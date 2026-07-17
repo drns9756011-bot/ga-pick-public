@@ -1,0 +1,879 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>픽견적 - 가전 비교견적</title>
+    <meta
+      name="description"
+      content="가전 견적서를 올리고 여러 판매자의 가격, 배송, 설치, 혜택 조건을 비교하는 픽견적 서비스입니다."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="픽견적" />
+    <meta property="og:title" content="픽견적 - 가전 비교견적" />
+    <meta
+      property="og:description"
+      content="가전 견적서를 올리고 가격, 배송, 설치, 카드 할인, 사은품 조건을 한곳에서 비교하세요."
+    />
+    <meta property="og:url" content="https://ga-pick.com/" />
+    <meta property="og:image" content="https://ga-pick.com/assets/customer-quote-comparison.png" />
+    <meta property="og:image:secure_url" content="https://ga-pick.com/assets/customer-quote-comparison.png" />
+    <meta property="og:image:alt" content="고객님이 가전 견적서를 확인하고 여러 제안을 비교하는 모습" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="픽견적 - 가전 비교견적" />
+    <meta
+      name="twitter:description"
+      content="가전 견적서를 올리고 여러 판매자의 조건을 한곳에서 비교하세요."
+    />
+    <meta name="twitter:image" content="https://ga-pick.com/assets/customer-quote-comparison.png" />
+    <link
+      rel="icon"
+      href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><rect width="40" height="40" rx="10" fill="%23126b5d"/><path d="M12 7h12l7 7v19H12z" fill="white"/><path d="M24 7v8h7" fill="none" stroke="%23d5eee8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M17 18h9M17 23h7" fill="none" stroke="%23126b5d" stroke-width="2.2" stroke-linecap="round"/><path d="M15.5 29.5l3.4 3.3 7.1-8" fill="none" stroke="%23e7b44d" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <script defer src="app.js"></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <button class="brand nav-button" type="button" data-view="home" aria-label="픽견적 홈">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 40 40" role="img" focusable="false">
+            <path class="logo-sheet" d="M12 7h12l7 7v19H12z" />
+            <path class="logo-fold" d="M24 7v8h7" />
+            <path class="logo-line" d="M17 18h9M17 23h7" />
+            <path class="logo-check" d="M15.5 29.5l3.4 3.3 7.1-8" />
+          </svg>
+        </span>
+        <span>픽견적</span>
+      </button>
+      <nav class="nav" aria-label="주요 메뉴">
+        <button type="button" data-view="customer">견적올리기</button>
+        <button type="button" data-view="lookup">내 견적 확인</button>
+        <button type="button" data-view="sellerLogin">판매자</button>
+      </nav>
+    </header>
+
+    <main>
+      <section class="page is-active" id="homePage" data-page="home">
+        <div class="hero">
+          <div class="hero-copy">
+            <p class="eyebrow">고객님을 위한 가전 견적 비교</p>
+            <h1>
+              <span>가전 견적,</span>
+              <span>사진으로 비교하세요.</span>
+            </h1>
+            <p class="hero-text">
+              매장이나 온라인몰에서 받은 견적서를 올리면 판매자 제안을 한곳에서 확인할 수 있습니다.
+              가격, 배송, 설치, 카드 할인, 사은품 조건을 비교하고 원하는 견적을 선택하세요.
+            </p>
+            <div class="trust-strip" aria-label="서비스 신뢰 지표">
+              <div>
+                <strong>평균 3개 이상</strong>
+                <span>판매자 비교 제안</span>
+              </div>
+              <div>
+                <strong>연락처 보호</strong>
+                <span>선택 후 공개</span>
+              </div>
+              <div>
+                <strong>최대 4장</strong>
+                <span>견적서 이미지 등록</span>
+              </div>
+            </div>
+            <div class="hero-actions">
+              <button class="primary-btn" type="button" data-view="customer">견적 올리기</button>
+              <button class="secondary-btn" type="button" data-view="lookup">내 견적 확인</button>
+              <button class="secondary-btn" type="button" data-view="sellerLogin">판매자 페이지</button>
+            </div>
+          </div>
+          <div class="hero-panel" aria-label="고객님 비교 예시">
+            <div class="quote-card active">
+              <span class="status">고객님 요청</span>
+              <strong>LG 오브제 패키지 4종</strong>
+              <p>현재 받은 견적 6,840,000원</p>
+            </div>
+            <div class="bid-row">
+              <span>최저 제안</span>
+              <strong>6,520,000원</strong>
+            </div>
+            <div class="bid-row">
+              <span>예상 절감액</span>
+              <strong>320,000원</strong>
+            </div>
+            <div class="bid-row muted">
+              <span>조회 방식</span>
+              <strong>성함 + 휴대전화</strong>
+            </div>
+            <div class="security-note">
+              <strong>고객님 연락처는 바로 공개되지 않습니다.</strong>
+              <p>판매자 제안을 비교한 뒤 고객님이 직접 선택한 경우에만 상담 연락처가 공개됩니다.</p>
+            </div>
+          </div>
+        </div>
+
+        <section class="confidence-section" aria-label="고객님 안심 포인트">
+          <div class="section-heading">
+            <p class="eyebrow">안심하고 비교하는 이유</p>
+            <h2>견적은 비교하되, 고객님 정보는 필요한 순간에만 공개합니다.</h2>
+            <p>
+              픽견적은 고객님이 받은 견적서를 바탕으로 조건을 비교하는 서비스입니다.
+              연락처와 견적 이미지는 동의한 목적 안에서만 사용되도록 화면 흐름을 설계했습니다.
+            </p>
+          </div>
+          <div class="confidence-grid">
+            <article>
+              <span>01</span>
+              <h3>연락처 선택 공개</h3>
+              <p>판매자는 고객님이 제안을 선택하기 전까지 전체 연락처를 볼 수 없습니다.</p>
+            </article>
+            <article>
+              <span>02</span>
+              <h3>명함 기반 판매자 등록</h3>
+              <p>판매자 등록 시 지점 명함 이미지를 받아 담당자와 근무 지점을 확인합니다.</p>
+            </article>
+            <article>
+              <span>03</span>
+              <h3>내 견적 다시 확인</h3>
+              <p>고객님은 로그인 없이 성함과 연락처로 본인이 올린 견적과 제안을 조회합니다.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="workflow" aria-label="고객님 이용 흐름">
+          <article>
+            <span>1</span>
+            <h2>견적서 등록</h2>
+            <p>고객님이 이미 받은 가전 견적서를 사진 또는 이미지 파일로 올립니다.</p>
+          </article>
+          <article>
+            <span>2</span>
+            <h2>판매자 제안 수신</h2>
+            <p>등록 판매자가 고객님의 품목, 지역, 요청사항을 보고 더 나은 조건을 제안합니다.</p>
+          </article>
+          <article>
+            <span>3</span>
+            <h2>내 견적 확인</h2>
+            <p>고객님은 성함과 휴대전화로 본인이 올린 견적과 받은 제안을 다시 확인합니다.</p>
+          </article>
+        </section>
+
+        <section class="ad-advantage-section" aria-label="광고 상담 대비 고객님 장점">
+          <div class="ad-advantage-media">
+            <img
+              src="assets/customer-quote-comparison.png"
+              alt="고객님이 가전 견적서를 확인하고 여러 제안을 비교하는 모습"
+            />
+          </div>
+          <div class="ad-advantage-copy">
+            <p class="eyebrow">광고 상담보다 편한 비교 방식</p>
+            <h2>광고를 보고 연락을 기다리는 대신, 내가 받은 견적을 기준으로 조건을 비교하세요.</h2>
+            <p>
+              메타광고를 통해 상담을 신청하면 여러 곳에 정보를 남기거나 전화 상담을 먼저 받아야 할 수 있습니다.
+              픽견적은 고객님이 이미 받은 견적서를 기준으로 가격, 배송, 설치, 혜택을 먼저 비교하고
+              마음에 드는 제안만 선택하는 방식입니다.
+            </p>
+            <div class="advantage-compare">
+              <article>
+                <span>일반 광고 상담</span>
+                <strong>상담부터 시작</strong>
+                <p>광고를 누른 뒤 연락처를 남기고, 상담을 받아야 가격과 혜택을 알 수 있는 경우가 많습니다.</p>
+              </article>
+              <article>
+                <span>픽견적 비교</span>
+                <strong>내 견적부터 비교</strong>
+                <p>이미 받은 견적 금액을 기준으로 여러 판매자의 제안을 보고, 원하는 제안만 선택할 수 있습니다.</p>
+              </article>
+            </div>
+            <ul class="advantage-list">
+              <li>여러 광고를 눌러 상담을 반복하지 않아도 됩니다.</li>
+              <li>기존 견적 금액이 있어 더 좋은 조건인지 바로 비교할 수 있습니다.</li>
+              <li>고객님이 선택한 판매자에게만 연락처가 공개되어 불필요한 연락 부담이 낮습니다.</li>
+            </ul>
+          </div>
+        </section>
+
+        <section class="review-section" aria-label="고객님 후기">
+          <div class="section-heading">
+            <p class="eyebrow">고객님 후기</p>
+            <h2>처음 비교하는 고객님도 이해하기 쉽게.</h2>
+            <p>데모 후기 예시입니다. 정식 운영 시 실제 고객님 동의 후 검수된 후기만 노출하는 구조를 권장합니다.</p>
+          </div>
+          <div class="review-grid">
+            <article>
+              <div class="stars" aria-label="5점 만점">★★★★★</div>
+              <p>혼수 가전 견적이 복잡했는데, 받은 견적서를 올리고 조건별로 비교하니 훨씬 정리가 쉬웠어요.</p>
+              <strong>박*연 고객님</strong>
+              <span>웨딩·혼수 패키지</span>
+            </article>
+            <article>
+              <div class="stars" aria-label="5점 만점">★★★★★</div>
+              <p>매장마다 할인 조건이 달라서 헷갈렸는데 배송일, 카드 혜택, 사은품을 한 번에 볼 수 있어 좋았습니다.</p>
+              <strong>김*준 고객님</strong>
+              <span>신축입주 가전</span>
+            </article>
+            <article>
+              <div class="stars" aria-label="5점 만점">★★★★★</div>
+              <p>연락처가 바로 공개되지 않는 점이 안심됐고, 선택한 제안만 상담으로 이어져 부담이 적었습니다.</p>
+              <strong>이*은 고객님</strong>
+              <span>이사 가전 교체</span>
+            </article>
+          </div>
+        </section>
+      </section>
+
+      <section class="page" id="customerPage" data-page="customer">
+        <div class="page-head">
+          <button class="back-btn" type="button" data-view="home">← 첫 화면</button>
+          <p class="eyebrow">견적올리기 페이지</p>
+          <h1>견적서 이미지를 올리고 비교 요청을 시작하세요.</h1>
+          <p>
+            1차 운영에서는 견적을 올릴 때만 고객님 인증을 받고, 이후에는 성함과 휴대전화로
+            내 견적을 조회하는 흐름으로 설계합니다.
+          </p>
+        </div>
+
+        <div class="request-grid app-grid">
+          <form class="request-form" id="requestForm">
+            <label class="upload-box" for="quoteImage">
+              <input id="quoteImage" name="quoteImage" type="file" accept="image/*" multiple />
+              <span class="upload-icon">+</span>
+              <strong>견적서 이미지 선택</strong>
+              <small>최대 4장까지 등록할 수 있습니다. 휴대폰에서는 사진 촬영 또는 앨범 선택이 가능합니다.</small>
+            </label>
+
+            <div class="form-row">
+              <label>
+                고객님 성함
+                <input type="text" name="customer" placeholder="예: 홍길동" required />
+              </label>
+              <label>
+                연락처
+                <input type="text" name="phone" data-phone-input placeholder="010-0000-0000" required />
+              </label>
+            </div>
+
+            <label>
+              구매 예정 품목
+              <input type="text" name="items" placeholder="예: 냉장고, 세탁기, 건조기, TV" required />
+            </label>
+
+            <label>
+              구매 목적
+              <select name="purchasePurpose" required>
+                <option value="">구매 목적 선택</option>
+                <option value="웨딩,혼수 특별혜택">웨딩,혼수 - 특별혜택</option>
+                <option value="신축입주 특별혜택">신축입주 - 특별혜택</option>
+                <option value="이사">이사</option>
+                <option value="인테리어">인테리어</option>
+                <option value="일반">일반</option>
+              </select>
+            </label>
+
+            <div class="form-row">
+              <label>
+                기존 견적 금액(만원)
+                <input type="text" name="price" data-money-input placeholder="684" required />
+                <small class="field-hint">예: 684 입력 시 6,840,000원으로 등록됩니다.</small>
+              </label>
+              <label>
+                설치 지역
+                <input type="text" name="region" placeholder="서울 송파구" required />
+              </label>
+            </div>
+
+            <label>
+              추가 요청사항
+              <textarea name="memo" rows="4" placeholder="희망 배송일, 카드 할인, 사은품, 보증 조건 등을 적어주세요."></textarea>
+            </label>
+
+            <button class="primary-btn full" type="submit">견적 요청 등록</button>
+            <p class="form-message" id="requestFormMessage" role="alert"></p>
+          </form>
+
+          <aside class="preview-card">
+            <div class="board-label">고객님 미리보기</div>
+            <div class="preview-image" id="imagePreview">
+              <span>이미지 미리보기</span>
+            </div>
+            <div class="preview-details">
+              <span class="status">작성 중</span>
+              <h3 id="previewTitle">견적 요청서가 여기에 표시됩니다.</h3>
+              <p id="previewMeta">등록 후 판매자 페이지와 내 견적 확인 페이지에서 볼 수 있습니다.</p>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="page lookup-page" id="lookupPage" data-page="lookup">
+        <div class="page-head">
+          <button class="back-btn" type="button" data-view="home">← 첫 화면</button>
+          <p class="eyebrow">내 견적 확인</p>
+          <h1>성함과 휴대전화로 내가 올린 견적을 확인하세요.</h1>
+          <p>
+            견적 등록 시 인증을 완료한 고객님은 이후 성함과 휴대전화로 견적 내용,
+            견적서 이미지, 판매자 제안을 다시 볼 수 있습니다.
+          </p>
+        </div>
+
+        <div class="lookup-layout">
+          <form class="request-form lookup-form" id="lookupForm">
+            <div class="form-row">
+              <label>
+                고객님 성함
+                <input type="text" name="lookupCustomer" placeholder="예: 홍길동" required />
+              </label>
+              <label>
+                연락처
+                <input type="text" name="lookupPhone" data-phone-input placeholder="010-0000-0000" required />
+              </label>
+            </div>
+            <button class="primary-btn full" type="submit">내 견적 조회</button>
+            <p class="helper-text">
+              데모에서는 이름과 휴대전화가 모두 일치하는 견적만 표시합니다.
+            </p>
+          </form>
+
+          <section class="lookup-results" id="lookupResults">
+            <div class="empty-state">
+              <strong>예시 화면을 불러오는 중입니다.</strong>
+              <p>내 견적 확인에서 고객님이 보게 될 화면 예시가 표시됩니다.</p>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="page seller-login-page" id="sellerLoginPage" data-page="sellerLogin">
+        <div class="page-head">
+          <button class="back-btn" type="button" data-view="home">← 첫 화면</button>
+          <p class="eyebrow">판매자 로그인</p>
+          <h1>판매자 등록 승인 계정으로 로그인하세요.</h1>
+          <p>
+            고객님 견적은 판매자로 등록된 사람만 확인할 수 있습니다. 고객님은 로그인 없이
+            견적 등록과 내 견적 확인을 이용합니다.
+          </p>
+        </div>
+
+        <div class="login-layout">
+          <form class="request-form login-form" id="sellerLoginForm">
+            <label>
+              아이디
+              <input type="text" name="loginId" placeholder="판매자 아이디" required />
+            </label>
+            <label>
+              비밀번호
+              <input type="password" name="loginPassword" placeholder="비밀번호" required />
+            </label>
+            <button class="primary-btn full" type="submit">판매자 로그인</button>
+            <button class="secondary-btn full" id="openSellerAccountModal" type="button">판매자 계정 찾기</button>
+            <p class="form-message" id="sellerLoginMessage" role="alert"></p>
+          </form>
+
+          <aside class="seller-benefit-panel">
+            <p class="eyebrow">판매자 유입 장점</p>
+            <h2>광고 클릭보다 구매 의향이 또렷한 고객님을 먼저 확인하세요.</h2>
+            <p>
+              메타 광고나 블로그는 노출 이후 상담까지 시간이 걸릴 수 있지만, 픽견적은 고객님이
+              이미 받은 견적서와 필요한 품목을 올린 뒤 판매자 제안을 기다리는 구조입니다.
+            </p>
+            <div class="seller-benefit-grid">
+              <div>
+                <strong>견적서 보유 고객님</strong>
+                <span>품목, 기존 금액, 설치 지역을 보고 바로 제안할 수 있습니다.</span>
+              </div>
+              <div>
+                <strong>지역 기반 상담</strong>
+                <span>지점 지역과 고객님 설치 지역을 기준으로 응답 대상을 판단합니다.</span>
+              </div>
+              <div>
+                <strong>선택 후 연락</strong>
+                <span>고객님이 제안을 선택한 뒤 연락처가 공개되어 불필요한 연락 부담을 줄입니다.</span>
+              </div>
+            </div>
+            <button class="secondary-btn" type="button" data-view="sellerRegister">판매자 등록 신청</button>
+          </aside>
+        </div>
+      </section>
+
+      <section class="page seller-page" id="sellerPage" data-page="seller">
+        <div class="page-head">
+          <button class="back-btn" type="button" data-view="home">← 첫 화면</button>
+          <p class="eyebrow">판매자 페이지</p>
+          <h1>고객님이 올린 견적 내용과 사진을 확인하고 제안하세요.</h1>
+          <p>
+            판매자는 접수된 견적 목록을 선택한 뒤 고객님의 견적서 이미지, 품목, 금액,
+            설치 지역, 요청사항을 보고 제안 금액과 조건을 입력합니다.
+          </p>
+        </div>
+
+        <div class="seller-tabs" aria-label="판매자 견적 분류">
+          <button class="is-active" type="button" data-seller-tab="all">고객님 견적</button>
+          <button type="button" data-seller-tab="proposed">제안한 견적</button>
+          <button type="button" data-seller-tab="selected">선택받은 견적</button>
+          <button type="button" data-seller-tab="region">매니저 정보 변경</button>
+        </div>
+
+        <div class="seller-layout seller-page-layout" id="sellerQuoteWorkspace">
+          <aside class="request-list" id="requestList" aria-label="접수 견적 목록"></aside>
+
+          <section class="seller-detail">
+            <div class="seller-quote-card">
+              <div class="board-label">고객님 견적서</div>
+              <div class="preview-image seller-image" id="sellerImage">
+                <span>등록된 견적서 이미지가 없습니다.</span>
+              </div>
+              <div class="preview-details">
+                <span class="status" id="selectedStatus">선택 대기</span>
+                <h3 id="selectedTitle">견적 요청을 선택하세요.</h3>
+                <div id="selectedInfo">왼쪽 목록에서 고객님 요청을 선택하면 상세 내용이 표시됩니다.</div>
+              </div>
+            </div>
+
+            <form class="bid-form" id="bidForm">
+              <div class="form-row">
+                <label>
+                  지점명
+                  <input type="text" name="branchName" value="데모 관리자" readonly required />
+                </label>
+                <label>
+                  제안 금액(만원)
+                  <input type="text" name="bidPrice" data-money-input placeholder="652" required />
+                  <small class="field-hint">예: 652 입력 시 6,520,000원으로 제안됩니다.</small>
+                </label>
+              </div>
+
+              <div class="form-row">
+                <label>
+                  매니저명
+                  <input type="text" name="managerName" value="마스터" readonly required />
+                </label>
+                <label>
+                  전화번호
+                  <input type="text" name="managerPhone" data-phone-input value="010-0000-0000" readonly required />
+                </label>
+              </div>
+
+              <label>
+                제공 조건
+                <textarea name="benefits" rows="4" placeholder="무료 설치, 배송일, 카드 할인, 사은품, 보증 조건 등을 입력하세요." required></textarea>
+              </label>
+
+              <button class="primary-btn full" type="submit">고객님에게 제안 보내기</button>
+              <p class="form-message" id="bidFormMessage" role="alert"></p>
+            </form>
+          </section>
+        </div>
+
+        <section class="seller-region-panel" id="sellerRegionPanel" hidden>
+          <div class="section-heading">
+            <p class="eyebrow">매니저 정보 변경 신청</p>
+            <h2>등록된 판매자 정보는 관리자 검토 후 변경됩니다.</h2>
+            <p>
+              판매자 로그인 계정 기준으로 신청합니다. 지점명, 매니저명, 현재 지역은 등록 정보에서 자동으로 불러오며 직접 수정할 수 없습니다.
+            </p>
+          </div>
+          <form class="request-form inline-form" id="regionChangeForm">
+            <div class="form-row">
+              <label>
+                현재 지점명
+                <input type="text" name="changeBranch" readonly required />
+              </label>
+              <label>
+                매니저 이름
+                <input type="text" name="changeManager" readonly required />
+              </label>
+            </div>
+            <div class="form-row">
+              <label>
+                현재 지역
+                <input type="text" name="currentRegion" readonly required />
+              </label>
+              <label>
+                변경 희망 지역
+                <select name="nextRegion" required>
+                  <option value="">변경 지역 선택</option>
+                  <option value="서울">서울</option>
+                  <option value="경기">경기</option>
+                  <option value="인천">인천</option>
+                  <option value="부산">부산</option>
+                  <option value="대구">대구</option>
+                  <option value="광주">광주</option>
+                  <option value="대전">대전</option>
+                  <option value="울산">울산</option>
+                  <option value="세종">세종</option>
+                  <option value="강원">강원</option>
+                  <option value="충북">충북</option>
+                  <option value="충남">충남</option>
+                  <option value="전북">전북</option>
+                  <option value="전남">전남</option>
+                  <option value="경북">경북</option>
+                  <option value="경남">경남</option>
+                  <option value="제주">제주</option>
+                  <option value="전국">전국</option>
+                </select>
+              </label>
+            </div>
+            <div class="form-row">
+              <label>
+                변경 희망 지점명
+                <input type="text" name="nextBranch" placeholder="예: 베스트샵 강남본점" required />
+              </label>
+            </div>
+            <label>
+              변경 사유
+              <textarea name="changeReason" rows="4" placeholder="지점 이동, 담당 권역 변경 등 사유를 적어주세요." required></textarea>
+            </label>
+            <button class="secondary-btn full" type="submit">매니저 정보 변경 검토 신청</button>
+          </form>
+          <pre id="regionChangePreview" hidden></pre>
+          <a class="primary-btn" id="regionChangeMailLink" href="#" hidden>변경 신청 메일 보내기</a>
+        </section>
+      </section>
+
+      <section class="page seller-register-page" id="sellerRegisterPage" data-page="sellerRegister">
+        <div class="page-head">
+          <button class="back-btn" type="button" data-view="home">← 첫 화면</button>
+          <p class="eyebrow">판매자 등록</p>
+          <h1>판매자로 등록할 지점 정보를 입력해주세요.</h1>
+          <p>
+            지점 명함 이미지는 필수입니다. 등록 신청 내용은 운영자 확인 후 승인된 판매자만
+            고객님 견적에 제안할 수 있도록 설계합니다.
+          </p>
+        </div>
+
+        <section class="seller-acquisition-section" aria-label="판매자 등록 장점">
+          <div class="section-heading">
+            <p class="eyebrow">광고·블로그와 다른 점</p>
+            <h2>문의가 오기만 기다리는 방식보다, 견적을 올린 고객님에게 직접 제안하세요.</h2>
+            <p>
+              광고 운영과 블로그 노출은 여전히 도움이 될 수 있습니다. 다만 픽견적은 고객님이
+              비교 의사를 먼저 남긴 뒤 판매자 제안을 받는 흐름이라 상담 준비 시간이 짧아집니다.
+            </p>
+          </div>
+
+          <div class="seller-acquisition-grid">
+            <article class="seller-compare-card">
+              <span>메타 광고·블로그</span>
+              <h3>노출 이후 문의를 기다리는 구조</h3>
+              <p>클릭과 조회는 만들 수 있지만 실제 구매 품목, 기존 견적, 설치 지역을 다시 확인해야 합니다.</p>
+            </article>
+            <article class="seller-compare-card is-highlight">
+              <span>픽견적 판매자</span>
+              <h3>견적서가 있는 고객님에게 제안</h3>
+              <p>고객님이 올린 견적 이미지와 요청 조건을 보고 금액, 혜택, 배송 조건을 바로 비교 제안합니다.</p>
+            </article>
+            <article class="seller-compare-card">
+              <span>상담 효율</span>
+              <h3>선택받은 고객님 중심으로 연락</h3>
+              <p>고객님 연락처는 제안 선택 후 공개되므로, 관심이 확인된 고객님과 더 집중해서 상담할 수 있습니다.</p>
+            </article>
+          </div>
+        </section>
+
+        <div class="register-layout">
+          <form class="request-form" id="sellerRegisterForm">
+            <label class="upload-box" for="businessCardImage">
+              <input id="businessCardImage" name="businessCardImage" type="file" accept="image/*" required />
+              <span class="upload-icon">+</span>
+              <strong>지점 명함 이미지 첨부</strong>
+              <small>명함, 사원증, 지점 정보가 보이는 이미지를 첨부해주세요.</small>
+            </label>
+
+            <div class="form-row">
+              <label>
+                채널
+                <select name="sellerChannel" required>
+                  <option value="">채널 선택</option>
+                  <option value="LG전자 BEST SHOP">LG전자 BEST SHOP</option>
+                  <option value="롯데하이마트">롯데하이마트</option>
+                  <option value="삼성스토어">삼성스토어</option>
+                  <option value="이마트(LG)">이마트(LG)</option>
+                  <option value="이마트(삼성)">이마트(삼성)</option>
+                  <option value="전자랜드(LG)">전자랜드(LG)</option>
+                  <option value="전자랜드(삼성)">전자랜드(삼성)</option>
+                </select>
+              </label>
+              <label>
+                지점명
+                <input type="text" name="branch" placeholder="예: 성서점" required />
+              </label>
+            </div>
+
+            <div class="form-row">
+              <label>
+                판매자 아이디
+                <input type="text" name="sellerId" placeholder="예: seller_gangnam" required />
+              </label>
+              <label>
+                비밀번호
+                <input type="password" name="sellerPassword" placeholder="판매자 로그인 비밀번호" required />
+              </label>
+            </div>
+
+            <div class="form-row">
+              <label>
+                해당 지점 지역
+                <select name="branchRegion" required>
+                  <option value="">지역 선택</option>
+                  <option value="서울">서울</option>
+                  <option value="경기">경기</option>
+                  <option value="인천">인천</option>
+                  <option value="부산">부산</option>
+                  <option value="대구">대구</option>
+                  <option value="광주">광주</option>
+                  <option value="대전">대전</option>
+                  <option value="울산">울산</option>
+                  <option value="세종">세종</option>
+                  <option value="강원">강원</option>
+                  <option value="충북">충북</option>
+                  <option value="충남">충남</option>
+                  <option value="전북">전북</option>
+                  <option value="전남">전남</option>
+                  <option value="경북">경북</option>
+                  <option value="경남">경남</option>
+                  <option value="제주">제주</option>
+                  <option value="전국">전국</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="form-row">
+              <label>
+                매니저 이름
+                <input type="text" name="manager" placeholder="예: 홍길동" required />
+              </label>
+              <label>
+                직책
+                <input type="text" name="managerPosition" placeholder="예: 선임 / 프로" required />
+              </label>
+            </div>
+
+            <div class="form-row">
+              <label>
+                연락처
+                <input type="text" name="sellerPhone" data-phone-input placeholder="010-0000-0000" required />
+              </label>
+            </div>
+
+            <label>
+              추가 메모
+              <textarea name="sellerMemo" rows="4" placeholder="담당 브랜드, 판매 가능 지역, 승인 요청 사항 등을 적어주세요."></textarea>
+            </label>
+
+            <div class="consent-box inline-consent">
+              <h3>판매자 개인정보 수집·이용 및 공개 동의</h3>
+              <ul>
+                <li>수집 항목: 채널, 지점명, 지점 지역, 판매자 아이디, 매니저 이름, 직책, 연락처, 명함 이미지, 추가 메모</li>
+                <li>이용 목적: 판매자 등록 검토, 계정 승인, 고객님 견적 제안, 고객님 선택 시 상담 연결</li>
+                <li>열람 대상: 페이지 운영 회사, 관리자, 등록 검토 및 고객님 응대 담당 직원</li>
+                <li>공개 범위: 고객님이 제안을 선택하면 매니저명, 직책, 지점명, 연락처, 명함 이미지가 고객님에게 공개됩니다.</li>
+                <li>보유 기간: 판매자 등록 해지 또는 삭제 요청 시까지, 관련 분쟁 처리 목적의 보관 기간은 별도 정책에 따릅니다.</li>
+              </ul>
+              <label class="consent-check">
+                <input type="checkbox" name="sellerPrivacyConsent" required />
+                판매자 개인정보 수집·이용 및 고객님 선택 시 정보 공개에 동의합니다.
+              </label>
+            </div>
+
+            <button class="primary-btn full" type="submit">판매자 등록 신청</button>
+          </form>
+
+          <aside class="preview-card">
+            <div class="board-label">등록 미리보기</div>
+            <div class="preview-image" id="businessCardPreview">
+              <span>명함 이미지 미리보기</span>
+            </div>
+            <div class="preview-details">
+              <span class="status">신청 전</span>
+              <h3 id="sellerRegisterTitle">판매자 등록 정보가 여기에 표시됩니다.</h3>
+              <p id="sellerRegisterMeta">신청 후 운영자 메일로 보낼 내용이 준비됩니다.</p>
+            </div>
+          </aside>
+        </div>
+
+        <section class="mail-panel" id="sellerMailPanel" hidden>
+          <div class="section-heading">
+            <p class="eyebrow">메일 발송 준비</p>
+            <h2>운영자에게 보낼 판매자 등록 내용입니다.</h2>
+            <p>
+              실제 자동 메일 발송은 서버 연동이 필요합니다. 현재 데모에서는 메일 앱으로
+              보낼 수 있는 링크를 제공합니다.
+            </p>
+          </div>
+          <pre id="sellerMailPreview"></pre>
+          <div class="mail-actions">
+            <a class="primary-btn" id="sellerAdminReviewLink" href="admin.html#sellerReview">관리자 페이지에서 신청 확인</a>
+            <a class="secondary-btn" id="sellerMailLink" href="#">메일 앱으로 보내기</a>
+          </div>
+        </section>
+
+      </section>
+
+    </main>
+
+    <footer class="footer">
+      <div>
+        <strong>픽견적</strong>
+        <span>고객님 견적 등록, 내 견적 조회, 판매자 제안 화면을 분리한 데모</span>
+      </div>
+      <button class="footer-register-btn" type="button" data-view="sellerRegister">판매자 등록</button>
+    </footer>
+    <div class="consent-modal" id="privacyConsentModal" hidden>
+      <div class="consent-dialog" role="dialog" aria-modal="true" aria-labelledby="privacyConsentTitle">
+        <h2 id="privacyConsentTitle">개인정보 처리 동의</h2>
+        <p>
+          견적 요청 등록을 위해 아래 개인정보 수집·이용 및 제3자 제공 동의가 필요합니다.
+          동의하지 않으면 견적 요청 등록이 제한됩니다.
+        </p>
+        <div class="consent-box">
+          <h3>개인정보 수집·이용</h3>
+          <ul>
+            <li>수집 항목: 고객님 성함, 연락처, 설치 지역, 구매 품목, 견적서 이미지 최대 4장, 요청사항</li>
+            <li>이용 목적: 견적 요청 접수, 본인 견적 조회, 판매자 제안 연결, 상담 진행</li>
+            <li>열람 대상: 페이지 운영 회사, 관리자, 견적 검토 및 고객님 응대 담당 직원</li>
+            <li>보유 기간: 견적 처리 완료 후 1년 또는 고객님 삭제 요청 시까지</li>
+          </ul>
+        </div>
+        <div class="consent-box">
+          <h3>개인정보 제3자 제공</h3>
+          <ul>
+            <li>제공받는 자: 견적 제안 참여 판매자 및 고객님이 선택한 판매자</li>
+            <li>제공 목적: 가전 견적 제안, 설치·배송 상담, 구매 상담 연결</li>
+            <li>제공 항목: 견적서 이미지 최대 4장, 구매 품목, 설치 지역, 요청사항, 선택 후 고객님 연락처</li>
+            <li>보유 기간: 상담 종료 후 1년 또는 고객님 삭제 요청 시까지</li>
+          </ul>
+        </div>
+        <label class="consent-check">
+          <input id="collectionConsent" type="checkbox" />
+          개인정보 수집·이용에 동의합니다.
+        </label>
+        <label class="consent-check">
+          <input id="thirdPartyConsent" type="checkbox" />
+          고객님이 선택한 판매자에게 연락처가 공개되는 것에 동의합니다.
+        </label>
+        <p class="form-message" id="consentMessage" role="alert"></p>
+        <div class="consent-actions">
+          <button class="secondary-btn" id="cancelConsentBtn" type="button">취소</button>
+          <button class="primary-btn" id="confirmConsentBtn" type="button">동의하고 등록</button>
+        </div>
+      </div>
+    </div>
+    <div class="confirm-modal" id="bidSelectConfirmModal" hidden>
+      <div class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="bidSelectConfirmTitle">
+        <h2 id="bidSelectConfirmTitle">이 견적을 선택하시겠습니까?</h2>
+        <p>
+          선택하신 견적은 이후 변경할 수 없습니다. 확인을 누르면 선택한 판매자에게만 고객님 연락처가 공개되고
+          상담이 진행됩니다.
+        </p>
+        <div class="confirm-summary" id="bidSelectConfirmSummary"></div>
+        <div class="consent-actions">
+          <button class="secondary-btn" id="cancelBidSelectBtn" type="button">취소</button>
+          <button class="primary-btn" id="confirmBidSelectBtn" type="button">확인</button>
+        </div>
+      </div>
+    </div>
+    <div class="image-modal" id="quoteImageModal" hidden>
+      <div class="image-modal-dialog" role="dialog" aria-modal="true" aria-label="견적서 원본 이미지">
+        <button class="image-modal-close" id="closeQuoteImageModal" type="button" aria-label="이미지 닫기">×</button>
+        <img id="quoteImageModalImg" alt="견적서 원본 이미지" />
+      </div>
+    </div>
+    <div class="account-modal" id="sellerAccountModal" hidden>
+      <div class="account-dialog" role="dialog" aria-modal="true" aria-labelledby="sellerAccountTitle">
+        <button class="image-modal-close" id="closeSellerAccountModal" type="button" aria-label="계정 찾기 닫기">×</button>
+        <h2 id="sellerAccountTitle">판매자 계정 찾기</h2>
+        <p>판매자 등록 시 입력한 정보로 아이디를 찾거나 비밀번호를 새로 설정할 수 있습니다.</p>
+        <div class="account-tabs" aria-label="계정 찾기 선택">
+          <button class="is-active" type="button" data-account-tab="findId">아이디 찾기</button>
+          <button type="button" data-account-tab="resetPassword">비밀번호 재설정</button>
+        </div>
+        <form class="account-form is-active" id="sellerFindIdForm" data-account-panel="findId">
+          <div class="form-row">
+            <label>
+              채널
+              <select name="findChannel" required>
+                <option value="">채널 선택</option>
+                <option value="LG전자 BEST SHOP">LG전자 BEST SHOP</option>
+                <option value="롯데하이마트">롯데하이마트</option>
+                <option value="마스터">마스터</option>
+                <option value="삼성스토어">삼성스토어</option>
+                <option value="이마트(LG)">이마트(LG)</option>
+                <option value="이마트(삼성)">이마트(삼성)</option>
+                <option value="전자랜드(LG)">전자랜드(LG)</option>
+                <option value="전자랜드(삼성)">전자랜드(삼성)</option>
+              </select>
+            </label>
+            <label>
+              근무지점
+              <input type="text" name="findBranch" placeholder="예: 베스트샵 강남본점" required />
+            </label>
+          </div>
+          <div class="form-row">
+            <label>
+              매니저 이름
+              <input type="text" name="findManager" placeholder="예: 홍길동" required />
+            </label>
+            <label>
+              전화번호
+              <input type="text" name="findPhone" data-phone-input placeholder="010-0000-0000" required />
+            </label>
+          </div>
+          <button class="primary-btn full" type="submit">아이디 찾기</button>
+          <p class="form-message" id="findIdMessage" role="alert"></p>
+        </form>
+        <form class="account-form" id="sellerResetPasswordForm" data-account-panel="resetPassword">
+          <div class="form-row">
+            <label>
+              채널
+              <select name="resetChannel" required>
+                <option value="">채널 선택</option>
+                <option value="LG전자 BEST SHOP">LG전자 BEST SHOP</option>
+                <option value="롯데하이마트">롯데하이마트</option>
+                <option value="마스터">마스터</option>
+                <option value="삼성스토어">삼성스토어</option>
+                <option value="이마트(LG)">이마트(LG)</option>
+                <option value="이마트(삼성)">이마트(삼성)</option>
+                <option value="전자랜드(LG)">전자랜드(LG)</option>
+                <option value="전자랜드(삼성)">전자랜드(삼성)</option>
+              </select>
+            </label>
+            <label>
+              근무지점
+              <input type="text" name="resetBranch" placeholder="예: 베스트샵 강남본점" required />
+            </label>
+          </div>
+          <div class="form-row">
+            <label>
+              매니저 이름
+              <input type="text" name="resetManager" placeholder="예: 홍길동" required />
+            </label>
+            <label>
+              전화번호
+              <input type="text" name="resetPhone" data-phone-input placeholder="010-0000-0000" required />
+            </label>
+          </div>
+          <div class="form-row">
+            <label>
+              아이디
+              <input type="text" name="resetSellerId" placeholder="판매자 아이디" required />
+            </label>
+            <label>
+              새 비밀번호
+              <input type="password" name="newPassword" placeholder="새 비밀번호" required />
+            </label>
+          </div>
+          <button class="primary-btn full" type="submit">비밀번호 재설정</button>
+          <p class="form-message" id="resetPasswordMessage" role="alert"></p>
+        </form>
+      </div>
+    </div>
+    <div class="review-modal" id="managerReviewModal" hidden>
+      <div class="review-dialog" role="dialog" aria-modal="true" aria-labelledby="managerReviewTitle">
+        <button class="image-modal-close" id="closeManagerReviewModal" type="button" aria-label="후기 닫기">×</button>
+        <p class="eyebrow">판매 매니저 후기</p>
+        <h2 id="managerReviewTitle">후기</h2>
+        <div class="review-modal-list" id="managerReviewList"></div>
+      </div>
+    </div>
+    <div class="security-blanket" id="securityBlanket" aria-hidden="true"></div>
+  </body>
+</html>
