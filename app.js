@@ -1480,7 +1480,7 @@ sellerRegisterForm.addEventListener("submit", async (event) => {
     return;
   }
 
-  if (hasPendingSellerApplication(sellerId, sellerPhone)) {
+  if (!canUseApiServer() && hasPendingSellerApplication(sellerId, sellerPhone)) {
     sellerRegisterTitle.textContent = "이미 검토 대기 중인 신청입니다.";
     sellerRegisterMeta.textContent = "관리자 승인 또는 반려 후 다시 신청할 수 있습니다.";
     return;
