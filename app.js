@@ -298,11 +298,21 @@ async function apiJson(path, options = {}) {
       },
       ...options,
     });
-    if (!response.ok) throw new Error("api request failed");
-    return response.status === 204 ? null : response.json();
+    const payload = response.status === 204 ? null : await response.json().catch(() => null);
+    if (!response.ok) {
+      return {
+        ok: false,
+        status: response.status,
+        message: payload?.message || "서버 저장 요청에 실패했습니다.",
+      };
+    }
+    return payload;
   } catch (error) {
     console.warn("API 요청에 실패했습니다.", error);
-    return null;
+    return {
+      ok: false,
+      message: "서버와 연결하지 못했습니다. 배포 상태 또는 네트워크를 확인해주세요.",
+    };
   }
 }
 
@@ -1486,6 +1496,15 @@ sellerRegisterForm.addEventListener("submit", async (event) => {
     return;
   }
 
+  const submitButton = sellerRegisterForm.querySelector('button[type="submit"]');
+  const originalSubmitText = submitButton?.textContent || "판매자 등록 요청";
+  if (submitButton) {
+    submitButton.disabled = true;
+    submitButton.textContent = "서버에 저장 중입니다...";
+  }
+  sellerRegisterTitle.textContent = "판매자 등록 요청을 저장 중입니다.";
+  sellerRegisterMeta.textContent = "잠시만 기다려주세요. 정상 저장 후 관리자 페이지에서 확인할 수 있습니다.";
+
   const mailBody = [
     "[픽견적 판매자 등록 요청]",
     "",
@@ -1531,7 +1550,12 @@ sellerRegisterForm.addEventListener("submit", async (event) => {
     applications.shift();
     setSellerApplications(applications);
     sellerRegisterTitle.textContent = "??? ?? ??? ???? ?????.";
-    sellerRegisterMeta.textContent = "?? ? ?? ??????. ??? ???? ????? ??????.";
+    if (submitButton) {
+      submitButton.disabled = false;
+      submitButton.textContent = originalSubmitText;
+    }
+    sellerRegisterTitle.textContent = "판매자 등록 요청을 저장하지 못했습니다.";
+    sellerRegisterMeta.textContent = serverResult?.message || "잠시 후 다시 시도해주세요. 문제가 계속되면 운영자에게 문의해주세요.";
     return;
   }
   queueAlimtalkMessage({
@@ -1546,6 +1570,15 @@ sellerRegisterForm.addEventListener("submit", async (event) => {
 
   sellerRegisterTitle.textContent = "판매자 등록 요청이 접수되었습니다.";
   sellerRegisterMeta.textContent = `${formatSellerDisplayName(sellerChannel, branch)} · 관리자 승인 대기`;
+  if (submitButton) {
+    submitButton.disabled = false;
+    submitButton.textContent = originalSubmitText;
+  }
+  sellerRegisterForm.reset();
+  businessCardImage = "";
+  businessCardPreview.innerHTML = "";
+  sellerRegisterTitle.textContent = "정상적으로 완료되었습니다.";
+  sellerRegisterMeta.textContent = `${formatSellerDisplayName(sellerChannel, branch)} 등록 요청이 저장되었습니다. 관리자 검토 후 승인 또는 반려 안내가 진행됩니다.`;
   sellerMailPreview.textContent = "";
   sellerMailPreview.hidden = true;
   sellerAdminReviewLink.hidden = true;
