@@ -1,83 +1,8 @@
-const requests = [
-  {
-    id: 1,
-    customer: "김민준",
-    phone: "010-1234-5678",
-    items: "LG 오브제 냉장고, 워시타워, 스타일러, TV",
-    purchasePurpose: "웨딩,혼수 특별혜택",
-    price: 6840000,
-    region: "서울 송파구",
-    quoteNumber: "20260717-0001",
-    memo: "주말 설치 가능 여부와 카드 할인 포함 조건을 원합니다.",
-    image: "",
-    images: [],
-  },
-  {
-    id: 2,
-    customer: "박서연",
-    phone: "010-9876-5432",
-    items: "삼성 비스포크 냉장고, 식기세척기, 인덕션",
-    purchasePurpose: "신축입주 특별혜택",
-    price: 4210000,
-    region: "경기 성남시",
-    quoteNumber: "20260717-0002",
-    memo: "입주 일정 때문에 7월 말 배송이 필요합니다.",
-    image: "",
-    images: [],
-  },
-];
+const requests = [];
+const bids = [];
+const managerReviews = [];
 
-const bids = [
-  {
-    id: 101,
-    requestId: 1,
-    sellerId: "sample-best",
-    seller: "LG전자 BEST SHOP 강남점",
-    channel: "LG전자 BEST SHOP",
-    branch: "강남점",
-    manager: "이서준",
-    managerPosition: "선임",
-    price: 6590000,
-    benefits: "무료 설치, 2주 내 배송, 멤버십 포인트 제공",
-  },
-  {
-    id: 102,
-    requestId: 1,
-    sellerId: "sample-prime",
-    seller: "삼성스토어 성서점",
-    channel: "삼성스토어",
-    branch: "성서점",
-    manager: "홍길동",
-    managerPosition: "프로",
-    price: 6520000,
-    benefits: "카드 청구할인 포함, 사은품 공기청정기 필터",
-  },
-];
-
-const managerReviews = [
-  {
-    id: 1,
-    sellerId: "sample-prime",
-    seller: "삼성스토어 성서점",
-    manager: "홍길동",
-    customer: "김*준",
-    rating: 5,
-    content: "카드 할인과 배송 일정 설명이 깔끔했고, 기존 견적보다 조건 비교가 쉬웠습니다.",
-    createdAt: "2026-07-10",
-  },
-  {
-    id: 2,
-    sellerId: "sample-best",
-    seller: "LG전자 BEST SHOP 강남점",
-    manager: "이서준",
-    customer: "박*연",
-    rating: 4,
-    content: "설치 가능일을 빠르게 확인해줘서 혼수 일정 잡는 데 도움이 됐습니다.",
-    createdAt: "2026-07-12",
-  },
-];
-
-let selectedRequestId = requests[0].id;
+let selectedRequestId = 0;
 let uploadedImages = [];
 let businessCardImage = "";
 let activeSellerId = "";
@@ -93,18 +18,6 @@ const STORAGE_KEYS = {
 };
 const registeredSellerPhones = new Set();
 const sellerAccounts = new Map();
-// Demo-only master seller account. Remove this in production.
-sellerAccounts.set("1234", {
-  password: "1234",
-  channel: "마스터",
-  branch: "데모 관리자",
-  branchRegion: "전국",
-  manager: "마스터",
-  managerPosition: "관리자",
-  phone: "010-0000-0000",
-  cardImage: "",
-});
-registeredSellerPhones.add("01000000000");
 hydrateApprovedSellerAccounts();
 const money = new Intl.NumberFormat("ko-KR");
 
@@ -502,7 +415,7 @@ function setAccountTab(tabName) {
 
 function getSelectedRequest() {
   if (selectedRequestId === null) return null;
-  return requests.find((request) => request.id === selectedRequestId) || requests[0];
+  return requests.find((request) => request.id === selectedRequestId) || requests[0] || null;
 }
 
 function getBidsForRequest(requestId) {
@@ -585,7 +498,7 @@ function syncSelectedRequestWithTab() {
   }
 
   if (!filteredRequests.some((request) => request.id === selectedRequestId)) {
-    selectedRequestId = filteredRequests[0].id;
+    selectedRequestId = filteredRequests[0]?.id || 0;
   }
 
   return filteredRequests;
@@ -1068,7 +981,7 @@ async function sendAdminMail(subject, body, fallbackLink) {
 
   if (window.location.protocol === "file:") {
     fallbackLink.href = buildMailtoLink(subject, body);
-    fallbackLink.textContent = "서버 실행 후 자동 발송 가능 · 메일 앱으로 보내기";
+    fallbackLink.textContent = "요청 접수 준비 중";
     fallbackLink.hidden = false;
     return false;
   }
@@ -1084,13 +997,13 @@ async function sendAdminMail(subject, body, fallbackLink) {
 
     if (!response.ok) throw new Error("mail request failed");
 
-    fallbackLink.textContent = "운영자 메일로 자동 발송 완료";
+    fallbackLink.textContent = "요청 접수가 완료되었습니다.";
     fallbackLink.removeAttribute("href");
     fallbackLink.hidden = false;
     return true;
   } catch (error) {
     fallbackLink.href = buildMailtoLink(subject, body);
-    fallbackLink.textContent = "자동 발송 실패 · 메일 앱으로 보내기";
+    fallbackLink.textContent = "요청 접수에 실패했습니다. 잠시 후 다시 시도해주세요.";
     fallbackLink.hidden = false;
     return false;
   }
@@ -1574,7 +1487,7 @@ sellerRegisterForm.addEventListener("submit", async (event) => {
   }
 
   const mailBody = [
-    "[픽견적 판매자 등록 신청]",
+    "[픽견적 판매자 등록 요청]",
     "",
     `채널: ${sellerChannel}`,
     `근무지점: ${branch}`,
@@ -1613,18 +1526,25 @@ sellerRegisterForm.addEventListener("submit", async (event) => {
   };
   applications.unshift(application);
   setSellerApplications(applications);
-  await saveSellerApplicationToServer(application);
+  const serverResult = await saveSellerApplicationToServer(application);
+  if (canUseApiServer() && !serverResult?.ok) {
+    applications.shift();
+    setSellerApplications(applications);
+    sellerRegisterTitle.textContent = "??? ?? ??? ???? ?????.";
+    sellerRegisterMeta.textContent = "?? ? ?? ??????. ??? ???? ????? ??????.";
+    return;
+  }
   queueAlimtalkMessage({
     type: "seller-application-received",
     targetRole: "seller",
     targetName: manager,
     targetPhone: sellerPhone,
-    title: "판매자 등록 신청 접수 안내",
-    body: `${formatSellerDisplayName(sellerChannel, branch)} 등록 신청이 접수되었습니다. 관리자 검토 후 승인 또는 반려 안내를 발송합니다.`,
+    title: "판매자 등록 요청 접수 안내",
+    body: `${formatSellerDisplayName(sellerChannel, branch)} 등록 요청이 접수되었습니다. 관리자 검토 후 승인 또는 반려 안내를 발송합니다.`,
     relatedId: application.id,
   });
 
-  sellerRegisterTitle.textContent = "판매자 등록 신청이 접수되었습니다.";
+  sellerRegisterTitle.textContent = "판매자 등록 요청이 접수되었습니다.";
   sellerRegisterMeta.textContent = `${formatSellerDisplayName(sellerChannel, branch)} · 관리자 승인 대기`;
   sellerMailPreview.textContent = "";
   sellerMailPreview.hidden = true;
@@ -1724,4 +1644,5 @@ window.addEventListener("afterprint", hideSecurityBlanket);
 
 renderRequests();
 renderSelectedRequest();
-renderLookupResults([requests[0]], "예시 화면");
+renderLookupResults([], "성함과 휴대전화로 등록한 견적을 조회하세요.");
+

@@ -31,7 +31,7 @@
       href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><rect width="40" height="40" rx="10" fill="%23126b5d"/><path d="M12 7h12l7 7v19H12z" fill="white"/><path d="M24 7v8h7" fill="none" stroke="%23d5eee8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M17 18h9M17 23h7" fill="none" stroke="%23126b5d" stroke-width="2.2" stroke-linecap="round"/><path d="M15.5 29.5l3.4 3.3 7.1-8" fill="none" stroke="%23e7b44d" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
     />
     <link rel="stylesheet" href="styles.css" />
-    <script defer src="app.js"></script>
+    <script defer src="app.js?v=20260718-production"></script>
   </head>
   <body>
     <header class="topbar">
@@ -93,8 +93,8 @@
               <p>현재 받은 견적 6,840,000원</p>
             </div>
             <div class="bid-row">
-              <span>최저 제안</span>
-              <strong>6,520,000원</strong>
+              <span>견적 비교</span>
+              <strong>요청 후 확인</strong>
             </div>
             <div class="bid-row">
               <span>예상 절감액</span>
@@ -196,7 +196,7 @@
           <div class="section-heading">
             <p class="eyebrow">고객님 후기</p>
             <h2>처음 비교하는 고객님도 이해하기 쉽게.</h2>
-            <p>데모 후기 예시입니다. 정식 운영 시 실제 고객님 동의 후 검수된 후기만 노출하는 구조를 권장합니다.</p>
+            <p>실제 고객님 동의 후 검수된 후기만 노출하여 믿고 비교할 수 있도록 운영합니다.</p>
           </div>
           <div class="review-grid">
             <article>
@@ -329,7 +329,7 @@
             </div>
             <button class="primary-btn full" type="submit">내 견적 조회</button>
             <p class="helper-text">
-              데모에서는 이름과 휴대전화가 모두 일치하는 견적만 표시합니다.
+              견적 등록 시 입력한 성함과 휴대전화가 일치하는 견적만 확인할 수 있습니다.
             </p>
           </form>
 
@@ -389,7 +389,7 @@
                 <span>고객님이 제안을 선택한 뒤 연락처가 공개되어 불필요한 연락 부담을 줄입니다.</span>
               </div>
             </div>
-            <button class="secondary-btn" type="button" data-view="sellerRegister">판매자 등록 신청</button>
+            <button class="secondary-btn" type="button" data-view="sellerRegister">판매자 등록 요청</button>
           </aside>
         </div>
       </section>
@@ -432,7 +432,7 @@
               <div class="form-row">
                 <label>
                   지점명
-                  <input type="text" name="branchName" value="데모 관리자" readonly required />
+                  <input type="text" name="branchName" value="등록 지점" readonly required />
                 </label>
                 <label>
                   제안 금액(만원)
@@ -525,7 +525,7 @@
             <button class="secondary-btn full" type="submit">매니저 정보 변경 검토 신청</button>
           </form>
           <pre id="regionChangePreview" hidden></pre>
-          <a class="primary-btn" id="regionChangeMailLink" href="#" hidden>변경 신청 메일 보내기</a>
+          <a class="primary-btn" id="regionChangeMailLink" href="#" hidden>변경 신청 접수</a>
         </section>
       </section>
 
@@ -674,7 +674,7 @@
               </label>
             </div>
 
-            <button class="primary-btn full" type="submit">판매자 등록 신청</button>
+            <button class="primary-btn full" type="submit">판매자 등록 요청</button>
           </form>
 
           <aside class="preview-card">
@@ -705,8 +705,8 @@
           <pre id="sellerMailPreview" hidden></pre>
           <div class="mail-actions">
             <button class="primary-btn" id="sellerRegisterRequestBtn" type="button" data-view="sellerRegister">판매자 등록 요청</button>
-            <a class="primary-btn" id="sellerAdminReviewLink" href="admin.html#sellerReview" hidden>관리자 페이지에서 신청 확인</a>
-            <a class="secondary-btn" id="sellerMailLink" href="#" hidden>메일 앱으로 보내기</a>
+            <a class="primary-btn" id="sellerAdminReviewLink" href="#" hidden></a>
+            <a class="secondary-btn" id="sellerMailLink" href="#" hidden></a>
           </div>
         </section>
 
@@ -717,7 +717,7 @@
     <footer class="footer">
       <div>
         <strong>픽견적</strong>
-        <span>고객님 견적 등록, 내 견적 조회, 판매자 제안 화면을 분리한 데모</span>
+        <span>고객님이 올린 견적서를 기준으로 여러 판매자 제안을 비교하는 가전 견적 서비스</span>
       </div>
       <button class="footer-register-btn" type="button" data-view="sellerRegister">판매자 등록</button>
     </footer>
