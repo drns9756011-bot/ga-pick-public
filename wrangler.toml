@@ -1,5 +1,16 @@
 name = "ga-pick-public"
+main = "src/index.js"
 compatibility_date = "2026-07-17"
 
 [assets]
 directory = "."
+binding = "ASSETS"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "ga-pick-db"
+database_id = "32dfadf4-bbd8-440c-b4ed-58fb564c6f06"
+
+[[r2_buckets]]
+binding = "FILES"
+bucket_name = "ga-pick-files"

@@ -1626,10 +1626,11 @@ sellerRegisterForm.addEventListener("submit", async (event) => {
 
   sellerRegisterTitle.textContent = "판매자 등록 신청이 접수되었습니다.";
   sellerRegisterMeta.textContent = `${formatSellerDisplayName(sellerChannel, branch)} · 관리자 승인 대기`;
-  sellerMailPreview.textContent = mailBody;
-  sellerAdminReviewLink.href = `admin.html?application=${encodeURIComponent(application.id)}#sellerReview`;
+  sellerMailPreview.textContent = "";
+  sellerMailPreview.hidden = true;
+  sellerAdminReviewLink.hidden = true;
+  sellerMailLink.hidden = true;
   sellerMailPanel.hidden = false;
-  await sendAdminMail("[픽견적] 판매자 등록 신청", mailBody, sellerMailLink);
   sellerMailPanel.scrollIntoView({ behavior: "smooth", block: "start" });
 });
 
