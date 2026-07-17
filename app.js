@@ -82,8 +82,12 @@ const managerReviewModal = document.querySelector("#managerReviewModal");
 const closeManagerReviewModalBtn = document.querySelector("#closeManagerReviewModal");
 const managerReviewTitle = document.querySelector("#managerReviewTitle");
 const managerReviewList = document.querySelector("#managerReviewList");
+const serverLoadingModal = document.querySelector("#serverLoadingModal");
+const serverLoadingTitle = document.querySelector("#serverLoadingTitle");
+const serverLoadingText = document.querySelector("#serverLoadingText");
 
 let securityBlanketTimer;
+let serverLoadingCount = 0;
 
 function formatPrice(value) {
   return `${money.format(Number(value || 0))}원`;
@@ -269,6 +273,20 @@ function setResetPasswordMessage(message, type = "normal") {
   resetPasswordMessage.dataset.type = type;
 }
 
+function showServerLoading(title = "로딩중입니다.", text = "서버와 연결하고 있습니다. 잠시만 기다려주세요.") {
+  serverLoadingCount += 1;
+  if (serverLoadingTitle) serverLoadingTitle.textContent = title;
+  if (serverLoadingText) serverLoadingText.textContent = text;
+  if (serverLoadingModal) serverLoadingModal.hidden = false;
+}
+
+function hideServerLoading(force = false) {
+  serverLoadingCount = force ? 0 : Math.max(0, serverLoadingCount - 1);
+  if (serverLoadingCount === 0 && serverLoadingModal) {
+    serverLoadingModal.hidden = true;
+  }
+}
+
 function readStorageArray(key) {
   try {
     const value = localStorage.getItem(key);
@@ -289,14 +307,18 @@ function canUseApiServer() {
 
 async function apiJson(path, options = {}) {
   if (!canUseApiServer()) return null;
+  const { loadingTitle, loadingText, showLoading = true, ...fetchOptions } = options;
 
+  if (showLoading) {
+    showServerLoading(loadingTitle || "로딩중입니다.", loadingText || "서버와 연결하고 있습니다. 잠시만 기다려주세요.");
+  }
   try {
     const response = await fetch(path, {
       headers: {
         "Content-Type": "application/json",
-        ...(options.headers || {}),
+        ...(fetchOptions.headers || {}),
       },
-      ...options,
+      ...fetchOptions,
     });
     const payload = response.status === 204 ? null : await response.json().catch(() => null);
     if (!response.ok) {
@@ -313,11 +335,16 @@ async function apiJson(path, options = {}) {
       ok: false,
       message: "서버와 연결하지 못했습니다. 배포 상태 또는 네트워크를 확인해주세요.",
     };
+  } finally {
+    if (showLoading) hideServerLoading();
   }
 }
 
 async function syncApprovedSellersFromServer() {
-  const result = await apiJson("/api/approved-sellers");
+  const result = await apiJson("/api/approved-sellers", {
+    loadingTitle: "판매자 정보를 확인 중입니다.",
+    loadingText: "승인된 판매자 계정을 서버에서 불러오고 있습니다.",
+  });
   if (!result?.ok || !Array.isArray(result.rows)) return;
 
   writeStorageArray(STORAGE_KEYS.approvedSellers, result.rows);
@@ -327,6 +354,8 @@ async function syncApprovedSellersFromServer() {
 async function saveSellerApplicationToServer(application) {
   return apiJson("/api/seller-applications", {
     method: "POST",
+    loadingTitle: "판매자 등록 요청을 저장 중입니다.",
+    loadingText: "입력하신 정보를 서버에 안전하게 저장하고 있습니다.",
     body: JSON.stringify(application),
   });
 }
@@ -811,7 +840,9 @@ function resetCustomerForm() {
   setRequestFormMessage("");
 }
 
-function createCustomerRequest(formData) {
+async function createCustomerRequest(formData) {
+  showServerLoading("견적 요청을 등록 중입니다.", "견적서 이미지와 입력 내용을 처리하고 있습니다.");
+  await new Promise((resolve) => window.setTimeout(resolve, 450));
   const newRequest = {
     id: Date.now(),
     quoteNumber: createQuoteNumber(),
@@ -842,6 +873,7 @@ function createCustomerRequest(formData) {
   renderLookupResults([newRequest]);
   resetCustomerForm();
   setView("lookup");
+  hideServerLoading();
 }
 
 function openConsentModal(formData) {
