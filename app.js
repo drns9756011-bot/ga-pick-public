@@ -163,6 +163,28 @@ function normalizeName(value) {
   return String(value || "").replace(/\s/g, "").trim();
 }
 
+function createLightweightImage(dataUrl, maxWidth = 720, quality = 0.72) {
+  return new Promise((resolve) => {
+    if (!dataUrl) {
+      resolve("");
+      return;
+    }
+
+    const image = new Image();
+    image.onload = () => {
+      const ratio = Math.min(1, maxWidth / image.width);
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(image.width * ratio));
+      canvas.height = Math.max(1, Math.round(image.height * ratio));
+      const context = canvas.getContext("2d");
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL("image/jpeg", quality));
+    };
+    image.onerror = () => resolve(dataUrl);
+    image.src = dataUrl;
+  });
+}
+
 function escapeHTML(value) {
   return String(value ?? "")
     .replace(/&/g, "&amp;")
@@ -357,6 +379,45 @@ async function saveSellerApplicationToServer(application) {
     loadingTitle: "판매자 등록 요청을 저장 중입니다.",
     loadingText: "입력하신 정보를 서버에 안전하게 저장하고 있습니다.",
     body: JSON.stringify(application),
+  });
+}
+
+function replaceRequests(rows) {
+  requests.splice(0, requests.length, ...rows);
+}
+
+async function syncCustomerQuotesFromServer() {
+  const result = await apiJson("/api/customer-quotes", {
+    loadingTitle: "고객님 견적을 불러오는 중입니다.",
+    loadingText: "48시간 이내 접수된 견적을 서버에서 확인하고 있습니다.",
+  });
+
+  if (!result?.ok || !Array.isArray(result.rows)) return;
+  replaceRequests(result.rows);
+}
+
+async function lookupCustomerQuotesFromServer(customer, phone, quoteNumber = "") {
+  const params = new URLSearchParams({
+    scope: "lookup",
+    customer,
+    phone,
+  });
+  if (quoteNumber) params.set("quoteNumber", quoteNumber);
+
+  const result = await apiJson(`/api/customer-quotes?${params.toString()}`, {
+    loadingTitle: "내 견적을 조회 중입니다.",
+    loadingText: "입력하신 성함과 연락처로 서버에서 견적을 확인하고 있습니다.",
+  });
+
+  return result?.ok && Array.isArray(result.rows) ? result.rows : [];
+}
+
+async function saveCustomerQuoteToServer(quote) {
+  return apiJson("/api/customer-quotes", {
+    method: "POST",
+    loadingTitle: "견적 요청을 서버에 저장 중입니다.",
+    loadingText: "대표 이미지는 1년, 전체 견적 이미지는 7일 기준으로 저장하고 있습니다.",
+    body: JSON.stringify(quote),
   });
 }
 
@@ -840,7 +901,7 @@ function resetCustomerForm() {
   setRequestFormMessage("");
 }
 
-async function createCustomerRequest(formData) {
+async function createCustomerRequestOnServer(formData) {
   showServerLoading("견적 요청을 등록 중입니다.", "견적서 이미지와 입력 내용을 처리하고 있습니다.");
   await new Promise((resolve) => window.setTimeout(resolve, 450));
   const newRequest = {
@@ -887,6 +948,58 @@ function openConsentModal(formData) {
 function closeConsentModal() {
   pendingQuoteFormData = null;
   privacyConsentModal.hidden = true;
+}
+
+async function createCustomerRequest(formData) {
+  const quoteNumber = createQuoteNumber();
+  const thumbnailImage = await createLightweightImage(uploadedImages[0]);
+  const newRequest = {
+    id: `quote-${Date.now()}`,
+    quoteNumber,
+    customer: formData.get("customer").trim(),
+    phone: formatPhoneNumber(formData.get("phone")),
+    items: formData.get("items").trim(),
+    purchasePurpose: formData.get("purchasePurpose"),
+    price: parseManwon(formData.get("price")),
+    region: formData.get("region").trim(),
+    memo: formData.get("memo").trim(),
+    image: uploadedImages[0] || "",
+    images: uploadedImages.slice(0, 4),
+    thumbnailImage,
+    selectedBidId: null,
+    saleCompletedAt: "",
+    saleCompletedBidId: null,
+    reviewNotificationSentAt: "",
+    consent: {
+      collectionUse: true,
+      thirdPartyProvision: true,
+      agreedAt: new Date().toISOString(),
+      retention: {
+        fullQuoteImagesDays: 7,
+        representativeImageDays: 365,
+        customerInfoDays: 365,
+        quoteReceiveHours: 48,
+      },
+    },
+  };
+
+  let savedRequest = newRequest;
+  if (canUseApiServer()) {
+    const serverResult = await saveCustomerQuoteToServer(newRequest);
+    if (!serverResult?.ok || !serverResult.row) {
+      setRequestFormMessage(serverResult?.message || "견적 요청을 서버에 저장하지 못했습니다. 잠시 후 다시 시도해주세요.", "error");
+      return;
+    }
+    savedRequest = serverResult.row;
+  }
+
+  requests.unshift(savedRequest);
+  selectedRequestId = savedRequest.id;
+  renderRequests();
+  renderSelectedRequest();
+  renderLookupResults([savedRequest]);
+  resetCustomerForm();
+  setView("lookup");
 }
 
 function openBidSelectConfirmModal(request, bid) {
@@ -1302,20 +1415,23 @@ confirmConsentBtn.addEventListener("click", () => {
   }
 
   if (pendingQuoteFormData) {
-    createCustomerRequest(pendingQuoteFormData);
+    createCustomerRequestOnServer(pendingQuoteFormData);
   }
 
   closeConsentModal();
 });
 
-lookupForm.addEventListener("submit", (event) => {
+lookupForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const formData = new FormData(lookupForm);
   const customer = normalizeName(formData.get("lookupCustomer"));
   const phone = normalizePhone(formData.get("lookupPhone"));
-  const matches = requests.filter((request) => {
-    return normalizeName(request.customer) === customer && normalizePhone(request.phone) === phone;
-  });
+  const serverMatches = canUseApiServer() ? await lookupCustomerQuotesFromServer(formData.get("lookupCustomer").trim(), phone) : [];
+  const matches = serverMatches.length
+    ? serverMatches
+    : requests.filter((request) => {
+        return normalizeName(request.customer) === customer && normalizePhone(request.phone) === phone;
+      });
 
   renderLookupResults(matches);
 });
@@ -1410,6 +1526,7 @@ sellerQuoteWorkspace.addEventListener("click", (event) => {
 sellerLoginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   await syncApprovedSellersFromServer();
+  await syncCustomerQuotesFromServer();
   hydrateApprovedSellerAccounts();
   const formData = new FormData(sellerLoginForm);
   const loginId = formData.get("loginId").trim();

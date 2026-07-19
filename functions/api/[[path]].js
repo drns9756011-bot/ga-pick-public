@@ -89,6 +89,67 @@ function normalizeMessage(row) {
   };
 }
 
+function addDays(date, days) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next.toISOString();
+}
+
+function addHours(date, hours) {
+  const next = new Date(date);
+  next.setHours(next.getHours() + hours);
+  return next.toISOString();
+}
+
+function normalizeCustomerQuote(row, images = []) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    quoteNumber: row.quote_number,
+    customer: row.customer,
+    phone: row.phone,
+    items: row.items,
+    purchasePurpose: row.purchase_purpose || "",
+    price: Number(row.price || 0),
+    region: row.region || "",
+    memo: row.memo || "",
+    status: row.status || "open",
+    selectedBidId: row.selected_bid_id || null,
+    saleCompletedAt: row.sale_completed_at || "",
+    thumbnailImage: row.thumbnail_image || "",
+    thumbnailImageKey: row.thumbnail_image_key || "",
+    quoteExpiresAt: row.quote_expires_at || "",
+    fullImagesExpiresAt: row.full_images_expires_at || "",
+    personalExpiresAt: row.personal_expires_at || "",
+    createdAt: row.created_at || "",
+    consent: parseJson(row.consent_json, {}),
+    image: images[0]?.url || row.thumbnail_image || "",
+    images: images.length ? images.map((image) => image.url) : row.thumbnail_image ? [row.thumbnail_image] : [],
+  };
+}
+
+async function ensureCustomerQuoteColumns(env) {
+  const statements = [
+    "ALTER TABLE customer_quotes ADD COLUMN thumbnail_image TEXT DEFAULT ''",
+    "ALTER TABLE customer_quotes ADD COLUMN thumbnail_image_key TEXT DEFAULT ''",
+    "ALTER TABLE customer_quotes ADD COLUMN quote_expires_at TEXT DEFAULT ''",
+    "ALTER TABLE customer_quotes ADD COLUMN full_images_expires_at TEXT DEFAULT ''",
+    "ALTER TABLE customer_quotes ADD COLUMN personal_expires_at TEXT DEFAULT ''",
+    "ALTER TABLE quote_images ADD COLUMN image_type TEXT DEFAULT 'full'",
+    "ALTER TABLE quote_images ADD COLUMN expires_at TEXT DEFAULT ''",
+  ];
+
+  await Promise.all(
+    statements.map(async (statement) => {
+      try {
+        await env.DB.prepare(statement).run();
+      } catch (error) {
+        // Column already exists on databases that were migrated earlier.
+      }
+    })
+  );
+}
+
 function parseJson(value, fallback) {
   try {
     return value ? JSON.parse(value) : fallback;
@@ -313,6 +374,158 @@ async function getApprovedSellers(env) {
   return json({ ok: true, rows: result.results.map(normalizeApprovedSeller) });
 }
 
+async function getQuoteImages(env, quoteId, includeFull = true) {
+  const now = new Date().toISOString();
+  const sql = includeFull
+    ? `SELECT * FROM quote_images
+       WHERE quote_id = ? AND (expires_at = '' OR expires_at >= ?)
+       ORDER BY sort_order ASC`
+    : `SELECT * FROM quote_images
+       WHERE quote_id = ? AND image_type = 'thumbnail' AND (expires_at = '' OR expires_at >= ?)
+       ORDER BY sort_order ASC`;
+  const result = await env.DB.prepare(sql).bind(quoteId, now).all();
+  return result.results || [];
+}
+
+async function getCustomerQuotes(env, request) {
+  await ensureCustomerQuoteColumns(env);
+  const url = new URL(request.url);
+  const customer = String(url.searchParams.get("customer") || "").trim();
+  const phone = normalizePhone(url.searchParams.get("phone"));
+  const quoteNumber = String(url.searchParams.get("quoteNumber") || "").trim();
+  const scope = String(url.searchParams.get("scope") || "seller");
+  const now = new Date().toISOString();
+
+  let rows = [];
+  if (scope === "lookup" && customer && phone) {
+    const result = quoteNumber
+      ? await env.DB.prepare(
+          `SELECT * FROM customer_quotes
+           WHERE customer = ? AND REPLACE(REPLACE(phone, '-', ''), ' ', '') = ? AND quote_number = ? AND (personal_expires_at = '' OR personal_expires_at >= ?)
+           ORDER BY created_at DESC`
+        )
+          .bind(customer, phone, quoteNumber, now)
+          .all()
+      : await env.DB.prepare(
+          `SELECT * FROM customer_quotes
+           WHERE customer = ? AND REPLACE(REPLACE(phone, '-', ''), ' ', '') = ? AND (personal_expires_at = '' OR personal_expires_at >= ?)
+           ORDER BY created_at DESC`
+        )
+          .bind(customer, phone, now)
+          .all();
+    rows = result.results || [];
+  } else {
+    const result = await env.DB.prepare(
+      `SELECT * FROM customer_quotes
+       WHERE status = 'open' AND (quote_expires_at = '' OR quote_expires_at >= ?)
+       ORDER BY created_at DESC`
+    )
+      .bind(now)
+      .all();
+    rows = result.results || [];
+  }
+
+  const normalized = [];
+  for (const row of rows) {
+    const includeFull = scope === "lookup" || (row.full_images_expires_at && row.full_images_expires_at >= now);
+    const images = await getQuoteImages(env, row.id, includeFull);
+    normalized.push(normalizeCustomerQuote(row, images));
+  }
+
+  return json({ ok: true, rows: normalized });
+}
+
+async function createCustomerQuote(env, request) {
+  await ensureCustomerQuoteColumns(env);
+  const body = await request.json();
+  const images = Array.isArray(body.images) ? body.images.slice(0, 4) : [];
+
+  if (!body.quoteNumber || !body.customer || !body.phone || !body.items || !images.length) {
+    return json({ ok: false, message: "고객명, 연락처, 품목, 견적서 이미지가 필요합니다." }, 400);
+  }
+
+  const id = body.id || createId("quote");
+  const createdAt = body.createdAt || new Date().toISOString();
+  const quoteExpiresAt = addHours(createdAt, 48);
+  const fullImagesExpiresAt = addDays(createdAt, 7);
+  const personalExpiresAt = addDays(createdAt, 365);
+
+  const thumbnailDataUrl = body.thumbnailImage || images[0];
+  const thumbnail = await saveDataUrlToR2(env, thumbnailDataUrl, "quote-thumbnails", `${id}-thumb`);
+  const thumbnailUrl = thumbnail.url || thumbnailDataUrl || "";
+  const thumbnailKey = thumbnail.key || "";
+
+  await env.DB.prepare(
+    `INSERT INTO customer_quotes
+      (id, quote_number, customer, phone, items, purchase_purpose, price, region, memo, status,
+       selected_bid_id, sale_completed_at, thumbnail_image, thumbnail_image_key, quote_expires_at,
+       full_images_expires_at, personal_expires_at, created_at, consent_json)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  )
+    .bind(
+      id,
+      body.quoteNumber,
+      body.customer,
+      body.phone,
+      body.items,
+      body.purchasePurpose || "",
+      Number(body.price || 0),
+      body.region || "",
+      body.memo || "",
+      "open",
+      "",
+      "",
+      thumbnailUrl,
+      thumbnailKey,
+      quoteExpiresAt,
+      fullImagesExpiresAt,
+      personalExpiresAt,
+      createdAt,
+      JSON.stringify(body.consent || {})
+    )
+    .run();
+
+  await env.DB.prepare(
+    `INSERT INTO quote_images (id, quote_id, object_key, url, image_type, sort_order, expires_at, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+  )
+    .bind(createId("qimg"), id, thumbnailKey, thumbnailUrl, "thumbnail", 0, personalExpiresAt, createdAt)
+    .run();
+
+  for (let index = 0; index < images.length; index += 1) {
+    const saved = await saveDataUrlToR2(env, images[index], "quote-originals", `${id}-${index + 1}`);
+    await env.DB.prepare(
+      `INSERT INTO quote_images (id, quote_id, object_key, url, image_type, sort_order, expires_at, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+    )
+      .bind(
+        createId("qimg"),
+        id,
+        saved.key || "",
+        saved.url || images[index],
+        "full",
+        index + 1,
+        fullImagesExpiresAt,
+        createdAt
+      )
+      .run();
+  }
+
+  await queueAlimtalk(env, {
+    type: "customer-quote-received",
+    targetRole: "customer",
+    targetName: body.customer,
+    targetPhone: body.phone,
+    title: "견적 요청 접수 안내",
+    body: `${body.customer} 고객님, 견적 요청이 정상 접수되었습니다. 견적번호: ${body.quoteNumber}`,
+    relatedId: id,
+  });
+
+  const row = await env.DB.prepare("SELECT * FROM customer_quotes WHERE id = ?").bind(id).first();
+  const savedImages = await getQuoteImages(env, id, true);
+  return json({ ok: true, row: normalizeCustomerQuote(row, savedImages) }, 201);
+}
+
 async function getAlimtalk(env) {
   const result = await env.DB.prepare("SELECT * FROM alimtalk_queue ORDER BY created_at DESC").all();
   return json({ ok: true, rows: result.results.map(normalizeMessage) });
@@ -379,6 +592,9 @@ export async function onRequest(context) {
   }
 
   if (path === "approved-sellers" && method === "GET") return getApprovedSellers(env);
+
+  if (path === "customer-quotes" && method === "GET") return getCustomerQuotes(env, request);
+  if (path === "customer-quotes" && method === "POST") return createCustomerQuote(env, request);
 
   if (path === "alimtalk" && method === "GET") return getAlimtalk(env);
   if (path === "alimtalk" && method === "POST") return createAlimtalk(env, request);
