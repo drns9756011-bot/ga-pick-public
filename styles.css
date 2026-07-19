@@ -1738,6 +1738,52 @@ select {
   font-weight: 900;
 }
 
+.seo-guide-section {
+  padding: 64px 6vw;
+  background: #fff;
+  border-top: 1px solid var(--line);
+}
+
+.seo-guide-grid,
+.seo-faq-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  max-width: 1180px;
+  margin: 24px auto 0;
+}
+
+.seo-guide-grid article,
+.seo-faq-grid article {
+  min-height: 154px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f9fbfc;
+}
+
+.seo-guide-grid h3,
+.seo-faq-grid h3 {
+  margin: 0 0 10px;
+  color: var(--ink);
+  font-size: 20px;
+  line-height: 1.32;
+  word-break: keep-all;
+}
+
+.seo-guide-grid p,
+.seo-faq-grid p {
+  margin: 0;
+  color: var(--muted);
+  font-weight: 700;
+  line-height: 1.65;
+  word-break: keep-all;
+}
+
+.seo-faq-grid {
+  margin-top: 14px;
+}
+
 .table-wrap {
   overflow-x: auto;
   box-shadow: none;
@@ -2447,6 +2493,11 @@ td strong {
 
 @media (max-width: 380px) {
   .seller-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .seo-guide-grid,
+  .seo-faq-grid {
     grid-template-columns: 1fr;
   }
 }
