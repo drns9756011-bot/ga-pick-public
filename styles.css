@@ -2449,6 +2449,241 @@ td strong {
   line-height: 1.55;
 }
 
+.page-guide-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(8, 16, 24, 0.58);
+}
+
+.page-guide-modal[hidden] {
+  display: none;
+}
+
+.page-guide-dialog {
+  position: relative;
+  overflow: hidden;
+  width: min(100%, 980px);
+  max-height: min(92vh, 820px);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.24);
+}
+
+.page-guide-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 2;
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.page-guide-layout {
+  display: grid;
+  grid-template-columns: minmax(300px, 0.9fr) minmax(0, 1.1fr);
+  gap: 0;
+}
+
+.page-guide-copy {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+  overflow-y: auto;
+  max-height: min(92vh, 820px);
+  padding: 42px 42px 34px;
+}
+
+.page-guide-copy h2,
+.page-guide-copy p {
+  margin: 0;
+}
+
+.page-guide-copy h2 {
+  padding-right: 38px;
+  color: var(--ink);
+  font-size: clamp(28px, 3vw, 42px);
+  line-height: 1.16;
+  word-break: keep-all;
+}
+
+.page-guide-copy > p:not(.eyebrow),
+.page-guide-note {
+  color: var(--muted);
+  font-size: 16px;
+  font-weight: 750;
+  line-height: 1.65;
+  word-break: keep-all;
+}
+
+.page-guide-steps {
+  display: grid;
+  gap: 10px;
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.page-guide-steps li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fafb;
+}
+
+.page-guide-steps li > span {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #fff;
+  font-weight: 900;
+}
+
+.page-guide-steps strong {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--ink);
+  font-size: 16px;
+}
+
+.page-guide-steps p {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.55;
+}
+
+.page-guide-note {
+  padding: 14px 16px;
+  border-radius: 8px;
+  background: #eef7f4;
+  color: #335b54;
+}
+
+.guide-screen {
+  display: grid;
+  align-content: start;
+  gap: 18px;
+  min-height: 100%;
+  padding: 38px 30px;
+  border-right: 1px solid var(--line);
+  background:
+    linear-gradient(180deg, rgba(18, 107, 93, 0.08), rgba(255, 255, 255, 0) 34%),
+    #f4f7fb;
+}
+
+.guide-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.guide-topline span {
+  color: var(--ink);
+  font-size: 22px;
+  font-weight: 950;
+}
+
+.guide-topline small,
+.guide-tabs span,
+.guide-filter-row span {
+  border-radius: 999px;
+  background: #fff;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.guide-topline small {
+  padding: 7px 10px;
+}
+
+.guide-progress {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.guide-progress span {
+  height: 5px;
+  border-radius: 999px;
+  background: #d7e0e7;
+}
+
+.guide-progress span.is-active {
+  background: var(--primary);
+}
+
+.guide-form-card,
+.guide-seller-grid > div {
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(20, 33, 45, 0.07);
+}
+
+.guide-form-card.muted {
+  background: #fbfcfd;
+}
+
+.guide-form-card strong,
+.guide-seller-grid strong {
+  color: var(--ink);
+  font-size: 18px;
+}
+
+.guide-form-card p,
+.guide-seller-grid small {
+  margin: 0;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.guide-tabs,
+.guide-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.guide-tabs span,
+.guide-filter-row span {
+  padding: 8px 10px;
+}
+
+.guide-tabs span.is-active,
+.guide-filter-row span:first-child {
+  background: var(--primary);
+  color: #fff;
+}
+
+.guide-seller-grid {
+  display: grid;
+  gap: 12px;
+}
+
 @keyframes server-loading-spin {
   to {
     transform: rotate(360deg);
@@ -2560,6 +2795,35 @@ td strong {
   .request-item span {
     word-break: keep-all;
     overflow-wrap: break-word;
+  }
+
+  .page-guide-modal {
+    padding: 14px;
+  }
+
+  .page-guide-dialog {
+    max-height: 92vh;
+  }
+
+  .page-guide-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .guide-screen {
+    min-height: auto;
+    padding: 28px 20px 22px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .page-guide-copy {
+    max-height: none;
+    padding: 26px 20px 22px;
+  }
+
+  .page-guide-copy h2 {
+    padding-right: 42px;
+    font-size: 28px;
   }
 
   .hero {
