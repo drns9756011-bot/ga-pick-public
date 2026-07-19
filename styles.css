@@ -2815,14 +2815,20 @@ td strong {
 
   .page-guide-modal {
     padding: 14px;
+    place-items: start center;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .page-guide-dialog {
-    max-height: 92vh;
+    width: 100%;
+    max-height: calc(100dvh - 28px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .page-guide-layout {
-    grid-template-columns: 1fr;
+    display: block;
   }
 
   .guide-screen {
