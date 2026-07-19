@@ -733,6 +733,10 @@ h3 {
   padding: 24px;
 }
 
+.bid-form[hidden] {
+  display: none;
+}
+
 .form-row {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2502,8 +2506,60 @@ td strong {
     line-height: 1.28;
   }
 
+  .brand-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .brand-card {
+    min-height: 96px;
+  }
+
+  .wizard-option-card {
+    grid-template-columns: auto 1fr;
+    align-items: center;
+  }
+
+  .wizard-option-card strong,
+  .wizard-option-card small {
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
+
+  .wizard-option-card em {
+    grid-column: 2;
+    justify-self: start;
+  }
+
   .seller-bid-grid {
     grid-template-columns: 1fr;
+  }
+
+  .seller-page-layout {
+    width: 100%;
+    max-width: 100%;
+    padding: 24px 5vw 64px;
+    overflow: hidden;
+  }
+
+  .seller-detail,
+  .seller-quote-card,
+  .request-list,
+  .bid-form {
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .seller-image {
+    min-height: 240px;
+  }
+
+  .seller-detail .preview-details h3,
+  .seller-detail .preview-details div,
+  .request-item strong,
+  .request-item span {
+    word-break: keep-all;
+    overflow-wrap: break-word;
   }
 
   .hero {

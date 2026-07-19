@@ -759,6 +759,7 @@ function syncRegionChangeForm() {
 }
 
 function setBidFormEnabled(isEnabled) {
+  bidForm.hidden = !isEnabled;
   Array.from(bidForm.elements).forEach((element) => {
     if (element.name === "branchName" || element.name === "managerName" || element.name === "managerPhone") {
       element.readOnly = true;
