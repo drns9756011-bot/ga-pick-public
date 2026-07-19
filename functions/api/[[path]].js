@@ -164,6 +164,7 @@ function normalizeCustomerQuote(row, images = []) {
     phone: row.phone,
     items: row.items,
     purchasePurpose: row.purchase_purpose || "",
+    desiredBrand: row.desired_brand || "",
     price: Number(row.price || 0),
     region: row.region || "",
     memo: row.memo || "",
@@ -189,6 +190,7 @@ async function ensureCustomerQuoteColumns(env) {
     "ALTER TABLE customer_quotes ADD COLUMN quote_expires_at TEXT DEFAULT ''",
     "ALTER TABLE customer_quotes ADD COLUMN full_images_expires_at TEXT DEFAULT ''",
     "ALTER TABLE customer_quotes ADD COLUMN personal_expires_at TEXT DEFAULT ''",
+    "ALTER TABLE customer_quotes ADD COLUMN desired_brand TEXT DEFAULT ''",
     "ALTER TABLE quote_images ADD COLUMN image_type TEXT DEFAULT 'full'",
     "ALTER TABLE quote_images ADD COLUMN expires_at TEXT DEFAULT ''",
   ];
@@ -512,10 +514,10 @@ async function createCustomerQuote(env, request) {
 
   await env.DB.prepare(
     `INSERT INTO customer_quotes
-      (id, quote_number, customer, phone, items, purchase_purpose, price, region, memo, status,
+      (id, quote_number, customer, phone, items, purchase_purpose, desired_brand, price, region, memo, status,
        selected_bid_id, sale_completed_at, thumbnail_image, thumbnail_image_key, quote_expires_at,
        full_images_expires_at, personal_expires_at, created_at, consent_json)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   )
     .bind(
       id,
@@ -524,6 +526,7 @@ async function createCustomerQuote(env, request) {
       body.phone,
       body.items,
       body.purchasePurpose || "",
+      body.desiredBrand || "",
       Number(body.price || 0),
       body.region || "",
       body.memo || "",

@@ -7,6 +7,8 @@ let uploadedImages = [];
 let businessCardImage = "";
 let activeSellerId = "";
 let activeSellerTab = "all";
+let activeSellerBrandFilter = "all";
+let activeSellerRegionFilter = "all";
 let pendingQuoteFormData = null;
 let pendingBidSelection = null;
 
@@ -598,6 +600,50 @@ function getActiveSellerBid(request) {
   return bids.find((bid) => bid.requestId === request.id && bid.sellerId === activeSellerId);
 }
 
+function normalizeSellerRegionCategory(region) {
+  const text = String(region || "").replace(/\s+/g, " ").trim();
+  if (!text) return "기타";
+
+  const normalized = text
+    .replace(/특별자치시/g, "")
+    .replace(/특별자치도/g, "")
+    .replace(/광역시/g, "")
+    .replace(/특별시/g, "")
+    .replace(/자치시/g, "")
+    .replace(/자치도/g, "")
+    .replace(/시$/g, "")
+    .trim();
+
+  const firstToken = normalized.split(" ")[0] || text.split(" ")[0] || "기타";
+  const aliases = [
+    ["서울", ["서울", "서울시"]],
+    ["부산", ["부산", "부산시"]],
+    ["대구", ["대구", "대구시"]],
+    ["인천", ["인천", "인천시"]],
+    ["광주", ["광주", "광주시"]],
+    ["대전", ["대전", "대전시"]],
+    ["울산", ["울산", "울산시"]],
+    ["세종", ["세종", "세종시"]],
+    ["경기", ["경기", "경기도"]],
+    ["강원", ["강원", "강원도"]],
+    ["충북", ["충북", "충청북도"]],
+    ["충남", ["충남", "충청남도"]],
+    ["전북", ["전북", "전라북도"]],
+    ["전남", ["전남", "전라남도"]],
+    ["경북", ["경북", "경상북도"]],
+    ["경남", ["경남", "경상남도"]],
+    ["제주", ["제주", "제주도"]],
+  ];
+
+  const compact = text.replace(/\s+/g, "");
+  const matched = aliases.find(([, names]) => names.some((name) => compact.startsWith(name)));
+  return matched ? matched[0] : firstToken;
+}
+
+function getSellerBrandValue(request) {
+  return request.desiredBrand || "미선택";
+}
+
 function getSelectedBid(request) {
   return bids.find((bid) => bid.id === request.selectedBidId) || null;
 }
@@ -607,15 +653,85 @@ function isSaleCompletedForBid(request, bid) {
 }
 
 function getFilteredSellerRequests() {
+  let filteredRequests;
+
   if (activeSellerTab === "proposed") {
-    return requests.filter((request) => getActiveSellerBid(request) && !canActiveSellerSeeCustomerPhone(request));
+    filteredRequests = requests.filter((request) => getActiveSellerBid(request) && !canActiveSellerSeeCustomerPhone(request));
+  } else if (activeSellerTab === "selected") {
+    filteredRequests = requests.filter((request) => canActiveSellerSeeCustomerPhone(request));
+  } else {
+    filteredRequests = requests;
   }
 
-  if (activeSellerTab === "selected") {
-    return requests.filter((request) => canActiveSellerSeeCustomerPhone(request));
+  if (activeSellerBrandFilter !== "all") {
+    filteredRequests = filteredRequests.filter((request) => getSellerBrandValue(request) === activeSellerBrandFilter);
   }
 
-  return requests;
+  if (activeSellerRegionFilter !== "all") {
+    filteredRequests = filteredRequests.filter((request) => normalizeSellerRegionCategory(request.region) === activeSellerRegionFilter);
+  }
+
+  return filteredRequests;
+}
+
+function getSellerRequestsForDynamicRegion() {
+  const savedRegionFilter = activeSellerRegionFilter;
+  activeSellerRegionFilter = "all";
+  const filteredRequests = getFilteredSellerRequests();
+  activeSellerRegionFilter = savedRegionFilter;
+  return filteredRequests;
+}
+
+function getAvailableSellerRegions() {
+  return Array.from(new Set(getSellerRequestsForDynamicRegion().map((request) => normalizeSellerRegionCategory(request.region))))
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b, "ko-KR"));
+}
+
+function renderSellerFilterBar() {
+  if (!requestList) return;
+
+  let filterBar = document.querySelector("#sellerFilterBar");
+  if (!filterBar) {
+    filterBar = document.createElement("div");
+    filterBar.id = "sellerFilterBar";
+    filterBar.className = "seller-filter-bar";
+  }
+  requestList.prepend(filterBar);
+
+  const availableRegions = getAvailableSellerRegions();
+  if (activeSellerRegionFilter !== "all" && !availableRegions.includes(activeSellerRegionFilter)) {
+    activeSellerRegionFilter = "all";
+  }
+
+  const brandOptions = [
+    ["all", "전체"],
+    ["LG전자", "LG전자"],
+    ["삼성전자", "삼성전자"],
+    ["비교 견적", "비교견적"],
+  ];
+
+  const regionOptions = [["all", "전체 지역"], ...availableRegions.map((region) => [region, region])];
+
+  const makeButtons = (items, activeValue, filterName) =>
+    items
+      .map(([value, label]) => `
+        <button type="button" class="${value === activeValue ? "is-active" : ""}" data-seller-filter="${filterName}" data-filter-value="${escapeHTML(value)}">
+          ${escapeHTML(label)}
+        </button>
+      `)
+      .join("");
+
+  filterBar.innerHTML = `
+    <div class="seller-filter-group">
+      <span>브랜드</span>
+      <div>${makeButtons(brandOptions, activeSellerBrandFilter, "brand")}</div>
+    </div>
+    <div class="seller-filter-group">
+      <span>지역</span>
+      <div>${makeButtons(regionOptions, activeSellerRegionFilter, "region")}</div>
+    </div>
+  `;
 }
 
 function syncSelectedRequestWithTab() {
@@ -689,6 +805,7 @@ function renderRequests() {
   });
 
   if (!filteredRequests.length) {
+    const currentFilterBar = document.querySelector("#sellerFilterBar");
     const emptyLabel =
       activeSellerTab === "proposed"
         ? "선택 대기 중인 제안 견적이 없습니다."
@@ -701,6 +818,7 @@ function renderRequests() {
         <p>해당하는 견적이 생기면 이 탭에 표시됩니다.</p>
       </div>
     `;
+    if (currentFilterBar) requestList.prepend(currentFilterBar);
     return;
   }
 
@@ -712,6 +830,7 @@ function renderRequests() {
     const safeCustomer = escapeHTML(request.customer);
     const safeRegion = escapeHTML(request.region);
     const safePurchasePurpose = escapeHTML(request.purchasePurpose || "미선택");
+    const safeDesiredBrand = escapeHTML(request.desiredBrand || "미선택");
     const safeQuoteNumber = escapeHTML(request.quoteNumber || "번호 없음");
     const safeRemaining = escapeHTML(getQuoteRemainingLabel(request));
     const expired = isQuoteExpired(request);
@@ -723,6 +842,7 @@ function renderRequests() {
       <span>${safeCustomer} · ${safeRegion}</span>
       <span>견적번호 ${safeQuoteNumber}</span>
       <span>구매 목적 ${safePurchasePurpose}</span>
+      <span>원하는 브랜드 ${safeDesiredBrand}</span>
       <span>기존 견적 ${formatPrice(request.price)}</span>
       ${sellerBid ? `<span>내 제안 ${formatPrice(sellerBid.price)}</span>` : ""}
       ${isSelectedByCustomer ? `<span class="request-badge">선택받음</span>` : ""}
@@ -757,6 +877,7 @@ function renderSelectedRequest() {
   const safeItems = escapeHTML(request.items);
   const safePhone = escapeHTML(visiblePhone);
   const safePurchasePurpose = escapeHTML(request.purchasePurpose || "미선택");
+  const safeDesiredBrand = escapeHTML(request.desiredBrand || "미선택");
   const safeRegion = escapeHTML(request.region);
   const safeQuoteNumber = escapeHTML(request.quoteNumber || "번호 없음");
   const safeMemo = escapeHTML(request.memo || "추가 요청사항 없음");
@@ -771,6 +892,7 @@ function renderSelectedRequest() {
       <div><span>고객님</span><strong>${safeCustomer}</strong></div>
       <div><span>연락처</span><strong>${safePhone}</strong></div>
       <div><span>구매 목적</span><strong>${safePurchasePurpose}</strong></div>
+      <div><span>원하는 브랜드</span><strong>${safeDesiredBrand}</strong></div>
       <div><span>설치 지역</span><strong>${safeRegion}</strong></div>
       <div><span>기존 견적</span><strong>${formatPrice(request.price)}</strong></div>
     </div>
@@ -942,6 +1064,7 @@ async function createCustomerRequestOnServer(formData) {
     phone: formatPhoneNumber(formData.get("phone")),
     items: formData.get("items").trim(),
     purchasePurpose: formData.get("purchasePurpose"),
+    desiredBrand: formData.get("desiredBrand"),
     price: parseManwon(formData.get("price")),
     region: formData.get("region").trim(),
     memo: formData.get("memo").trim(),
@@ -991,6 +1114,7 @@ async function createCustomerRequest(formData) {
     phone: formatPhoneNumber(formData.get("phone")),
     items: formData.get("items").trim(),
     purchasePurpose: formData.get("purchasePurpose"),
+    desiredBrand: formData.get("desiredBrand"),
     price: parseManwon(formData.get("price")),
     region: formData.get("region").trim(),
     memo: formData.get("memo").trim(),
@@ -1259,6 +1383,27 @@ sellerTabs.forEach((tab) => {
     renderRequests();
     renderSelectedRequest();
   });
+});
+
+document.addEventListener("click", (event) => {
+  const filterButton = event.target.closest("[data-seller-filter]");
+  if (!filterButton) return;
+
+  const filterType = filterButton.dataset.sellerFilter;
+  const filterValue = filterButton.dataset.filterValue || "all";
+
+  if (filterType === "brand") {
+    activeSellerBrandFilter = filterValue;
+    activeSellerRegionFilter = "all";
+  }
+
+  if (filterType === "region") {
+    activeSellerRegionFilter = filterValue;
+  }
+
+  setBidFormMessage("");
+  renderRequests();
+  renderSelectedRequest();
 });
 
 quoteImage.addEventListener("change", async (event) => {
@@ -1863,6 +2008,8 @@ renderRequests = function renderRequestsClean() {
   const isRegionTab = activeSellerTab === "region";
   sellerQuoteWorkspace.hidden = isRegionTab;
   sellerRegionPanel.hidden = !isRegionTab;
+  const filterBar = document.querySelector("#sellerFilterBar");
+  if (filterBar) filterBar.hidden = isRegionTab;
 
   if (isRegionTab) {
     sellerTabs.forEach((tab) => {
@@ -1873,6 +2020,7 @@ renderRequests = function renderRequestsClean() {
   }
 
   requestList.innerHTML = "";
+  renderSellerFilterBar();
   const filteredRequests = syncSelectedRequestWithTab();
 
   sellerTabs.forEach((tab) => {
@@ -1880,6 +2028,7 @@ renderRequests = function renderRequestsClean() {
   });
 
   if (!filteredRequests.length) {
+    const currentFilterBar = document.querySelector("#sellerFilterBar");
     const emptyLabel =
       activeSellerTab === "proposed"
         ? "선택 대기 중인 제안 견적이 없습니다."
@@ -1892,6 +2041,7 @@ renderRequests = function renderRequestsClean() {
         <p>해당하는 견적이 생기면 이곳에 표시됩니다.</p>
       </div>
     `;
+    if (currentFilterBar) requestList.prepend(currentFilterBar);
     return;
   }
 
