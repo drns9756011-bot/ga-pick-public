@@ -133,6 +133,35 @@ function createQuoteNumber() {
   return `${dateKey}-${String(lastSequence + 1).padStart(4, "0")}`;
 }
 
+function getQuoteDeadline(request) {
+  if (request?.quoteExpiresAt) return new Date(request.quoteExpiresAt);
+  if (request?.quote_expires_at) return new Date(request.quote_expires_at);
+  if (!request?.createdAt) return null;
+  const deadline = new Date(request.createdAt);
+  deadline.setHours(deadline.getHours() + 48);
+  return deadline;
+}
+
+function getQuoteRemainingLabel(request) {
+  const deadline = getQuoteDeadline(request);
+  if (!deadline || Number.isNaN(deadline.getTime())) return "남은 시간 확인중";
+
+  const remainingMs = deadline.getTime() - Date.now();
+  if (remainingMs <= 0) return "견적 마감";
+
+  const totalMinutes = Math.ceil(remainingMs / 60000);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours >= 24) return `${Math.floor(hours / 24)}일 ${hours % 24}시간 남음`;
+  if (hours > 0) return `${hours}시간 ${minutes}분 남음`;
+  return `${minutes}분 남음`;
+}
+
+function isQuoteExpired(request) {
+  const deadline = getQuoteDeadline(request);
+  return Boolean(deadline && !Number.isNaN(deadline.getTime()) && deadline.getTime() <= Date.now());
+}
+
 function formatPhoneNumber(value) {
   const digits = normalizePhone(value).slice(0, 11);
 
@@ -684,6 +713,8 @@ function renderRequests() {
     const safeRegion = escapeHTML(request.region);
     const safePurchasePurpose = escapeHTML(request.purchasePurpose || "미선택");
     const safeQuoteNumber = escapeHTML(request.quoteNumber || "번호 없음");
+    const safeRemaining = escapeHTML(getQuoteRemainingLabel(request));
+    const expired = isQuoteExpired(request);
     const item = document.createElement("button");
     item.type = "button";
     item.className = `request-item${request.id === selectedRequestId ? " is-active" : ""}`;
@@ -1823,6 +1854,155 @@ window.addEventListener("blur", () => showSecurityBlanket(0));
 window.addEventListener("focus", hideSecurityBlanket);
 window.addEventListener("beforeprint", () => showSecurityBlanket(0));
 window.addEventListener("afterprint", hideSecurityBlanket);
+
+createCustomerRequestOnServer = async function createCustomerRequestOnServerClean(formData) {
+  await createCustomerRequest(formData);
+};
+
+renderRequests = function renderRequestsClean() {
+  const isRegionTab = activeSellerTab === "region";
+  sellerQuoteWorkspace.hidden = isRegionTab;
+  sellerRegionPanel.hidden = !isRegionTab;
+
+  if (isRegionTab) {
+    sellerTabs.forEach((tab) => {
+      tab.classList.toggle("is-active", tab.dataset.sellerTab === activeSellerTab);
+    });
+    syncRegionChangeForm();
+    return;
+  }
+
+  requestList.innerHTML = "";
+  const filteredRequests = syncSelectedRequestWithTab();
+
+  sellerTabs.forEach((tab) => {
+    tab.classList.toggle("is-active", tab.dataset.sellerTab === activeSellerTab);
+  });
+
+  if (!filteredRequests.length) {
+    const emptyLabel =
+      activeSellerTab === "proposed"
+        ? "선택 대기 중인 제안 견적이 없습니다."
+        : activeSellerTab === "selected"
+          ? "아직 고객님에게 선택받은 견적이 없습니다."
+          : "등록된 고객님 견적이 없습니다.";
+    requestList.innerHTML = `
+      <div class="empty-state compact-empty">
+        <strong>${emptyLabel}</strong>
+        <p>해당하는 견적이 생기면 이곳에 표시됩니다.</p>
+      </div>
+    `;
+    return;
+  }
+
+  filteredRequests.forEach((request) => {
+    const sellerBid = getActiveSellerBid(request);
+    const isSelectedByCustomer = canActiveSellerSeeCustomerPhone(request);
+    const isSaleCompleted = Boolean(request.saleCompletedAt && request.saleCompletedBidId === sellerBid?.id);
+    const safeItems = escapeHTML(request.items);
+    const safeCustomer = escapeHTML(request.customer);
+    const safeRegion = escapeHTML(request.region);
+    const safePurchasePurpose = escapeHTML(request.purchasePurpose || "미선택");
+    const safeQuoteNumber = escapeHTML(request.quoteNumber || "번호 없음");
+    const safeRemaining = escapeHTML(getQuoteRemainingLabel(request));
+    const expired = isQuoteExpired(request);
+    const item = document.createElement("button");
+    item.type = "button";
+    item.className = `request-item${request.id === selectedRequestId ? " is-active" : ""}`;
+    item.innerHTML = `
+      <strong>${safeItems}</strong>
+      <span>${safeCustomer} · ${safeRegion}</span>
+      <span>견적번호 ${safeQuoteNumber}</span>
+      <span class="${expired ? "deadline-expired" : "deadline-live"}">남은 시간 ${safeRemaining}</span>
+      <span>구매 목적 ${safePurchasePurpose}</span>
+      <span>기존 견적 ${formatPrice(request.price)}</span>
+      ${sellerBid ? `<span>내 제안 ${formatPrice(sellerBid.price)}</span>` : ""}
+      ${isSelectedByCustomer ? `<span class="request-badge">선택받음</span>` : ""}
+      ${isSaleCompleted ? `<span class="request-badge done">판매완료</span>` : ""}
+    `;
+    item.addEventListener("click", () => {
+      selectedRequestId = request.id;
+      setBidFormMessage("");
+      renderRequests();
+      renderSelectedRequest();
+    });
+    requestList.appendChild(item);
+  });
+};
+
+renderSelectedRequest = function renderSelectedRequestClean() {
+  const request = getSelectedRequest();
+  if (!request) {
+    selectedStatus.textContent = "선택 대기";
+    selectedTitle.textContent = "표시할 견적이 없습니다.";
+    selectedInfo.innerHTML = "현재 탭에 해당하는 고객님 견적이 없습니다.";
+    sellerImage.innerHTML = "<span>등록된 견적서 이미지가 없습니다.</span>";
+    syncBidFormForRequest(null);
+    setBidFormEnabled(false);
+    return;
+  }
+
+  setBidFormEnabled(true);
+  syncBidFormForRequest(request);
+
+  const visiblePhone = canActiveSellerSeeCustomerPhone(request) ? request.phone : maskPhone(request.phone);
+  const safeCustomer = escapeHTML(request.customer);
+  const safePhone = escapeHTML(visiblePhone);
+  const safePurchasePurpose = escapeHTML(request.purchasePurpose || "미선택");
+  const safeRegion = escapeHTML(request.region);
+  const safeQuoteNumber = escapeHTML(request.quoteNumber || "번호 없음");
+  const safeMemo = escapeHTML(request.memo || "추가 요청사항 없음");
+  const safeRemaining = escapeHTML(getQuoteRemainingLabel(request));
+  const expired = isQuoteExpired(request);
+  const activeSellerBid = getActiveSellerBid(request);
+  const isSelectedSeller = canActiveSellerSeeCustomerPhone(request);
+  const isSaleCompleted = isSaleCompletedForBid(request, activeSellerBid);
+
+  selectedStatus.textContent = isSaleCompleted ? "판매완료" : isSelectedSeller ? "선택받음" : expired ? "견적 마감" : "응답 가능";
+  selectedTitle.textContent = request.items;
+  selectedInfo.innerHTML = `
+    <div class="seller-summary-grid">
+      <div><span>견적번호</span><strong>${safeQuoteNumber}</strong></div>
+      <div><span>고객님</span><strong>${safeCustomer}</strong></div>
+      <div><span>연락처</span><strong>${safePhone}</strong></div>
+      <div><span>구매 목적</span><strong>${safePurchasePurpose}</strong></div>
+      <div><span>설치 지역</span><strong>${safeRegion}</strong></div>
+      <div><span>기존 견적</span><strong>${formatPrice(request.price)}</strong></div>
+      <div><span>견적 가능 시간</span><strong class="${expired ? "deadline-expired" : "deadline-live"}">${safeRemaining}</strong></div>
+    </div>
+    <div class="seller-request-note">
+      <span>요청사항</span>
+      <p>${safeMemo}</p>
+    </div>
+    <p class="privacy-note">${
+      isSaleCompleted
+        ? `판매완료 처리되었습니다. 고객님에게 후기 요청 알림톡 발송 상태: ${
+            request.reviewNotificationSentAt ? "발송 완료" : "발송 대기"
+          }`
+        : isSelectedSeller
+        ? "고객님이 이 제안을 선택해 연락처가 공개되었습니다."
+        : "연락처는 고객님이 제안을 선택한 뒤 공개됩니다."
+    }</p>
+    ${
+      isSelectedSeller
+        ? `<div class="sale-complete-panel">
+            <strong>${isSaleCompleted ? "판매완료 처리됨" : "판매가 완료되었나요?"}</strong>
+            <p>${
+              isSaleCompleted
+                ? "정식 서비스에서는 이 시점에 고객님께 카카오 알림톡으로 후기 작성 링크가 발송됩니다."
+                : "선택받은 견적에서 판매완료를 누르면 고객님 후기 작성 안내가 열립니다."
+            }</p>
+            <button class="primary-btn full sale-complete-btn" type="button" data-request-id="${request.id}" ${
+              isSaleCompleted ? "disabled" : ""
+            }>
+              ${isSaleCompleted ? "판매완료 완료" : "판매완료 처리"}
+            </button>
+          </div>`
+        : ""
+    }
+  `;
+  sellerImage.innerHTML = quoteImageMarkup(request, `${request.customer} 고객님이 올린 견적서`);
+};
 
 renderRequests();
 renderSelectedRequest();

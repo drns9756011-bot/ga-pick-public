@@ -1728,6 +1728,16 @@ select {
   color: #2156a3 !important;
 }
 
+.deadline-live {
+  color: #126b5d !important;
+  font-weight: 900;
+}
+
+.deadline-expired {
+  color: #c75146 !important;
+  font-weight: 900;
+}
+
 .table-wrap {
   overflow-x: auto;
   box-shadow: none;

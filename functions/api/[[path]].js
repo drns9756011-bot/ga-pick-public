@@ -71,6 +71,60 @@ function normalizeApprovedSeller(row) {
   };
 }
 
+const MASTER_SELLER = {
+  id: "master-pickgj",
+  status: "approved",
+  sellerId: "pickgj",
+  password: "qwer1234!!",
+  channel: "픽견적",
+  branch: "마스터 관리자",
+  branchRegion: "전국",
+  manager: "마스터",
+  managerPosition: "관리자",
+  phone: "010-0000-0000",
+  cardImage: "",
+  cardImageKey: "",
+  memo: "운영자 마스터 계정",
+  consent: { systemAccount: true },
+};
+
+async function ensureMasterSeller(env) {
+  const now = new Date().toISOString();
+  const existing = await env.DB.prepare("SELECT id FROM approved_sellers WHERE seller_id = ? LIMIT 1")
+    .bind(MASTER_SELLER.sellerId)
+    .first();
+
+  if (existing) return;
+
+  await env.DB.prepare(
+    `INSERT INTO approved_sellers
+      (id, status, seller_id, password, channel, branch, branch_region, manager, manager_position, phone,
+       card_image, card_image_key, memo, consent_json, requested_at, reviewed_at, review_memo, approved_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  )
+    .bind(
+      MASTER_SELLER.id,
+      MASTER_SELLER.status,
+      MASTER_SELLER.sellerId,
+      MASTER_SELLER.password,
+      MASTER_SELLER.channel,
+      MASTER_SELLER.branch,
+      MASTER_SELLER.branchRegion,
+      MASTER_SELLER.manager,
+      MASTER_SELLER.managerPosition,
+      MASTER_SELLER.phone,
+      MASTER_SELLER.cardImage,
+      MASTER_SELLER.cardImageKey,
+      MASTER_SELLER.memo,
+      JSON.stringify(MASTER_SELLER.consent),
+      now,
+      now,
+      "마스터 계정 자동 등록",
+      now
+    )
+    .run();
+}
+
 function normalizeMessage(row) {
   if (!row) return null;
   return {
@@ -370,6 +424,7 @@ async function updateSellerApplication(env, request, id) {
 }
 
 async function getApprovedSellers(env) {
+  await ensureMasterSeller(env);
   const result = await env.DB.prepare("SELECT * FROM approved_sellers ORDER BY approved_at DESC").all();
   return json({ ok: true, rows: result.results.map(normalizeApprovedSeller) });
 }
