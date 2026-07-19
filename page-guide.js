@@ -5,6 +5,55 @@
     sellerShown: false,
   };
 
+  function todayKey() {
+    return new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Seoul",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date());
+  }
+
+  function localDismissKey(type) {
+    return `pickquoteGuideDismissed:${type}:${todayKey()}`;
+  }
+
+  function isLocalDismissed(type) {
+    return localStorage.getItem(localDismissKey(type)) === "1";
+  }
+
+  function saveLocalDismissal(type) {
+    localStorage.setItem(localDismissKey(type), "1");
+  }
+
+  async function isServerDismissed(type) {
+    if (window.location.protocol === "file:") return isLocalDismissed(type);
+    try {
+      const response = await fetch(`/api/guide-dismissal?guideType=${encodeURIComponent(type)}`, {
+        cache: "no-store",
+      });
+      const payload = await response.json();
+      return Boolean(payload.ok && payload.dismissed);
+    } catch (error) {
+      return isLocalDismissed(type);
+    }
+  }
+
+  async function saveDismissal(type) {
+    saveLocalDismissal(type);
+    if (window.location.protocol === "file:") return;
+
+    try {
+      await fetch("/api/guide-dismissal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ guideType: type }),
+      });
+    } catch (error) {
+      // Local dismissal still prevents repeat display on this browser for today.
+    }
+  }
+
   const guides = {
     customer: {
       eyebrow: "견적올리기 사용 안내",
@@ -127,6 +176,10 @@
                 .join("")}
             </ol>
             <p class="page-guide-note">${guide.note}</p>
+            <label class="page-guide-today">
+              <input type="checkbox" id="pageGuideTodayDismiss" />
+              오늘은 그만보기
+            </label>
             <button class="primary-btn full" type="button" data-guide-close>확인하고 시작하기</button>
           </div>
         </div>
@@ -135,7 +188,11 @@
     modal.hidden = false;
   }
 
-  function closeGuide() {
+  async function closeGuide() {
+    const type = guideState.activeType;
+    const dismissToday = document.querySelector("#pageGuideTodayDismiss")?.checked;
+    if (type && dismissToday) await saveDismissal(type);
+
     const modal = document.querySelector("#pageGuideModal");
     if (modal) modal.hidden = true;
   }
@@ -144,17 +201,19 @@
     return document.querySelector(".page.is-active")?.dataset.page || "";
   }
 
-  function maybeOpenGuide() {
+  async function maybeOpenGuide() {
     const page = getActivePageName();
 
     if (page === "customer" && !guideState.customerShown) {
       guideState.customerShown = true;
+      if (await isServerDismissed("customer")) return;
       window.setTimeout(() => openGuide("customer"), 180);
       return;
     }
 
     if ((page === "seller" || page === "sellerLogin") && !guideState.sellerShown) {
       guideState.sellerShown = true;
+      if (await isServerDismissed("seller")) return;
       window.setTimeout(() => openGuide("seller"), 180);
     }
   }

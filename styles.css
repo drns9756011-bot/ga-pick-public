@@ -2578,6 +2578,22 @@ td strong {
   color: #335b54;
 }
 
+.page-guide-today {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  width: fit-content;
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.page-guide-today input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+}
+
 .guide-screen {
   display: grid;
   align-content: start;

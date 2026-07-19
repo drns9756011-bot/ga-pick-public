@@ -16,6 +16,32 @@ function createId(prefix) {
   return `${prefix}-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
 }
 
+function todayKey() {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
+function getClientIp(request) {
+  return (
+    request.headers.get("CF-Connecting-IP") ||
+    request.headers.get("X-Forwarded-For")?.split(",")[0]?.trim() ||
+    request.headers.get("X-Real-IP") ||
+    "unknown"
+  );
+}
+
+async function sha256Hex(value) {
+  const bytes = new TextEncoder().encode(String(value || ""));
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
 function sellerName(row) {
   return [row.channel, row.branch].filter(Boolean).join(" ");
 }
@@ -204,6 +230,21 @@ async function ensureCustomerQuoteColumns(env) {
       }
     })
   );
+}
+
+async function ensureGuideDismissalTable(env) {
+  await env.DB.prepare(
+    `CREATE TABLE IF NOT EXISTS guide_dismissals (
+      id TEXT PRIMARY KEY,
+      guide_type TEXT NOT NULL,
+      ip_hash TEXT NOT NULL,
+      dismiss_date TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    )`
+  ).run();
+  await env.DB.prepare(
+    "CREATE INDEX IF NOT EXISTS idx_guide_dismissals_lookup ON guide_dismissals(guide_type, ip_hash, dismiss_date)"
+  ).run();
 }
 
 function parseJson(value, fallback) {
@@ -634,6 +675,50 @@ async function uploadFile(env, request) {
   return json({ ok: true, key: saved.key, url: saved.url });
 }
 
+function sanitizeGuideType(value) {
+  const type = String(value || "");
+  return ["customer", "seller"].includes(type) ? type : "";
+}
+
+async function getGuideDismissal(env, request) {
+  await ensureGuideDismissalTable(env);
+  const url = new URL(request.url);
+  const guideType = sanitizeGuideType(url.searchParams.get("guideType"));
+  if (!guideType) return json({ ok: false, dismissed: false, message: "guideType is required" }, 400);
+
+  const ipHash = await sha256Hex(`${getClientIp(request)}:${guideType}`);
+  const dismissDate = todayKey();
+  const row = await env.DB.prepare(
+    "SELECT id FROM guide_dismissals WHERE guide_type = ? AND ip_hash = ? AND dismiss_date = ? LIMIT 1"
+  )
+    .bind(guideType, ipHash, dismissDate)
+    .first();
+
+  return json({ ok: true, dismissed: Boolean(row), dismissDate });
+}
+
+async function saveGuideDismissal(env, request) {
+  await ensureGuideDismissalTable(env);
+  const body = await request.json().catch(() => ({}));
+  const guideType = sanitizeGuideType(body.guideType);
+  if (!guideType) return json({ ok: false, message: "guideType is required" }, 400);
+
+  const ipHash = await sha256Hex(`${getClientIp(request)}:${guideType}`);
+  const dismissDate = todayKey();
+  const now = new Date().toISOString();
+  const id = `guide-${guideType}-${dismissDate}-${ipHash.slice(0, 16)}`;
+
+  await env.DB.prepare(
+    `INSERT OR REPLACE INTO guide_dismissals
+      (id, guide_type, ip_hash, dismiss_date, created_at)
+     VALUES (?, ?, ?, ?, ?)`
+  )
+    .bind(id, guideType, ipHash, dismissDate, now)
+    .run();
+
+  return json({ ok: true, dismissed: true, dismissDate });
+}
+
 export async function onRequest(context) {
   const { request, env, params } = context;
   const pathParts = Array.isArray(params.path) ? params.path : [];
@@ -653,6 +738,9 @@ export async function onRequest(context) {
 
   if (path === "customer-quotes" && method === "GET") return getCustomerQuotes(env, request);
   if (path === "customer-quotes" && method === "POST") return createCustomerQuote(env, request);
+
+  if (path === "guide-dismissal" && method === "GET") return getGuideDismissal(env, request);
+  if (path === "guide-dismissal" && method === "POST") return saveGuideDismissal(env, request);
 
   if (path === "alimtalk" && method === "GET") return getAlimtalk(env);
   if (path === "alimtalk" && method === "POST") return createAlimtalk(env, request);

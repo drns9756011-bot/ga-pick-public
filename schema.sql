@@ -135,3 +135,12 @@ CREATE TABLE IF NOT EXISTS reviews (
 );
 
 CREATE INDEX IF NOT EXISTS idx_reviews_seller_id ON reviews(seller_id);
+
+CREATE TABLE IF NOT EXISTS guide_dismissals (
+  id TEXT PRIMARY KEY,
+  guide_type TEXT NOT NULL,
+  ip_hash TEXT NOT NULL,
+  dismiss_date TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_guide_dismissals_lookup ON guide_dismissals(guide_type, ip_hash, dismiss_date);
