@@ -163,10 +163,35 @@ function normalizeMessage(row) {
     title: row.title,
     body: row.body,
     relatedId: row.related_id || "",
+    templateId: row.template_id || "",
+    variables: parseJson(row.variables_json, {}),
+    solapiGroupId: row.solapi_group_id || "",
+    solapiMessageId: row.solapi_message_id || "",
+    errorMessage: row.error_message || "",
     createdAt: row.created_at || "",
     sentAt: row.sent_at || "",
     canceledAt: row.canceled_at || "",
   };
+}
+
+async function ensureAlimtalkColumns(env) {
+  const statements = [
+    "ALTER TABLE alimtalk_queue ADD COLUMN template_id TEXT DEFAULT ''",
+    "ALTER TABLE alimtalk_queue ADD COLUMN variables_json TEXT DEFAULT '{}'",
+    "ALTER TABLE alimtalk_queue ADD COLUMN solapi_group_id TEXT DEFAULT ''",
+    "ALTER TABLE alimtalk_queue ADD COLUMN solapi_message_id TEXT DEFAULT ''",
+    "ALTER TABLE alimtalk_queue ADD COLUMN error_message TEXT DEFAULT ''",
+  ];
+
+  await Promise.all(
+    statements.map(async (statement) => {
+      try {
+        await env.DB.prepare(statement).run();
+      } catch (error) {
+        // Column already exists on databases that were migrated earlier.
+      }
+    })
+  );
 }
 
 function addDays(date, days) {
@@ -329,6 +354,19 @@ async function closeExpiredQuotes(env) {
 
   const rows = result.results || [];
   for (const quote of rows) {
+    await queueAlimtalk(env, {
+      type: "customer-quote-closed",
+      targetRole: "customer",
+      targetName: quote.customer,
+      targetPhone: quote.phone,
+      title: "견적 비교 시간이 종료되었습니다",
+      body: `${quote.customer} 고객님의 견적 비교 시간이 종료되었습니다. 견적번호 ${quote.quote_number}의 제안 내역을 확인해 주세요.`,
+      relatedId: quote.id,
+      variables: {
+        "#{고객명}": quote.customer,
+        "#{견적번호}": quote.quote_number,
+      },
+    });
     await env.DB.prepare("UPDATE customer_quotes SET status = 'closed', rank_notice_queued_at = ? WHERE id = ?")
       .bind(now, quote.id)
       .run();
@@ -393,13 +431,114 @@ async function saveDataUrlToR2(env, dataUrl, prefix, id) {
   return { key, url: `/api/files/${key}` };
 }
 
+async function hmacSha256Hex(secret, value) {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const signature = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(value));
+  return Array.from(new Uint8Array(signature))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function getSolapiTemplateId(env, type) {
+  return (
+    {
+      "customer-quote-received": env.SOLAPI_TEMPLATE_CUSTOMER_QUOTE_RECEIVED,
+      "customer-bid-received": env.SOLAPI_TEMPLATE_CUSTOMER_BID_RECEIVED,
+      "customer-quote-closed": env.SOLAPI_TEMPLATE_CUSTOMER_QUOTE_CLOSED,
+      "seller-bid-selected": env.SOLAPI_TEMPLATE_SELLER_BID_SELECTED,
+      "seller-application-received": env.SOLAPI_TEMPLATE_ADMIN_SELLER_APPLICATION,
+    }[type] || ""
+  );
+}
+
+function canSendSolapi(env, message, templateId) {
+  return Boolean(
+    env.SOLAPI_API_KEY &&
+      env.SOLAPI_API_SECRET &&
+      env.SOLAPI_CHANNEL_ID &&
+      env.SOLAPI_FROM &&
+      templateId &&
+      normalizePhone(message.targetPhone)
+  );
+}
+
+async function sendSolapiAlimtalk(env, message, templateId) {
+  if (!canSendSolapi(env, message, templateId)) {
+    return { ok: false, skipped: true, error: "솔라피 환경변수 또는 수신번호가 설정되지 않았습니다." };
+  }
+
+  const date = new Date().toISOString();
+  const salt = crypto.randomUUID();
+  const signature = await hmacSha256Hex(env.SOLAPI_API_SECRET, date + salt);
+  const authorization = `HMAC-SHA256 apiKey=${env.SOLAPI_API_KEY}, date=${date}, salt=${salt}, signature=${signature}`;
+  const variables = {};
+  Object.entries(message.variables || {}).forEach(([key, value]) => {
+    variables[key] = String(value ?? "");
+  });
+
+  const response = await fetch("https://api.solapi.com/messages/v4/send-many/detail", {
+    method: "POST",
+    headers: {
+      Authorization: authorization,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      messages: [
+        {
+          to: normalizePhone(message.targetPhone),
+          from: normalizePhone(env.SOLAPI_FROM),
+          text: message.body || message.title || "픽견적 알림입니다.",
+          kakaoOptions: {
+            pfId: env.SOLAPI_CHANNEL_ID,
+            templateId,
+            variables,
+            disableSms: false,
+          },
+        },
+      ],
+      strict: false,
+      allowDuplicates: false,
+      showMessageList: true,
+    }),
+  });
+
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    return {
+      ok: false,
+      status: response.status,
+      error: payload.errorMessage || payload.message || "솔라피 발송에 실패했습니다.",
+      payload,
+    };
+  }
+
+  const firstMessage = payload.messageList?.[0] || payload.messages?.[0] || {};
+  return {
+    ok: true,
+    payload,
+    groupId: payload.groupInfo?.groupId || payload.groupId || "",
+    messageId: firstMessage.messageId || firstMessage.message_id || "",
+  };
+}
+
 async function queueAlimtalk(env, message) {
+  await ensureAlimtalkColumns(env);
   const now = new Date().toISOString();
   const id = createId("talk");
+  const templateId = message.templateId || getSolapiTemplateId(env, message.type || "notice");
+  const variablesJson = JSON.stringify(message.variables || {});
   await env.DB.prepare(
     `INSERT INTO alimtalk_queue
-      (id, status, type, target_role, target_name, target_phone, title, body, related_id, created_at, sent_at, canceled_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      (id, status, type, target_role, target_name, target_phone, title, body, related_id,
+       template_id, variables_json, solapi_group_id, solapi_message_id, error_message,
+       created_at, sent_at, canceled_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   )
     .bind(
       id,
@@ -411,11 +550,35 @@ async function queueAlimtalk(env, message) {
       message.title || "알림",
       message.body || "",
       message.relatedId || "",
+      templateId,
+      variablesJson,
+      "",
+      "",
+      "",
       now,
       "",
       ""
     )
     .run();
+
+  const result = await sendSolapiAlimtalk(env, message, templateId);
+  const sentAt = result.ok ? new Date().toISOString() : "";
+  await env.DB.prepare(
+    `UPDATE alimtalk_queue
+     SET status = ?, sent_at = ?, solapi_group_id = ?, solapi_message_id = ?, error_message = ?
+     WHERE id = ?`
+  )
+    .bind(
+      result.ok ? "sent" : result.skipped ? "ready" : "failed",
+      sentAt,
+      result.groupId || "",
+      result.messageId || "",
+      result.error || "",
+      id
+    )
+    .run();
+
+  return { id, ...result };
 }
 
 async function getSellerApplications(env) {
@@ -478,12 +641,17 @@ async function createSellerApplication(env, request) {
 
   await queueAlimtalk(env, {
     type: "seller-application-received",
-    targetRole: "seller",
-    targetName: row.manager,
-    targetPhone: row.phone,
-    title: "판매자 등록 신청 접수 안내",
-    body: `${sellerName(row)} 등록 신청이 접수되었습니다. 관리자 검토 후 승인 또는 반려 안내를 발송합니다.`,
-    relatedId: row.id,
+    targetRole: "admin",
+    targetName: "관리자",
+    targetPhone: env.SOLAPI_ADMIN_PHONE || env.SOLAPI_FROM || "",
+    title: "판매자 등록 요청이 접수되었습니다",
+    body: `${sellerName(row)} ${row.manager} 매니저의 판매자 등록 요청이 접수되었습니다.`,
+    variables: {
+      "#{채널}": row.channel,
+      "#{지점명}": row.branch,
+      "#{매니저명}": row.manager,
+      "#{연락처}": formatPhoneNumber(row.phone),
+    },
   });
 
   return json({ ok: true, row }, 201);
@@ -727,9 +895,13 @@ async function createCustomerQuote(env, request) {
     targetRole: "customer",
     targetName: body.customer,
     targetPhone: body.phone,
-    title: "견적 요청 접수 안내",
-    body: `${body.customer} 고객님, 견적 요청이 정상 접수되었습니다. 견적번호: ${body.quoteNumber}`,
     relatedId: id,
+    title: "견적 요청이 접수되었습니다",
+    body: `${body.customer} 고객님의 견적 요청이 정상 접수되었습니다. 견적번호: ${body.quoteNumber}`,
+    variables: {
+      "#{고객명}": body.customer,
+      "#{견적번호}": body.quoteNumber,
+    },
   });
 
   const row = await env.DB.prepare("SELECT * FROM customer_quotes WHERE id = ?").bind(id).first();
@@ -832,9 +1004,14 @@ async function upsertBid(env, request) {
       targetRole: "customer",
       targetName: quote.customer,
       targetPhone: quote.phone,
-      title: "판매자 제안 도착 안내",
-      body: `${quote.customer} 고객님, 픽견적 견적번호 ${quote.quote_number}에 새로운 판매자 제안이 도착했습니다.`,
       relatedId: quote.id,
+      title: "새로운 판매자 제안이 도착했습니다",
+      body: `${quote.customer} 고객님의 견적번호 ${quote.quote_number}에 새로운 판매자 제안이 도착했습니다.`,
+      variables: {
+        "#{고객명}": quote.customer,
+        "#{견적번호}": quote.quote_number,
+        "#{제안금액}": `${Number(body.price || 0).toLocaleString("ko-KR")}만원`,
+      },
     });
   }
 
@@ -881,9 +1058,15 @@ async function selectBid(env, request) {
       targetRole: "seller",
       targetName: bid.manager || bid.seller,
       targetPhone: bid.phone,
-      title: "제안 선택 안내",
-      body: `${bid.manager || "매니저"}님, 고객님이 견적번호 ${quote.quote_number}에서 연락처 공개 대상 제안으로 선택했습니다. 판매자 페이지에서 확인해주세요.`,
       relatedId: quoteId,
+      title: "고객님이 제안을 선택했습니다",
+      body: `${bid.manager || "매니저"}님, 견적번호 ${quote.quote_number}에서 고객님 연락처 공개 대상 제안으로 선택되었습니다.`,
+      variables: {
+        "#{매니저명}": bid.manager || bid.seller || "",
+        "#{견적번호}": quote.quote_number,
+        "#{고객명}": quote.customer,
+        "#{고객연락처}": formatPhoneNumber(quote.phone),
+      },
     });
   }
 
