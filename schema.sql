@@ -77,6 +77,11 @@ CREATE TABLE IF NOT EXISTS customer_quotes (
   memo TEXT DEFAULT '',
   status TEXT NOT NULL DEFAULT 'open',
   selected_bid_id TEXT DEFAULT '',
+  contact_release_scope TEXT DEFAULT 'selected',
+  contact_released_bid_ids TEXT DEFAULT '[]',
+  submission_count INTEGER DEFAULT 1,
+  previous_lowest_price INTEGER DEFAULT 0,
+  rank_notice_queued_at TEXT DEFAULT '',
   sale_completed_at TEXT DEFAULT '',
   created_at TEXT NOT NULL,
   consent_json TEXT DEFAULT '{}'

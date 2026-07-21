@@ -2309,6 +2309,45 @@ td strong {
   text-align: right;
 }
 
+.contact-release-options {
+  display: grid;
+  gap: 10px;
+  margin: 16px 0 18px;
+}
+
+.contact-release-options label {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: start;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fafb;
+  cursor: pointer;
+}
+
+.contact-release-options input {
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  accent-color: var(--primary);
+}
+
+.contact-release-options span {
+  display: grid;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.55;
+}
+
+.contact-release-options strong {
+  color: var(--ink);
+  font-size: 15px;
+}
+
 .account-dialog {
   position: relative;
 }

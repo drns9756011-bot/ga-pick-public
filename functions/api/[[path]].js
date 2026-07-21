@@ -196,6 +196,11 @@ function normalizeCustomerQuote(row, images = []) {
     memo: row.memo || "",
     status: row.status || "open",
     selectedBidId: row.selected_bid_id || null,
+    contactReleaseScope: row.contact_release_scope || "selected",
+    contactReleasedBidIds: parseJson(row.contact_released_bid_ids, []),
+    submissionCount: Number(row.submission_count || 1),
+    previousLowestPrice: Number(row.previous_lowest_price || 0),
+    rankNoticeQueuedAt: row.rank_notice_queued_at || "",
     saleCompletedAt: row.sale_completed_at || "",
     thumbnailImage: row.thumbnail_image || "",
     thumbnailImageKey: row.thumbnail_image_key || "",
@@ -209,6 +214,36 @@ function normalizeCustomerQuote(row, images = []) {
   };
 }
 
+function hideSellerOnlyQuoteFields(quote) {
+  if (!quote) return quote;
+  const safeQuote = { ...quote };
+  delete safeQuote.submissionCount;
+  delete safeQuote.previousLowestPrice;
+  delete safeQuote.rankNoticeQueuedAt;
+  return safeQuote;
+}
+
+function normalizeBid(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    requestId: row.quote_id,
+    quoteId: row.quote_id,
+    sellerId: row.seller_id,
+    seller: row.seller || "",
+    channel: row.channel || "",
+    branch: row.branch || "",
+    manager: row.manager || "",
+    managerPosition: row.manager_position || "",
+    phone: row.phone || "",
+    cardImage: row.card_image || "",
+    price: Number(row.price || 0),
+    benefits: row.benefits || "",
+    createdAt: row.created_at || "",
+    updatedAt: row.updated_at || "",
+  };
+}
+
 async function ensureCustomerQuoteColumns(env) {
   const statements = [
     "ALTER TABLE customer_quotes ADD COLUMN thumbnail_image TEXT DEFAULT ''",
@@ -217,6 +252,11 @@ async function ensureCustomerQuoteColumns(env) {
     "ALTER TABLE customer_quotes ADD COLUMN full_images_expires_at TEXT DEFAULT ''",
     "ALTER TABLE customer_quotes ADD COLUMN personal_expires_at TEXT DEFAULT ''",
     "ALTER TABLE customer_quotes ADD COLUMN desired_brand TEXT DEFAULT ''",
+    "ALTER TABLE customer_quotes ADD COLUMN contact_release_scope TEXT DEFAULT 'selected'",
+    "ALTER TABLE customer_quotes ADD COLUMN contact_released_bid_ids TEXT DEFAULT '[]'",
+    "ALTER TABLE customer_quotes ADD COLUMN submission_count INTEGER DEFAULT 1",
+    "ALTER TABLE customer_quotes ADD COLUMN previous_lowest_price INTEGER DEFAULT 0",
+    "ALTER TABLE customer_quotes ADD COLUMN rank_notice_queued_at TEXT DEFAULT ''",
     "ALTER TABLE quote_images ADD COLUMN image_type TEXT DEFAULT 'full'",
     "ALTER TABLE quote_images ADD COLUMN expires_at TEXT DEFAULT ''",
   ];
@@ -230,6 +270,69 @@ async function ensureCustomerQuoteColumns(env) {
       }
     })
   );
+}
+
+async function getPreviousQuoteStats(env, customer, phone) {
+  const normalizedPhone = normalizePhone(phone);
+  if (!customer || !normalizedPhone) return { submissionCount: 1, previousLowestPrice: 0 };
+
+  const countRow = await env.DB.prepare(
+    `SELECT COUNT(*) AS total
+     FROM customer_quotes
+     WHERE customer = ? AND REPLACE(REPLACE(phone, '-', ''), ' ', '') = ?`
+  )
+    .bind(customer, normalizedPhone)
+    .first();
+
+  const previousQuote = await env.DB.prepare(
+    `SELECT id
+     FROM customer_quotes
+     WHERE customer = ? AND REPLACE(REPLACE(phone, '-', ''), ' ', '') = ?
+     ORDER BY created_at DESC
+     LIMIT 1`
+  )
+    .bind(customer, normalizedPhone)
+    .first();
+
+  let previousLowestPrice = 0;
+  if (previousQuote?.id) {
+    const lowest = await env.DB.prepare("SELECT MIN(price) AS lowest FROM bids WHERE quote_id = ?")
+      .bind(previousQuote.id)
+      .first();
+    previousLowestPrice = Number(lowest?.lowest || 0);
+  }
+
+  return {
+    submissionCount: Number(countRow?.total || 0) + 1,
+    previousLowestPrice,
+  };
+}
+
+async function getBidsForQuote(env, quoteId) {
+  const result = await env.DB.prepare("SELECT * FROM bids WHERE quote_id = ? ORDER BY price ASC, created_at ASC")
+    .bind(quoteId)
+    .all();
+  return (result.results || []).map(normalizeBid);
+}
+
+async function closeExpiredQuotes(env) {
+  await ensureCustomerQuoteColumns(env);
+  const now = new Date().toISOString();
+  const result = await env.DB.prepare(
+    `SELECT * FROM customer_quotes
+     WHERE quote_expires_at != ''
+       AND quote_expires_at < ?
+       AND (rank_notice_queued_at = '' OR rank_notice_queued_at IS NULL)`
+  )
+    .bind(now)
+    .all();
+
+  const rows = result.results || [];
+  for (const quote of rows) {
+    await env.DB.prepare("UPDATE customer_quotes SET status = 'closed', rank_notice_queued_at = ? WHERE id = ?")
+      .bind(now, quote.id)
+      .run();
+  }
 }
 
 async function ensureGuideDismissalTable(env) {
@@ -487,6 +590,7 @@ async function getQuoteImages(env, quoteId, includeFull = true) {
 
 async function getCustomerQuotes(env, request) {
   await ensureCustomerQuoteColumns(env);
+  await closeExpiredQuotes(env);
   const url = new URL(request.url);
   const customer = String(url.searchParams.get("customer") || "").trim();
   const phone = normalizePhone(url.searchParams.get("phone"));
@@ -527,7 +631,8 @@ async function getCustomerQuotes(env, request) {
   for (const row of rows) {
     const includeFull = scope === "lookup" || (row.full_images_expires_at && row.full_images_expires_at >= now);
     const images = await getQuoteImages(env, row.id, includeFull);
-    normalized.push(normalizeCustomerQuote(row, images));
+    const quote = normalizeCustomerQuote(row, images);
+    normalized.push(scope === "lookup" ? hideSellerOnlyQuoteFields(quote) : quote);
   }
 
   return json({ ok: true, rows: normalized });
@@ -547,6 +652,7 @@ async function createCustomerQuote(env, request) {
   const quoteExpiresAt = addHours(createdAt, 48);
   const fullImagesExpiresAt = addDays(createdAt, 7);
   const personalExpiresAt = addDays(createdAt, 365);
+  const previousStats = await getPreviousQuoteStats(env, String(body.customer || "").trim(), body.phone);
 
   const thumbnailDataUrl = body.thumbnailImage || images[0];
   const thumbnail = await saveDataUrlToR2(env, thumbnailDataUrl, "quote-thumbnails", `${id}-thumb`);
@@ -556,9 +662,10 @@ async function createCustomerQuote(env, request) {
   await env.DB.prepare(
     `INSERT INTO customer_quotes
       (id, quote_number, customer, phone, items, purchase_purpose, desired_brand, price, region, memo, status,
-       selected_bid_id, sale_completed_at, thumbnail_image, thumbnail_image_key, quote_expires_at,
+       selected_bid_id, contact_release_scope, contact_released_bid_ids, submission_count, previous_lowest_price,
+       rank_notice_queued_at, sale_completed_at, thumbnail_image, thumbnail_image_key, quote_expires_at,
        full_images_expires_at, personal_expires_at, created_at, consent_json)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   )
     .bind(
       id,
@@ -572,6 +679,11 @@ async function createCustomerQuote(env, request) {
       body.region || "",
       body.memo || "",
       "open",
+      "",
+      "selected",
+      "[]",
+      previousStats.submissionCount,
+      previousStats.previousLowestPrice,
       "",
       "",
       thumbnailUrl,
@@ -622,7 +734,162 @@ async function createCustomerQuote(env, request) {
 
   const row = await env.DB.prepare("SELECT * FROM customer_quotes WHERE id = ?").bind(id).first();
   const savedImages = await getQuoteImages(env, id, true);
-  return json({ ok: true, row: normalizeCustomerQuote(row, savedImages) }, 201);
+  return json({ ok: true, row: hideSellerOnlyQuoteFields(normalizeCustomerQuote(row, savedImages)) }, 201);
+}
+
+async function getBids(env, request) {
+  await closeExpiredQuotes(env);
+  const url = new URL(request.url);
+  const quoteId = String(url.searchParams.get("quoteId") || "").trim();
+  const sellerId = String(url.searchParams.get("sellerId") || "").trim();
+  let sql = "SELECT * FROM bids";
+  const bindings = [];
+  const where = [];
+
+  if (quoteId) {
+    where.push("quote_id = ?");
+    bindings.push(quoteId);
+  }
+  if (sellerId) {
+    where.push("seller_id = ?");
+    bindings.push(sellerId);
+  }
+  if (where.length) sql += ` WHERE ${where.join(" AND ")}`;
+  sql += " ORDER BY price ASC, created_at ASC";
+
+  const statement = env.DB.prepare(sql);
+  const result = bindings.length ? await statement.bind(...bindings).all() : await statement.all();
+  return json({ ok: true, rows: (result.results || []).map(normalizeBid) });
+}
+
+async function upsertBid(env, request) {
+  await closeExpiredQuotes(env);
+  const body = await request.json();
+  if (!body.requestId || !body.sellerId || !body.price) {
+    return json({ ok: false, message: "견적, 판매자, 제안 금액이 필요합니다." }, 400);
+  }
+
+  const quote = await env.DB.prepare("SELECT * FROM customer_quotes WHERE id = ?").bind(body.requestId).first();
+  if (!quote) return json({ ok: false, message: "고객 견적을 찾을 수 없습니다." }, 404);
+  if (quote.selected_bid_id) return json({ ok: false, message: "이미 선택된 견적은 제안 금액을 수정할 수 없습니다." }, 400);
+  if (quote.quote_expires_at && quote.quote_expires_at < new Date().toISOString()) {
+    return json({ ok: false, message: "견적 제안 가능 시간이 종료되었습니다." }, 400);
+  }
+
+  const now = new Date().toISOString();
+  const existing = await env.DB.prepare("SELECT * FROM bids WHERE quote_id = ? AND seller_id = ? LIMIT 1")
+    .bind(body.requestId, body.sellerId)
+    .first();
+
+  if (existing) {
+    await env.DB.prepare(
+      `UPDATE bids
+       SET seller = ?, channel = ?, branch = ?, manager = ?, manager_position = ?, phone = ?,
+           card_image = ?, price = ?, benefits = ?, updated_at = ?
+       WHERE id = ?`
+    )
+      .bind(
+        body.seller || "",
+        body.channel || "",
+        body.branch || "",
+        body.manager || "",
+        body.managerPosition || "",
+        body.phone || "",
+        body.cardImage || "",
+        Number(body.price || 0),
+        body.benefits || "",
+        now,
+        existing.id
+      )
+      .run();
+  } else {
+    await env.DB.prepare(
+      `INSERT INTO bids
+        (id, quote_id, seller_id, seller, channel, branch, manager, manager_position, phone,
+         card_image, price, benefits, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    )
+      .bind(
+        body.id || createId("bid"),
+        body.requestId,
+        body.sellerId,
+        body.seller || "",
+        body.channel || "",
+        body.branch || "",
+        body.manager || "",
+        body.managerPosition || "",
+        body.phone || "",
+        body.cardImage || "",
+        Number(body.price || 0),
+        body.benefits || "",
+        now,
+        now
+      )
+      .run();
+
+    await queueAlimtalk(env, {
+      type: "customer-bid-received",
+      targetRole: "customer",
+      targetName: quote.customer,
+      targetPhone: quote.phone,
+      title: "판매자 제안 도착 안내",
+      body: `${quote.customer} 고객님, 픽견적 견적번호 ${quote.quote_number}에 새로운 판매자 제안이 도착했습니다.`,
+      relatedId: quote.id,
+    });
+  }
+
+  const row = await env.DB.prepare("SELECT * FROM bids WHERE quote_id = ? AND seller_id = ? LIMIT 1")
+    .bind(body.requestId, body.sellerId)
+    .first();
+  return json({ ok: true, row: normalizeBid(row) }, existing ? 200 : 201);
+}
+
+async function selectBid(env, request) {
+  await ensureCustomerQuoteColumns(env);
+  const body = await request.json();
+  const quoteId = String(body.requestId || "").trim();
+  const bidId = String(body.bidId || "").trim();
+  const scope = body.contactReleaseScope === "top3" ? "top3" : "selected";
+  if (!quoteId || !bidId) return json({ ok: false, message: "선택할 견적 정보가 필요합니다." }, 400);
+
+  const quote = await env.DB.prepare("SELECT * FROM customer_quotes WHERE id = ?").bind(quoteId).first();
+  if (!quote) return json({ ok: false, message: "고객 견적을 찾을 수 없습니다." }, 404);
+  if (quote.selected_bid_id && quote.selected_bid_id !== bidId) {
+    return json({ ok: false, message: "이미 선택한 견적은 변경할 수 없습니다." }, 400);
+  }
+
+  const quoteBids = await getBidsForQuote(env, quoteId);
+  const selectedBid = quoteBids.find((bid) => bid.id === bidId);
+  if (!selectedBid) return json({ ok: false, message: "선택할 판매자 제안을 찾을 수 없습니다." }, 404);
+
+  const releasedBidIds =
+    scope === "top3"
+      ? Array.from(new Set([...quoteBids.slice(0, 3).map((bid) => bid.id), bidId]))
+      : [bidId];
+  const now = new Date().toISOString();
+  await env.DB.prepare(
+    `UPDATE customer_quotes
+     SET selected_bid_id = ?, contact_release_scope = ?, contact_released_bid_ids = ?
+     WHERE id = ?`
+  )
+    .bind(bidId, scope, JSON.stringify(releasedBidIds), quoteId)
+    .run();
+
+  for (const bid of quoteBids.filter((item) => releasedBidIds.includes(item.id))) {
+    await queueAlimtalk(env, {
+      type: "seller-bid-selected",
+      targetRole: "seller",
+      targetName: bid.manager || bid.seller,
+      targetPhone: bid.phone,
+      title: "제안 선택 안내",
+      body: `${bid.manager || "매니저"}님, 고객님이 견적번호 ${quote.quote_number}에서 연락처 공개 대상 제안으로 선택했습니다. 판매자 페이지에서 확인해주세요.`,
+      relatedId: quoteId,
+    });
+  }
+
+  const row = await env.DB.prepare("SELECT * FROM customer_quotes WHERE id = ?").bind(quoteId).first();
+  const images = await getQuoteImages(env, quoteId, true);
+  return json({ ok: true, row: hideSellerOnlyQuoteFields(normalizeCustomerQuote(row, images)), releasedBidIds, selectedAt: now });
 }
 
 async function getAlimtalk(env) {
@@ -738,6 +1005,9 @@ export async function onRequest(context) {
 
   if (path === "customer-quotes" && method === "GET") return getCustomerQuotes(env, request);
   if (path === "customer-quotes" && method === "POST") return createCustomerQuote(env, request);
+  if (path === "bids" && method === "GET") return getBids(env, request);
+  if (path === "bids" && method === "POST") return upsertBid(env, request);
+  if (path === "bid-selection" && method === "POST") return selectBid(env, request);
 
   if (path === "guide-dismissal" && method === "GET") return getGuideDismissal(env, request);
   if (path === "guide-dismissal" && method === "POST") return saveGuideDismissal(env, request);

@@ -427,6 +427,20 @@ async function syncCustomerQuotesFromServer() {
   replaceRequests(result.rows);
 }
 
+function replaceBids(rows) {
+  bids.splice(0, bids.length, ...rows);
+}
+
+async function syncBidsFromServer() {
+  const result = await apiJson("/api/bids", {
+    loadingTitle: "판매자 제안을 불러오는 중입니다.",
+    loadingText: "서버에 저장된 제안 금액과 순위를 확인하고 있습니다.",
+  });
+
+  if (!result?.ok || !Array.isArray(result.rows)) return;
+  replaceBids(result.rows);
+}
+
 async function lookupCustomerQuotesFromServer(customer, phone, quoteNumber = "") {
   const params = new URLSearchParams({
     scope: "lookup",
@@ -449,6 +463,28 @@ async function saveCustomerQuoteToServer(quote) {
     loadingTitle: "견적 요청을 서버에 저장 중입니다.",
     loadingText: "대표 이미지는 1년, 전체 견적 이미지는 7일 기준으로 저장하고 있습니다.",
     body: JSON.stringify(quote),
+  });
+}
+
+async function saveBidToServer(bid) {
+  return apiJson("/api/bids", {
+    method: "POST",
+    loadingTitle: "제안을 저장 중입니다.",
+    loadingText: "제안 금액과 제공 조건을 서버에 반영하고 있습니다.",
+    body: JSON.stringify(bid),
+  });
+}
+
+async function selectBidOnServer(request, bid, contactReleaseScope) {
+  return apiJson("/api/bid-selection", {
+    method: "POST",
+    loadingTitle: "견적을 선택 중입니다.",
+    loadingText: "연락처 공개 범위와 선택 내용을 서버에 저장하고 있습니다.",
+    body: JSON.stringify({
+      requestId: request.id,
+      bidId: bid.id,
+      contactReleaseScope,
+    }),
   });
 }
 
@@ -551,8 +587,37 @@ function getSelectedRequest() {
 
 function getBidsForRequest(requestId) {
   return bids
-    .filter((bid) => bid.requestId === requestId)
+    .filter((bid) => String(bid.requestId) === String(requestId))
     .sort((a, b) => Number(a.price || 0) - Number(b.price || 0));
+}
+
+function getBidRankInfo(request, bid) {
+  const rows = getBidsForRequest(request.id);
+  const index = rows.findIndex((item) => String(item.id) === String(bid?.id));
+  return {
+    rank: index >= 0 ? index + 1 : 0,
+    total: rows.length,
+    lowestPrice: rows[0]?.price || 0,
+  };
+}
+
+function getRepeatQuoteNotice(request) {
+  const count = Number(request?.submissionCount || 1);
+  if (count <= 1) return "";
+  const previousLowest = Number(request.previousLowestPrice || 0);
+  return previousLowest
+    ? `${count}번째 올린 견적입니다. 이전 견적 최저가는 ${formatPrice(previousLowest)}입니다.`
+    : `${count}번째 올린 견적입니다. 이전 견적에는 판매자 제안 최저가가 없었습니다.`;
+}
+
+function getReleasedBidIds(request) {
+  if (Array.isArray(request.contactReleasedBidIds)) return request.contactReleasedBidIds.map(String);
+  return request.selectedBidId ? [String(request.selectedBidId)] : [];
+}
+
+function isBidContactReleased(request, bid) {
+  if (!request || !bid) return false;
+  return getReleasedBidIds(request).includes(String(bid.id));
 }
 
 function setView(view) {
@@ -592,12 +657,12 @@ function quoteImageMarkup(request, label) {
 }
 
 function canActiveSellerSeeCustomerPhone(request) {
-  const selectedBid = bids.find((bid) => bid.id === request.selectedBidId);
-  return Boolean(selectedBid && selectedBid.sellerId === activeSellerId);
+  const sellerBid = getActiveSellerBid(request);
+  return Boolean(sellerBid && isBidContactReleased(request, sellerBid));
 }
 
 function getActiveSellerBid(request) {
-  return bids.find((bid) => bid.requestId === request.id && bid.sellerId === activeSellerId);
+  return bids.find((bid) => String(bid.requestId) === String(request.id) && bid.sellerId === activeSellerId);
 }
 
 function normalizeSellerRegionCategory(region) {
@@ -645,11 +710,11 @@ function getSellerBrandValue(request) {
 }
 
 function getSelectedBid(request) {
-  return bids.find((bid) => bid.id === request.selectedBidId) || null;
+  return bids.find((bid) => String(bid.id) === String(request.selectedBidId)) || null;
 }
 
 function isSaleCompletedForBid(request, bid) {
-  return Boolean(request.saleCompletedAt && request.saleCompletedBidId === bid?.id);
+  return Boolean(request.saleCompletedAt && String(request.saleCompletedBidId || "") === String(bid?.id || ""));
 }
 
 function getFilteredSellerRequests() {
@@ -834,6 +899,7 @@ function renderRequests() {
     const safeDesiredBrand = escapeHTML(request.desiredBrand || "미선택");
     const safeQuoteNumber = escapeHTML(request.quoteNumber || "번호 없음");
     const safeRemaining = escapeHTML(getQuoteRemainingLabel(request));
+    const repeatNotice = getRepeatQuoteNotice(request);
     const expired = isQuoteExpired(request);
     const item = document.createElement("button");
     item.type = "button";
@@ -845,6 +911,7 @@ function renderRequests() {
       <span>구매 목적 ${safePurchasePurpose}</span>
       <span>원하는 브랜드 ${safeDesiredBrand}</span>
       <span>기존 견적 ${formatPrice(request.price)}</span>
+      ${repeatNotice ? `<span class="request-repeat">${escapeHTML(repeatNotice)}</span>` : ""}
       ${sellerBid ? `<span>내 제안 ${formatPrice(sellerBid.price)}</span>` : ""}
       ${isSelectedByCustomer ? `<span class="request-badge">선택받음</span>` : ""}
       ${isSaleCompleted ? `<span class="request-badge done">판매완료</span>` : ""}
@@ -946,7 +1013,8 @@ function renderBidCards(request) {
   return rows
     .map((bid, index) => {
       const saving = Math.max(0, request.price - bid.price);
-      const isSelected = request.selectedBidId === bid.id;
+      const isSelected = String(request.selectedBidId || "") === String(bid.id);
+      const isContactReleased = isBidContactReleased(request, bid);
       const isLockedBySelection = Boolean(request.selectedBidId);
       const isSaleCompleted = isSaleCompletedForBid(request, bid);
       const sellerDisplayName = formatSellerDisplayName(bid.channel, bid.branch) || bid.seller;
@@ -966,7 +1034,7 @@ function renderBidCards(request) {
         <article class="seller-bid-card${isSelected ? " is-selected" : ""}">
           <div class="bid-card-visual">
             <button class="heart-btn" type="button" aria-label="관심 제안">♡</button>
-            <div class="bid-card-thumb${isSelected ? "" : " is-private-card"}">
+            <div class="bid-card-thumb${isContactReleased ? "" : " is-private-card"}">
               ${
                 bid.cardImage
                   ? `<img src="${bid.cardImage}" alt="${safeSeller} 매니저 명함" />`
@@ -976,7 +1044,7 @@ function renderBidCards(request) {
                       <small>${safePhone}</small>
                     </div>`
               }
-              ${isSelected ? "" : `<div class="private-card-overlay">선택 후 명함 공개</div>`}
+              ${isContactReleased ? "" : `<div class="private-card-overlay">선택 후 명함 공개</div>`}
             </div>
           </div>
           <div class="bid-card-body">
@@ -1161,6 +1229,7 @@ async function createCustomerRequest(formData) {
 function openBidSelectConfirmModal(request, bid) {
   const sellerDisplayName = formatSellerDisplayName(bid.channel, bid.branch) || bid.seller;
   const managerDisplayName = formatManagerDisplayName(bid.manager, bid.managerPosition);
+  const rankInfo = getBidRankInfo(request, bid);
   pendingBidSelection = {
     requestId: request.id,
     bidId: bid.id,
@@ -1168,8 +1237,11 @@ function openBidSelectConfirmModal(request, bid) {
   bidSelectConfirmSummary.innerHTML = `
     <div><span>선택 견적</span><strong>${escapeHTML(sellerDisplayName)}</strong></div>
     <div><span>담당</span><strong>${escapeHTML(managerDisplayName)}</strong></div>
+    <div><span>현재 순위</span><strong>${rankInfo.rank ? `${rankInfo.rank}위 / ${rankInfo.total}개 제안` : "순위 확인중"}</strong></div>
     <div><span>제안 금액</span><strong>${formatPrice(bid.price)}</strong></div>
   `;
+  const selectedScopeInput = document.querySelector("input[name='contactReleaseScope'][value='selected']");
+  if (selectedScopeInput) selectedScopeInput.checked = true;
   bidSelectConfirmModal.hidden = false;
 }
 
@@ -1179,7 +1251,7 @@ function closeBidSelectConfirmModal() {
   bidSelectConfirmSummary.innerHTML = "";
 }
 
-function confirmBidSelection() {
+async function confirmBidSelection() {
   if (!pendingBidSelection) return;
 
   const request = requests.find((item) => item.id === pendingBidSelection.requestId);
@@ -1195,7 +1267,29 @@ function confirmBidSelection() {
     return;
   }
 
-  request.selectedBidId = bid.id;
+  const scope = document.querySelector("input[name='contactReleaseScope']:checked")?.value === "top3" ? "top3" : "selected";
+  let savedRequest = null;
+  if (canUseApiServer()) {
+    const serverResult = await selectBidOnServer(request, bid, scope);
+    if (!serverResult?.ok || !serverResult.row) {
+      setConsentMessage(serverResult?.message || "견적 선택을 저장하지 못했습니다.");
+      closeBidSelectConfirmModal();
+      return;
+    }
+    savedRequest = serverResult.row;
+  }
+
+  if (savedRequest) {
+    Object.assign(request, savedRequest);
+  } else {
+    const releasedBidIds =
+      scope === "top3"
+        ? Array.from(new Set([...getBidsForRequest(request.id).slice(0, 3).map((item) => item.id), bid.id]))
+        : [bid.id];
+    request.selectedBidId = bid.id;
+    request.contactReleaseScope = scope;
+    request.contactReleasedBidIds = releasedBidIds;
+  }
   selectedRequestId = request.id;
   closeBidSelectConfirmModal();
   renderLookupResults([request]);
@@ -1605,6 +1699,7 @@ lookupForm.addEventListener("submit", async (event) => {
   const customer = normalizeName(formData.get("lookupCustomer"));
   const phone = normalizePhone(formData.get("lookupPhone"));
   const serverMatches = canUseApiServer() ? await lookupCustomerQuotesFromServer(formData.get("lookupCustomer").trim(), phone) : [];
+  if (serverMatches.length && canUseApiServer()) await syncBidsFromServer();
   const matches = serverMatches.length
     ? serverMatches
     : requests.filter((request) => {
@@ -1634,8 +1729,8 @@ lookupResults.addEventListener("click", (event) => {
   const bid = bids.find((item) => item.id === Number(button.dataset.bidId));
   if (!request) return;
   if (!bid) return;
-  if (request.selectedBidId && request.selectedBidId !== bid.id) return;
-  if (request.selectedBidId === bid.id) return;
+  if (request.selectedBidId && String(request.selectedBidId) !== String(bid.id)) return;
+  if (String(request.selectedBidId || "") === String(bid.id)) return;
 
   openBidSelectConfirmModal(request, bid);
 });
@@ -1647,7 +1742,7 @@ lookupResults.addEventListener("submit", (event) => {
 
   const request = requests.find((item) => item.id === Number(form.dataset.requestId));
   const bid = bids.find((item) => item.id === Number(form.dataset.bidId));
-  if (!request || !bid || request.selectedBidId !== bid.id) return;
+  if (!request || !bid || String(request.selectedBidId || "") !== String(bid.id)) return;
 
   const formData = new FormData(form);
   const content = formData.get("content").trim();
@@ -1705,6 +1800,7 @@ sellerLoginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   await syncApprovedSellersFromServer();
   await syncCustomerQuotesFromServer();
+  await syncBidsFromServer();
   hydrateApprovedSellerAccounts();
   const formData = new FormData(sellerLoginForm);
   const loginId = formData.get("loginId").trim();
@@ -1729,7 +1825,7 @@ sellerLoginForm.addEventListener("submit", async (event) => {
   setView("seller");
 });
 
-bidForm.addEventListener("submit", (event) => {
+bidForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (!selectedRequestId) return;
 
@@ -1771,15 +1867,30 @@ bidForm.addEventListener("submit", (event) => {
     cardImage: account?.cardImage || "",
   };
 
+  const localBid = existingBid || {
+    id: `bid-${Date.now()}`,
+    requestId: selectedRequestId,
+    sellerId: activeSellerId,
+  };
+  const bidPayload = {
+    ...localBid,
+    ...nextBid,
+  };
+
+  let savedBid = bidPayload;
+  if (canUseApiServer()) {
+    const serverResult = await saveBidToServer(bidPayload);
+    if (!serverResult?.ok || !serverResult.row) {
+      setBidFormMessage(serverResult?.message || "제안을 서버에 저장하지 못했습니다.", "error");
+      return;
+    }
+    savedBid = serverResult.row;
+  }
+
   if (existingBid) {
-    Object.assign(existingBid, nextBid);
+    Object.assign(existingBid, savedBid);
   } else {
-    bids.push({
-      id: Date.now(),
-      requestId: selectedRequestId,
-      sellerId: activeSellerId,
-      ...nextBid,
-    });
+    bids.push(savedBid);
   }
 
   bidForm.reset();
@@ -2109,6 +2220,12 @@ renderSelectedRequest = function renderSelectedRequestClean() {
   const activeSellerBid = getActiveSellerBid(request);
   const isSelectedSeller = canActiveSellerSeeCustomerPhone(request);
   const isSaleCompleted = isSaleCompletedForBid(request, activeSellerBid);
+  const repeatNotice = getRepeatQuoteNotice(request);
+  const rankInfo = activeSellerBid ? getBidRankInfo(request, activeSellerBid) : null;
+  const rankNotice =
+    expired && rankInfo?.rank
+      ? `견적 제안 가능 시간이 종료되었습니다. 최저가는 ${formatPrice(rankInfo.lowestPrice)}이며 내 제안은 ${rankInfo.rank}위입니다.`
+      : "";
 
   selectedStatus.textContent = isSaleCompleted ? "판매완료" : isSelectedSeller ? "선택받음" : expired ? "견적 마감" : "응답 가능";
   selectedTitle.textContent = request.items;
@@ -2121,6 +2238,8 @@ renderSelectedRequest = function renderSelectedRequestClean() {
       <div><span>설치 지역</span><strong>${safeRegion}</strong></div>
       <div><span>기존 견적</span><strong>${formatPrice(request.price)}</strong></div>
       <div><span>견적 가능 시간</span><strong class="${expired ? "deadline-expired" : "deadline-live"}">${safeRemaining}</strong></div>
+      ${repeatNotice ? `<div><span>재등록 안내</span><strong>${escapeHTML(repeatNotice)}</strong></div>` : ""}
+      ${rankNotice ? `<div><span>마감 결과</span><strong>${escapeHTML(rankNotice)}</strong></div>` : ""}
     </div>
     <div class="seller-request-note">
       <span>요청사항</span>
