@@ -1372,7 +1372,8 @@ document.querySelectorAll("input, textarea").forEach((field) => {
 });
 
 navButtons.forEach((button) => {
-  button.addEventListener("click", () => {
+  button.addEventListener("click", (event) => {
+    event.preventDefault();
     setView(button.dataset.view);
   });
 });
