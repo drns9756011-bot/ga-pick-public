@@ -50,6 +50,13 @@ function normalizePhone(value) {
   return String(value || "").replace(/[^0-9]/g, "");
 }
 
+function formatAlimtalkPrice(value) {
+  const amount = Number(value || 0);
+  if (!amount) return "";
+  if (amount >= 10000) return `${amount.toLocaleString("ko-KR")}원`;
+  return `${amount.toLocaleString("ko-KR")}만원`;
+}
+
 function normalizeSellerApplication(row) {
   if (!row) return null;
   return {
@@ -468,9 +475,26 @@ function canSendSolapi(env, message, templateId) {
   );
 }
 
+function getSolapiMissingKeys(env, message, templateId) {
+  return [
+    ["SOLAPI_API_KEY", env.SOLAPI_API_KEY],
+    ["SOLAPI_API_SECRET", env.SOLAPI_API_SECRET],
+    ["SOLAPI_CHANNEL_ID", env.SOLAPI_CHANNEL_ID],
+    ["SOLAPI_FROM", env.SOLAPI_FROM],
+    ["templateId", templateId],
+    ["targetPhone", normalizePhone(message.targetPhone)],
+  ]
+    .filter(([, value]) => !value)
+    .map(([key]) => key);
+}
+
 async function sendSolapiAlimtalk(env, message, templateId) {
   if (!canSendSolapi(env, message, templateId)) {
-    return { ok: false, skipped: true, error: "솔라피 환경변수 또는 수신번호가 설정되지 않았습니다." };
+    return {
+      ok: false,
+      skipped: true,
+      error: `솔라피 설정 누락: ${getSolapiMissingKeys(env, message, templateId).join(", ")}`,
+    };
   }
 
   const date = new Date().toISOString();
@@ -1010,7 +1034,7 @@ async function upsertBid(env, request) {
       variables: {
         "#{고객명}": quote.customer,
         "#{견적번호}": quote.quote_number,
-        "#{제안금액}": `${Number(body.price || 0).toLocaleString("ko-KR")}만원`,
+        "#{제안금액}": formatAlimtalkPrice(body.price),
       },
     });
   }
@@ -1169,6 +1193,36 @@ async function saveGuideDismissal(env, request) {
   return json({ ok: true, dismissed: true, dismissDate });
 }
 
+function getSolapiHealth(env) {
+  const templates = {
+    customerQuoteReceived: env.SOLAPI_TEMPLATE_CUSTOMER_QUOTE_RECEIVED || "",
+    customerQuoteClosed: env.SOLAPI_TEMPLATE_CUSTOMER_QUOTE_CLOSED || "",
+    customerBidReceived: env.SOLAPI_TEMPLATE_CUSTOMER_BID_RECEIVED || "",
+    adminSellerApplication: env.SOLAPI_TEMPLATE_ADMIN_SELLER_APPLICATION || "",
+    sellerBidSelected: env.SOLAPI_TEMPLATE_SELLER_BID_SELECTED || "",
+  };
+  return json({
+    ok: true,
+    hasApiKey: Boolean(env.SOLAPI_API_KEY),
+    hasApiSecret: Boolean(env.SOLAPI_API_SECRET),
+    hasChannelId: Boolean(env.SOLAPI_CHANNEL_ID),
+    hasFrom: Boolean(env.SOLAPI_FROM),
+    hasAdminPhone: Boolean(env.SOLAPI_ADMIN_PHONE),
+    templates,
+    missing: [
+      !env.SOLAPI_API_KEY && "SOLAPI_API_KEY",
+      !env.SOLAPI_API_SECRET && "SOLAPI_API_SECRET",
+      !env.SOLAPI_CHANNEL_ID && "SOLAPI_CHANNEL_ID",
+      !env.SOLAPI_FROM && "SOLAPI_FROM",
+      !templates.customerQuoteReceived && "SOLAPI_TEMPLATE_CUSTOMER_QUOTE_RECEIVED",
+      !templates.customerQuoteClosed && "SOLAPI_TEMPLATE_CUSTOMER_QUOTE_CLOSED",
+      !templates.customerBidReceived && "SOLAPI_TEMPLATE_CUSTOMER_BID_RECEIVED",
+      !templates.adminSellerApplication && "SOLAPI_TEMPLATE_ADMIN_SELLER_APPLICATION",
+      !templates.sellerBidSelected && "SOLAPI_TEMPLATE_SELLER_BID_SELECTED",
+    ].filter(Boolean),
+  });
+}
+
 export async function onRequest(context) {
   const { request, env, params } = context;
   const pathParts = Array.isArray(params.path) ? params.path : [];
@@ -1194,6 +1248,7 @@ export async function onRequest(context) {
 
   if (path === "guide-dismissal" && method === "GET") return getGuideDismissal(env, request);
   if (path === "guide-dismissal" && method === "POST") return saveGuideDismissal(env, request);
+  if (path === "solapi-health" && method === "GET") return getSolapiHealth(env);
 
   if (path === "alimtalk" && method === "GET") return getAlimtalk(env);
   if (path === "alimtalk" && method === "POST") return createAlimtalk(env, request);
