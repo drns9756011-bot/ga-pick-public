@@ -180,6 +180,7 @@ function normalizeMessage(row) {
     solapiGroupId: row.solapi_group_id || "",
     solapiMessageId: row.solapi_message_id || "",
     errorMessage: row.error_message || "",
+    solapiResponse: parseJson(row.solapi_response_json, null),
     createdAt: row.created_at || "",
     sentAt: row.sent_at || "",
     canceledAt: row.canceled_at || "",
@@ -193,6 +194,7 @@ async function ensureAlimtalkColumns(env) {
     "ALTER TABLE alimtalk_queue ADD COLUMN solapi_group_id TEXT DEFAULT ''",
     "ALTER TABLE alimtalk_queue ADD COLUMN solapi_message_id TEXT DEFAULT ''",
     "ALTER TABLE alimtalk_queue ADD COLUMN error_message TEXT DEFAULT ''",
+    "ALTER TABLE alimtalk_queue ADD COLUMN solapi_response_json TEXT DEFAULT ''",
   ];
 
   for (const statement of statements) {
@@ -569,9 +571,9 @@ async function sendSolapiAlimtalk(env, message, templateId) {
     body: JSON.stringify({
       messages: [
         {
+          type: "ATA",
           to: normalizePhone(message.targetPhone),
           from: normalizePhone(env.SOLAPI_FROM),
-          text: message.body || message.title || "픽견적 알림입니다.",
           kakaoOptions: {
             pfId: env.SOLAPI_CHANNEL_ID,
             templateId,
@@ -597,6 +599,19 @@ async function sendSolapiAlimtalk(env, message, templateId) {
   }
 
   const firstMessage = payload.messageList?.[0] || payload.messages?.[0] || {};
+  const failedCount = Number(payload.groupInfo?.failedCount || payload.failedCount || 0);
+  const firstError = firstMessage.errorMessage || firstMessage.errorCode || firstMessage.reason || "";
+  if (failedCount > 0 || firstError) {
+    return {
+      ok: false,
+      status: response.status,
+      error: firstError || "솔라피에서 발송 실패 응답을 반환했습니다.",
+      payload,
+      groupId: payload.groupInfo?.groupId || payload.groupId || "",
+      messageId: firstMessage.messageId || firstMessage.message_id || "",
+    };
+  }
+
   return {
     ok: true,
     payload,
@@ -614,9 +629,9 @@ async function queueAlimtalk(env, message) {
   await env.DB.prepare(
     `INSERT INTO alimtalk_queue
       (id, status, type, target_role, target_name, target_phone, title, body, related_id,
-       template_id, variables_json, solapi_group_id, solapi_message_id, error_message,
+       template_id, variables_json, solapi_group_id, solapi_message_id, error_message, solapi_response_json,
        created_at, sent_at, canceled_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   )
     .bind(
       id,
@@ -630,6 +645,7 @@ async function queueAlimtalk(env, message) {
       message.relatedId || "",
       templateId,
       variablesJson,
+      "",
       "",
       "",
       "",
@@ -651,7 +667,7 @@ async function queueAlimtalk(env, message) {
   const sentAt = result.ok ? new Date().toISOString() : "";
   await env.DB.prepare(
     `UPDATE alimtalk_queue
-     SET status = ?, sent_at = ?, solapi_group_id = ?, solapi_message_id = ?, error_message = ?
+     SET status = ?, sent_at = ?, solapi_group_id = ?, solapi_message_id = ?, error_message = ?, solapi_response_json = ?
      WHERE id = ?`
   )
     .bind(
@@ -660,6 +676,7 @@ async function queueAlimtalk(env, message) {
       result.groupId || "",
       result.messageId || "",
       result.error || "",
+      JSON.stringify(result.payload || {}),
       id
     )
     .run();

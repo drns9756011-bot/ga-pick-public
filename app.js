@@ -714,7 +714,11 @@ function getSellerBrandValue(request) {
 }
 
 function getSelectedBid(request) {
-  return bids.find((bid) => String(bid.id) === String(request.selectedBidId)) || null;
+  return bids.find((bid) => sameId(bid.id, request.selectedBidId)) || null;
+}
+
+function hasValidSelectedBid(request) {
+  return Boolean(request?.selectedBidId && getSelectedBid(request));
 }
 
 function isSaleCompletedForBid(request, bid) {
@@ -1017,9 +1021,9 @@ function renderBidCards(request) {
   return rows
     .map((bid, index) => {
       const saving = Math.max(0, request.price - bid.price);
-      const isSelected = String(request.selectedBidId || "") === String(bid.id);
+      const isSelected = sameId(request.selectedBidId, bid.id);
       const isContactReleased = isBidContactReleased(request, bid);
-      const isLockedBySelection = Boolean(request.selectedBidId);
+      const isLockedBySelection = hasValidSelectedBid(request);
       const isSaleCompleted = isSaleCompletedForBid(request, bid);
       const sellerDisplayName = formatSellerDisplayName(bid.channel, bid.branch) || bid.seller;
       const managerDisplayName = formatManagerDisplayName(bid.manager, bid.managerPosition);
@@ -1265,7 +1269,7 @@ async function confirmBidSelection() {
     return;
   }
 
-  if (request.selectedBidId && !sameId(request.selectedBidId, bid.id)) {
+  if (hasValidSelectedBid(request) && !sameId(request.selectedBidId, bid.id)) {
     closeBidSelectConfirmModal();
     renderLookupResults([request]);
     return;
@@ -1742,7 +1746,7 @@ lookupResults.addEventListener("click", (event) => {
   const bid = bids.find((item) => sameId(item.id, button.dataset.bidId));
   if (!request) return;
   if (!bid) return;
-  if (request.selectedBidId && !sameId(request.selectedBidId, bid.id)) return;
+  if (hasValidSelectedBid(request) && !sameId(request.selectedBidId, bid.id)) return;
   if (sameId(request.selectedBidId, bid.id)) return;
 
   openBidSelectConfirmModal(request, bid);

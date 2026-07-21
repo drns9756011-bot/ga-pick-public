@@ -1486,6 +1486,7 @@ select {
   color: var(--ink);
   text-align: center;
   font-weight: 900;
+  pointer-events: none;
 }
 
 .manager-card-placeholder {
