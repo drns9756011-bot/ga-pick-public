@@ -585,7 +585,15 @@ async function queueAlimtalk(env, message) {
     )
     .run();
 
-  const result = await sendSolapiAlimtalk(env, message, templateId);
+  let result;
+  try {
+    result = await sendSolapiAlimtalk(env, message, templateId);
+  } catch (error) {
+    result = {
+      ok: false,
+      error: error?.message || "솔라피 발송 처리 중 오류가 발생했습니다.",
+    };
+  }
   const sentAt = result.ok ? new Date().toISOString() : "";
   await env.DB.prepare(
     `UPDATE alimtalk_queue

@@ -164,6 +164,10 @@ function isQuoteExpired(request) {
   return Boolean(deadline && !Number.isNaN(deadline.getTime()) && deadline.getTime() <= Date.now());
 }
 
+function sameId(left, right) {
+  return String(left || "") === String(right || "");
+}
+
 function formatPhoneNumber(value) {
   const digits = normalizePhone(value).slice(0, 11);
 
@@ -1028,7 +1032,7 @@ function renderBidCards(request) {
         ? reviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / reviews.length
         : 0;
       const selectedReview = managerReviews.find(
-        (review) => review.requestId === request.id && review.bidId === bid.id
+        (review) => sameId(review.requestId, request.id) && sameId(review.bidId, bid.id)
       );
       return `
         <article class="seller-bid-card${isSelected ? " is-selected" : ""}">
@@ -1317,6 +1321,13 @@ function renderLookupResults(matches, label = "내 견적") {
       const safeRegion = escapeHTML(request.region);
       const safeQuoteNumber = escapeHTML(request.quoteNumber || "번호 없음");
       const safeMemo = escapeHTML(request.memo || "추가 요청사항 없음");
+      const expired = isQuoteExpired(request);
+      const safeRemaining = escapeHTML(getQuoteRemainingLabel(request));
+      const selectionState = request.selectedBidId
+        ? "선택 완료"
+        : expired
+          ? "견적 비교 마감"
+          : "선택 가능";
       return `
         <article class="lookup-card">
           <div class="preview-image lookup-image">
@@ -1332,6 +1343,8 @@ function renderLookupResults(matches, label = "내 견적") {
               <div><dt>구매 목적</dt><dd>${safePurchasePurpose}</dd></div>
               <div><dt>기존 견적</dt><dd>${formatPrice(request.price)}</dd></div>
               <div><dt>설치 지역</dt><dd>${safeRegion}</dd></div>
+              <div><dt>남은 시간</dt><dd class="${expired ? "deadline-expired" : "deadline-live"}">${safeRemaining}</dd></div>
+              <div><dt>선택 상태</dt><dd>${selectionState}</dd></div>
               <div><dt>요청사항</dt><dd>${safeMemo}</dd></div>
             </dl>
             <div class="bid-card-toolbar">
@@ -1725,8 +1738,8 @@ lookupResults.addEventListener("click", (event) => {
   const button = event.target.closest(".select-bid-btn");
   if (!button || button.disabled) return;
 
-  const request = requests.find((item) => item.id === Number(button.dataset.requestId));
-  const bid = bids.find((item) => item.id === Number(button.dataset.bidId));
+  const request = requests.find((item) => sameId(item.id, button.dataset.requestId));
+  const bid = bids.find((item) => sameId(item.id, button.dataset.bidId));
   if (!request) return;
   if (!bid) return;
   if (request.selectedBidId && String(request.selectedBidId) !== String(bid.id)) return;
@@ -1740,8 +1753,8 @@ lookupResults.addEventListener("submit", (event) => {
   if (!form) return;
   event.preventDefault();
 
-  const request = requests.find((item) => item.id === Number(form.dataset.requestId));
-  const bid = bids.find((item) => item.id === Number(form.dataset.bidId));
+  const request = requests.find((item) => sameId(item.id, form.dataset.requestId));
+  const bid = bids.find((item) => sameId(item.id, form.dataset.bidId));
   if (!request || !bid || String(request.selectedBidId || "") !== String(bid.id)) return;
 
   const formData = new FormData(form);
@@ -1750,7 +1763,7 @@ lookupResults.addEventListener("submit", (event) => {
   if (!content || !rating) return;
 
   const existingReview = managerReviews.find(
-    (review) => review.requestId === request.id && review.bidId === bid.id
+    (review) => sameId(review.requestId, request.id) && sameId(review.bidId, bid.id)
   );
   const nextReview = {
     id: existingReview?.id || Date.now(),
@@ -1778,7 +1791,7 @@ sellerQuoteWorkspace.addEventListener("click", (event) => {
   const button = event.target.closest(".sale-complete-btn");
   if (!button || button.disabled) return;
 
-  const request = requests.find((item) => item.id === Number(button.dataset.requestId));
+  const request = requests.find((item) => sameId(item.id, button.dataset.requestId));
   const selectedBid = request ? getSelectedBid(request) : null;
   if (!request || !selectedBid || selectedBid.sellerId !== activeSellerId) {
     setBidFormMessage("선택받은 견적만 판매완료 처리할 수 있습니다.", "error");
