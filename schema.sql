@@ -88,6 +88,11 @@ CREATE TABLE IF NOT EXISTS customer_quotes (
   previous_lowest_price INTEGER DEFAULT 0,
   rank_notice_queued_at TEXT DEFAULT '',
   sale_completed_at TEXT DEFAULT '',
+  thumbnail_image TEXT DEFAULT '',
+  thumbnail_image_key TEXT DEFAULT '',
+  quote_expires_at TEXT DEFAULT '',
+  full_images_expires_at TEXT DEFAULT '',
+  personal_expires_at TEXT DEFAULT '',
   created_at TEXT NOT NULL,
   consent_json TEXT DEFAULT '{}'
 );
@@ -100,7 +105,9 @@ CREATE TABLE IF NOT EXISTS quote_images (
   quote_id TEXT NOT NULL,
   object_key TEXT NOT NULL,
   url TEXT NOT NULL,
+  image_type TEXT DEFAULT 'full',
   sort_order INTEGER NOT NULL DEFAULT 0,
+  expires_at TEXT DEFAULT '',
   created_at TEXT NOT NULL,
   FOREIGN KEY (quote_id) REFERENCES customer_quotes(id)
 );

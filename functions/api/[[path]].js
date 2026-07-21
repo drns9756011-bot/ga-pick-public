@@ -25,6 +25,10 @@ function todayKey() {
   }).format(new Date());
 }
 
+function quoteDateKey() {
+  return todayKey().replace(/-/g, "");
+}
+
 function getClientIp(request) {
   return (
     request.headers.get("CF-Connecting-IP") ||
@@ -122,6 +126,7 @@ const MASTER_SELLER = {
 };
 
 async function ensureMasterSeller(env) {
+  await ensureSellerColumns(env);
   const now = new Date().toISOString();
   const existing = await env.DB.prepare("SELECT id FROM approved_sellers WHERE seller_id = ? LIMIT 1")
     .bind(MASTER_SELLER.sellerId)
@@ -190,15 +195,13 @@ async function ensureAlimtalkColumns(env) {
     "ALTER TABLE alimtalk_queue ADD COLUMN error_message TEXT DEFAULT ''",
   ];
 
-  await Promise.all(
-    statements.map(async (statement) => {
-      try {
-        await env.DB.prepare(statement).run();
-      } catch (error) {
-        // Column already exists on databases that were migrated earlier.
-      }
-    })
-  );
+  for (const statement of statements) {
+    try {
+      await env.DB.prepare(statement).run();
+    } catch (error) {
+      // Column already exists on databases that were migrated earlier.
+    }
+  }
 }
 
 function addDays(date, days) {
@@ -289,19 +292,70 @@ async function ensureCustomerQuoteColumns(env) {
     "ALTER TABLE customer_quotes ADD COLUMN submission_count INTEGER DEFAULT 1",
     "ALTER TABLE customer_quotes ADD COLUMN previous_lowest_price INTEGER DEFAULT 0",
     "ALTER TABLE customer_quotes ADD COLUMN rank_notice_queued_at TEXT DEFAULT ''",
+    "ALTER TABLE customer_quotes ADD COLUMN sale_completed_at TEXT DEFAULT ''",
     "ALTER TABLE quote_images ADD COLUMN image_type TEXT DEFAULT 'full'",
     "ALTER TABLE quote_images ADD COLUMN expires_at TEXT DEFAULT ''",
   ];
 
-  await Promise.all(
-    statements.map(async (statement) => {
-      try {
-        await env.DB.prepare(statement).run();
-      } catch (error) {
-        // Column already exists on databases that were migrated earlier.
-      }
-    })
-  );
+  for (const statement of statements) {
+    try {
+      await env.DB.prepare(statement).run();
+    } catch (error) {
+      // Column already exists on databases that were migrated earlier.
+    }
+  }
+}
+
+async function ensureSellerColumns(env) {
+  const statements = [
+    "ALTER TABLE seller_applications ADD COLUMN reviewed_at TEXT DEFAULT ''",
+    "ALTER TABLE seller_applications ADD COLUMN review_memo TEXT DEFAULT ''",
+    "ALTER TABLE seller_applications ADD COLUMN password TEXT DEFAULT ''",
+    "ALTER TABLE seller_applications ADD COLUMN channel TEXT DEFAULT ''",
+    "ALTER TABLE seller_applications ADD COLUMN branch_region TEXT DEFAULT ''",
+    "ALTER TABLE seller_applications ADD COLUMN manager_position TEXT DEFAULT ''",
+    "ALTER TABLE seller_applications ADD COLUMN card_image TEXT DEFAULT ''",
+    "ALTER TABLE seller_applications ADD COLUMN card_image_key TEXT DEFAULT ''",
+    "ALTER TABLE seller_applications ADD COLUMN memo TEXT DEFAULT ''",
+    "ALTER TABLE seller_applications ADD COLUMN consent_json TEXT DEFAULT '{}'",
+    "ALTER TABLE approved_sellers ADD COLUMN branch_region TEXT DEFAULT ''",
+    "ALTER TABLE approved_sellers ADD COLUMN manager_position TEXT DEFAULT ''",
+    "ALTER TABLE approved_sellers ADD COLUMN card_image TEXT DEFAULT ''",
+    "ALTER TABLE approved_sellers ADD COLUMN card_image_key TEXT DEFAULT ''",
+    "ALTER TABLE approved_sellers ADD COLUMN memo TEXT DEFAULT ''",
+    "ALTER TABLE approved_sellers ADD COLUMN consent_json TEXT DEFAULT '{}'",
+    "ALTER TABLE approved_sellers ADD COLUMN requested_at TEXT DEFAULT ''",
+    "ALTER TABLE approved_sellers ADD COLUMN reviewed_at TEXT DEFAULT ''",
+    "ALTER TABLE approved_sellers ADD COLUMN review_memo TEXT DEFAULT ''",
+  ];
+
+  for (const statement of statements) {
+    try {
+      await env.DB.prepare(statement).run();
+    } catch (error) {
+      // Column already exists on databases that were migrated earlier.
+    }
+  }
+}
+
+async function createUniqueQuoteNumber(env, preferred) {
+  const requested = String(preferred || "").trim();
+  if (requested) {
+    const duplicate = await env.DB.prepare("SELECT id FROM customer_quotes WHERE quote_number = ? LIMIT 1")
+      .bind(requested)
+      .first();
+    if (!duplicate) return requested;
+  }
+
+  const match = requested.match(/^(\d{8})-\d{4}$/);
+  const dateKey = match?.[1] || quoteDateKey();
+  const result = await env.DB.prepare(
+    "SELECT quote_number FROM customer_quotes WHERE quote_number LIKE ? ORDER BY quote_number DESC LIMIT 1"
+  )
+    .bind(`${dateKey}-%`)
+    .first();
+  const lastSequence = Number(String(result?.quote_number || "").split("-")[1] || 0);
+  return `${dateKey}-${String(lastSequence + 1).padStart(4, "0")}`;
 }
 
 async function getPreviousQuoteStats(env, customer, phone) {
@@ -614,11 +668,13 @@ async function queueAlimtalk(env, message) {
 }
 
 async function getSellerApplications(env) {
+  await ensureSellerColumns(env);
   const result = await env.DB.prepare("SELECT * FROM seller_applications ORDER BY requested_at DESC").all();
   return json({ ok: true, rows: result.results.map(normalizeSellerApplication) });
 }
 
 async function createSellerApplication(env, request) {
+  await ensureSellerColumns(env);
   const body = await request.json();
   if (!body.sellerId || !body.branch || !body.manager || !body.phone) {
     return json({ ok: false, message: "판매자 아이디, 지점명, 매니저 이름, 연락처가 필요합니다." }, 400);
@@ -678,6 +734,7 @@ async function createSellerApplication(env, request) {
     targetPhone: env.SOLAPI_ADMIN_PHONE || env.SOLAPI_FROM || "",
     title: "판매자 등록 요청이 접수되었습니다",
     body: `${sellerName(row)} ${row.manager} 매니저의 판매자 등록 요청이 접수되었습니다.`,
+    relatedId: row.id,
     variables: {
       "#{채널}": row.channel,
       "#{지점명}": row.branch,
@@ -690,6 +747,7 @@ async function createSellerApplication(env, request) {
 }
 
 async function updateSellerApplication(env, request, id) {
+  await ensureSellerColumns(env);
   const body = await request.json();
   const row = normalizeSellerApplication(
     await env.DB.prepare("SELECT * FROM seller_applications WHERE id = ?").bind(id).first()
@@ -770,6 +828,7 @@ async function updateSellerApplication(env, request, id) {
 }
 
 async function getApprovedSellers(env) {
+  await ensureSellerColumns(env);
   await ensureMasterSeller(env);
   const result = await env.DB.prepare("SELECT * FROM approved_sellers ORDER BY approved_at DESC").all();
   return json({ ok: true, rows: result.results.map(normalizeApprovedSeller) });
@@ -849,6 +908,7 @@ async function createCustomerQuote(env, request) {
 
   const id = body.id || createId("quote");
   const createdAt = body.createdAt || new Date().toISOString();
+  const quoteNumber = await createUniqueQuoteNumber(env, body.quoteNumber);
   const quoteExpiresAt = addHours(createdAt, 48);
   const fullImagesExpiresAt = addDays(createdAt, 7);
   const personalExpiresAt = addDays(createdAt, 365);
@@ -869,7 +929,7 @@ async function createCustomerQuote(env, request) {
   )
     .bind(
       id,
-      body.quoteNumber,
+      quoteNumber,
       body.customer,
       body.phone,
       body.items,
@@ -929,10 +989,10 @@ async function createCustomerQuote(env, request) {
     targetPhone: body.phone,
     relatedId: id,
     title: "견적 요청이 접수되었습니다",
-    body: `${body.customer} 고객님의 견적 요청이 정상 접수되었습니다. 견적번호: ${body.quoteNumber}`,
+    body: `${body.customer} 고객님의 견적 요청이 정상 접수되었습니다. 견적번호: ${quoteNumber}`,
     variables: {
       "#{고객명}": body.customer,
-      "#{견적번호}": body.quoteNumber,
+      "#{견적번호}": quoteNumber,
     },
   });
 

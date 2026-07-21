@@ -1258,14 +1258,14 @@ function closeBidSelectConfirmModal() {
 async function confirmBidSelection() {
   if (!pendingBidSelection) return;
 
-  const request = requests.find((item) => item.id === pendingBidSelection.requestId);
-  const bid = bids.find((item) => item.id === pendingBidSelection.bidId);
+  const request = requests.find((item) => sameId(item.id, pendingBidSelection.requestId));
+  const bid = bids.find((item) => sameId(item.id, pendingBidSelection.bidId));
   if (!request || !bid) {
     closeBidSelectConfirmModal();
     return;
   }
 
-  if (request.selectedBidId && request.selectedBidId !== bid.id) {
+  if (request.selectedBidId && !sameId(request.selectedBidId, bid.id)) {
     closeBidSelectConfirmModal();
     renderLookupResults([request]);
     return;
@@ -1742,8 +1742,8 @@ lookupResults.addEventListener("click", (event) => {
   const bid = bids.find((item) => sameId(item.id, button.dataset.bidId));
   if (!request) return;
   if (!bid) return;
-  if (request.selectedBidId && String(request.selectedBidId) !== String(bid.id)) return;
-  if (String(request.selectedBidId || "") === String(bid.id)) return;
+  if (request.selectedBidId && !sameId(request.selectedBidId, bid.id)) return;
+  if (sameId(request.selectedBidId, bid.id)) return;
 
   openBidSelectConfirmModal(request, bid);
 });
