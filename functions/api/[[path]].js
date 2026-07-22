@@ -220,6 +220,8 @@ function addHours(date, hours) {
 
 function normalizeCustomerQuote(row, images = []) {
   if (!row) return null;
+  const fullImages = images.filter((image) => image.image_type !== "thumbnail");
+  const displayImages = fullImages.length ? fullImages : row.thumbnail_image ? [{ url: row.thumbnail_image }] : [];
   return {
     id: row.id,
     quoteNumber: row.quote_number,
@@ -246,8 +248,8 @@ function normalizeCustomerQuote(row, images = []) {
     personalExpiresAt: row.personal_expires_at || "",
     createdAt: row.created_at || "",
     consent: parseJson(row.consent_json, {}),
-    image: images[0]?.url || row.thumbnail_image || "",
-    images: images.length ? images.map((image) => image.url) : row.thumbnail_image ? [row.thumbnail_image] : [],
+    image: displayImages[0]?.url || row.thumbnail_image || "",
+    images: displayImages.map((image) => image.url),
   };
 }
 
@@ -515,6 +517,7 @@ function getSolapiTemplateId(env, type) {
       "customer-bid-received": env.SOLAPI_TEMPLATE_CUSTOMER_BID_RECEIVED,
       "customer-quote-closed": env.SOLAPI_TEMPLATE_CUSTOMER_QUOTE_CLOSED,
       "seller-bid-selected": env.SOLAPI_TEMPLATE_SELLER_BID_SELECTED,
+      "seller-approved": env.SOLAPI_TEMPLATE_SELLER_APPROVED,
       "seller-application-received": env.SOLAPI_TEMPLATE_ADMIN_SELLER_APPLICATION,
     }[type] || ""
   );
@@ -1285,6 +1288,7 @@ function getSolapiHealth(env) {
     customerBidReceived: env.SOLAPI_TEMPLATE_CUSTOMER_BID_RECEIVED || "",
     adminSellerApplication: env.SOLAPI_TEMPLATE_ADMIN_SELLER_APPLICATION || "",
     sellerBidSelected: env.SOLAPI_TEMPLATE_SELLER_BID_SELECTED || "",
+    sellerApproved: env.SOLAPI_TEMPLATE_SELLER_APPROVED || "",
   };
   return json({
     ok: true,
@@ -1304,6 +1308,7 @@ function getSolapiHealth(env) {
       !templates.customerBidReceived && "SOLAPI_TEMPLATE_CUSTOMER_BID_RECEIVED",
       !templates.adminSellerApplication && "SOLAPI_TEMPLATE_ADMIN_SELLER_APPLICATION",
       !templates.sellerBidSelected && "SOLAPI_TEMPLATE_SELLER_BID_SELECTED",
+      !templates.sellerApproved && "SOLAPI_TEMPLATE_SELLER_APPROVED",
     ].filter(Boolean),
   });
 }
