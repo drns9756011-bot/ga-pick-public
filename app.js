@@ -1968,63 +1968,67 @@ sellerRegisterForm.addEventListener("submit", async (event) => {
   sellerRegisterTitle.textContent = "판매자 등록 요청을 저장 중입니다.";
   sellerRegisterMeta.textContent = "잠시만 기다려주세요. 정상 저장 후 관리자 페이지에서 확인할 수 있습니다.";
 
-  const application = {
-    id: `seller-${Date.now()}`,
-    status: "pending",
-    requestedAt: new Date().toISOString(),
-    reviewedAt: "",
-    reviewMemo: "",
-    sellerId,
-    password: sellerPassword,
-    channel: sellerChannel,
-    branch,
-    branchRegion,
-    manager,
-    managerPosition,
-    phone: sellerPhone,
-    cardImage: businessCardImage,
-    consent: {
-      privacyUse: true,
-      customerDisclosure: true,
-      agreedAt: new Date().toISOString(),
-    },
-    memo: sellerMemo,
-  };
+  try {
+    const application = {
+      id: `seller-${Date.now()}`,
+      status: "pending",
+      requestedAt: new Date().toISOString(),
+      reviewedAt: "",
+      reviewMemo: "",
+      sellerId,
+      password: sellerPassword,
+      channel: sellerChannel,
+      branch,
+      branchRegion,
+      manager,
+      managerPosition,
+      phone: sellerPhone,
+      cardImage: businessCardImage,
+      consent: {
+        privacyUse: true,
+        customerDisclosure: true,
+        agreedAt: new Date().toISOString(),
+      },
+      memo: sellerMemo,
+    };
 
-  const serverResult = await saveSellerApplicationToServer(application);
+    const serverResult = await saveSellerApplicationToServer(application);
 
-  if (canUseApiServer() && !serverResult?.ok) {
+    if (canUseApiServer() && !serverResult?.ok) {
+      sellerRegisterTitle.textContent = "판매자 등록 요청을 저장하지 못했습니다.";
+      sellerRegisterMeta.textContent =
+        serverResult?.message || "잠시 후 다시 시도해주세요. 문제가 계속되면 운영자에게 문의해주세요.";
+      return;
+    }
+
+    const savedApplication = serverResult?.row || application;
+    const applications = getSellerApplications().filter((item) => item.id !== savedApplication.id);
+    applications.unshift(savedApplication);
+    setSellerApplications(applications);
+
+    sellerRegisterForm.reset();
+    businessCardImage = "";
+    businessCardPreview.innerHTML = "";
+    sellerRegisterTitle.textContent = "정상적으로 완료되었습니다.";
+    sellerRegisterMeta.textContent = `${formatSellerDisplayName(sellerChannel, branch)} 등록 요청이 저장되었습니다. 관리자 검토 후 승인 또는 반려 안내가 진행됩니다.`;
+    if (sellerMailPreview) {
+      sellerMailPreview.textContent = "";
+      sellerMailPreview.hidden = true;
+    }
+    if (sellerAdminReviewLink) sellerAdminReviewLink.hidden = true;
+    if (sellerMailLink) sellerMailLink.hidden = true;
+    if (sellerMailPanel) sellerMailPanel.hidden = true;
+    showSellerRegisterCompleteModal();
+  } catch (error) {
+    console.warn("판매자 등록 처리 중 오류가 발생했습니다.", error);
+    sellerRegisterTitle.textContent = "판매자 등록 요청을 처리하지 못했습니다.";
+    sellerRegisterMeta.textContent = "잠시 후 다시 시도해주세요. 문제가 계속되면 운영자에게 문의해주세요.";
+  } finally {
     if (submitButton) {
       submitButton.disabled = false;
       submitButton.textContent = originalSubmitText;
     }
-    sellerRegisterTitle.textContent = "판매자 등록 요청을 저장하지 못했습니다.";
-    sellerRegisterMeta.textContent = serverResult?.message || "잠시 후 다시 시도해주세요. 문제가 계속되면 운영자에게 문의해주세요.";
-    return;
   }
-
-  const savedApplication = serverResult?.row || application;
-  const applications = getSellerApplications().filter((item) => item.id !== savedApplication.id);
-  applications.unshift(savedApplication);
-  setSellerApplications(applications);
-
-  if (submitButton) {
-    submitButton.disabled = false;
-    submitButton.textContent = originalSubmitText;
-  }
-  sellerRegisterForm.reset();
-  businessCardImage = "";
-  businessCardPreview.innerHTML = "";
-  sellerRegisterTitle.textContent = "정상적으로 완료되었습니다.";
-  sellerRegisterMeta.textContent = `${formatSellerDisplayName(sellerChannel, branch)} 등록 요청이 저장되었습니다. 관리자 검토 후 승인 또는 반려 안내가 진행됩니다.`;
-  if (sellerMailPreview) {
-    sellerMailPreview.textContent = "";
-    sellerMailPreview.hidden = true;
-  }
-  if (sellerAdminReviewLink) sellerAdminReviewLink.hidden = true;
-  if (sellerMailLink) sellerMailLink.hidden = true;
-  if (sellerMailPanel) sellerMailPanel.hidden = true;
-  showSellerRegisterCompleteModal();
 });
 
 regionChangeForm.addEventListener("submit", async (event) => {

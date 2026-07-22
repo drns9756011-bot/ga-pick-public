@@ -804,9 +804,17 @@ async function createSellerApplication(env, request) {
     await env.DB.prepare("SELECT * FROM seller_applications WHERE id = ?").bind(id).first()
   );
 
-  await queueSellerApplicationAdminAlert(env, row);
+  let adminAlert = null;
+  try {
+    adminAlert = await queueSellerApplicationAdminAlert(env, row);
+  } catch (error) {
+    adminAlert = {
+      ok: false,
+      error: error?.message || "관리자 알림톡 처리 중 오류가 발생했습니다.",
+    };
+  }
 
-  return json({ ok: true, row }, 201);
+  return json({ ok: true, row, adminAlert }, 201);
 }
 
 async function updateSellerApplication(env, request, id) {
