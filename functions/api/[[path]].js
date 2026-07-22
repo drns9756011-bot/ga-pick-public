@@ -619,6 +619,8 @@ function parseSolapiSendResult(response, payload) {
       0
   );
   const firstStatusCode = String(firstMessage.statusCode || failedMessage.statusCode || "");
+  const groupStatus = String(payload.groupInfo?.status || "").toUpperCase();
+  const sentSuccessCount = Number(payload.groupInfo?.count?.sentSuccess || payload.sentSuccess || 0);
   const nonSuccessStatusMessage =
     firstMessage.statusMessage && firstStatusCode && !firstStatusCode.startsWith("2")
       ? firstMessage.statusMessage
@@ -643,14 +645,20 @@ function parseSolapiSendResult(response, payload) {
     };
   }
 
-  const acceptedStatusCodes = ["2000", "3000"];
-  const queueStatus = firstStatusCode === "4000" ? "sent" : acceptedStatusCodes.includes(firstStatusCode) ? "accepted" : "accepted";
+  let queueStatus = "accepted";
+  if (firstStatusCode === "4000" || sentSuccessCount > 0) {
+    queueStatus = "sent";
+  } else if (groupStatus === "SENDING" || firstStatusCode === "2000" || firstStatusCode.startsWith("3")) {
+    queueStatus = "sending";
+  } else if (groupStatus === "COMPLETE") {
+    queueStatus = "accepted";
+  }
 
   return {
     ok: true,
     queueStatus,
     payload,
-    groupId: payload.groupInfo?.groupId || payload.groupId || "",
+    groupId: payload.groupInfo?.groupId || payload.groupInfo?._id || payload.groupId || "",
     messageId: firstMessage.messageId || firstMessage.message_id || "",
   };
 }
@@ -674,6 +682,51 @@ async function sendSolapiAlimtalk(env, message, templateId) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(createSolapiMessageBody(config, message, templateId)),
+  });
+  const payload = await response.json().catch(() => ({}));
+  return parseSolapiSendResult(response, payload);
+}
+
+async function sendSolapiTextMessage(env, message) {
+  const config = getSolapiConfig(env);
+  const missingKeys = [
+    ["SOLAPI_API_KEY", config.apiKey],
+    ["SOLAPI_API_SECRET", config.apiSecret],
+    ["SOLAPI_FROM", config.from],
+    ["targetPhone", normalizePhone(message.targetPhone)],
+    ["body", message.body],
+  ]
+    .filter(([, value]) => !value)
+    .map(([key]) => key);
+
+  if (missingKeys.length) {
+    return {
+      ok: false,
+      skipped: true,
+      error: `문자 발송 설정 누락: ${missingKeys.join(", ")}`,
+    };
+  }
+
+  const authorization = await createSolapiAuthorization(config);
+  const response = await fetch("https://api.solapi.com/messages/v4/send-many/detail", {
+    method: "POST",
+    headers: {
+      Authorization: authorization,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      messages: [
+        {
+          type: "LMS",
+          to: normalizePhone(message.targetPhone),
+          from: config.from,
+          text: message.body,
+        },
+      ],
+      strict: false,
+      allowDuplicates: true,
+      showMessageList: true,
+    }),
   });
   const payload = await response.json().catch(() => ({}));
   return parseSolapiSendResult(response, payload);
@@ -723,7 +776,69 @@ async function queueAlimtalk(env, message) {
       error: error?.message || "솔라피 발송 처리 중 오류가 발생했습니다.",
     };
   }
-  const sentAt = result.ok ? new Date().toISOString() : "";
+  const sentAt = result.ok && result.queueStatus === "sent" ? new Date().toISOString() : "";
+  await env.DB.prepare(
+    `UPDATE alimtalk_queue
+     SET status = ?, sent_at = ?, solapi_group_id = ?, solapi_message_id = ?, error_message = ?, solapi_response_json = ?
+     WHERE id = ?`
+  )
+    .bind(
+      result.ok ? result.queueStatus || "accepted" : result.skipped ? "ready" : "failed",
+      sentAt,
+      result.groupId || "",
+      result.messageId || "",
+      result.error || "",
+      JSON.stringify(result.payload || {}),
+      id
+    )
+    .run();
+
+  return { id, ...result };
+}
+
+async function queueTextMessage(env, message) {
+  await ensureAlimtalkColumns(env);
+  const now = new Date().toISOString();
+  const id = createId("talk");
+  await env.DB.prepare(
+    `INSERT INTO alimtalk_queue
+      (id, status, type, target_role, target_name, target_phone, title, body, related_id,
+       template_id, variables_json, solapi_group_id, solapi_message_id, error_message, solapi_response_json,
+       created_at, sent_at, canceled_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  )
+    .bind(
+      id,
+      message.status || "ready",
+      message.type || "sms-notice",
+      message.targetRole || "",
+      message.targetName || "",
+      message.targetPhone || "",
+      message.title || "문자 알림",
+      message.body || "",
+      message.relatedId || "",
+      "",
+      JSON.stringify(message.variables || {}),
+      "",
+      "",
+      "",
+      "",
+      now,
+      "",
+      ""
+    )
+    .run();
+
+  let result;
+  try {
+    result = await sendSolapiTextMessage(env, message);
+  } catch (error) {
+    result = {
+      ok: false,
+      error: error?.message || "문자 발송 처리 중 오류가 발생했습니다.",
+    };
+  }
+  const sentAt = result.ok && result.queueStatus === "sent" ? new Date().toISOString() : "";
   await env.DB.prepare(
     `UPDATE alimtalk_queue
      SET status = ?, sent_at = ?, solapi_group_id = ?, solapi_message_id = ?, error_message = ?, solapi_response_json = ?
@@ -745,28 +860,55 @@ async function queueAlimtalk(env, message) {
 
 async function queueSellerApplicationAdminAlert(env, row) {
   await ensureAlimtalkColumns(env);
-  const existing = await env.DB.prepare(
+  const existingKakao = await env.DB.prepare(
     "SELECT id FROM alimtalk_queue WHERE type = ? AND target_role = ? AND related_id = ? LIMIT 1"
   )
     .bind("seller-application-received", "admin", row.id)
     .first();
-  if (existing) return { skipped: true, id: existing.id };
+  const existingSms = await env.DB.prepare(
+    "SELECT id FROM alimtalk_queue WHERE type = ? AND target_role = ? AND related_id = ? LIMIT 1"
+  )
+    .bind("seller-application-admin-sms", "admin", row.id)
+    .first();
 
-  return queueAlimtalk(env, {
-    type: "seller-application-received",
-    targetRole: "admin",
-    targetName: "관리자",
-    targetPhone: solapiValue(env, "SOLAPI_ADMIN_PHONE") || solapiValue(env, "SOLAPI_FROM"),
-    title: "판매자 등록 요청이 접수되었습니다",
-    body: `${sellerName(row)} ${row.manager} 매니저의 판매자 등록 요청이 접수되었습니다.`,
-    relatedId: row.id,
-    variables: {
-      "#{채널}": row.channel,
-      "#{지점명}": row.branch,
-      "#{매니저명}": row.manager,
-      "#{연락처}": formatPhoneNumber(row.phone),
-    },
-  });
+  const targetPhone = solapiValue(env, "SOLAPI_ADMIN_PHONE") || solapiValue(env, "SOLAPI_FROM");
+  const results = {};
+
+  if (!existingKakao) {
+    results.kakao = await queueAlimtalk(env, {
+      type: "seller-application-received",
+      targetRole: "admin",
+      targetName: "관리자",
+      targetPhone,
+      title: "판매자 등록 요청이 접수되었습니다",
+      body: `${sellerName(row)} ${row.manager} 매니저의 판매자 등록 요청이 접수되었습니다.`,
+      relatedId: row.id,
+      variables: {
+        "#{채널}": row.channel,
+        "#{지점명}": row.branch,
+        "#{매니저명}": row.manager,
+        "#{연락처}": formatPhoneNumber(row.phone),
+      },
+    });
+  } else {
+    results.kakao = { skipped: true, id: existingKakao.id };
+  }
+
+  if (!existingSms) {
+    results.sms = await queueTextMessage(env, {
+      type: "seller-application-admin-sms",
+      targetRole: "admin",
+      targetName: "관리자",
+      targetPhone,
+      title: "판매자 등록 요청 문자 백업",
+      body: `[픽견적] 판매자 등록 요청\n채널: ${row.channel}\n지점명: ${row.branch}\n매니저: ${row.manager}\n연락처: ${formatPhoneNumber(row.phone)}`,
+      relatedId: row.id,
+    });
+  } else {
+    results.sms = { skipped: true, id: existingSms.id };
+  }
+
+  return results;
 }
 
 async function getSellerApplications(env) {
@@ -1270,7 +1412,11 @@ async function getAlimtalk(env) {
 
 async function createAlimtalk(env, request) {
   const body = await request.json();
-  await queueAlimtalk(env, body);
+  if (String(body.type || "").includes("sms")) {
+    await queueTextMessage(env, body);
+  } else {
+    await queueAlimtalk(env, body);
+  }
   return getAlimtalk(env);
 }
 
@@ -1299,11 +1445,14 @@ async function resendAlimtalk(env, id) {
   if (!row) return json({ ok: false, message: "알림톡 정보를 찾을 수 없습니다." }, 404);
 
   const templateId = row.templateId || getSolapiTemplateId(env, row.type || "notice");
-  const result = await sendSolapiAlimtalk(env, row, templateId).catch((error) => ({
-    ok: false,
-    error: error?.message || "솔라피 재발송 처리 중 오류가 발생했습니다.",
-  }));
-  const sentAt = result.ok ? new Date().toISOString() : "";
+  const isTextMessage = String(row.type || "").includes("sms");
+  const result = await (isTextMessage ? sendSolapiTextMessage(env, row) : sendSolapiAlimtalk(env, row, templateId)).catch(
+    (error) => ({
+      ok: false,
+      error: error?.message || "솔라피 재발송 처리 중 오류가 발생했습니다.",
+    })
+  );
+  const sentAt = result.ok && result.queueStatus === "sent" ? new Date().toISOString() : "";
 
   await env.DB.prepare(
     `UPDATE alimtalk_queue
@@ -1324,12 +1473,36 @@ async function resendAlimtalk(env, id) {
     )
     .run();
 
+  let smsBackup = null;
+  if (!isTextMessage && row.type === "seller-application-received" && row.targetRole === "admin") {
+    const existingSms = await env.DB.prepare(
+      "SELECT id FROM alimtalk_queue WHERE type = ? AND target_role = ? AND related_id = ? LIMIT 1"
+    )
+      .bind("seller-application-admin-sms", "admin", row.relatedId || id)
+      .first();
+
+    if (!existingSms) {
+      smsBackup = await queueTextMessage(env, {
+        type: "seller-application-admin-sms",
+        targetRole: "admin",
+        targetName: row.targetName || "관리자",
+        targetPhone: row.targetPhone || solapiValue(env, "SOLAPI_ADMIN_PHONE") || solapiValue(env, "SOLAPI_FROM"),
+        title: "판매자 등록 요청 문자 백업",
+        body: `[픽견적] ${row.body || "판매자 등록 요청이 접수되었습니다."}`,
+        relatedId: row.relatedId || id,
+      });
+    } else {
+      smsBackup = { skipped: true, id: existingSms.id };
+    }
+  }
+
   const updated = normalizeMessage(
     await env.DB.prepare("SELECT * FROM alimtalk_queue WHERE id = ?").bind(id).first()
   );
   return json({
     ok: Boolean(result.ok),
     row: updated,
+    smsBackup,
     message: result.ok ? "알림톡을 재발송했습니다." : result.error || "알림톡 재발송에 실패했습니다.",
   });
 }
@@ -1345,50 +1518,60 @@ function getSolapiStatusFromMessage(message) {
 }
 
 async function refreshAlimtalkStatus(env, id) {
-  await ensureAlimtalkColumns(env);
-  const row = normalizeMessage(
-    await env.DB.prepare("SELECT * FROM alimtalk_queue WHERE id = ?").bind(id).first()
-  );
-  if (!row) return json({ ok: false, message: "알림톡 정보를 찾을 수 없습니다." }, 404);
-  if (!row.solapiGroupId) {
-    return json({ ok: false, row, message: "솔라피 그룹 ID가 없어 상태를 조회할 수 없습니다." }, 400);
+  try {
+    await ensureAlimtalkColumns(env);
+    const row = normalizeMessage(
+      await env.DB.prepare("SELECT * FROM alimtalk_queue WHERE id = ?").bind(id).first()
+    );
+    if (!row) return json({ ok: false, message: "알림톡 정보를 찾을 수 없습니다." }, 404);
+    if (!row.solapiGroupId) {
+      return json({ ok: false, row, message: "솔라피 그룹 ID가 없어 상태를 조회할 수 없습니다." }, 400);
+    }
+
+    const config = getSolapiConfig(env);
+    if (!config.apiKey || !config.apiSecret) {
+      return json({ ok: false, row, message: "솔라피 API 키 또는 시크릿이 설정되지 않았습니다." }, 400);
+    }
+
+    const authorization = await createSolapiAuthorization(config);
+    const response = await fetch(
+      `https://api.solapi.com/messages/v4/groups/${encodeURIComponent(row.solapiGroupId)}/messages?limit=20`,
+      { method: "GET", headers: { Authorization } }
+    );
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const message = payload.errorMessage || payload.message || "솔라피 상태 조회에 실패했습니다.";
+      return json({ ok: false, row, message, solapiResponse: payload }, response.status);
+    }
+
+    const messageList = payload.messageList || {};
+    const messages = Array.isArray(messageList) ? messageList : Object.values(messageList || {});
+    const solapiMessage =
+      messages.find((message) => message.messageId === row.solapiMessageId) || messages[0] || {};
+    const next = getSolapiStatusFromMessage(solapiMessage);
+    const sentAt = next.status === "sent" ? new Date().toISOString() : row.sentAt || "";
+
+    await env.DB.prepare(
+      `UPDATE alimtalk_queue
+       SET status = ?, sent_at = ?, error_message = ?, solapi_response_json = ?
+       WHERE id = ?`
+    )
+      .bind(next.status, sentAt, next.error, JSON.stringify({ ...payload, latestMessage: solapiMessage }), id)
+      .run();
+
+    const updated = normalizeMessage(
+      await env.DB.prepare("SELECT * FROM alimtalk_queue WHERE id = ?").bind(id).first()
+    );
+    return json({ ok: true, row: updated, latestMessage: solapiMessage });
+  } catch (error) {
+    return json(
+      {
+        ok: false,
+        message: error?.message || "솔라피 상태 조회 처리 중 오류가 발생했습니다.",
+      },
+      500
+    );
   }
-
-  const config = getSolapiConfig(env);
-  if (!config.apiKey || !config.apiSecret) {
-    return json({ ok: false, row, message: "솔라피 API 키 또는 시크릿이 설정되지 않았습니다." }, 400);
-  }
-
-  const authorization = await createSolapiAuthorization(config);
-  const response = await fetch(
-    `https://api.solapi.com/messages/v4/groups/${encodeURIComponent(row.solapiGroupId)}/messages?limit=20`,
-    { method: "GET", headers: { Authorization } }
-  );
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const message = payload.errorMessage || payload.message || "솔라피 상태 조회에 실패했습니다.";
-    return json({ ok: false, row, message, solapiResponse: payload }, response.status);
-  }
-
-  const messageList = payload.messageList || {};
-  const messages = Array.isArray(messageList) ? messageList : Object.values(messageList);
-  const solapiMessage =
-    messages.find((message) => message.messageId === row.solapiMessageId) || messages[0] || {};
-  const next = getSolapiStatusFromMessage(solapiMessage);
-  const sentAt = next.status === "sent" ? new Date().toISOString() : row.sentAt || "";
-
-  await env.DB.prepare(
-    `UPDATE alimtalk_queue
-     SET status = ?, sent_at = ?, error_message = ?, solapi_response_json = ?
-     WHERE id = ?`
-  )
-    .bind(next.status, sentAt, next.error, JSON.stringify({ ...payload, latestMessage: solapiMessage }), id)
-    .run();
-
-  const updated = normalizeMessage(
-    await env.DB.prepare("SELECT * FROM alimtalk_queue WHERE id = ?").bind(id).first()
-  );
-  return json({ ok: true, row: updated, latestMessage: solapiMessage });
 }
 
 async function getFile(env, key) {
