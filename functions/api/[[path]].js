@@ -593,7 +593,7 @@ function createSolapiMessageBody(config, message, templateId) {
       },
     ],
     strict: false,
-    allowDuplicates: false,
+    allowDuplicates: Boolean(message.allowDuplicates),
     showMessageList: true,
   };
 }
@@ -859,56 +859,28 @@ async function queueTextMessage(env, message) {
 }
 
 async function queueSellerApplicationAdminAlert(env, row) {
-  await ensureAlimtalkColumns(env);
-  const existingKakao = await env.DB.prepare(
-    "SELECT id FROM alimtalk_queue WHERE type = ? AND target_role = ? AND related_id = ? LIMIT 1"
-  )
-    .bind("seller-application-received", "admin", row.id)
-    .first();
-  const existingSms = await env.DB.prepare(
-    "SELECT id FROM alimtalk_queue WHERE type = ? AND target_role = ? AND related_id = ? LIMIT 1"
-  )
-    .bind("seller-application-admin-sms", "admin", row.id)
-    .first();
+  const targetPhone = normalizePhone(solapiValue(env, "SOLAPI_ADMIN_PHONE") || "01066312323");
+  const templateId =
+    solapiValue(env, "SOLAPI_TEMPLATE_ADMIN_SELLER_APPLICATION") ||
+    "KA01TP2607210300081256MK0cxuHata";
 
-  const targetPhone = solapiValue(env, "SOLAPI_ADMIN_PHONE") || solapiValue(env, "SOLAPI_FROM");
-  const results = {};
-
-  if (!existingKakao) {
-    results.kakao = await queueAlimtalk(env, {
-      type: "seller-application-received",
-      targetRole: "admin",
-      targetName: "관리자",
-      targetPhone,
-      title: "판매자 등록 요청이 접수되었습니다",
-      body: `${sellerName(row)} ${row.manager} 매니저의 판매자 등록 요청이 접수되었습니다.`,
-      relatedId: row.id,
-      variables: {
-        "#{채널}": row.channel,
-        "#{지점명}": row.branch,
-        "#{매니저명}": row.manager,
-        "#{연락처}": formatPhoneNumber(row.phone),
-      },
-    });
-  } else {
-    results.kakao = { skipped: true, id: existingKakao.id };
-  }
-
-  if (!existingSms) {
-    results.sms = await queueTextMessage(env, {
-      type: "seller-application-admin-sms",
-      targetRole: "admin",
-      targetName: "관리자",
-      targetPhone,
-      title: "판매자 등록 요청 문자 백업",
-      body: `[픽견적] 판매자 등록 요청\n채널: ${row.channel}\n지점명: ${row.branch}\n매니저: ${row.manager}\n연락처: ${formatPhoneNumber(row.phone)}`,
-      relatedId: row.id,
-    });
-  } else {
-    results.sms = { skipped: true, id: existingSms.id };
-  }
-
-  return results;
+  return queueAlimtalk(env, {
+    type: "seller-application-received",
+    targetRole: "admin",
+    targetName: "관리자",
+    targetPhone,
+    title: "판매자 등록 요청이 접수되었습니다",
+    body: `${sellerName(row)} ${row.manager} 매니저의 판매자 등록 요청이 접수되었습니다.`,
+    relatedId: row.id,
+    templateId,
+    allowDuplicates: true,
+    variables: {
+      "#{채널}": row.channel,
+      "#{지점명}": row.branch,
+      "#{매니저명}": row.manager,
+      "#{연락처}": formatPhoneNumber(row.phone),
+    },
+  });
 }
 
 async function getSellerApplications(env) {
@@ -1473,36 +1445,12 @@ async function resendAlimtalk(env, id) {
     )
     .run();
 
-  let smsBackup = null;
-  if (!isTextMessage && row.type === "seller-application-received" && row.targetRole === "admin") {
-    const existingSms = await env.DB.prepare(
-      "SELECT id FROM alimtalk_queue WHERE type = ? AND target_role = ? AND related_id = ? LIMIT 1"
-    )
-      .bind("seller-application-admin-sms", "admin", row.relatedId || id)
-      .first();
-
-    if (!existingSms) {
-      smsBackup = await queueTextMessage(env, {
-        type: "seller-application-admin-sms",
-        targetRole: "admin",
-        targetName: row.targetName || "관리자",
-        targetPhone: row.targetPhone || solapiValue(env, "SOLAPI_ADMIN_PHONE") || solapiValue(env, "SOLAPI_FROM"),
-        title: "판매자 등록 요청 문자 백업",
-        body: `[픽견적] ${row.body || "판매자 등록 요청이 접수되었습니다."}`,
-        relatedId: row.relatedId || id,
-      });
-    } else {
-      smsBackup = { skipped: true, id: existingSms.id };
-    }
-  }
-
   const updated = normalizeMessage(
     await env.DB.prepare("SELECT * FROM alimtalk_queue WHERE id = ?").bind(id).first()
   );
   return json({
     ok: Boolean(result.ok),
     row: updated,
-    smsBackup,
     message: result.ok ? "알림톡을 재발송했습니다." : result.error || "알림톡 재발송에 실패했습니다.",
   });
 }
