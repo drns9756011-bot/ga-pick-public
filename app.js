@@ -68,6 +68,8 @@ const bidSelectConfirmModal = document.querySelector("#bidSelectConfirmModal");
 const bidSelectConfirmSummary = document.querySelector("#bidSelectConfirmSummary");
 const cancelBidSelectBtn = document.querySelector("#cancelBidSelectBtn");
 const confirmBidSelectBtn = document.querySelector("#confirmBidSelectBtn");
+const sellerRegisterCompleteModal = document.querySelector("#sellerRegisterCompleteModal");
+const closeSellerRegisterCompleteModal = document.querySelector("#closeSellerRegisterCompleteModal");
 const quoteImageModal = document.querySelector("#quoteImageModal");
 const quoteImageModalImg = document.querySelector("#quoteImageModalImg");
 const closeQuoteImageModal = document.querySelector("#closeQuoteImageModal");
@@ -342,6 +344,17 @@ function hideServerLoading(force = false) {
   if (serverLoadingCount === 0 && serverLoadingModal) {
     serverLoadingModal.hidden = true;
   }
+}
+
+function showSellerRegisterCompleteModal() {
+  if (!sellerRegisterCompleteModal) return;
+  sellerRegisterCompleteModal.hidden = false;
+  closeSellerRegisterCompleteModal?.focus();
+}
+
+function hideSellerRegisterCompleteModal() {
+  if (!sellerRegisterCompleteModal) return;
+  sellerRegisterCompleteModal.hidden = true;
 }
 
 function readStorageArray(key) {
@@ -1690,10 +1703,17 @@ privacyConsentModal.addEventListener("click", (event) => {
 
 cancelBidSelectBtn.addEventListener("click", closeBidSelectConfirmModal);
 confirmBidSelectBtn.addEventListener("click", confirmBidSelection);
+closeSellerRegisterCompleteModal?.addEventListener("click", hideSellerRegisterCompleteModal);
 
 bidSelectConfirmModal.addEventListener("click", (event) => {
   if (event.target === bidSelectConfirmModal) {
     closeBidSelectConfirmModal();
+  }
+});
+
+sellerRegisterCompleteModal?.addEventListener("click", (event) => {
+  if (event.target === sellerRegisterCompleteModal) {
+    hideSellerRegisterCompleteModal();
   }
 });
 
@@ -2039,6 +2059,7 @@ sellerRegisterForm.addEventListener("submit", async (event) => {
   sellerAdminReviewLink.hidden = true;
   sellerMailLink.hidden = true;
   sellerMailPanel.hidden = false;
+  showSellerRegisterCompleteModal();
   sellerMailPanel.scrollIntoView({ behavior: "smooth", block: "start" });
 });
 

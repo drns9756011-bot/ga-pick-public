@@ -5,6 +5,22 @@ const jsonHeaders = {
   "Access-Control-Allow-Headers": "Content-Type",
 };
 
+const SOLAPI_DEFAULTS = {
+  SOLAPI_CHANNEL_ID: "KA01PF260720091629575EzVmd2YRyU7",
+  SOLAPI_FROM: "01066312323",
+  SOLAPI_ADMIN_PHONE: "01066312323",
+  SOLAPI_TEMPLATE_CUSTOMER_QUOTE_RECEIVED: "KA01TP260721025042754h4ZUWHp0Vl8",
+  SOLAPI_TEMPLATE_CUSTOMER_QUOTE_CLOSED: "KA01TP2607210258227887LLx9OshNug",
+  SOLAPI_TEMPLATE_CUSTOMER_BID_RECEIVED: "KA01TP260721025517053z5NPvs1ZUIX",
+  SOLAPI_TEMPLATE_ADMIN_SELLER_APPLICATION: "KA01TP2607210300081256MK0cxuHata",
+  SOLAPI_TEMPLATE_SELLER_BID_SELECTED: "KA01TP260721133628815TgDs1sAwUhc",
+  SOLAPI_TEMPLATE_SELLER_APPROVED: "KA01TP2607211355258674q0EFuag5GE",
+};
+
+function solapiValue(env, key) {
+  return String(env?.[key] || SOLAPI_DEFAULTS[key] || "").trim();
+}
+
 function json(payload, status = 200) {
   return new Response(JSON.stringify(payload), {
     status,
@@ -499,7 +515,7 @@ async function saveDataUrlToR2(env, dataUrl, prefix, id) {
 async function hmacSha256Hex(secret, value) {
   const key = await crypto.subtle.importKey(
     "raw",
-    new TextEncoder().encode(secret),
+    new TextEncoder().encode(String(secret || "").trim()),
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign"]
@@ -510,15 +526,22 @@ async function hmacSha256Hex(secret, value) {
     .join("");
 }
 
+function createSolapiSalt() {
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  return Array.from(bytes)
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
 function getSolapiTemplateId(env, type) {
   return (
     {
-      "customer-quote-received": env.SOLAPI_TEMPLATE_CUSTOMER_QUOTE_RECEIVED,
-      "customer-bid-received": env.SOLAPI_TEMPLATE_CUSTOMER_BID_RECEIVED,
-      "customer-quote-closed": env.SOLAPI_TEMPLATE_CUSTOMER_QUOTE_CLOSED,
-      "seller-bid-selected": env.SOLAPI_TEMPLATE_SELLER_BID_SELECTED,
-      "seller-approved": env.SOLAPI_TEMPLATE_SELLER_APPROVED,
-      "seller-application-received": env.SOLAPI_TEMPLATE_ADMIN_SELLER_APPLICATION,
+      "customer-quote-received": solapiValue(env, "SOLAPI_TEMPLATE_CUSTOMER_QUOTE_RECEIVED"),
+      "customer-bid-received": solapiValue(env, "SOLAPI_TEMPLATE_CUSTOMER_BID_RECEIVED"),
+      "customer-quote-closed": solapiValue(env, "SOLAPI_TEMPLATE_CUSTOMER_QUOTE_CLOSED"),
+      "seller-bid-selected": solapiValue(env, "SOLAPI_TEMPLATE_SELLER_BID_SELECTED"),
+      "seller-approved": solapiValue(env, "SOLAPI_TEMPLATE_SELLER_APPROVED"),
+      "seller-application-received": solapiValue(env, "SOLAPI_TEMPLATE_ADMIN_SELLER_APPLICATION"),
     }[type] || ""
   );
 }
@@ -527,8 +550,8 @@ function canSendSolapi(env, message, templateId) {
   return Boolean(
     env.SOLAPI_API_KEY &&
       env.SOLAPI_API_SECRET &&
-      env.SOLAPI_CHANNEL_ID &&
-      env.SOLAPI_FROM &&
+      solapiValue(env, "SOLAPI_CHANNEL_ID") &&
+      solapiValue(env, "SOLAPI_FROM") &&
       templateId &&
       normalizePhone(message.targetPhone)
   );
@@ -538,8 +561,8 @@ function getSolapiMissingKeys(env, message, templateId) {
   return [
     ["SOLAPI_API_KEY", env.SOLAPI_API_KEY],
     ["SOLAPI_API_SECRET", env.SOLAPI_API_SECRET],
-    ["SOLAPI_CHANNEL_ID", env.SOLAPI_CHANNEL_ID],
-    ["SOLAPI_FROM", env.SOLAPI_FROM],
+    ["SOLAPI_CHANNEL_ID", solapiValue(env, "SOLAPI_CHANNEL_ID")],
+    ["SOLAPI_FROM", solapiValue(env, "SOLAPI_FROM")],
     ["templateId", templateId],
     ["targetPhone", normalizePhone(message.targetPhone)],
   ]
@@ -557,9 +580,11 @@ async function sendSolapiAlimtalk(env, message, templateId) {
   }
 
   const date = new Date().toISOString();
-  const salt = crypto.randomUUID();
-  const signature = await hmacSha256Hex(env.SOLAPI_API_SECRET, date + salt);
-  const authorization = `HMAC-SHA256 apiKey=${env.SOLAPI_API_KEY}, date=${date}, salt=${salt}, signature=${signature}`;
+  const salt = createSolapiSalt();
+  const apiKey = String(env.SOLAPI_API_KEY || "").trim();
+  const apiSecret = String(env.SOLAPI_API_SECRET || "").trim();
+  const signature = await hmacSha256Hex(apiSecret, date + salt);
+  const authorization = `HMAC-SHA256 apiKey=${apiKey}, date=${date}, salt=${salt}, signature=${signature}`;
   const variables = {};
   Object.entries(message.variables || {}).forEach(([key, value]) => {
     variables[key] = String(value ?? "");
@@ -576,9 +601,9 @@ async function sendSolapiAlimtalk(env, message, templateId) {
         {
           type: "ATA",
           to: normalizePhone(message.targetPhone),
-          from: normalizePhone(env.SOLAPI_FROM),
+          from: normalizePhone(solapiValue(env, "SOLAPI_FROM")),
           kakaoOptions: {
-            pfId: env.SOLAPI_CHANNEL_ID,
+            pfId: solapiValue(env, "SOLAPI_CHANNEL_ID"),
             templateId,
             variables,
             disableSms: false,
@@ -751,7 +776,7 @@ async function createSellerApplication(env, request) {
     type: "seller-application-received",
     targetRole: "admin",
     targetName: "관리자",
-    targetPhone: env.SOLAPI_ADMIN_PHONE || env.SOLAPI_FROM || "",
+    targetPhone: solapiValue(env, "SOLAPI_ADMIN_PHONE") || solapiValue(env, "SOLAPI_FROM"),
     title: "판매자 등록 요청이 접수되었습니다",
     body: `${sellerName(row)} ${row.manager} 매니저의 판매자 등록 요청이 접수되었습니다.`,
     relatedId: row.id,
@@ -1283,26 +1308,26 @@ async function saveGuideDismissal(env, request) {
 
 function getSolapiHealth(env) {
   const templates = {
-    customerQuoteReceived: env.SOLAPI_TEMPLATE_CUSTOMER_QUOTE_RECEIVED || "",
-    customerQuoteClosed: env.SOLAPI_TEMPLATE_CUSTOMER_QUOTE_CLOSED || "",
-    customerBidReceived: env.SOLAPI_TEMPLATE_CUSTOMER_BID_RECEIVED || "",
-    adminSellerApplication: env.SOLAPI_TEMPLATE_ADMIN_SELLER_APPLICATION || "",
-    sellerBidSelected: env.SOLAPI_TEMPLATE_SELLER_BID_SELECTED || "",
-    sellerApproved: env.SOLAPI_TEMPLATE_SELLER_APPROVED || "",
+    customerQuoteReceived: solapiValue(env, "SOLAPI_TEMPLATE_CUSTOMER_QUOTE_RECEIVED"),
+    customerQuoteClosed: solapiValue(env, "SOLAPI_TEMPLATE_CUSTOMER_QUOTE_CLOSED"),
+    customerBidReceived: solapiValue(env, "SOLAPI_TEMPLATE_CUSTOMER_BID_RECEIVED"),
+    adminSellerApplication: solapiValue(env, "SOLAPI_TEMPLATE_ADMIN_SELLER_APPLICATION"),
+    sellerBidSelected: solapiValue(env, "SOLAPI_TEMPLATE_SELLER_BID_SELECTED"),
+    sellerApproved: solapiValue(env, "SOLAPI_TEMPLATE_SELLER_APPROVED"),
   };
   return json({
     ok: true,
     hasApiKey: Boolean(env.SOLAPI_API_KEY),
     hasApiSecret: Boolean(env.SOLAPI_API_SECRET),
-    hasChannelId: Boolean(env.SOLAPI_CHANNEL_ID),
-    hasFrom: Boolean(env.SOLAPI_FROM),
-    hasAdminPhone: Boolean(env.SOLAPI_ADMIN_PHONE),
+    hasChannelId: Boolean(solapiValue(env, "SOLAPI_CHANNEL_ID")),
+    hasFrom: Boolean(solapiValue(env, "SOLAPI_FROM")),
+    hasAdminPhone: Boolean(solapiValue(env, "SOLAPI_ADMIN_PHONE")),
     templates,
     missing: [
       !env.SOLAPI_API_KEY && "SOLAPI_API_KEY",
       !env.SOLAPI_API_SECRET && "SOLAPI_API_SECRET",
-      !env.SOLAPI_CHANNEL_ID && "SOLAPI_CHANNEL_ID",
-      !env.SOLAPI_FROM && "SOLAPI_FROM",
+      !solapiValue(env, "SOLAPI_CHANNEL_ID") && "SOLAPI_CHANNEL_ID",
+      !solapiValue(env, "SOLAPI_FROM") && "SOLAPI_FROM",
       !templates.customerQuoteReceived && "SOLAPI_TEMPLATE_CUSTOMER_QUOTE_RECEIVED",
       !templates.customerQuoteClosed && "SOLAPI_TEMPLATE_CUSTOMER_QUOTE_CLOSED",
       !templates.customerBidReceived && "SOLAPI_TEMPLATE_CUSTOMER_BID_RECEIVED",
