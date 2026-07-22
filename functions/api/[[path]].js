@@ -609,8 +609,29 @@ function parseSolapiSendResult(response, payload) {
   }
 
   const firstMessage = payload.messageList?.[0] || payload.messages?.[0] || {};
-  const failedCount = Number(payload.groupInfo?.failedCount || payload.failedCount || 0);
-  const firstError = firstMessage.errorMessage || firstMessage.errorCode || firstMessage.reason || "";
+  const failedMessage = payload.failedMessageList?.[0] || {};
+  const failedCount = Number(
+    payload.groupInfo?.failedCount ||
+      payload.failedCount ||
+      payload.groupInfo?.count?.registeredFailed ||
+      payload.groupInfo?.count?.sentFailed ||
+      payload.failedMessageList?.length ||
+      0
+  );
+  const firstStatusCode = String(firstMessage.statusCode || failedMessage.statusCode || "");
+  const nonSuccessStatusMessage =
+    firstMessage.statusMessage && firstStatusCode && !firstStatusCode.startsWith("2")
+      ? firstMessage.statusMessage
+      : "";
+  const firstError =
+    failedMessage.statusMessage ||
+    failedMessage.errorMessage ||
+    failedMessage.errorCode ||
+    nonSuccessStatusMessage ||
+    firstMessage.errorMessage ||
+    firstMessage.errorCode ||
+    firstMessage.reason ||
+    "";
   if (failedCount > 0 || firstError) {
     return {
       ok: false,
@@ -618,12 +639,16 @@ function parseSolapiSendResult(response, payload) {
       error: firstError || "솔라피에서 발송 실패 응답을 반환했습니다.",
       payload,
       groupId: payload.groupInfo?.groupId || payload.groupId || "",
-      messageId: firstMessage.messageId || firstMessage.message_id || "",
+      messageId: firstMessage.messageId || failedMessage.messageId || firstMessage.message_id || "",
     };
   }
 
+  const acceptedStatusCodes = ["2000", "3000"];
+  const queueStatus = firstStatusCode === "4000" ? "sent" : acceptedStatusCodes.includes(firstStatusCode) ? "accepted" : "accepted";
+
   return {
     ok: true,
+    queueStatus,
     payload,
     groupId: payload.groupInfo?.groupId || payload.groupId || "",
     messageId: firstMessage.messageId || firstMessage.message_id || "",
@@ -705,7 +730,7 @@ async function queueAlimtalk(env, message) {
      WHERE id = ?`
   )
     .bind(
-      result.ok ? "sent" : result.skipped ? "ready" : "failed",
+      result.ok ? result.queueStatus || "accepted" : result.skipped ? "ready" : "failed",
       sentAt,
       result.groupId || "",
       result.messageId || "",
@@ -1287,7 +1312,7 @@ async function resendAlimtalk(env, id) {
      WHERE id = ?`
   )
     .bind(
-      result.ok ? "sent" : result.skipped ? "ready" : "failed",
+      result.ok ? result.queueStatus || "accepted" : result.skipped ? "ready" : "failed",
       sentAt,
       "",
       templateId,
@@ -1307,6 +1332,63 @@ async function resendAlimtalk(env, id) {
     row: updated,
     message: result.ok ? "알림톡을 재발송했습니다." : result.error || "알림톡 재발송에 실패했습니다.",
   });
+}
+
+function getSolapiStatusFromMessage(message) {
+  const statusCode = String(message?.statusCode || "");
+  const reason = message?.reason || message?.statusMessage || message?.errorMessage || "";
+  if (statusCode === "4000") return { status: "sent", error: "" };
+  if (statusCode === "2000") return { status: "accepted", error: "" };
+  if (statusCode.startsWith("3000")) return { status: "sending", error: "" };
+  if (statusCode) return { status: "failed", error: reason || `솔라피 상태 코드 ${statusCode}` };
+  return { status: "accepted", error: reason || "" };
+}
+
+async function refreshAlimtalkStatus(env, id) {
+  await ensureAlimtalkColumns(env);
+  const row = normalizeMessage(
+    await env.DB.prepare("SELECT * FROM alimtalk_queue WHERE id = ?").bind(id).first()
+  );
+  if (!row) return json({ ok: false, message: "알림톡 정보를 찾을 수 없습니다." }, 404);
+  if (!row.solapiGroupId) {
+    return json({ ok: false, row, message: "솔라피 그룹 ID가 없어 상태를 조회할 수 없습니다." }, 400);
+  }
+
+  const config = getSolapiConfig(env);
+  if (!config.apiKey || !config.apiSecret) {
+    return json({ ok: false, row, message: "솔라피 API 키 또는 시크릿이 설정되지 않았습니다." }, 400);
+  }
+
+  const authorization = await createSolapiAuthorization(config);
+  const response = await fetch(
+    `https://api.solapi.com/messages/v4/groups/${encodeURIComponent(row.solapiGroupId)}/messages?limit=20`,
+    { method: "GET", headers: { Authorization } }
+  );
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const message = payload.errorMessage || payload.message || "솔라피 상태 조회에 실패했습니다.";
+    return json({ ok: false, row, message, solapiResponse: payload }, response.status);
+  }
+
+  const messageList = payload.messageList || {};
+  const messages = Array.isArray(messageList) ? messageList : Object.values(messageList);
+  const solapiMessage =
+    messages.find((message) => message.messageId === row.solapiMessageId) || messages[0] || {};
+  const next = getSolapiStatusFromMessage(solapiMessage);
+  const sentAt = next.status === "sent" ? new Date().toISOString() : row.sentAt || "";
+
+  await env.DB.prepare(
+    `UPDATE alimtalk_queue
+     SET status = ?, sent_at = ?, error_message = ?, solapi_response_json = ?
+     WHERE id = ?`
+  )
+    .bind(next.status, sentAt, next.error, JSON.stringify({ ...payload, latestMessage: solapiMessage }), id)
+    .run();
+
+  const updated = normalizeMessage(
+    await env.DB.prepare("SELECT * FROM alimtalk_queue WHERE id = ?").bind(id).first()
+  );
+  return json({ ok: true, row: updated, latestMessage: solapiMessage });
 }
 
 async function getFile(env, key) {
@@ -1466,6 +1548,9 @@ export async function onRequest(context) {
   if (path === "alimtalk" && method === "POST") return createAlimtalk(env, request);
   if (path.startsWith("alimtalk/") && path.endsWith("/resend") && method === "POST") {
     return resendAlimtalk(env, decodeURIComponent(pathParts.slice(1, -1).join("/")));
+  }
+  if (path.startsWith("alimtalk/") && path.endsWith("/refresh") && method === "POST") {
+    return refreshAlimtalkStatus(env, decodeURIComponent(pathParts.slice(1, -1).join("/")));
   }
   if (path.startsWith("alimtalk/") && method === "PATCH") {
     return updateAlimtalk(env, request, decodeURIComponent(pathParts.slice(1).join("/")));
