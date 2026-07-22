@@ -512,57 +512,59 @@ async function saveDataUrlToR2(env, dataUrl, prefix, id) {
   return { key, url: `/api/files/${key}` };
 }
 
-async function hmacSha256Hex(secret, value) {
-  const key = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(String(secret || "").trim()),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-  const signature = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(value));
-  return Array.from(new Uint8Array(signature))
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
+function getSolapiConfig(env) {
+  return {
+    apiKey: String(env.SOLAPI_API_KEY || "").trim(),
+    apiSecret: String(env.SOLAPI_API_SECRET || "").trim(),
+    channelId: solapiValue(env, "SOLAPI_CHANNEL_ID"),
+    from: normalizePhone(solapiValue(env, "SOLAPI_FROM")),
+    adminPhone: normalizePhone(solapiValue(env, "SOLAPI_ADMIN_PHONE")),
+  };
 }
 
 function createSolapiSalt() {
   const bytes = crypto.getRandomValues(new Uint8Array(16));
-  return Array.from(bytes)
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+async function createHmacSha256Hex(secret, text) {
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const digest = await crypto.subtle.sign("HMAC", key, encoder.encode(text));
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+async function createSolapiAuthorization(config) {
+  const date = new Date().toISOString();
+  const salt = createSolapiSalt();
+  const signature = await createHmacSha256Hex(config.apiSecret, date + salt);
+  return `HMAC-SHA256 apiKey=${config.apiKey}, date=${date}, salt=${salt}, signature=${signature}`;
 }
 
 function getSolapiTemplateId(env, type) {
-  return (
-    {
-      "customer-quote-received": solapiValue(env, "SOLAPI_TEMPLATE_CUSTOMER_QUOTE_RECEIVED"),
-      "customer-bid-received": solapiValue(env, "SOLAPI_TEMPLATE_CUSTOMER_BID_RECEIVED"),
-      "customer-quote-closed": solapiValue(env, "SOLAPI_TEMPLATE_CUSTOMER_QUOTE_CLOSED"),
-      "seller-bid-selected": solapiValue(env, "SOLAPI_TEMPLATE_SELLER_BID_SELECTED"),
-      "seller-approved": solapiValue(env, "SOLAPI_TEMPLATE_SELLER_APPROVED"),
-      "seller-application-received": solapiValue(env, "SOLAPI_TEMPLATE_ADMIN_SELLER_APPLICATION"),
-    }[type] || ""
-  );
+  const templates = {
+    "customer-quote-received": solapiValue(env, "SOLAPI_TEMPLATE_CUSTOMER_QUOTE_RECEIVED"),
+    "customer-bid-received": solapiValue(env, "SOLAPI_TEMPLATE_CUSTOMER_BID_RECEIVED"),
+    "customer-quote-closed": solapiValue(env, "SOLAPI_TEMPLATE_CUSTOMER_QUOTE_CLOSED"),
+    "seller-bid-selected": solapiValue(env, "SOLAPI_TEMPLATE_SELLER_BID_SELECTED"),
+    "seller-approved": solapiValue(env, "SOLAPI_TEMPLATE_SELLER_APPROVED"),
+    "seller-application-received": solapiValue(env, "SOLAPI_TEMPLATE_ADMIN_SELLER_APPLICATION"),
+  };
+  return templates[type] || "";
 }
 
-function canSendSolapi(env, message, templateId) {
-  return Boolean(
-    env.SOLAPI_API_KEY &&
-      env.SOLAPI_API_SECRET &&
-      solapiValue(env, "SOLAPI_CHANNEL_ID") &&
-      solapiValue(env, "SOLAPI_FROM") &&
-      templateId &&
-      normalizePhone(message.targetPhone)
-  );
-}
-
-function getSolapiMissingKeys(env, message, templateId) {
+function getSolapiMissingKeys(config, message, templateId) {
   return [
-    ["SOLAPI_API_KEY", env.SOLAPI_API_KEY],
-    ["SOLAPI_API_SECRET", env.SOLAPI_API_SECRET],
-    ["SOLAPI_CHANNEL_ID", solapiValue(env, "SOLAPI_CHANNEL_ID")],
-    ["SOLAPI_FROM", solapiValue(env, "SOLAPI_FROM")],
+    ["SOLAPI_API_KEY", config.apiKey],
+    ["SOLAPI_API_SECRET", config.apiSecret],
+    ["SOLAPI_CHANNEL_ID", config.channelId],
+    ["SOLAPI_FROM", config.from],
     ["templateId", templateId],
     ["targetPhone", normalizePhone(message.targetPhone)],
   ]
@@ -570,53 +572,33 @@ function getSolapiMissingKeys(env, message, templateId) {
     .map(([key]) => key);
 }
 
-async function sendSolapiAlimtalk(env, message, templateId) {
-  if (!canSendSolapi(env, message, templateId)) {
-    return {
-      ok: false,
-      skipped: true,
-      error: `솔라피 설정 누락: ${getSolapiMissingKeys(env, message, templateId).join(", ")}`,
-    };
-  }
-
-  const date = new Date().toISOString();
-  const salt = createSolapiSalt();
-  const apiKey = String(env.SOLAPI_API_KEY || "").trim();
-  const apiSecret = String(env.SOLAPI_API_SECRET || "").trim();
-  const signature = await hmacSha256Hex(apiSecret, date + salt);
-  const authorization = `HMAC-SHA256 apiKey=${apiKey}, date=${date}, salt=${salt}, signature=${signature}`;
+function createSolapiMessageBody(config, message, templateId) {
   const variables = {};
   Object.entries(message.variables || {}).forEach(([key, value]) => {
     variables[key] = String(value ?? "");
   });
 
-  const response = await fetch("https://api.solapi.com/messages/v4/send-many/detail", {
-    method: "POST",
-    headers: {
-      Authorization: authorization,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      messages: [
-        {
-          type: "ATA",
-          to: normalizePhone(message.targetPhone),
-          from: normalizePhone(solapiValue(env, "SOLAPI_FROM")),
-          kakaoOptions: {
-            pfId: solapiValue(env, "SOLAPI_CHANNEL_ID"),
-            templateId,
-            variables,
-            disableSms: false,
-          },
+  return {
+    messages: [
+      {
+        type: "ATA",
+        to: normalizePhone(message.targetPhone),
+        from: config.from,
+        kakaoOptions: {
+          pfId: config.channelId,
+          templateId,
+          variables,
+          disableSms: false,
         },
-      ],
-      strict: false,
-      allowDuplicates: false,
-      showMessageList: true,
-    }),
-  });
+      },
+    ],
+    strict: false,
+    allowDuplicates: false,
+    showMessageList: true,
+  };
+}
 
-  const payload = await response.json().catch(() => ({}));
+function parseSolapiSendResult(response, payload) {
   if (!response.ok) {
     return {
       ok: false,
@@ -646,6 +628,30 @@ async function sendSolapiAlimtalk(env, message, templateId) {
     groupId: payload.groupInfo?.groupId || payload.groupId || "",
     messageId: firstMessage.messageId || firstMessage.message_id || "",
   };
+}
+
+async function sendSolapiAlimtalk(env, message, templateId) {
+  const config = getSolapiConfig(env);
+  const missingKeys = getSolapiMissingKeys(config, message, templateId);
+  if (missingKeys.length) {
+    return {
+      ok: false,
+      skipped: true,
+      error: `솔라피 설정 누락: ${missingKeys.join(", ")}`,
+    };
+  }
+
+  const authorization = await createSolapiAuthorization(config);
+  const response = await fetch("https://api.solapi.com/messages/v4/send-many/detail", {
+    method: "POST",
+    headers: {
+      Authorization: authorization,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(createSolapiMessageBody(config, message, templateId)),
+  });
+  const payload = await response.json().catch(() => ({}));
+  return parseSolapiSendResult(response, payload);
 }
 
 async function queueAlimtalk(env, message) {
@@ -1393,6 +1399,33 @@ function getSolapiHealth(env) {
   });
 }
 
+async function getSolapiAuthTest(env) {
+  const config = getSolapiConfig(env);
+  if (!config.apiKey || !config.apiSecret) {
+    return json({ ok: false, message: "SOLAPI_API_KEY 또는 SOLAPI_API_SECRET이 없습니다." }, 500);
+  }
+
+  const authorization = await createSolapiAuthorization(config);
+  const response = await fetch("https://api.solapi.com/messages/v4/list?limit=1", {
+    method: "GET",
+    headers: {
+      Authorization: authorization,
+      "Content-Type": "application/json",
+    },
+  });
+  const payload = await response.json().catch(() => ({}));
+  return json({
+    ok: response.ok,
+    status: response.status,
+    message: response.ok ? "솔라피 인증이 정상입니다." : payload.errorMessage || payload.message || "솔라피 인증 테스트에 실패했습니다.",
+    errorCode: payload.errorCode || "",
+    hasApiKey: Boolean(config.apiKey),
+    hasApiSecret: Boolean(config.apiSecret),
+    hasChannelId: Boolean(config.channelId),
+    hasFrom: Boolean(config.from),
+  }, response.ok ? 200 : 502);
+}
+
 export async function onRequest(context) {
   const { request, env, params } = context;
   const pathParts = Array.isArray(params.path) ? params.path : [];
@@ -1419,6 +1452,7 @@ export async function onRequest(context) {
   if (path === "guide-dismissal" && method === "GET") return getGuideDismissal(env, request);
   if (path === "guide-dismissal" && method === "POST") return saveGuideDismissal(env, request);
   if (path === "solapi-health" && method === "GET") return getSolapiHealth(env);
+  if (path === "solapi-auth-test" && method === "GET") return getSolapiAuthTest(env);
 
   if (path === "alimtalk" && method === "GET") return getAlimtalk(env);
   if (path === "alimtalk" && method === "POST") return createAlimtalk(env, request);
