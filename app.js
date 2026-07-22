@@ -16,7 +16,6 @@ const ADMIN_EMAIL = "di02013@naver.com";
 const STORAGE_KEYS = {
   sellerApplications: "pickquoteSellerApplications",
   approvedSellers: "pickquoteApprovedSellers",
-  alimtalkQueue: "pickquoteAlimtalkQueue",
 };
 const registeredSellerPhones = new Set();
 const sellerAccounts = new Map();
@@ -543,17 +542,6 @@ function hasPendingSellerApplication(sellerId, phone) {
       (application.sellerId === sellerId || normalizePhone(application.phone) === normalizedPhone)
     );
   });
-}
-
-function queueAlimtalkMessage(message) {
-  const queue = readStorageArray(STORAGE_KEYS.alimtalkQueue);
-  queue.unshift({
-    id: `talk-${Date.now()}`,
-    status: "ready",
-    createdAt: new Date().toISOString(),
-    ...message,
-  });
-  writeStorageArray(STORAGE_KEYS.alimtalkQueue, queue);
 }
 
 function findSellerByProfile({ channel, branch, manager, phone, sellerId = "" }) {
@@ -1980,22 +1968,6 @@ sellerRegisterForm.addEventListener("submit", async (event) => {
   sellerRegisterTitle.textContent = "판매자 등록 요청을 저장 중입니다.";
   sellerRegisterMeta.textContent = "잠시만 기다려주세요. 정상 저장 후 관리자 페이지에서 확인할 수 있습니다.";
 
-  const mailBody = [
-    "[픽견적 판매자 등록 요청]",
-    "",
-    `채널: ${sellerChannel}`,
-    `근무지점: ${branch}`,
-    `해당 지점 지역: ${branchRegion}`,
-    `판매자 아이디: ${sellerId}`,
-    `매니저 이름: ${manager}`,
-    `직책: ${managerPosition}`,
-    `연락처: ${sellerPhone}`,
-    `추가 메모: ${sellerMemo}`,
-    "",
-    "지점 명함 이미지: 실제 서비스에서는 첨부파일 또는 서버 저장 URL로 함께 전달됩니다.",
-  ].join("\n");
-
-  const applications = getSellerApplications();
   const application = {
     id: `seller-${Date.now()}`,
     status: "pending",
@@ -2018,13 +1990,10 @@ sellerRegisterForm.addEventListener("submit", async (event) => {
     },
     memo: sellerMemo,
   };
-  applications.unshift(application);
-  setSellerApplications(applications);
+
   const serverResult = await saveSellerApplicationToServer(application);
+
   if (canUseApiServer() && !serverResult?.ok) {
-    applications.shift();
-    setSellerApplications(applications);
-    sellerRegisterTitle.textContent = "??? ?? ??? ???? ?????.";
     if (submitButton) {
       submitButton.disabled = false;
       submitButton.textContent = originalSubmitText;
@@ -2033,18 +2002,12 @@ sellerRegisterForm.addEventListener("submit", async (event) => {
     sellerRegisterMeta.textContent = serverResult?.message || "잠시 후 다시 시도해주세요. 문제가 계속되면 운영자에게 문의해주세요.";
     return;
   }
-  queueAlimtalkMessage({
-    type: "seller-application-received",
-    targetRole: "seller",
-    targetName: manager,
-    targetPhone: sellerPhone,
-    title: "판매자 등록 요청 접수 안내",
-    body: `${formatSellerDisplayName(sellerChannel, branch)} 등록 요청이 접수되었습니다. 관리자 검토 후 승인 또는 반려 안내를 발송합니다.`,
-    relatedId: application.id,
-  });
 
-  sellerRegisterTitle.textContent = "판매자 등록 요청이 접수되었습니다.";
-  sellerRegisterMeta.textContent = `${formatSellerDisplayName(sellerChannel, branch)} · 관리자 승인 대기`;
+  const savedApplication = serverResult?.row || application;
+  const applications = getSellerApplications().filter((item) => item.id !== savedApplication.id);
+  applications.unshift(savedApplication);
+  setSellerApplications(applications);
+
   if (submitButton) {
     submitButton.disabled = false;
     submitButton.textContent = originalSubmitText;
@@ -2054,13 +2017,14 @@ sellerRegisterForm.addEventListener("submit", async (event) => {
   businessCardPreview.innerHTML = "";
   sellerRegisterTitle.textContent = "정상적으로 완료되었습니다.";
   sellerRegisterMeta.textContent = `${formatSellerDisplayName(sellerChannel, branch)} 등록 요청이 저장되었습니다. 관리자 검토 후 승인 또는 반려 안내가 진행됩니다.`;
-  sellerMailPreview.textContent = "";
-  sellerMailPreview.hidden = true;
-  sellerAdminReviewLink.hidden = true;
-  sellerMailLink.hidden = true;
-  sellerMailPanel.hidden = false;
+  if (sellerMailPreview) {
+    sellerMailPreview.textContent = "";
+    sellerMailPreview.hidden = true;
+  }
+  if (sellerAdminReviewLink) sellerAdminReviewLink.hidden = true;
+  if (sellerMailLink) sellerMailLink.hidden = true;
+  if (sellerMailPanel) sellerMailPanel.hidden = true;
   showSellerRegisterCompleteModal();
-  sellerMailPanel.scrollIntoView({ behavior: "smooth", block: "start" });
 });
 
 regionChangeForm.addEventListener("submit", async (event) => {
