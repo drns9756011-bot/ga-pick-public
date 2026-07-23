@@ -17,7 +17,7 @@ const SOLAPI_DEFAULTS = {
   SOLAPI_TEMPLATE_SELLER_APPROVED: "KA01TP2607211355258674q0EFuag5GE",
 };
 
-const PUBLIC_API_VERSION = "20260723-seller-admin-alimtalk-dynamic-queue";
+const PUBLIC_API_VERSION = "20260723-seller-admin-alert-rewrite";
 
 function solapiValue(env, key) {
   return String(env?.[key] || SOLAPI_DEFAULTS[key] || "").trim();
@@ -914,7 +914,8 @@ async function queueTextMessage(env, message) {
 }
 
 async function queueSellerApplicationAdminAlert(env, row) {
-  return queueAlimtalk(env, {
+  await ensureAlimtalkColumns(env);
+  const message = {
     type: "seller-application-received",
     targetRole: "admin",
     targetName: "관리자",
@@ -930,7 +931,66 @@ async function queueSellerApplicationAdminAlert(env, row) {
       "#{매니저명}": row.manager,
       "#{연락처}": formatPhoneNumber(row.phone),
     },
-  });
+  };
+  const id = createId("talk");
+  const now = new Date().toISOString();
+  const variablesJson = JSON.stringify(message.variables || {});
+
+  await env.DB.prepare(
+    `INSERT INTO alimtalk_queue
+      (id, status, type, target_role, target_name, target_phone, title, body, related_id,
+       template_id, variables_json, solapi_group_id, solapi_message_id, error_message,
+       created_at, sent_at, canceled_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  )
+    .bind(
+      id,
+      "ready",
+      message.type,
+      message.targetRole,
+      message.targetName,
+      message.targetPhone,
+      message.title,
+      message.body,
+      message.relatedId,
+      message.templateId,
+      variablesJson,
+      "",
+      "",
+      "",
+      now,
+      "",
+      ""
+    )
+    .run();
+
+  let result;
+  try {
+    result = await sendSolapiAlimtalk(env, message, message.templateId);
+  } catch (error) {
+    result = {
+      ok: false,
+      error: error?.message || "판매자 등록 관리자 알림톡 발송 처리 중 오류가 발생했습니다.",
+    };
+  }
+
+  const sentAt = result.ok && result.queueStatus === "sent" ? new Date().toISOString() : "";
+  await env.DB.prepare(
+    `UPDATE alimtalk_queue
+     SET status = ?, sent_at = ?, solapi_group_id = ?, solapi_message_id = ?, error_message = ?
+     WHERE id = ?`
+  )
+    .bind(
+      result.ok ? result.queueStatus || "accepted" : result.skipped ? "ready" : "failed",
+      sentAt,
+      result.groupId || "",
+      result.messageId || "",
+      result.error || "",
+      id
+    )
+    .run();
+
+  return { id, ...result };
 }
 
 async function getSellerApplications(env) {
@@ -993,7 +1053,10 @@ async function createSellerApplication(env, request) {
     await env.DB.prepare("SELECT * FROM seller_applications WHERE id = ?").bind(id).first()
   );
 
-  const adminAlert = await queueSellerApplicationAdminAlert(env, row);
+  const adminAlert = await queueSellerApplicationAdminAlert(env, row).catch((error) => ({
+    ok: false,
+    error: error?.message || "판매자 등록 관리자 알림톡 큐 저장에 실패했습니다.",
+  }));
 
   return json({ ok: true, row, adminAlert }, 201);
 }
@@ -1425,6 +1488,28 @@ async function getAlimtalk(env) {
   return json({ ok: true, rows: result.results.map(normalizeMessage) });
 }
 
+async function getAlimtalkDebug(env) {
+  await ensureAlimtalkColumns(env);
+  const schema = await env.DB.prepare(
+    "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'alimtalk_queue'"
+  ).first();
+  const count = await env.DB.prepare("SELECT COUNT(*) AS count FROM alimtalk_queue").first();
+  const recent = await env.DB.prepare(
+    "SELECT id, status, type, target_role, title, template_id, error_message, created_at, sent_at FROM alimtalk_queue ORDER BY created_at DESC LIMIT 5"
+  ).all();
+  const latestSeller = await env.DB.prepare(
+    "SELECT id, status, channel, branch, manager, phone, requested_at FROM seller_applications ORDER BY requested_at DESC LIMIT 1"
+  ).first();
+  return json({
+    ok: true,
+    version: PUBLIC_API_VERSION,
+    tableSql: schema?.sql || "",
+    count: count?.count || 0,
+    recent: recent.results || [],
+    latestSeller,
+  });
+}
+
 async function createAlimtalk(env, request) {
   const body = await request.json();
   if (String(body.type || "").includes("sms")) {
@@ -1705,6 +1790,7 @@ export async function onRequest(context) {
   if (path === "solapi-auth-test" && method === "GET") return getSolapiAuthTest(env);
 
   if (path === "alimtalk" && method === "GET") return getAlimtalk(env);
+  if (path === "alimtalk-debug" && method === "GET") return getAlimtalkDebug(env);
   if (path === "alimtalk" && method === "POST") return createAlimtalk(env, request);
   if (path.startsWith("alimtalk/") && path.endsWith("/resend") && method === "POST") {
     return resendAlimtalk(env, decodeURIComponent(pathParts.slice(1, -1).join("/")));
