@@ -17,7 +17,7 @@ const SOLAPI_DEFAULTS = {
   SOLAPI_TEMPLATE_SELLER_APPROVED: "KA01TP2607211355258674q0EFuag5GE",
 };
 
-const PUBLIC_API_VERSION = "20260723-seller-admin-alert-fallback-log";
+const PUBLIC_API_VERSION = "20260723-seller-admin-alert-trace";
 
 function solapiValue(env, key) {
   return String(env?.[key] || SOLAPI_DEFAULTS[key] || "").trim();
@@ -1024,6 +1024,12 @@ async function getSellerApplications(env) {
   return json({ ok: true, rows: result.results.map(normalizeSellerApplication) });
 }
 
+async function traceSellerAdminAlert(env, sellerId, message) {
+  await env.DB.prepare("UPDATE seller_applications SET review_memo = ? WHERE id = ?")
+    .bind(message, sellerId)
+    .run();
+}
+
 async function createSellerApplication(env, request) {
   await ensureSellerColumns(env);
   const body = await request.json();
@@ -1078,7 +1084,18 @@ async function createSellerApplication(env, request) {
     await env.DB.prepare("SELECT * FROM seller_applications WHERE id = ?").bind(id).first()
   );
 
-  const adminAlert = await queueSellerApplicationAdminAlert(env, row);
+  await traceSellerAdminAlert(env, row.id, "관리자 알림톡 처리 시작");
+  const adminAlert = await queueSellerApplicationAdminAlert(env, row).catch((error) => ({
+    ok: false,
+    error: error?.message || "판매자 등록 관리자 알림톡 처리 중 오류가 발생했습니다.",
+  }));
+  await traceSellerAdminAlert(
+    env,
+    row.id,
+    adminAlert.ok
+      ? `관리자 알림톡 처리 완료: ${adminAlert.id || ""}`
+      : `관리자 알림톡 처리 실패: ${adminAlert.error || "unknown"}`
+  );
 
   return json({ ok: true, row, adminAlert }, 201);
 }
@@ -1520,7 +1537,7 @@ async function getAlimtalkDebug(env) {
     "SELECT id, status, type, target_role, title, template_id, error_message, created_at, sent_at FROM alimtalk_queue ORDER BY created_at DESC LIMIT 5"
   ).all();
   const latestSeller = await env.DB.prepare(
-    "SELECT id, status, channel, branch, manager, phone, requested_at FROM seller_applications ORDER BY requested_at DESC LIMIT 1"
+    "SELECT id, status, review_memo, channel, branch, manager, phone, requested_at FROM seller_applications ORDER BY requested_at DESC LIMIT 1"
   ).first();
   return json({
     ok: true,
