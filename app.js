@@ -11,6 +11,7 @@ let activeSellerBrandFilter = "all";
 let activeSellerRegionFilter = "all";
 let pendingQuoteFormData = null;
 let pendingBidSelection = null;
+let lookupAccessGranted = false;
 
 const ADMIN_EMAIL = "di02013@naver.com";
 const STORAGE_KEYS = {
@@ -627,6 +628,11 @@ function setView(view) {
     setSellerLoginMessage("판매자 페이지는 로그인 후 이용할 수 있습니다.", "error");
   }
 
+  if (view === "lookup") {
+    lookupAccessGranted = false;
+    renderLookupResults([], "성함과 휴대전화로 등록한 견적을 조회하세요.");
+  }
+
   pages.forEach((page) => {
     page.classList.toggle("is-active", page.dataset.page === view);
   });
@@ -1159,7 +1165,6 @@ async function createCustomerRequestOnServer(formData) {
   selectedRequestId = newRequest.id;
   renderRequests();
   renderSelectedRequest();
-  renderLookupResults([newRequest]);
   resetCustomerForm();
   setView("lookup");
   hideServerLoading();
@@ -1226,7 +1231,6 @@ async function createCustomerRequest(formData) {
   selectedRequestId = savedRequest.id;
   renderRequests();
   renderSelectedRequest();
-  renderLookupResults([savedRequest]);
   resetCustomerForm();
   setView("lookup");
 }
@@ -1303,11 +1307,21 @@ async function confirmBidSelection() {
 }
 
 function renderLookupResults(matches, label = "내 견적") {
+  if (!lookupAccessGranted) {
+    lookupResults.innerHTML = `
+      <div class="empty-state">
+        <strong>성함과 휴대전화로 내 견적을 조회하세요.</strong>
+        <p>고객님 개인정보 보호를 위해 등록 당시 입력한 성함과 휴대전화가 일치해야 견적 내용과 판매자 제안을 확인할 수 있습니다.</p>
+      </div>
+    `;
+    return;
+  }
+
   if (!matches.length) {
     lookupResults.innerHTML = `
       <div class="empty-state">
         <strong>조회된 견적이 없습니다.</strong>
-        <p>고객님 성함과 연락처가 견적 등록 때 입력한 내용과 같은지 확인해주세요.</p>
+        <p>견적 등록 시 입력한 성함과 휴대전화가 정확한지 다시 확인해주세요.</p>
       </div>
     `;
     return;
@@ -1691,6 +1705,13 @@ lookupForm.addEventListener("submit", async (event) => {
   const formData = new FormData(lookupForm);
   const customer = normalizeName(formData.get("lookupCustomer"));
   const phone = normalizePhone(formData.get("lookupPhone"));
+
+  lookupAccessGranted = true;
+  if (!customer || !phone) {
+    renderLookupResults([]);
+    return;
+  }
+
   const serverMatches = canUseApiServer() ? await lookupCustomerQuotesFromServer(formData.get("lookupCustomer").trim(), phone) : [];
   if (serverMatches.length && canUseApiServer()) await syncBidsFromServer();
   const matches = serverMatches.length
