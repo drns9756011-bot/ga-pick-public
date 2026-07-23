@@ -17,7 +17,7 @@ const SOLAPI_DEFAULTS = {
   SOLAPI_TEMPLATE_SELLER_APPROVED: "KA01TP2607211355258674q0EFuag5GE",
 };
 
-const PUBLIC_API_VERSION = "20260723-seller-admin-alert-trace";
+const PUBLIC_API_VERSION = "20260723-solapi-docs-direct-admin-alert";
 
 function solapiValue(env, key) {
   return String(env?.[key] || SOLAPI_DEFAULTS[key] || "").trim();
@@ -914,7 +914,6 @@ async function queueTextMessage(env, message) {
 }
 
 async function queueSellerApplicationAdminAlert(env, row) {
-  await ensureAlimtalkColumns(env);
   const message = {
     type: "seller-application-received",
     targetRole: "admin",
@@ -936,59 +935,6 @@ async function queueSellerApplicationAdminAlert(env, row) {
   const now = new Date().toISOString();
   const variablesJson = JSON.stringify(message.variables || {});
 
-  try {
-    await env.DB.prepare(
-      `INSERT INTO alimtalk_queue
-        (id, status, type, target_role, target_name, target_phone, title, body, related_id,
-         template_id, variables_json, solapi_group_id, solapi_message_id, error_message,
-         created_at, sent_at, canceled_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-    )
-      .bind(
-        id,
-        "ready",
-        message.type,
-        message.targetRole,
-        message.targetName,
-        message.targetPhone,
-        message.title,
-        message.body,
-        message.relatedId,
-        message.templateId,
-        variablesJson,
-        "",
-        "",
-        "",
-        now,
-        "",
-        ""
-      )
-      .run();
-  } catch (insertError) {
-    const fallbackId = createId("talk");
-    const errorMessage = `판매자 등록 알림톡 큐 저장 실패: ${insertError?.message || "unknown"}`;
-    await env.DB.prepare(
-      `INSERT INTO alimtalk_queue
-        (id, status, type, target_role, target_name, target_phone, title, body, related_id, error_message, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-    )
-      .bind(
-        fallbackId,
-        "failed",
-        message.type,
-        message.targetRole,
-        message.targetName,
-        message.targetPhone,
-        message.title,
-        message.body,
-        message.relatedId,
-        errorMessage,
-        now
-      )
-      .run();
-    return { id: fallbackId, ok: false, error: errorMessage };
-  }
-
   let result;
   try {
     result = await sendSolapiAlimtalk(env, message, message.templateId);
@@ -999,21 +945,43 @@ async function queueSellerApplicationAdminAlert(env, row) {
     };
   }
 
-  const sentAt = result.ok && result.queueStatus === "sent" ? new Date().toISOString() : "";
-  await env.DB.prepare(
-    `UPDATE alimtalk_queue
-     SET status = ?, sent_at = ?, solapi_group_id = ?, solapi_message_id = ?, error_message = ?
-     WHERE id = ?`
-  )
-    .bind(
-      result.ok ? result.queueStatus || "accepted" : result.skipped ? "ready" : "failed",
-      sentAt,
-      result.groupId || "",
-      result.messageId || "",
-      result.error || "",
-      id
+  try {
+    await ensureAlimtalkColumns(env);
+    const sentAt = result.ok && result.queueStatus === "sent" ? new Date().toISOString() : "";
+    await env.DB.prepare(
+      `INSERT INTO alimtalk_queue
+        (id, status, type, target_role, target_name, target_phone, title, body, related_id,
+         template_id, variables_json, solapi_group_id, solapi_message_id, error_message,
+         created_at, sent_at, canceled_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
-    .run();
+      .bind(
+        id,
+        result.ok ? result.queueStatus || "accepted" : result.skipped ? "ready" : "failed",
+        message.type,
+        message.targetRole,
+        message.targetName,
+        message.targetPhone,
+        message.title,
+        message.body,
+        message.relatedId,
+        message.templateId,
+        variablesJson,
+        result.groupId || "",
+        result.messageId || "",
+        result.error || "",
+        now,
+        sentAt,
+        ""
+      )
+      .run();
+  } catch (queueError) {
+    return {
+      id,
+      ...result,
+      queueError: queueError?.message || "알림톡 발송 결과를 큐에 저장하지 못했습니다.",
+    };
+  }
 
   return { id, ...result };
 }
