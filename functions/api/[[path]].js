@@ -15,9 +15,10 @@ const SOLAPI_DEFAULTS = {
   SOLAPI_TEMPLATE_ADMIN_SELLER_APPLICATION: "KA01TP2607210300081256MK0cxuHata",
   SOLAPI_TEMPLATE_SELLER_BID_SELECTED: "KA01TP260721133628815TgDs1sAwUhc",
   SOLAPI_TEMPLATE_SELLER_APPROVED: "KA01TP2607211355258674q0EFuag5GE",
+  SOLAPI_TEMPLATE_SELLER_REJECTED: "KA01TP260723100412983h6pYV7vWwi5",
 };
 
-const PUBLIC_API_VERSION = "20260723-seller-alert-phone-format-fix";
+const PUBLIC_API_VERSION = "20260723-seller-rejected-template-reason";
 
 function solapiValue(env, key) {
   return String(env?.[key] || SOLAPI_DEFAULTS[key] || "").trim();
@@ -682,6 +683,7 @@ function getSolapiTemplateId(env, type) {
     "customer-quote-closed": solapiValue(env, "SOLAPI_TEMPLATE_CUSTOMER_QUOTE_CLOSED"),
     "seller-bid-selected": solapiValue(env, "SOLAPI_TEMPLATE_SELLER_BID_SELECTED"),
     "seller-approved": solapiValue(env, "SOLAPI_TEMPLATE_SELLER_APPROVED"),
+    "seller-rejected": solapiValue(env, "SOLAPI_TEMPLATE_SELLER_REJECTED"),
     "seller-application-received": solapiValue(env, "SOLAPI_TEMPLATE_ADMIN_SELLER_APPLICATION"),
   };
   return templates[type] || "";
@@ -1150,14 +1152,22 @@ async function updateSellerApplication(env, request, id) {
   }
 
   if (status === "rejected") {
+    const rejectReason = reviewMemo || "등록 정보 확인이 필요합니다.";
     await queueAlimtalk(env, {
       type: "seller-rejected",
       targetRole: "seller",
       targetName: updated.manager,
       targetPhone: updated.phone,
       title: "판매자 등록 반려 안내",
-      body: `${sellerName(updated)} 등록 신청이 반려되었습니다. 사유: ${reviewMemo || "등록 정보 확인이 필요합니다."}`,
+      body: `${sellerName(updated)} 등록 신청이 반려되었습니다. 사유: ${rejectReason}`,
       relatedId: updated.id,
+      variables: {
+        "#{판매자명}": sellerName(updated),
+        "#{채널}": updated.channel,
+        "#{지점명}": updated.branch,
+        "#{매니저명}": updated.manager,
+        "#{반려사유}": rejectReason,
+      },
     });
   }
 
@@ -1731,6 +1741,7 @@ function getSolapiHealth(env) {
     adminSellerApplication: solapiValue(env, "SOLAPI_TEMPLATE_ADMIN_SELLER_APPLICATION"),
     sellerBidSelected: solapiValue(env, "SOLAPI_TEMPLATE_SELLER_BID_SELECTED"),
     sellerApproved: solapiValue(env, "SOLAPI_TEMPLATE_SELLER_APPROVED"),
+    sellerRejected: solapiValue(env, "SOLAPI_TEMPLATE_SELLER_REJECTED"),
   };
   return json({
     ok: true,
@@ -1752,6 +1763,7 @@ function getSolapiHealth(env) {
       !templates.adminSellerApplication && "SOLAPI_TEMPLATE_ADMIN_SELLER_APPLICATION",
       !templates.sellerBidSelected && "SOLAPI_TEMPLATE_SELLER_BID_SELECTED",
       !templates.sellerApproved && "SOLAPI_TEMPLATE_SELLER_APPROVED",
+      !templates.sellerRejected && "SOLAPI_TEMPLATE_SELLER_REJECTED",
     ].filter(Boolean),
   });
 }
