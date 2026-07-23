@@ -17,7 +17,7 @@ const SOLAPI_DEFAULTS = {
   SOLAPI_TEMPLATE_SELLER_APPROVED: "KA01TP2607211355258674q0EFuag5GE",
 };
 
-const PUBLIC_API_VERSION = "20260723-seller-admin-alimtalk-record-first-delete";
+const PUBLIC_API_VERSION = "20260723-seller-admin-alimtalk-single-queue";
 
 function solapiValue(env, key) {
   return String(env?.[key] || SOLAPI_DEFAULTS[key] || "").trim();
@@ -861,22 +861,15 @@ async function queueTextMessage(env, message) {
 }
 
 async function queueSellerApplicationAdminAlert(env, row) {
-  await ensureAlimtalkColumns(env);
-  const now = new Date().toISOString();
-  const id = createId("talk");
-  const targetPhone = normalizePhone(solapiValue(env, "SOLAPI_ADMIN_PHONE") || "01066312323");
-  const templateId =
-    solapiValue(env, "SOLAPI_TEMPLATE_ADMIN_SELLER_APPLICATION") ||
-    "KA01TP2607210300081256MK0cxuHata";
-  const message = {
+  return queueAlimtalk(env, {
     type: "seller-application-received",
     targetRole: "admin",
     targetName: "관리자",
-    targetPhone,
+    targetPhone: solapiValue(env, "SOLAPI_ADMIN_PHONE") || "01066312323",
     title: "판매자 등록 요청이 접수되었습니다",
     body: `${sellerName(row)} ${row.manager} 매니저의 판매자 등록 요청이 접수되었습니다.`,
     relatedId: row.id,
-    templateId,
+    templateId: solapiValue(env, "SOLAPI_TEMPLATE_ADMIN_SELLER_APPLICATION") || "KA01TP2607210300081256MK0cxuHata",
     allowDuplicates: true,
     variables: {
       "#{채널}": row.channel,
@@ -884,67 +877,7 @@ async function queueSellerApplicationAdminAlert(env, row) {
       "#{매니저명}": row.manager,
       "#{연락처}": formatPhoneNumber(row.phone),
     },
-  };
-  const variablesJson = JSON.stringify(message.variables || {});
-
-  await env.DB.prepare(
-    `INSERT INTO alimtalk_queue
-      (id, status, type, target_role, target_name, target_phone, title, body, related_id,
-       template_id, variables_json, solapi_group_id, solapi_message_id, error_message, solapi_response_json,
-       created_at, sent_at, canceled_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-  )
-    .bind(
-      id,
-      "ready",
-      message.type,
-      message.targetRole,
-      message.targetName,
-      message.targetPhone,
-      message.title,
-      message.body,
-      message.relatedId,
-      templateId,
-      variablesJson,
-      "",
-      "",
-      "",
-      "",
-      now,
-      "",
-      ""
-    )
-    .run();
-
-  let result;
-  try {
-    result = await sendSolapiAlimtalk(env, message, templateId);
-  } catch (error) {
-    result = {
-      ok: false,
-      error: error?.message || "관리자 알림톡 발송 처리 중 오류가 발생했습니다.",
-    };
-  }
-
-  const status = result.ok ? result.queueStatus || "sending" : result.skipped ? "ready" : "failed";
-  const sentAt = result.ok && result.queueStatus === "sent" ? new Date().toISOString() : "";
-  await env.DB.prepare(
-    `UPDATE alimtalk_queue
-     SET status = ?, sent_at = ?, solapi_group_id = ?, solapi_message_id = ?, error_message = ?, solapi_response_json = ?
-     WHERE id = ?`
-  )
-    .bind(
-      status,
-      sentAt,
-      result.groupId || "",
-      result.messageId || "",
-      result.error || "",
-      JSON.stringify(result.payload || {}),
-      id
-    )
-    .run();
-
-  return { id, ...result };
+  });
 }
 
 async function getSellerApplications(env) {
@@ -1007,15 +940,7 @@ async function createSellerApplication(env, request) {
     await env.DB.prepare("SELECT * FROM seller_applications WHERE id = ?").bind(id).first()
   );
 
-  let adminAlert = null;
-  try {
-    adminAlert = await queueSellerApplicationAdminAlert(env, row);
-  } catch (error) {
-    adminAlert = {
-      ok: false,
-      error: error?.message || "관리자 알림톡 처리 중 오류가 발생했습니다.",
-    };
-  }
+  const adminAlert = await queueSellerApplicationAdminAlert(env, row);
 
   return json({ ok: true, row, adminAlert }, 201);
 }
@@ -1766,10 +1691,6 @@ export async function onRequest(context) {
 
   if (path === "uploads" && method === "POST") return uploadFile(env, request);
   if (path.startsWith("files/") && method === "GET") return getFile(env, decodeURIComponent(pathParts.slice(1).join("/")));
-
-  if (path === "send-mail" && method === "POST") {
-    return json({ ok: false, message: "정식 서비스 메일 발송은 별도 메일 API 연동이 필요합니다." }, 501);
-  }
 
   return json({ ok: false, message: "API를 찾을 수 없습니다." }, 404);
 }

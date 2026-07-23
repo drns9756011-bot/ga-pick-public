@@ -42,10 +42,6 @@ const previewTitle = document.querySelector("#previewTitle");
 const previewMeta = document.querySelector("#previewMeta");
 const sellerRegisterTitle = document.querySelector("#sellerRegisterTitle");
 const sellerRegisterMeta = document.querySelector("#sellerRegisterMeta");
-const sellerMailPanel = document.querySelector("#sellerMailPanel");
-const sellerMailPreview = document.querySelector("#sellerMailPreview");
-const sellerMailLink = document.querySelector("#sellerMailLink");
-const sellerAdminReviewLink = document.querySelector("#sellerAdminReviewLink");
 const regionChangePreview = document.querySelector("#regionChangePreview");
 const regionChangeMailLink = document.querySelector("#regionChangeMailLink");
 const sellerQuoteWorkspace = document.querySelector("#sellerQuoteWorkspace");
@@ -992,7 +988,7 @@ function renderSelectedRequest() {
             <strong>${isSaleCompleted ? "판매완료 처리됨" : "판매가 완료되었나요?"}</strong>
             <p>${
               isSaleCompleted
-                ? "정식 서비스에서는 이 시점에 고객님께 카카오 알림톡으로 후기 작성 링크가 발송됩니다."
+                ? "고객님에게 후기 작성 안내가 발송되었습니다."
                 : "선택받은 견적에서 판매완료를 누르면 고객님 후기 작성 안내가 열립니다."
             }</p>
             <button class="primary-btn full sale-complete-btn" type="button" data-request-id="${request.id}" ${
@@ -1398,38 +1394,10 @@ function buildMailtoLink(subject, body) {
 }
 
 async function sendAdminMail(subject, body, fallbackLink) {
-  fallbackLink.hidden = true;
-  fallbackLink.textContent = "자동 메일 발송 중...";
-  fallbackLink.href = "#";
-
-  if (window.location.protocol === "file:") {
-    fallbackLink.href = buildMailtoLink(subject, body);
-    fallbackLink.textContent = "요청 접수 준비 중";
-    fallbackLink.hidden = false;
-    return false;
-  }
-
-  try {
-    const response = await fetch("/api/send-mail", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ subject, body }),
-    });
-
-    if (!response.ok) throw new Error("mail request failed");
-
-    fallbackLink.textContent = "요청 접수가 완료되었습니다.";
-    fallbackLink.removeAttribute("href");
-    fallbackLink.hidden = false;
-    return true;
-  } catch (error) {
-    fallbackLink.href = buildMailtoLink(subject, body);
-    fallbackLink.textContent = "요청 접수에 실패했습니다. 잠시 후 다시 시도해주세요.";
-    fallbackLink.hidden = false;
-    return false;
-  }
+  fallbackLink.href = buildMailtoLink(subject, body);
+  fallbackLink.textContent = "메일 앱으로 변경 신청 보내기";
+  fallbackLink.hidden = false;
+  return false;
 }
 
 document.querySelectorAll("input, textarea, select").forEach((field) => {
@@ -1815,7 +1783,7 @@ sellerQuoteWorkspace.addEventListener("click", (event) => {
   request.saleCompletedBidId = selectedBid.id;
   request.reviewNotificationSentAt = completedAt;
   setBidFormMessage(
-    "판매완료 처리되었습니다. 정식 서비스에서는 고객님께 카카오 알림톡 후기 요청이 발송됩니다."
+    "판매완료 처리되었습니다. 고객님에게 후기 작성 안내를 발송했습니다."
   );
   renderRequests();
   renderSelectedRequest();
@@ -2011,13 +1979,6 @@ sellerRegisterForm.addEventListener("submit", async (event) => {
     businessCardPreview.innerHTML = "";
     sellerRegisterTitle.textContent = "정상적으로 완료되었습니다.";
     sellerRegisterMeta.textContent = `${formatSellerDisplayName(sellerChannel, branch)} 등록 요청이 저장되었습니다. 관리자 검토 후 승인 또는 반려 안내가 진행됩니다.`;
-    if (sellerMailPreview) {
-      sellerMailPreview.textContent = "";
-      sellerMailPreview.hidden = true;
-    }
-    if (sellerAdminReviewLink) sellerAdminReviewLink.hidden = true;
-    if (sellerMailLink) sellerMailLink.hidden = true;
-    if (sellerMailPanel) sellerMailPanel.hidden = true;
     showSellerRegisterCompleteModal();
   } catch (error) {
     console.warn("판매자 등록 처리 중 오류가 발생했습니다.", error);
@@ -2266,7 +2227,7 @@ renderSelectedRequest = function renderSelectedRequestClean() {
             <strong>${isSaleCompleted ? "판매완료 처리됨" : "판매가 완료되었나요?"}</strong>
             <p>${
               isSaleCompleted
-                ? "정식 서비스에서는 이 시점에 고객님께 카카오 알림톡으로 후기 작성 링크가 발송됩니다."
+                ? "고객님에게 후기 작성 안내가 발송되었습니다."
                 : "선택받은 견적에서 판매완료를 누르면 고객님 후기 작성 안내가 열립니다."
             }</p>
             <button class="primary-btn full sale-complete-btn" type="button" data-request-id="${request.id}" ${
