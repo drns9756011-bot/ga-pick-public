@@ -17,7 +17,7 @@ const SOLAPI_DEFAULTS = {
   SOLAPI_TEMPLATE_SELLER_APPROVED: "KA01TP2607211355258674q0EFuag5GE",
 };
 
-const PUBLIC_API_VERSION = "20260723-seller-admin-alimtalk-robust-queue";
+const PUBLIC_API_VERSION = "20260723-seller-admin-alimtalk-dynamic-queue";
 
 function solapiValue(env, key) {
   return String(env?.[key] || SOLAPI_DEFAULTS[key] || "").trim();
@@ -252,122 +252,87 @@ async function ensureAlimtalkColumns(env) {
 }
 
 async function insertAlimtalkRow(env, row) {
-  try {
-    return await env.DB.prepare(
-      `INSERT INTO alimtalk_queue
-        (id, status, type, target_role, target_name, target_phone, title, body, related_id,
-         template_id, variables_json, solapi_group_id, solapi_message_id, error_message, solapi_response_json,
-         created_at, sent_at, canceled_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-    )
-      .bind(
-        row.id,
-        row.status,
-        row.type,
-        row.targetRole,
-        row.targetName,
-        row.targetPhone,
-        row.title,
-        row.body,
-        row.relatedId,
-        row.templateId,
-        row.variablesJson,
-        "",
-        "",
-        "",
-        "",
-        row.createdAt,
-        "",
-        ""
-      )
-      .run();
-  } catch (firstError) {
-    await ensureAlimtalkColumns(env);
-    try {
-      return await env.DB.prepare(
-        `INSERT INTO alimtalk_queue
-          (id, status, type, target_role, target_name, target_phone, title, body, related_id,
-           template_id, variables_json, solapi_group_id, solapi_message_id, error_message,
-           created_at, sent_at, canceled_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-      )
-        .bind(
-          row.id,
-          row.status,
-          row.type,
-          row.targetRole,
-          row.targetName,
-          row.targetPhone,
-          row.title,
-          row.body,
-          row.relatedId,
-          row.templateId,
-          row.variablesJson,
-          "",
-          "",
-          "",
-          row.createdAt,
-          "",
-          ""
-        )
-        .run();
-    } catch (secondError) {
-      secondError.message = `알림톡 큐 저장 실패: ${secondError.message || firstError.message || "unknown"}`;
-      throw secondError;
-    }
-  }
+  await ensureAlimtalkColumns(env);
+  const valuesByColumn = {
+    id: row.id,
+    status: row.status,
+    type: row.type,
+    target_role: row.targetRole,
+    target_name: row.targetName,
+    target_phone: row.targetPhone,
+    title: row.title,
+    body: row.body,
+    related_id: row.relatedId,
+    template_id: row.templateId,
+    variables_json: row.variablesJson,
+    solapi_group_id: "",
+    solapi_message_id: "",
+    error_message: "",
+    solapi_response_json: "",
+    created_at: row.createdAt,
+    sent_at: "",
+    canceled_at: "",
+  };
+  const tableInfo = await env.DB.prepare("PRAGMA table_info(alimtalk_queue)").all();
+  const columns = (tableInfo.results || [])
+    .map((info) => info.name)
+    .filter((name) => Object.prototype.hasOwnProperty.call(valuesByColumn, name));
+  if (!columns.includes("id")) throw new Error("알림톡 큐 테이블에 id 컬럼이 없습니다.");
+
+  const placeholders = columns.map(() => "?").join(", ");
+  const quotedColumns = columns.map((column) => `"${column}"`).join(", ");
+  return env.DB.prepare(`INSERT INTO alimtalk_queue (${quotedColumns}) VALUES (${placeholders})`)
+    .bind(...columns.map((column) => valuesByColumn[column]))
+    .run();
 }
 
 async function updateAlimtalkDeliveryResult(env, id, result, options = {}) {
   const sentAt = result.ok && result.queueStatus === "sent" ? new Date().toISOString() : "";
   const status = result.ok ? result.queueStatus || "accepted" : result.skipped ? "ready" : "failed";
-  const payloadJson = JSON.stringify(result.payload || {});
-  try {
-    await env.DB.prepare(
-      `UPDATE alimtalk_queue
-       SET status = ?, sent_at = ?, canceled_at = COALESCE(?, canceled_at), template_id = COALESCE(?, template_id),
-           solapi_group_id = ?, solapi_message_id = ?, error_message = ?, solapi_response_json = ?
-       WHERE id = ?`
-    )
-      .bind(
-        status,
-        sentAt,
-        options.canceledAt ?? null,
-        options.templateId ?? null,
-        result.groupId || "",
-        result.messageId || "",
-        result.error || "",
-        payloadJson,
-        id
-      )
-      .run();
-  } catch (firstError) {
-    await ensureAlimtalkColumns(env);
-    await env.DB.prepare(
-      `UPDATE alimtalk_queue
-       SET status = ?, sent_at = ?, solapi_group_id = ?, solapi_message_id = ?, error_message = ?
-       WHERE id = ?`
-    )
-      .bind(status, sentAt, result.groupId || "", result.messageId || "", result.error || "", id)
-      .run();
+  await ensureAlimtalkColumns(env);
+  const valuesByColumn = {
+    status,
+    sent_at: sentAt,
+    canceled_at: options.canceledAt,
+    template_id: options.templateId,
+    solapi_group_id: result.groupId || "",
+    solapi_message_id: result.messageId || "",
+    error_message: result.error || "",
+    solapi_response_json: JSON.stringify(result.payload || {}),
+  };
+  const tableInfo = await env.DB.prepare("PRAGMA table_info(alimtalk_queue)").all();
+  const assignments = [];
+  const values = [];
+  for (const info of tableInfo.results || []) {
+    if (info.name === "id") continue;
+    if (!Object.prototype.hasOwnProperty.call(valuesByColumn, info.name)) continue;
+    const value = valuesByColumn[info.name];
+    if (value === undefined) continue;
+    assignments.push(`"${info.name}" = ?`);
+    values.push(value);
   }
+  if (!assignments.length) return;
+  await env.DB.prepare(`UPDATE alimtalk_queue SET ${assignments.join(", ")} WHERE id = ?`).bind(...values, id).run();
 }
 
 async function updateAlimtalkStatusResult(env, id, status, sentAt, errorMessage, payload) {
-  try {
-    await env.DB.prepare(
-      `UPDATE alimtalk_queue
-       SET status = ?, sent_at = ?, error_message = ?, solapi_response_json = ?
-       WHERE id = ?`
-    )
-      .bind(status, sentAt, errorMessage, JSON.stringify(payload || {}), id)
-      .run();
-  } catch (firstError) {
-    await ensureAlimtalkColumns(env);
-    await env.DB.prepare("UPDATE alimtalk_queue SET status = ?, sent_at = ?, error_message = ? WHERE id = ?")
-      .bind(status, sentAt, errorMessage, id)
-      .run();
+  await ensureAlimtalkColumns(env);
+  const valuesByColumn = {
+    status,
+    sent_at: sentAt,
+    error_message: errorMessage,
+    solapi_response_json: JSON.stringify(payload || {}),
+  };
+  const tableInfo = await env.DB.prepare("PRAGMA table_info(alimtalk_queue)").all();
+  const assignments = [];
+  const values = [];
+  for (const info of tableInfo.results || []) {
+    if (!Object.prototype.hasOwnProperty.call(valuesByColumn, info.name)) continue;
+    assignments.push(`"${info.name}" = ?`);
+    values.push(valuesByColumn[info.name]);
   }
+  if (!assignments.length) return;
+  await env.DB.prepare(`UPDATE alimtalk_queue SET ${assignments.join(", ")} WHERE id = ?`).bind(...values, id).run();
 }
 
 function addDays(date, days) {
