@@ -17,6 +17,8 @@ const SOLAPI_DEFAULTS = {
   SOLAPI_TEMPLATE_SELLER_APPROVED: "KA01TP2607211355258674q0EFuag5GE",
 };
 
+const PUBLIC_API_VERSION = "20260723-seller-admin-alimtalk-direct-send-first";
+
 function solapiValue(env, key) {
   return String(env?.[key] || SOLAPI_DEFAULTS[key] || "").trim();
 }
@@ -859,12 +861,14 @@ async function queueTextMessage(env, message) {
 }
 
 async function queueSellerApplicationAdminAlert(env, row) {
+  await ensureAlimtalkColumns(env);
+  const now = new Date().toISOString();
+  const id = createId("talk");
   const targetPhone = normalizePhone(solapiValue(env, "SOLAPI_ADMIN_PHONE") || "01066312323");
   const templateId =
     solapiValue(env, "SOLAPI_TEMPLATE_ADMIN_SELLER_APPLICATION") ||
     "KA01TP2607210300081256MK0cxuHata";
-
-  return queueAlimtalk(env, {
+  const message = {
     type: "seller-application-received",
     targetRole: "admin",
     targetName: "관리자",
@@ -880,7 +884,59 @@ async function queueSellerApplicationAdminAlert(env, row) {
       "#{매니저명}": row.manager,
       "#{연락처}": formatPhoneNumber(row.phone),
     },
-  });
+  };
+  const variablesJson = JSON.stringify(message.variables || {});
+
+  let result;
+  try {
+    result = await sendSolapiAlimtalk(env, message, templateId);
+  } catch (error) {
+    result = {
+      ok: false,
+      error: error?.message || "관리자 알림톡 발송 처리 중 오류가 발생했습니다.",
+    };
+  }
+
+  const status = result.ok ? result.queueStatus || "sending" : result.skipped ? "ready" : "failed";
+  const sentAt = result.ok && result.queueStatus === "sent" ? new Date().toISOString() : "";
+  try {
+    await env.DB.prepare(
+      `INSERT INTO alimtalk_queue
+        (id, status, type, target_role, target_name, target_phone, title, body, related_id,
+         template_id, variables_json, solapi_group_id, solapi_message_id, error_message, solapi_response_json,
+         created_at, sent_at, canceled_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    )
+      .bind(
+        id,
+        status,
+        message.type,
+        message.targetRole,
+        message.targetName,
+        message.targetPhone,
+        message.title,
+        message.body,
+        message.relatedId,
+        templateId,
+        variablesJson,
+        result.groupId || "",
+        result.messageId || "",
+        result.error || "",
+        JSON.stringify(result.payload || {}),
+        now,
+        sentAt,
+        ""
+      )
+      .run();
+  } catch (error) {
+    return {
+      id,
+      ...result,
+      recordError: error?.message || "관리자 알림톡 기록 저장에 실패했습니다.",
+    };
+  }
+
+  return { id, ...result };
 }
 
 async function getSellerApplications(env) {
@@ -1599,6 +1655,7 @@ function getSolapiHealth(env) {
   };
   return json({
     ok: true,
+    version: PUBLIC_API_VERSION,
     hasApiKey: Boolean(env.SOLAPI_API_KEY),
     hasApiSecret: Boolean(env.SOLAPI_API_SECRET),
     hasChannelId: Boolean(solapiValue(env, "SOLAPI_CHANNEL_ID")),
