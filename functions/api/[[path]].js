@@ -17,7 +17,7 @@ const SOLAPI_DEFAULTS = {
   SOLAPI_TEMPLATE_SELLER_APPROVED: "KA01TP2607211355258674q0EFuag5GE",
 };
 
-const PUBLIC_API_VERSION = "20260723-seller-admin-alert-rewrite";
+const PUBLIC_API_VERSION = "20260723-seller-admin-alert-fallback-log";
 
 function solapiValue(env, key) {
   return String(env?.[key] || SOLAPI_DEFAULTS[key] || "").trim();
@@ -936,33 +936,58 @@ async function queueSellerApplicationAdminAlert(env, row) {
   const now = new Date().toISOString();
   const variablesJson = JSON.stringify(message.variables || {});
 
-  await env.DB.prepare(
-    `INSERT INTO alimtalk_queue
-      (id, status, type, target_role, target_name, target_phone, title, body, related_id,
-       template_id, variables_json, solapi_group_id, solapi_message_id, error_message,
-       created_at, sent_at, canceled_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-  )
-    .bind(
-      id,
-      "ready",
-      message.type,
-      message.targetRole,
-      message.targetName,
-      message.targetPhone,
-      message.title,
-      message.body,
-      message.relatedId,
-      message.templateId,
-      variablesJson,
-      "",
-      "",
-      "",
-      now,
-      "",
-      ""
+  try {
+    await env.DB.prepare(
+      `INSERT INTO alimtalk_queue
+        (id, status, type, target_role, target_name, target_phone, title, body, related_id,
+         template_id, variables_json, solapi_group_id, solapi_message_id, error_message,
+         created_at, sent_at, canceled_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
-    .run();
+      .bind(
+        id,
+        "ready",
+        message.type,
+        message.targetRole,
+        message.targetName,
+        message.targetPhone,
+        message.title,
+        message.body,
+        message.relatedId,
+        message.templateId,
+        variablesJson,
+        "",
+        "",
+        "",
+        now,
+        "",
+        ""
+      )
+      .run();
+  } catch (insertError) {
+    const fallbackId = createId("talk");
+    const errorMessage = `판매자 등록 알림톡 큐 저장 실패: ${insertError?.message || "unknown"}`;
+    await env.DB.prepare(
+      `INSERT INTO alimtalk_queue
+        (id, status, type, target_role, target_name, target_phone, title, body, related_id, error_message, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    )
+      .bind(
+        fallbackId,
+        "failed",
+        message.type,
+        message.targetRole,
+        message.targetName,
+        message.targetPhone,
+        message.title,
+        message.body,
+        message.relatedId,
+        errorMessage,
+        now
+      )
+      .run();
+    return { id: fallbackId, ok: false, error: errorMessage };
+  }
 
   let result;
   try {
@@ -1053,10 +1078,7 @@ async function createSellerApplication(env, request) {
     await env.DB.prepare("SELECT * FROM seller_applications WHERE id = ?").bind(id).first()
   );
 
-  const adminAlert = await queueSellerApplicationAdminAlert(env, row).catch((error) => ({
-    ok: false,
-    error: error?.message || "판매자 등록 관리자 알림톡 큐 저장에 실패했습니다.",
-  }));
+  const adminAlert = await queueSellerApplicationAdminAlert(env, row);
 
   return json({ ok: true, row, adminAlert }, 201);
 }
