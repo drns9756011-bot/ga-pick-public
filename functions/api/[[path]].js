@@ -1,7 +1,7 @@
 const jsonHeaders = {
   "Content-Type": "application/json; charset=utf-8",
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PATCH, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
 };
 
@@ -17,7 +17,7 @@ const SOLAPI_DEFAULTS = {
   SOLAPI_TEMPLATE_SELLER_APPROVED: "KA01TP2607211355258674q0EFuag5GE",
 };
 
-const PUBLIC_API_VERSION = "20260723-seller-admin-alimtalk-direct-send-first";
+const PUBLIC_API_VERSION = "20260723-seller-admin-alimtalk-record-first-delete";
 
 function solapiValue(env, key) {
   return String(env?.[key] || SOLAPI_DEFAULTS[key] || "").trim();
@@ -887,6 +887,35 @@ async function queueSellerApplicationAdminAlert(env, row) {
   };
   const variablesJson = JSON.stringify(message.variables || {});
 
+  await env.DB.prepare(
+    `INSERT INTO alimtalk_queue
+      (id, status, type, target_role, target_name, target_phone, title, body, related_id,
+       template_id, variables_json, solapi_group_id, solapi_message_id, error_message, solapi_response_json,
+       created_at, sent_at, canceled_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  )
+    .bind(
+      id,
+      "ready",
+      message.type,
+      message.targetRole,
+      message.targetName,
+      message.targetPhone,
+      message.title,
+      message.body,
+      message.relatedId,
+      templateId,
+      variablesJson,
+      "",
+      "",
+      "",
+      "",
+      now,
+      "",
+      ""
+    )
+    .run();
+
   let result;
   try {
     result = await sendSolapiAlimtalk(env, message, templateId);
@@ -899,42 +928,21 @@ async function queueSellerApplicationAdminAlert(env, row) {
 
   const status = result.ok ? result.queueStatus || "sending" : result.skipped ? "ready" : "failed";
   const sentAt = result.ok && result.queueStatus === "sent" ? new Date().toISOString() : "";
-  try {
-    await env.DB.prepare(
-      `INSERT INTO alimtalk_queue
-        (id, status, type, target_role, target_name, target_phone, title, body, related_id,
-         template_id, variables_json, solapi_group_id, solapi_message_id, error_message, solapi_response_json,
-         created_at, sent_at, canceled_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  await env.DB.prepare(
+    `UPDATE alimtalk_queue
+     SET status = ?, sent_at = ?, solapi_group_id = ?, solapi_message_id = ?, error_message = ?, solapi_response_json = ?
+     WHERE id = ?`
+  )
+    .bind(
+      status,
+      sentAt,
+      result.groupId || "",
+      result.messageId || "",
+      result.error || "",
+      JSON.stringify(result.payload || {}),
+      id
     )
-      .bind(
-        id,
-        status,
-        message.type,
-        message.targetRole,
-        message.targetName,
-        message.targetPhone,
-        message.title,
-        message.body,
-        message.relatedId,
-        templateId,
-        variablesJson,
-        result.groupId || "",
-        result.messageId || "",
-        result.error || "",
-        JSON.stringify(result.payload || {}),
-        now,
-        sentAt,
-        ""
-      )
-      .run();
-  } catch (error) {
-    return {
-      id,
-      ...result,
-      recordError: error?.message || "관리자 알림톡 기록 저장에 실패했습니다.",
-    };
-  }
+    .run();
 
   return { id, ...result };
 }
@@ -1465,6 +1473,15 @@ async function updateAlimtalk(env, request, id) {
   return json({ ok: true, row });
 }
 
+async function deleteAlimtalk(env, id) {
+  await ensureAlimtalkColumns(env);
+  const existing = await env.DB.prepare("SELECT id FROM alimtalk_queue WHERE id = ?").bind(id).first();
+  if (!existing) return json({ ok: false, message: "알림톡 정보를 찾을 수 없습니다." }, 404);
+
+  await env.DB.prepare("DELETE FROM alimtalk_queue WHERE id = ?").bind(id).run();
+  return json({ ok: true, id });
+}
+
 async function resendAlimtalk(env, id) {
   await ensureAlimtalkColumns(env);
   const row = normalizeMessage(
@@ -1739,6 +1756,9 @@ export async function onRequest(context) {
   }
   if (path.startsWith("alimtalk/") && path.endsWith("/refresh") && method === "POST") {
     return refreshAlimtalkStatus(env, decodeURIComponent(pathParts.slice(1, -1).join("/")));
+  }
+  if (path.startsWith("alimtalk/") && method === "DELETE") {
+    return deleteAlimtalk(env, decodeURIComponent(pathParts.slice(1).join("/")));
   }
   if (path.startsWith("alimtalk/") && method === "PATCH") {
     return updateAlimtalk(env, request, decodeURIComponent(pathParts.slice(1).join("/")));
