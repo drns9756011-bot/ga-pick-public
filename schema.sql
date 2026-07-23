@@ -77,12 +77,23 @@ CREATE TABLE IF NOT EXISTS customer_quotes (
   phone TEXT NOT NULL,
   items TEXT NOT NULL,
   purchase_purpose TEXT DEFAULT '',
+  desired_brand TEXT DEFAULT '',
   price INTEGER DEFAULT 0,
   region TEXT DEFAULT '',
   memo TEXT DEFAULT '',
   status TEXT NOT NULL DEFAULT 'open',
   selected_bid_id TEXT DEFAULT '',
+  contact_release_scope TEXT DEFAULT 'selected',
+  contact_released_bid_ids TEXT DEFAULT '[]',
+  submission_count INTEGER DEFAULT 1,
+  previous_lowest_price INTEGER DEFAULT 0,
+  rank_notice_queued_at TEXT DEFAULT '',
   sale_completed_at TEXT DEFAULT '',
+  thumbnail_image TEXT DEFAULT '',
+  thumbnail_image_key TEXT DEFAULT '',
+  quote_expires_at TEXT DEFAULT '',
+  full_images_expires_at TEXT DEFAULT '',
+  personal_expires_at TEXT DEFAULT '',
   created_at TEXT NOT NULL,
   consent_json TEXT DEFAULT '{}'
 );
@@ -95,7 +106,9 @@ CREATE TABLE IF NOT EXISTS quote_images (
   quote_id TEXT NOT NULL,
   object_key TEXT NOT NULL,
   url TEXT NOT NULL,
+  image_type TEXT DEFAULT 'full',
   sort_order INTEGER NOT NULL DEFAULT 0,
+  expires_at TEXT DEFAULT '',
   created_at TEXT NOT NULL,
   FOREIGN KEY (quote_id) REFERENCES customer_quotes(id)
 );
@@ -141,14 +154,11 @@ CREATE TABLE IF NOT EXISTS reviews (
 
 CREATE INDEX IF NOT EXISTS idx_reviews_seller_id ON reviews(seller_id);
 
-CREATE TABLE IF NOT EXISTS deleted_quote_logs (
+CREATE TABLE IF NOT EXISTS guide_dismissals (
   id TEXT PRIMARY KEY,
-  quote_id TEXT DEFAULT '',
-  quote_number TEXT DEFAULT '',
-  customer TEXT NOT NULL,
-  phone TEXT NOT NULL,
-  reason TEXT NOT NULL,
-  deleted_at TEXT NOT NULL
+  guide_type TEXT NOT NULL,
+  ip_hash TEXT NOT NULL,
+  dismiss_date TEXT NOT NULL,
+  created_at TEXT NOT NULL
 );
-
-CREATE INDEX IF NOT EXISTS idx_deleted_quote_logs_deleted_at ON deleted_quote_logs(deleted_at);
+CREATE INDEX IF NOT EXISTS idx_guide_dismissals_lookup ON guide_dismissals(guide_type, ip_hash, dismiss_date);
