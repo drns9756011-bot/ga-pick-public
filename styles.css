@@ -966,8 +966,9 @@ h3 {
 
 .report-price-row strong {
   color: #53606d;
-  font-size: 24px;
+  font-size: clamp(20px, 2.2vw, 24px);
   text-decoration: line-through;
+  white-space: nowrap;
 }
 
 .report-price-row.is-best {
@@ -979,6 +980,7 @@ h3 {
   color: #245ee8;
   font-size: clamp(34px, 3.4vw, 44px);
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .report-delta {
@@ -987,7 +989,8 @@ h3 {
 }
 
 .report-delta strong {
-  font-size: 26px;
+  font-size: clamp(23px, 2.6vw, 30px);
+  white-space: nowrap;
 }
 
 .report-checks {
@@ -3414,11 +3417,13 @@ td strong {
   position: fixed;
   inset: 0;
   z-index: 140;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 24px;
   background: rgba(10, 18, 28, 0.38);
   backdrop-filter: blur(8px);
+  overflow: hidden;
 }
 
 .server-loading-modal[hidden] {
@@ -3427,6 +3432,8 @@ td strong {
 
 .server-loading-dialog {
   width: min(520px, calc(100vw - 36px));
+  max-width: calc(100vw - 36px);
+  margin: auto;
   padding: 30px clamp(18px, 5vw, 34px) 28px;
   border: 1px solid rgba(209, 216, 224, 0.9);
   border-radius: 18px;
@@ -3435,6 +3442,7 @@ td strong {
   text-align: center;
   display: grid;
   justify-items: center;
+  box-sizing: border-box;
 }
 
 .server-loading-spinner {
@@ -3452,12 +3460,12 @@ td strong {
   color: #121b25;
   width: 100%;
   max-width: 440px;
-  font-size: clamp(17px, 4.4vw, 24px);
+  font-size: clamp(17px, 3.6vw, 24px);
   font-weight: 900;
   line-height: 1.25;
   text-align: center;
   word-break: keep-all;
-  overflow-wrap: normal;
+  overflow-wrap: break-word;
 }
 
 .server-loading-dialog p {
@@ -3465,12 +3473,12 @@ td strong {
   color: #607080;
   width: 100%;
   max-width: 440px;
-  font-size: clamp(12px, 3.2vw, 16px);
+  font-size: clamp(12px, 2.9vw, 16px);
   font-weight: 750;
   line-height: 1.35;
   text-align: center;
   word-break: keep-all;
-  overflow-wrap: normal;
+  overflow-wrap: break-word;
 }
 
 .page-guide-modal {
