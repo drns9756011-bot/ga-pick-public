@@ -3413,6 +3413,56 @@ td strong {
   background: #edf1f4;
 }
 
+.kakao-floating-btn {
+  position: fixed;
+  right: clamp(18px, 3vw, 34px);
+  bottom: clamp(22px, 4vh, 42px);
+  z-index: 90;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 8px 16px 8px 8px;
+  border: 1px solid rgba(35, 35, 35, 0.08);
+  border-radius: 999px;
+  background: #fee500;
+  color: #181600;
+  text-decoration: none;
+  font-weight: 950;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.2);
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease;
+}
+
+.kakao-floating-btn:hover {
+  transform: translateY(-3px);
+  background: #ffeb28;
+  box-shadow: 0 20px 48px rgba(15, 23, 42, 0.26);
+}
+
+.kakao-floating-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 999px;
+  background: #181600;
+}
+
+.kakao-floating-icon svg {
+  width: 28px;
+  height: 28px;
+  fill: #fee500;
+}
+
+.kakao-floating-text {
+  white-space: nowrap;
+  font-size: 15px;
+  line-height: 1;
+}
+
 .server-loading-modal {
   position: fixed;
   inset: 0;
@@ -4495,6 +4545,27 @@ td strong {
 
   .consent-actions button {
     width: 100%;
+  }
+
+  .kakao-floating-btn {
+    right: 16px;
+    bottom: 82px;
+    min-height: 52px;
+    padding: 7px 12px 7px 7px;
+  }
+
+  .kakao-floating-icon {
+    width: 38px;
+    height: 38px;
+  }
+
+  .kakao-floating-icon svg {
+    width: 25px;
+    height: 25px;
+  }
+
+  .kakao-floating-text {
+    font-size: 13px;
   }
 }
 

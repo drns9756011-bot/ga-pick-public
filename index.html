@@ -303,9 +303,9 @@
         <div class="page-head">
           <button class="back-btn" type="button" data-view="home">← 첫 화면</button>
           <p class="eyebrow">견적올리기 페이지</p>
-          <h2>견적서 이미지를 올리고 비교 요청을 시작하세요.</h2>
+          <h2>견적서가 없어도 비교 요청을 시작할 수 있습니다.</h2>
           <p>
-            받은 견적서를 올리면 픽견적이 판매자 제안을 한곳에 모아드립니다.
+            받은 견적서가 있다면 사진을 함께 올리고, 없다면 품목과 금액 정보만으로 먼저 요청하세요.
             고객님은 가격, 설치, 배송, 혜택 조건을 비교한 뒤 원하는 제안만 선택하시면 됩니다.
           </p>
         </div>
@@ -316,7 +316,7 @@
               <input id="quoteImage" name="quoteImage" type="file" accept="image/*" multiple />
               <span class="upload-icon">+</span>
               <strong>견적서 이미지 선택</strong>
-              <small>최대 4장까지 등록할 수 있습니다. 휴대폰에서는 사진 촬영 또는 앨범 선택이 가능합니다.</small>
+              <small>선택 사항입니다. 견적서가 있다면 최대 4장까지 등록할 수 있습니다.</small>
             </label>
 
             <div class="form-row">
@@ -811,6 +811,27 @@
         <p class="footer-copy">2026 © Pickquote. All rights reserved.</p>
       </div>
     </footer>
+
+    <a
+      class="kakao-floating-btn"
+      href="https://pf.kakao.com/_PxlUfX"
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="카카오톡 채널로 문의하기"
+    >
+      <span class="kakao-floating-icon" aria-hidden="true">
+        <svg viewBox="0 0 48 48" role="img" focusable="false">
+          <path
+            d="M24 8C13.5 8 5 14.8 5 23.2c0 5.3 3.4 10 8.7 12.7l-1.4 5.4c-.2.8.7 1.4 1.4.9l6.4-4.1c1.3.2 2.6.3 3.9.3 10.5 0 19-6.8 19-15.2S34.5 8 24 8Z"
+          />
+          <circle cx="17" cy="23.5" r="2.2" />
+          <circle cx="24" cy="23.5" r="2.2" />
+          <circle cx="31" cy="23.5" r="2.2" />
+        </svg>
+      </span>
+      <span class="kakao-floating-text">카카오톡 문의</span>
+    </a>
+
     <div class="consent-modal" id="privacyConsentModal" hidden>
       <div class="consent-dialog" role="dialog" aria-modal="true" aria-labelledby="privacyConsentTitle">
         <h2 id="privacyConsentTitle">개인정보 처리 동의</h2>

@@ -1249,8 +1249,8 @@ async function createCustomerQuote(env, request) {
   const body = await request.json();
   const images = Array.isArray(body.images) ? body.images.slice(0, 4) : [];
 
-  if (!body.quoteNumber || !body.customer || !body.phone || !body.items || !images.length) {
-    return json({ ok: false, message: "고객명, 연락처, 품목, 견적서 이미지가 필요합니다." }, 400);
+  if (!body.quoteNumber || !body.customer || !body.phone || !body.items) {
+    return json({ ok: false, message: "고객명, 연락처, 품목 정보가 필요합니다." }, 400);
   }
 
   const id = body.id || createId("quote");
@@ -1261,8 +1261,10 @@ async function createCustomerQuote(env, request) {
   const personalExpiresAt = addDays(createdAt, 365);
   const previousStats = await getPreviousQuoteStats(env, String(body.customer || "").trim(), body.phone);
 
-  const thumbnailDataUrl = body.thumbnailImage || images[0];
-  const thumbnail = await saveDataUrlToR2(env, thumbnailDataUrl, "quote-thumbnails", `${id}-thumb`);
+  const thumbnailDataUrl = body.thumbnailImage || images[0] || "";
+  const thumbnail = thumbnailDataUrl
+    ? await saveDataUrlToR2(env, thumbnailDataUrl, "quote-thumbnails", `${id}-thumb`)
+    : { url: "", key: "" };
   const thumbnailUrl = thumbnail.url || thumbnailDataUrl || "";
   const thumbnailKey = thumbnail.key || "";
 

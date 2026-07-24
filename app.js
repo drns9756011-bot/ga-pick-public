@@ -1656,12 +1656,6 @@ requestForm.addEventListener("submit", (event) => {
   const customerPhone = normalizePhone(formData.get("phone"));
   const quotePrice = parseManwon(formData.get("price"));
 
-  if (!uploadedImages.length) {
-    setRequestFormMessage("견적서 이미지를 1장 이상 첨부해주세요.", "error");
-    quoteImage.closest(".upload-box")?.scrollIntoView({ behavior: "smooth", block: "center" });
-    return;
-  }
-
   if (customerPhone.length < 9) {
     setRequestFormMessage("연락처를 정확히 입력해주세요.", "error");
     requestForm.elements.phone.focus();

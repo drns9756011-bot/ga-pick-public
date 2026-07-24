@@ -172,8 +172,8 @@
   stepQuote.innerHTML = `
     <div class="wizard-step-head">
       <p class="eyebrow">Step 4</p>
-      <h2>견적서와 구매 정보를 등록해주세요.</h2>
-      <p>견적서 이미지는 최대 4장까지, 금액은 만원 단위로 입력합니다.</p>
+      <h2>구매 정보를 등록해주세요.</h2>
+      <p>견적서 이미지는 선택 사항이며, 금액은 만원 단위로 입력합니다.</p>
     </div>
   `;
   stepQuote.appendChild(uploadBox);
