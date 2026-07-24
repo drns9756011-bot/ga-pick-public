@@ -318,6 +318,16 @@ function setConsentMessage(message, type = "normal") {
   consentMessage.dataset.type = type;
 }
 
+function setLookupActionMessage(message, type = "error") {
+  lookupResults.querySelector(".lookup-action-message")?.remove();
+  if (!message) return;
+  const notice = document.createElement("p");
+  notice.className = "form-message lookup-action-message";
+  notice.dataset.type = type;
+  notice.textContent = message;
+  lookupResults.prepend(notice);
+}
+
 function setFindIdMessage(message, type = "normal") {
   findIdMessage.textContent = message;
   findIdMessage.dataset.type = type;
@@ -428,6 +438,17 @@ async function saveSellerApplicationToServer(application) {
 
 function replaceRequests(rows) {
   requests.splice(0, requests.length, ...rows);
+}
+
+function mergeRequests(rows) {
+  rows.forEach((row) => {
+    const index = requests.findIndex((request) => sameId(request.id, row.id));
+    if (index >= 0) {
+      requests[index] = { ...requests[index], ...row };
+      return;
+    }
+    requests.push(row);
+  });
 }
 
 async function syncCustomerQuotesFromServer() {
@@ -1281,8 +1302,8 @@ async function confirmBidSelection() {
   if (canUseApiServer()) {
     const serverResult = await selectBidOnServer(request, bid, scope);
     if (!serverResult?.ok || !serverResult.row) {
-      setConsentMessage(serverResult?.message || "견적 선택을 저장하지 못했습니다.");
       closeBidSelectConfirmModal();
+      setLookupActionMessage(serverResult?.message || "견적 선택을 저장하지 못했습니다.");
       return;
     }
     savedRequest = serverResult.row;
@@ -1307,6 +1328,7 @@ async function confirmBidSelection() {
 }
 
 function renderLookupResults(matches, label = "내 견적") {
+  setLookupActionMessage("");
   if (!lookupAccessGranted) {
     lookupResults.innerHTML = `
       <div class="empty-state">
@@ -1713,7 +1735,10 @@ lookupForm.addEventListener("submit", async (event) => {
   }
 
   const serverMatches = canUseApiServer() ? await lookupCustomerQuotesFromServer(formData.get("lookupCustomer").trim(), phone) : [];
-  if (serverMatches.length && canUseApiServer()) await syncBidsFromServer();
+  if (serverMatches.length && canUseApiServer()) {
+    mergeRequests(serverMatches);
+    await syncBidsFromServer();
+  }
   const matches = serverMatches.length
     ? serverMatches
     : requests.filter((request) => {
@@ -1741,8 +1766,14 @@ lookupResults.addEventListener("click", (event) => {
 
   const request = requests.find((item) => sameId(item.id, button.dataset.requestId));
   const bid = bids.find((item) => sameId(item.id, button.dataset.bidId));
-  if (!request) return;
-  if (!bid) return;
+  if (!request) {
+    setLookupActionMessage("조회된 견적 정보를 다시 확인해주세요. 내 견적 조회를 다시 실행한 뒤 선택해주세요.");
+    return;
+  }
+  if (!bid) {
+    setLookupActionMessage("선택할 판매자 제안을 찾지 못했습니다. 새로고침 후 다시 시도해주세요.");
+    return;
+  }
   if (hasValidSelectedBid(request) && !sameId(request.selectedBidId, bid.id)) return;
   if (sameId(request.selectedBidId, bid.id)) return;
 
