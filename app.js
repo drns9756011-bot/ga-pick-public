@@ -27,18 +27,22 @@ const pages = document.querySelectorAll(".page");
 const navButtons = document.querySelectorAll("[data-view]");
 const ROUTES_BY_VIEW = {
   home: "/",
-  customer: "/quote",
-  lookup: "/my-quote",
-  sellerLogin: "/seller",
-  seller: "/seller",
-  sellerRegister: "/seller/register",
+  customer: "/quote/",
+  lookup: "/my-quote/",
+  sellerLogin: "/seller/",
+  seller: "/seller/",
+  sellerRegister: "/seller/register/",
 };
 const VIEWS_BY_ROUTE = {
   "/": "home",
   "/quote": "customer",
+  "/quote/": "customer",
   "/my-quote": "lookup",
+  "/my-quote/": "lookup",
   "/seller": "sellerLogin",
+  "/seller/": "sellerLogin",
   "/seller/register": "sellerRegister",
+  "/seller/register/": "sellerRegister",
 };
 const requestForm = document.querySelector("#requestForm");
 const requestFormMessage = document.querySelector("#requestFormMessage");
@@ -686,8 +690,7 @@ function isBidContactReleased(request, bid) {
 }
 
 function normalizeAppPath(pathname) {
-  const path = String(pathname || "/").replace(/\/+$/, "") || "/";
-  return path;
+  return String(pathname || "/") || "/";
 }
 
 function getViewFromPath(pathname) {

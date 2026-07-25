@@ -1,4 +1,8 @@
-/quote /index.html 200
-/my-quote /index.html 200
-/seller /index.html 200
-/seller/register /index.html 200
+/quote /quote/ 301
+/my-quote /my-quote/ 301
+/seller /seller/ 301
+/seller/register /seller/register/ 301
+/quote/ /quote/index.html 200
+/my-quote/ /my-quote/index.html 200
+/seller/ /seller/index.html 200
+/seller/register/ /seller/register/index.html 200
