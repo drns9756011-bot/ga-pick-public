@@ -3,6 +3,29 @@ import { onRequest } from "../functions/api/[[path]].js";
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    const routeVersion = "20260725-no-redirect-diagnostic-v84";
+
+    if (url.pathname === "/__route-test") {
+      return new Response(
+        JSON.stringify(
+          {
+            ok: true,
+            version: routeVersion,
+            host: url.hostname,
+            pathname: url.pathname,
+            note: "No 301 redirect is configured in this Worker.",
+          },
+          null,
+          2
+        ),
+        {
+          headers: {
+            "Content-Type": "application/json; charset=utf-8",
+            "Cache-Control": "no-store",
+          },
+        }
+      );
+    }
 
     if (url.pathname === "/robots.txt") {
       return new Response("User-agent: *\nAllow: /\n\nSitemap: https://ga-pick.com/sitemap.xml\n", {
@@ -72,7 +95,15 @@ export default {
     if (appRoutes.has(url.pathname)) {
       const indexUrl = new URL(request.url);
       indexUrl.pathname = "/index.html";
-      return env.ASSETS.fetch(new Request(indexUrl, request));
+      const response = await env.ASSETS.fetch(new Request(indexUrl, request));
+      const headers = new Headers(response.headers);
+      headers.set("Cache-Control", "no-store");
+      headers.set("X-GA-Pick-Route-Version", routeVersion);
+      return new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers,
+      });
     }
 
     return env.ASSETS.fetch(request);
