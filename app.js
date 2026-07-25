@@ -27,11 +27,11 @@ const pages = document.querySelectorAll(".page");
 const navButtons = document.querySelectorAll("[data-view]");
 const ROUTES_BY_VIEW = {
   home: "/",
-  customer: "/quote/",
-  lookup: "/my-quote/",
-  sellerLogin: "/seller/",
-  seller: "/seller/",
-  sellerRegister: "/seller/register/",
+  customer: "/quote",
+  lookup: "/my-quote",
+  sellerLogin: "/seller",
+  seller: "/seller",
+  sellerRegister: "/seller/register",
 };
 const VIEWS_BY_ROUTE = {
   "/": "home",

@@ -68,19 +68,7 @@ export default {
       });
     }
 
-    const slashRoutes = new Map([
-      ["/quote", "/quote/"],
-      ["/my-quote", "/my-quote/"],
-      ["/seller", "/seller/"],
-      ["/seller/register", "/seller/register/"],
-    ]);
-    if (slashRoutes.has(url.pathname)) {
-      const redirectUrl = new URL(request.url);
-      redirectUrl.pathname = slashRoutes.get(url.pathname);
-      return Response.redirect(redirectUrl.toString(), 301);
-    }
-
-    const appRoutes = new Set(["/", "/quote/", "/my-quote/", "/seller/", "/seller/register/"]);
+    const appRoutes = new Set(["/", "/quote", "/quote/", "/my-quote", "/my-quote/", "/seller", "/seller/", "/seller/register", "/seller/register/"]);
     if (appRoutes.has(url.pathname)) {
       const indexUrl = new URL(request.url);
       indexUrl.pathname = "/index.html";
