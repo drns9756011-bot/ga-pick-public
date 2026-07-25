@@ -19,9 +19,33 @@ export default {
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://ga-pick.com/</loc>
-    <lastmod>2026-07-19</lastmod>
+    <lastmod>2026-07-25</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://ga-pick.com/quote</loc>
+    <lastmod>2026-07-25</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://ga-pick.com/my-quote</loc>
+    <lastmod>2026-07-25</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://ga-pick.com/seller</loc>
+    <lastmod>2026-07-25</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://ga-pick.com/seller/register</loc>
+    <lastmod>2026-07-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
   </url>
 </urlset>`,
         {
@@ -42,6 +66,13 @@ export default {
           path: url.pathname.replace(/^\/api\/?/, "").split("/").filter(Boolean),
         },
       });
+    }
+
+    const appRoutes = new Set(["/", "/quote", "/my-quote", "/seller", "/seller/register"]);
+    if (appRoutes.has(url.pathname.replace(/\/+$/, "") || "/")) {
+      const indexUrl = new URL(request.url);
+      indexUrl.pathname = "/index.html";
+      return env.ASSETS.fetch(new Request(indexUrl, request));
     }
 
     return env.ASSETS.fetch(request);
