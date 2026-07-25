@@ -716,6 +716,15 @@ function updateBrowserPath(view, replace = false) {
   window.history.pushState(state, "", nextPath);
 }
 
+function applyViewFromCurrentPath(options = {}) {
+  const view = getViewFromPath(window.location.pathname);
+  setView(view, {
+    updatePath: options.updatePath === true,
+    replacePath: options.replacePath === true,
+    scroll: options.scroll === true,
+  });
+}
+
 function setView(view, options = {}) {
   const shouldUpdatePath = options.updatePath !== false;
   const shouldScroll = options.scroll !== false;
@@ -1620,10 +1629,15 @@ navButtons.forEach((button) => {
 });
 
 window.addEventListener("popstate", () => {
-  setView(getViewFromPath(window.location.pathname), {
-    updatePath: false,
-    scroll: true,
-  });
+  applyViewFromCurrentPath({ scroll: true });
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  applyViewFromCurrentPath();
+});
+
+window.addEventListener("load", () => {
+  applyViewFromCurrentPath();
 });
 
 sellerTabs.forEach((tab) => {
@@ -2452,10 +2466,8 @@ renderSelectedRequest = function renderSelectedRequestClean() {
 
 renderRequests();
 renderSelectedRequest();
-setView(getViewFromPath(window.location.pathname), {
-  updatePath: true,
-  replacePath: true,
-  scroll: false,
-});
+applyViewFromCurrentPath();
+setTimeout(applyViewFromCurrentPath, 0);
+setTimeout(applyViewFromCurrentPath, 250);
 renderLookupResults([], "성함과 휴대전화로 등록한 견적을 조회하세요.");
 
