@@ -25,6 +25,21 @@ const money = new Intl.NumberFormat("ko-KR");
 
 const pages = document.querySelectorAll(".page");
 const navButtons = document.querySelectorAll("[data-view]");
+const ROUTES_BY_VIEW = {
+  home: "/",
+  customer: "/quote",
+  lookup: "/my-quote",
+  sellerLogin: "/seller",
+  seller: "/seller",
+  sellerRegister: "/seller/register",
+};
+const VIEWS_BY_ROUTE = {
+  "/": "home",
+  "/quote": "customer",
+  "/my-quote": "lookup",
+  "/seller": "sellerLogin",
+  "/seller/register": "sellerRegister",
+};
 const requestForm = document.querySelector("#requestForm");
 const requestFormMessage = document.querySelector("#requestFormMessage");
 const lookupForm = document.querySelector("#lookupForm");
@@ -670,7 +685,38 @@ function isBidContactReleased(request, bid) {
   return getReleasedBidIds(request).includes(String(bid.id));
 }
 
-function setView(view) {
+function normalizeAppPath(pathname) {
+  const path = String(pathname || "/").replace(/\/+$/, "") || "/";
+  return path;
+}
+
+function getViewFromPath(pathname) {
+  return VIEWS_BY_ROUTE[normalizeAppPath(pathname)] || "home";
+}
+
+function getPathForView(view) {
+  return ROUTES_BY_VIEW[view] || "/";
+}
+
+function updateBrowserPath(view, replace = false) {
+  if (!window.history || !window.history.pushState) return;
+
+  const nextPath = getPathForView(view);
+  const currentPath = normalizeAppPath(window.location.pathname);
+  if (currentPath === nextPath) return;
+
+  const state = { view };
+  if (replace) {
+    window.history.replaceState(state, "", nextPath);
+    return;
+  }
+  window.history.pushState(state, "", nextPath);
+}
+
+function setView(view, options = {}) {
+  const shouldUpdatePath = options.updatePath !== false;
+  const shouldScroll = options.scroll !== false;
+  const shouldReplacePath = options.replacePath === true;
   if (view === "seller" && !activeSellerId) {
     view = "sellerLogin";
     setSellerLoginMessage("판매자 페이지는 로그인 후 이용할 수 있습니다.", "error");
@@ -689,7 +735,13 @@ function setView(view) {
     button.classList.toggle("is-current", button.dataset.view === view);
   });
 
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  if (shouldUpdatePath) {
+    updateBrowserPath(view, shouldReplacePath);
+  }
+
+  if (shouldScroll) {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
 }
 
 function quoteImageMarkup(request, label) {
@@ -1565,6 +1617,13 @@ navButtons.forEach((button) => {
   });
 });
 
+window.addEventListener("popstate", () => {
+  setView(getViewFromPath(window.location.pathname), {
+    updatePath: false,
+    scroll: true,
+  });
+});
+
 sellerTabs.forEach((tab) => {
   tab.addEventListener("click", () => {
     activeSellerTab = tab.dataset.sellerTab;
@@ -2387,5 +2446,10 @@ renderSelectedRequest = function renderSelectedRequestClean() {
 
 renderRequests();
 renderSelectedRequest();
+setView(getViewFromPath(window.location.pathname), {
+  updatePath: true,
+  replacePath: true,
+  scroll: false,
+});
 renderLookupResults([], "성함과 휴대전화로 등록한 견적을 조회하세요.");
 
