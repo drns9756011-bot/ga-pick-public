@@ -1015,6 +1015,7 @@ function renderRequests() {
     const safeCustomer = escapeHTML(isClosedTab ? request.customer : request.customer);
     const safePhone = escapeHTML(maskPhone(request.phone));
     const safeRegion = escapeHTML(request.region);
+    const safeDesiredBrandLegacy = escapeHTML(getSellerBrandValue(request));
     const safePurchasePurpose = escapeHTML(request.purchasePurpose || "미선택");
     const safeDesiredBrand = escapeHTML(request.desiredBrand || "미선택");
     const safeQuoteNumber = escapeHTML(request.quoteNumber || "번호 없음");
@@ -1029,7 +1030,6 @@ function renderRequests() {
       <span>${safeCustomer} · ${safeRegion}</span>
       <span>견적번호 ${safeQuoteNumber}</span>
       <span>구매 목적 ${safePurchasePurpose}</span>
-      <span>원하는 브랜드 ${safeDesiredBrand}</span>
       <span>기존 견적 ${formatPrice(request.price)}</span>
       ${repeatNotice ? `<span class="request-repeat">${escapeHTML(repeatNotice)}</span>` : ""}
       ${sellerBid ? `<span>내 제안 ${formatPrice(sellerBid.price)}</span>` : ""}
@@ -1080,7 +1080,6 @@ function renderSelectedRequest() {
       <div><span>고객님</span><strong>${safeCustomer}</strong></div>
       <div><span>연락처</span><strong>${safePhone}</strong></div>
       <div><span>구매 목적</span><strong>${safePurchasePurpose}</strong></div>
-      <div><span>원하는 브랜드</span><strong>${safeDesiredBrand}</strong></div>
       <div><span>설치 지역</span><strong>${safeRegion}</strong></div>
       <div><span>기존 견적</span><strong>${formatPrice(request.price)}</strong></div>
     </div>
@@ -2313,6 +2312,7 @@ renderRequests = function renderRequestsClean() {
     const safeCustomer = escapeHTML(request.customer);
     const safePhone = escapeHTML(maskPhone(request.phone));
     const safeRegion = escapeHTML(request.region);
+    const safeDesiredBrand = escapeHTML(getSellerBrandValue(request));
     const safePurchasePurpose = escapeHTML(request.purchasePurpose || "미선택");
     const safeQuoteNumber = escapeHTML(request.quoteNumber || "번호 없음");
     const safeRemaining = escapeHTML(getQuoteRemainingLabel(request));
@@ -2322,6 +2322,7 @@ renderRequests = function renderRequestsClean() {
     item.className = `request-item${request.id === selectedRequestId ? " is-active" : ""}`;
     item.innerHTML = `
       <strong>${safeItems}</strong>
+      <span>원하는 브랜드 ${safeDesiredBrand}</span>
       <span>${safeCustomer} · ${isClosedTab ? safePhone : safeRegion}</span>
       <span>견적번호 ${safeQuoteNumber}</span>
       <span class="${expired ? "deadline-expired" : "deadline-live"}">남은 시간 ${safeRemaining}</span>
@@ -2367,6 +2368,7 @@ renderSelectedRequest = function renderSelectedRequestClean() {
   const safePhone = escapeHTML(visiblePhone);
   const safePurchasePurpose = escapeHTML(request.purchasePurpose || "미선택");
   const safeRegion = escapeHTML(request.region);
+  const safeDesiredBrand = escapeHTML(getSellerBrandValue(request));
   const safeQuoteNumber = escapeHTML(request.quoteNumber || "번호 없음");
   const safeMemo = escapeHTML(request.memo || "추가 요청사항 없음");
   const safeRemaining = escapeHTML(getQuoteRemainingLabel(request));
@@ -2398,6 +2400,7 @@ renderSelectedRequest = function renderSelectedRequestClean() {
       <div><span>고객님</span><strong>${safeCustomer}</strong></div>
       <div><span>연락처</span><strong>${safePhone}</strong></div>
       <div><span>구매 목적</span><strong>${safePurchasePurpose}</strong></div>
+      <div><span>원하는 브랜드</span><strong>${safeDesiredBrand}</strong></div>
       <div><span>설치 지역</span><strong>${safeRegion}</strong></div>
       ${
         isClosedTab
