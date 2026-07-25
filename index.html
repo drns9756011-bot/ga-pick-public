@@ -493,6 +493,7 @@
           <button class="is-active" type="button" data-seller-tab="all">고객님 견적</button>
           <button type="button" data-seller-tab="proposed">제안한 견적</button>
           <button type="button" data-seller-tab="selected">선택받은 견적</button>
+          <button type="button" data-seller-tab="closed">종료된 견적</button>
           <button type="button" data-seller-tab="region">매니저 정보 변경</button>
         </div>
 
@@ -875,7 +876,7 @@
     <div class="confirm-modal" id="bidSelectConfirmModal" hidden>
       <div class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="bidSelectConfirmTitle">
         <h2 id="bidSelectConfirmTitle">이 견적을 선택하시겠습니까?</h2>
-        <p>
+        <p id="bidSelectConfirmDescription">
           선택하신 견적은 이후 변경할 수 없습니다. 연락처 공개 범위를 선택한 뒤 확인을 눌러주세요.
         </p>
         <div class="confirm-summary" id="bidSelectConfirmSummary"></div>

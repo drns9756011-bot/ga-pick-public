@@ -1225,7 +1225,7 @@ async function getCustomerQuotes(env, request) {
   } else {
     const result = await env.DB.prepare(
       `SELECT * FROM customer_quotes
-       WHERE status = 'open' AND (quote_expires_at = '' OR quote_expires_at >= ?)
+       WHERE personal_expires_at = '' OR personal_expires_at >= ?
        ORDER BY created_at DESC`
     )
       .bind(now)
@@ -1384,6 +1384,7 @@ async function upsertBid(env, request) {
 
   const quote = await env.DB.prepare("SELECT * FROM customer_quotes WHERE id = ?").bind(body.requestId).first();
   if (!quote) return json({ ok: false, message: "고객 견적을 찾을 수 없습니다." }, 404);
+  if (quote.status === "closed") return json({ ok: false, message: "종료된 견적에는 제안할 수 없습니다." }, 400);
   if (quote.selected_bid_id) return json({ ok: false, message: "이미 선택된 견적은 제안 금액을 수정할 수 없습니다." }, 400);
   if (quote.quote_expires_at && quote.quote_expires_at < new Date().toISOString()) {
     return json({ ok: false, message: "견적 제안 가능 시간이 종료되었습니다." }, 400);
@@ -1487,10 +1488,10 @@ async function selectBid(env, request) {
   const now = new Date().toISOString();
   await env.DB.prepare(
     `UPDATE customer_quotes
-     SET selected_bid_id = ?, contact_release_scope = ?, contact_released_bid_ids = ?
+     SET selected_bid_id = ?, contact_release_scope = ?, contact_released_bid_ids = ?, status = 'closed', quote_expires_at = ?
      WHERE id = ?`
   )
-    .bind(bidId, scope, JSON.stringify(releasedBidIds), quoteId)
+    .bind(bidId, scope, JSON.stringify(releasedBidIds), now, quoteId)
     .run();
 
   for (const bid of quoteBids.filter((item) => releasedBidIds.includes(item.id))) {

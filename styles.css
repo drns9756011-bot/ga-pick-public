@@ -3151,6 +3151,11 @@ td strong {
   width: min(100%, 520px);
 }
 
+.confirm-dialog h2 {
+  text-align: center;
+  word-break: keep-all;
+}
+
 .confirm-dialog h2,
 .confirm-dialog p {
   margin: 0;
@@ -3159,6 +3164,13 @@ td strong {
 .confirm-dialog p {
   color: var(--muted);
   line-height: 1.65;
+  text-align: center;
+  word-break: keep-all;
+}
+
+.confirm-dialog p strong {
+  color: var(--primary);
+  font-weight: 950;
 }
 
 .confirm-summary {
@@ -3357,6 +3369,12 @@ td strong {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+}
+
+.confirm-dialog .consent-actions button {
+  min-width: 0;
+  white-space: normal;
+  word-break: keep-all;
 }
 
 .image-modal {

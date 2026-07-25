@@ -61,6 +61,8 @@ const consentMessage = document.querySelector("#consentMessage");
 const cancelConsentBtn = document.querySelector("#cancelConsentBtn");
 const confirmConsentBtn = document.querySelector("#confirmConsentBtn");
 const bidSelectConfirmModal = document.querySelector("#bidSelectConfirmModal");
+const bidSelectConfirmTitle = document.querySelector("#bidSelectConfirmTitle");
+const bidSelectConfirmDescription = document.querySelector("#bidSelectConfirmDescription");
 const bidSelectConfirmSummary = document.querySelector("#bidSelectConfirmSummary");
 const cancelBidSelectBtn = document.querySelector("#cancelBidSelectBtn");
 const confirmBidSelectBtn = document.querySelector("#confirmBidSelectBtn");
@@ -160,6 +162,27 @@ function getQuoteRemainingLabel(request) {
 function isQuoteExpired(request) {
   const deadline = getQuoteDeadline(request);
   return Boolean(deadline && !Number.isNaN(deadline.getTime()) && deadline.getTime() <= Date.now());
+}
+
+function isQuoteClosed(request) {
+  return request?.status === "closed" || isQuoteExpired(request) || hasValidSelectedBid(request);
+}
+
+function getQuoteRemainingParts(request) {
+  const deadline = getQuoteDeadline(request);
+  if (!deadline || Number.isNaN(deadline.getTime())) return { hours: 0, minutes: 0, totalMinutes: 0 };
+  const totalMinutes = Math.max(0, Math.ceil((deadline.getTime() - Date.now()) / 60000));
+  return {
+    hours: Math.floor(totalMinutes / 60),
+    minutes: totalMinutes % 60,
+    totalMinutes,
+  };
+}
+
+function getQuoteRemainingShortLabel(request) {
+  const { hours, minutes } = getQuoteRemainingParts(request);
+  if (hours > 0) return `${hours}시간 ${minutes}분`;
+  return `${minutes}분`;
 }
 
 function sameId(left, right) {
@@ -614,6 +637,10 @@ function getBidsForRequest(requestId) {
     .sort((a, b) => Number(a.price || 0) - Number(b.price || 0));
 }
 
+function getLowestBidForRequest(requestId) {
+  return getBidsForRequest(requestId)[0] || null;
+}
+
 function getBidRankInfo(request, bid) {
   const rows = getBidsForRequest(request.id);
   const index = rows.findIndex((item) => String(item.id) === String(bid?.id));
@@ -753,11 +780,15 @@ function getFilteredSellerRequests() {
   let filteredRequests;
 
   if (activeSellerTab === "proposed") {
-    filteredRequests = requests.filter((request) => getActiveSellerBid(request) && !canActiveSellerSeeCustomerPhone(request));
+    filteredRequests = requests.filter(
+      (request) => !isQuoteClosed(request) && getActiveSellerBid(request) && !canActiveSellerSeeCustomerPhone(request)
+    );
   } else if (activeSellerTab === "selected") {
-    filteredRequests = requests.filter((request) => canActiveSellerSeeCustomerPhone(request));
+    filteredRequests = requests.filter((request) => !isQuoteClosed(request) && canActiveSellerSeeCustomerPhone(request));
+  } else if (activeSellerTab === "closed") {
+    filteredRequests = requests.filter((request) => isQuoteClosed(request));
   } else {
-    filteredRequests = requests;
+    filteredRequests = requests.filter((request) => !isQuoteClosed(request));
   }
 
   if (activeSellerBrandFilter !== "all") {
@@ -903,12 +934,14 @@ function renderRequests() {
   });
 
   if (!filteredRequests.length) {
-    const currentFilterBar = document.querySelector("#sellerFilterBar");
-    const emptyLabel =
-      activeSellerTab === "proposed"
-        ? "선택 대기 중인 제안 견적이 없습니다."
+      const currentFilterBar = document.querySelector("#sellerFilterBar");
+      const emptyLabel =
+        activeSellerTab === "proposed"
+          ? "선택 대기 중인 제안 견적이 없습니다."
         : activeSellerTab === "selected"
           ? "아직 고객님에게 선택받은 견적이 없습니다."
+        : activeSellerTab === "closed"
+          ? "종료된 견적이 없습니다."
           : "등록된 고객님 견적이 없습니다.";
     requestList.innerHTML = `
       <div class="empty-state compact-empty">
@@ -924,8 +957,11 @@ function renderRequests() {
     const sellerBid = getActiveSellerBid(request);
     const isSelectedByCustomer = canActiveSellerSeeCustomerPhone(request);
     const isSaleCompleted = Boolean(request.saleCompletedAt && request.saleCompletedBidId === sellerBid?.id);
+    const isClosedTab = activeSellerTab === "closed";
+    const lowestBid = getLowestBidForRequest(request.id);
     const safeItems = escapeHTML(request.items);
-    const safeCustomer = escapeHTML(request.customer);
+    const safeCustomer = escapeHTML(isClosedTab ? request.customer : request.customer);
+    const safePhone = escapeHTML(maskPhone(request.phone));
     const safeRegion = escapeHTML(request.region);
     const safePurchasePurpose = escapeHTML(request.purchasePurpose || "미선택");
     const safeDesiredBrand = escapeHTML(request.desiredBrand || "미선택");
@@ -1260,10 +1296,26 @@ function openBidSelectConfirmModal(request, bid) {
   const sellerDisplayName = formatSellerDisplayName(bid.channel, bid.branch) || bid.seller;
   const managerDisplayName = formatManagerDisplayName(bid.manager, bid.managerPosition);
   const rankInfo = getBidRankInfo(request, bid);
+  const remainingLabel = getQuoteRemainingShortLabel(request);
+  const shouldCloseEarly = !isQuoteExpired(request) && request?.status !== "closed";
   pendingBidSelection = {
     requestId: request.id,
     bidId: bid.id,
   };
+  if (bidSelectConfirmTitle) {
+    bidSelectConfirmTitle.textContent = shouldCloseEarly ? "견적 비교를 종료하고 선택할까요?" : "이 견적을 선택하시겠습니까?";
+  }
+  if (bidSelectConfirmDescription) {
+    bidSelectConfirmDescription.innerHTML = shouldCloseEarly
+      ? `견적비교 가능시간이 아직 <strong>${escapeHTML(remainingLabel)}</strong> 남았는데<br />종료하고 선택할까요?`
+      : "선택하신 견적은 이후 변경할 수 없습니다. 연락처 공개 범위를 선택한 뒤 확인을 눌러주세요.";
+  }
+  if (confirmBidSelectBtn) {
+    confirmBidSelectBtn.textContent = shouldCloseEarly ? "네 종료하고 선택합니다." : "확인";
+  }
+  if (cancelBidSelectBtn) {
+    cancelBidSelectBtn.textContent = shouldCloseEarly ? "아니오 조금더 지켜볼께요" : "취소";
+  }
   bidSelectConfirmSummary.innerHTML = `
     <div><span>선택 견적</span><strong>${escapeHTML(sellerDisplayName)}</strong></div>
     <div><span>담당</span><strong>${escapeHTML(managerDisplayName)}</strong></div>
@@ -1279,52 +1331,71 @@ function closeBidSelectConfirmModal() {
   pendingBidSelection = null;
   bidSelectConfirmModal.hidden = true;
   bidSelectConfirmSummary.innerHTML = "";
+  if (bidSelectConfirmTitle) bidSelectConfirmTitle.textContent = "이 견적을 선택하시겠습니까?";
+  if (bidSelectConfirmDescription) {
+    bidSelectConfirmDescription.textContent =
+      "선택하신 견적은 이후 변경할 수 없습니다. 연락처 공개 범위를 선택한 뒤 확인을 눌러주세요.";
+  }
+  if (confirmBidSelectBtn) confirmBidSelectBtn.textContent = "확인";
+  if (cancelBidSelectBtn) cancelBidSelectBtn.textContent = "취소";
 }
 
 async function confirmBidSelection() {
   if (!pendingBidSelection) return;
+  if (confirmBidSelectBtn) confirmBidSelectBtn.disabled = true;
+  showServerLoading("견적 선택을 저장 중입니다.", "견적 비교를 종료하고 선택 내용을 서버에 반영하고 있습니다.");
 
-  const request = requests.find((item) => sameId(item.id, pendingBidSelection.requestId));
-  const bid = bids.find((item) => sameId(item.id, pendingBidSelection.bidId));
-  if (!request || !bid) {
-    closeBidSelectConfirmModal();
-    return;
-  }
-
-  if (hasValidSelectedBid(request) && !sameId(request.selectedBidId, bid.id)) {
-    closeBidSelectConfirmModal();
-    renderLookupResults([request]);
-    return;
-  }
-
-  const scope = document.querySelector("input[name='contactReleaseScope']:checked")?.value === "top3" ? "top3" : "selected";
-  let savedRequest = null;
-  if (canUseApiServer()) {
-    const serverResult = await selectBidOnServer(request, bid, scope);
-    if (!serverResult?.ok || !serverResult.row) {
+  try {
+    const request = requests.find((item) => sameId(item.id, pendingBidSelection.requestId));
+    const bid = bids.find((item) => sameId(item.id, pendingBidSelection.bidId));
+    if (!request || !bid) {
       closeBidSelectConfirmModal();
-      setLookupActionMessage(serverResult?.message || "견적 선택을 저장하지 못했습니다.");
       return;
     }
-    savedRequest = serverResult.row;
-  }
 
-  if (savedRequest) {
-    Object.assign(request, savedRequest);
-  } else {
-    const releasedBidIds =
-      scope === "top3"
-        ? Array.from(new Set([...getBidsForRequest(request.id).slice(0, 3).map((item) => item.id), bid.id]))
-        : [bid.id];
-    request.selectedBidId = bid.id;
-    request.contactReleaseScope = scope;
-    request.contactReleasedBidIds = releasedBidIds;
+    if (hasValidSelectedBid(request) && !sameId(request.selectedBidId, bid.id)) {
+      closeBidSelectConfirmModal();
+      renderLookupResults([request]);
+      return;
+    }
+
+    const scope = document.querySelector("input[name='contactReleaseScope']:checked")?.value === "top3" ? "top3" : "selected";
+    let savedRequest = null;
+    if (canUseApiServer()) {
+      const serverResult = await selectBidOnServer(request, bid, scope);
+      if (!serverResult?.ok || !serverResult.row) {
+        closeBidSelectConfirmModal();
+        setLookupActionMessage(serverResult?.message || "견적 선택을 저장하지 못했습니다.");
+        return;
+      }
+      savedRequest = serverResult.row;
+    }
+
+    if (savedRequest) {
+      Object.assign(request, savedRequest);
+    } else {
+      const releasedBidIds =
+        scope === "top3"
+          ? Array.from(new Set([...getBidsForRequest(request.id).slice(0, 3).map((item) => item.id), bid.id]))
+          : [bid.id];
+      request.selectedBidId = bid.id;
+      request.contactReleaseScope = scope;
+      request.contactReleasedBidIds = releasedBidIds;
+      request.status = "closed";
+      request.quoteExpiresAt = new Date().toISOString();
+    }
+    selectedRequestId = request.id;
+    closeBidSelectConfirmModal();
+    renderLookupResults([request]);
+    renderRequests();
+    renderSelectedRequest();
+  } catch (error) {
+    console.error(error);
+    setLookupActionMessage("견적 선택 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+  } finally {
+    if (confirmBidSelectBtn) confirmBidSelectBtn.disabled = false;
+    hideServerLoading();
   }
-  selectedRequestId = request.id;
-  closeBidSelectConfirmModal();
-  renderLookupResults([request]);
-  renderRequests();
-  renderSelectedRequest();
 }
 
 function renderLookupResults(matches, label = "내 견적") {
@@ -2155,11 +2226,13 @@ renderRequests = function renderRequestsClean() {
 
   if (!filteredRequests.length) {
     const currentFilterBar = document.querySelector("#sellerFilterBar");
-    const emptyLabel =
-      activeSellerTab === "proposed"
-        ? "선택 대기 중인 제안 견적이 없습니다."
+      const emptyLabel =
+        activeSellerTab === "proposed"
+          ? "선택 대기 중인 제안 견적이 없습니다."
         : activeSellerTab === "selected"
           ? "아직 고객님에게 선택받은 견적이 없습니다."
+        : activeSellerTab === "closed"
+          ? "종료된 견적이 없습니다."
           : "등록된 고객님 견적이 없습니다.";
     requestList.innerHTML = `
       <div class="empty-state compact-empty">
@@ -2175,8 +2248,11 @@ renderRequests = function renderRequestsClean() {
     const sellerBid = getActiveSellerBid(request);
     const isSelectedByCustomer = canActiveSellerSeeCustomerPhone(request);
     const isSaleCompleted = Boolean(request.saleCompletedAt && request.saleCompletedBidId === sellerBid?.id);
+    const isClosedTab = activeSellerTab === "closed";
+    const lowestBid = getLowestBidForRequest(request.id);
     const safeItems = escapeHTML(request.items);
     const safeCustomer = escapeHTML(request.customer);
+    const safePhone = escapeHTML(maskPhone(request.phone));
     const safeRegion = escapeHTML(request.region);
     const safePurchasePurpose = escapeHTML(request.purchasePurpose || "미선택");
     const safeQuoteNumber = escapeHTML(request.quoteNumber || "번호 없음");
@@ -2187,13 +2263,18 @@ renderRequests = function renderRequestsClean() {
     item.className = `request-item${request.id === selectedRequestId ? " is-active" : ""}`;
     item.innerHTML = `
       <strong>${safeItems}</strong>
-      <span>${safeCustomer} · ${safeRegion}</span>
+      <span>${safeCustomer} · ${isClosedTab ? safePhone : safeRegion}</span>
       <span>견적번호 ${safeQuoteNumber}</span>
       <span class="${expired ? "deadline-expired" : "deadline-live"}">남은 시간 ${safeRemaining}</span>
       <span>구매 목적 ${safePurchasePurpose}</span>
-      <span>기존 견적 ${formatPrice(request.price)}</span>
-      ${sellerBid ? `<span>내 제안 ${formatPrice(sellerBid.price)}</span>` : ""}
-      ${isSelectedByCustomer ? `<span class="request-badge">선택받음</span>` : ""}
+      ${
+        isClosedTab
+          ? `<span>1위 금액 ${lowestBid ? formatPrice(lowestBid.price) : "제안 없음"}</span>`
+          : `<span>기존 견적 ${formatPrice(request.price)}</span>`
+      }
+      ${!isClosedTab && sellerBid ? `<span>내 제안 ${formatPrice(sellerBid.price)}</span>` : ""}
+      ${isClosedTab ? `<span class="request-badge done">종료</span>` : ""}
+      ${!isClosedTab && isSelectedByCustomer ? `<span class="request-badge">선택받음</span>` : ""}
       ${isSaleCompleted ? `<span class="request-badge done">판매완료</span>` : ""}
     `;
     item.addEventListener("click", () => {
@@ -2218,10 +2299,11 @@ renderSelectedRequest = function renderSelectedRequestClean() {
     return;
   }
 
-  setBidFormEnabled(true);
+  const isClosedTab = activeSellerTab === "closed";
+  setBidFormEnabled(!isClosedTab);
   syncBidFormForRequest(request);
 
-  const visiblePhone = canActiveSellerSeeCustomerPhone(request) ? request.phone : maskPhone(request.phone);
+  const visiblePhone = isClosedTab ? maskPhone(request.phone) : canActiveSellerSeeCustomerPhone(request) ? request.phone : maskPhone(request.phone);
   const safeCustomer = escapeHTML(request.customer);
   const safePhone = escapeHTML(visiblePhone);
   const safePurchasePurpose = escapeHTML(request.purchasePurpose || "미선택");
@@ -2233,6 +2315,7 @@ renderSelectedRequest = function renderSelectedRequestClean() {
   const activeSellerBid = getActiveSellerBid(request);
   const isSelectedSeller = canActiveSellerSeeCustomerPhone(request);
   const isSaleCompleted = isSaleCompletedForBid(request, activeSellerBid);
+  const lowestBid = getLowestBidForRequest(request.id);
   const repeatNotice = getRepeatQuoteNotice(request);
   const rankInfo = activeSellerBid ? getBidRankInfo(request, activeSellerBid) : null;
   const rankNotice =
@@ -2240,7 +2323,15 @@ renderSelectedRequest = function renderSelectedRequestClean() {
       ? `견적 제안 가능 시간이 종료되었습니다. 최저가는 ${formatPrice(rankInfo.lowestPrice)}이며 내 제안은 ${rankInfo.rank}위입니다.`
       : "";
 
-  selectedStatus.textContent = isSaleCompleted ? "판매완료" : isSelectedSeller ? "선택받음" : expired ? "견적 마감" : "응답 가능";
+  selectedStatus.textContent = isClosedTab
+    ? "종료된 견적"
+    : isSaleCompleted
+      ? "판매완료"
+      : isSelectedSeller
+        ? "선택받음"
+        : expired
+          ? "견적 마감"
+          : "응답 가능";
   selectedTitle.textContent = request.items;
   selectedInfo.innerHTML = `
     <div class="seller-summary-grid">
@@ -2249,7 +2340,11 @@ renderSelectedRequest = function renderSelectedRequestClean() {
       <div><span>연락처</span><strong>${safePhone}</strong></div>
       <div><span>구매 목적</span><strong>${safePurchasePurpose}</strong></div>
       <div><span>설치 지역</span><strong>${safeRegion}</strong></div>
-      <div><span>기존 견적</span><strong>${formatPrice(request.price)}</strong></div>
+      ${
+        isClosedTab
+          ? `<div><span>1위 금액</span><strong>${lowestBid ? formatPrice(lowestBid.price) : "제안 없음"}</strong></div>`
+          : `<div><span>기존 견적</span><strong>${formatPrice(request.price)}</strong></div>`
+      }
       <div><span>견적 가능 시간</span><strong class="${expired ? "deadline-expired" : "deadline-live"}">${safeRemaining}</strong></div>
       ${repeatNotice ? `<div><span>재등록 안내</span><strong>${escapeHTML(repeatNotice)}</strong></div>` : ""}
       ${rankNotice ? `<div><span>마감 결과</span><strong>${escapeHTML(rankNotice)}</strong></div>` : ""}
@@ -2263,12 +2358,14 @@ renderSelectedRequest = function renderSelectedRequestClean() {
         ? `판매완료 처리되었습니다. 고객님에게 후기 요청 알림톡 발송 상태: ${
             request.reviewNotificationSentAt ? "발송 완료" : "발송 대기"
           }`
+        : isClosedTab
+        ? "종료된 견적에서는 고객님 연락처가 마스킹 처리되며 1위 금액만 표시됩니다."
         : isSelectedSeller
         ? "고객님이 이 제안을 선택해 연락처가 공개되었습니다."
         : "연락처는 고객님이 제안을 선택한 뒤 공개됩니다."
     }</p>
     ${
-      isSelectedSeller
+      !isClosedTab && isSelectedSeller
         ? `<div class="sale-complete-panel">
             <strong>${isSaleCompleted ? "판매완료 처리됨" : "판매가 완료되었나요?"}</strong>
             <p>${
