@@ -1214,19 +1214,19 @@ function renderBidCards(request) {
       );
       return `
         <article class="seller-bid-card${isSelected ? " is-selected" : ""}">
-          <div class="bid-card-visual">
+          <div class="bid-card-visual${isContactReleased ? " is-released" : " is-locked"}">
             <button class="heart-btn" type="button" aria-label="관심 제안">♡</button>
             <div class="bid-card-thumb${isContactReleased ? "" : " is-private-card"}">
+              <div class="manager-card-placeholder">
+                <strong>${isContactReleased ? "명함 확인 가능" : "선택 후 명함 공개"}</strong>
+                <span>${safeManager}</span>
+                <small>${safeSeller}</small>
+              </div>
               ${
-                bid.cardImage
-                  ? `<img src="${bid.cardImage}" alt="${safeSeller} 매니저 명함" />`
-                  : `<div class="manager-card-placeholder">
-                      <strong>${safeManager}</strong>
-                      <span>${safeSeller}</span>
-                      <small>${safePhone}</small>
-                    </div>`
+                isContactReleased && bid.cardImage
+                  ? `<button class="card-image-open-btn" type="button" data-card-image="${escapeHTML(bid.cardImage)}" data-card-alt="${safeSeller} ${safeManager} 명함">명함 보기</button>`
+                  : ""
               }
-              ${isContactReleased ? "" : `<div class="private-card-overlay">선택 후 명함 공개</div>`}
             </div>
           </div>
           <div class="bid-card-body">
@@ -1945,6 +1945,12 @@ lookupResults.addEventListener("click", (event) => {
   const reviewButton = event.target.closest("[data-review-bid-id]");
   if (reviewButton) {
     openManagerReviewModal(reviewButton.dataset.reviewBidId);
+    return;
+  }
+
+  const cardImageButton = event.target.closest("[data-card-image]");
+  if (cardImageButton) {
+    openQuoteImageModal(cardImageButton.dataset.cardImage, cardImageButton.dataset.cardAlt || "판매자 명함 이미지");
     return;
   }
 

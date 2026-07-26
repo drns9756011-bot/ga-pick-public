@@ -2304,10 +2304,16 @@ select {
 
 .bid-card-visual {
   position: relative;
-  min-height: 220px;
+  min-height: 156px;
   background:
-    radial-gradient(circle at 50% 18%, rgba(255, 255, 255, 0.95), rgba(216, 222, 228, 0.92)),
-    linear-gradient(135deg, #f3f5f7, #d9dfe6);
+    radial-gradient(circle at 18% 12%, rgba(255, 255, 255, 0.95), rgba(221, 227, 233, 0.88)),
+    linear-gradient(135deg, #f7f9fb, #e3e8ee);
+}
+
+.bid-card-visual.is-released {
+  background:
+    radial-gradient(circle at 16% 16%, rgba(255, 255, 255, 0.95), rgba(235, 247, 244, 0.92)),
+    linear-gradient(135deg, #f5fbf9, #dfeeea);
 }
 
 .heart-btn {
@@ -2330,59 +2336,40 @@ select {
 
 .bid-card-thumb {
   position: relative;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
   width: 100%;
-  height: 220px;
+  min-height: 156px;
+  padding: 22px;
   color: var(--muted);
   font-weight: 800;
 }
 
-.bid-card-thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-.bid-card-thumb.is-private-card img,
 .bid-card-thumb.is-private-card .manager-card-placeholder {
-  filter: blur(10px);
-  opacity: 0.28;
-  transform: scale(1.02);
+  opacity: 0.72;
   user-select: none;
-  pointer-events: none;
-}
-
-.private-card-overlay {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  padding: 20px;
-  background: rgba(255, 255, 255, 0.62);
-  color: var(--ink);
-  text-align: center;
-  font-weight: 900;
   pointer-events: none;
 }
 
 .manager-card-placeholder {
   display: grid;
-  place-items: center;
-  gap: 8px;
-  width: min(78%, 340px);
-  min-height: 136px;
-  padding: 22px;
+  gap: 6px;
+  width: min(100%, 310px);
+  min-height: 106px;
+  padding: 20px;
   border: 1px solid #cfd6df;
   border-radius: 8px;
   background: #fff;
   color: var(--ink);
   text-align: center;
-  box-shadow: 0 16px 32px rgba(22, 32, 42, 0.12);
+  box-shadow: 0 12px 28px rgba(22, 32, 42, 0.1);
 }
 
 .manager-card-placeholder strong {
-  font-size: 23px;
+  font-size: 19px;
 }
 
 .manager-card-placeholder span {
@@ -2392,6 +2379,22 @@ select {
 
 .manager-card-placeholder small {
   color: var(--muted);
+}
+
+.card-image-open-btn {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid rgba(18, 107, 93, 0.28);
+  border-radius: 8px;
+  background: var(--primary);
+  color: #fff;
+  cursor: pointer;
+  font-weight: 900;
+  box-shadow: 0 12px 26px rgba(18, 107, 93, 0.18);
+}
+
+.card-image-open-btn:hover {
+  background: #0f5f52;
 }
 
 .bid-card-body {
