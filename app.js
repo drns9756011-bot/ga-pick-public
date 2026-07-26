@@ -816,6 +816,12 @@ function canActiveSellerSeeCustomerPhone(request) {
   return Boolean(sellerBid && isBidContactReleased(request, sellerBid));
 }
 
+function isActiveSellerSelectedRequest(request) {
+  const sellerBid = getActiveSellerBid(request);
+  if (!sellerBid) return false;
+  return sameId(request?.selectedBidId, sellerBid.id) || isBidContactReleased(request, sellerBid);
+}
+
 function getActiveSellerBid(request) {
   return bids.find((bid) => String(bid.requestId) === String(request.id) && bid.sellerId === activeSellerId);
 }
@@ -886,10 +892,10 @@ function getFilteredSellerRequests() {
 
   if (activeSellerTab === "proposed") {
     filteredRequests = requests.filter(
-      (request) => !isQuoteClosed(request) && getActiveSellerBid(request) && !canActiveSellerSeeCustomerPhone(request)
+      (request) => !isQuoteClosed(request) && getActiveSellerBid(request) && !isActiveSellerSelectedRequest(request)
     );
   } else if (activeSellerTab === "selected") {
-    filteredRequests = requests.filter((request) => !isQuoteClosed(request) && canActiveSellerSeeCustomerPhone(request));
+    filteredRequests = requests.filter((request) => isActiveSellerSelectedRequest(request));
   } else if (activeSellerTab === "closed") {
     filteredRequests = requests.filter((request) => isQuoteClosed(request));
   } else {
