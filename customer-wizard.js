@@ -47,8 +47,8 @@
   ];
 
   const purposeOptions = [
-    { value: "웨딩,혼수 특별혜택", title: "웨딩,혼수", text: "여러 품목을 한 번에 비교해 혼수 혜택을 확인합니다.", badge: "혜택 확인" },
-    { value: "신축입주 특별혜택", title: "신축입주", text: "입주 일정에 맞춘 배송, 설치 조건을 함께 봅니다.", badge: "혜택 확인" },
+    { value: "웨딩,혼수 특별혜택", title: "웨딩,혼수", text: "여러 품목을 한 번에 비교합니다.", badge: "특별혜택" },
+    { value: "신축입주 특별혜택", title: "신축입주", text: "입주 일정에 맞춘 조건을 비교합니다.", badge: "특별혜택" },
     { value: "이사", title: "이사", text: "이사 날짜와 설치 환경에 맞는 조건을 비교합니다." },
     { value: "인테리어", title: "인테리어", text: "공간 완성 일정에 맞춰 필요한 가전을 제안받습니다." },
     { value: "일반", title: "일반구매", text: "필요한 제품의 가격과 혜택을 차분히 비교합니다." },
@@ -163,10 +163,30 @@
           <span class="product-thumb product-thumb-${option.icon}" aria-hidden="true"></span>
           <span class="product-copy">
             <strong>${option.title}</strong>
-            <small data-product-summary="${option.value}">옵션을 선택해주세요.</small>
+            <small data-product-summary="${option.value}">선택 후 다음 단계에서 상세 옵션을 고릅니다.</small>
           </span>
         </label>
-        <button class="product-option-btn" type="button" data-product-option="${option.value}">옵션 선택</button>
+      </div>
+    `;
+  }
+
+  function selectedOptionCard(product) {
+    const option = productOptions.find((item) => item.value === product);
+    const icon = option?.icon || "tv";
+    const optionText = getProductOptionText(product);
+    return `
+      <div class="wizard-product-card selected-option-card" data-selected-option-row="${product}">
+        <div class="wizard-product-main">
+          <span class="wizard-check fixed-check"></span>
+          <span class="product-thumb product-thumb-${icon}" aria-hidden="true"></span>
+          <span class="product-copy">
+            <strong>${product}</strong>
+            <small class="${optionText ? "is-complete" : ""}">${optionText || "상세 옵션을 선택해주세요."}</small>
+          </span>
+        </div>
+        <button class="product-option-btn" type="button" data-product-option="${product}">
+          ${optionText ? "옵션 변경" : "옵션 선택"}
+        </button>
       </div>
     `;
   }
@@ -218,12 +238,23 @@
   function syncProductSummaries() {
     productOptions.forEach((product) => {
       const summary = wizard.querySelector(`[data-product-summary="${product.value}"]`);
+      const row = Array.from(wizard.querySelectorAll("[data-product-row]")).find((node) => node.dataset.productRow === product.value);
       if (!summary) return;
       const optionText = getProductOptionText(product.value);
       const isSelected = selectedProducts().includes(product.value);
-      summary.textContent = isSelected ? optionText || "옵션 미선택" : "옵션을 선택해주세요.";
-      summary.classList.toggle("is-complete", Boolean(optionText));
+      if (row) row.classList.toggle("is-selected", isSelected);
+      summary.textContent = isSelected ? "선택됨" : "선택 후 다음 단계에서 상세 옵션을 고릅니다.";
+      summary.classList.toggle("is-complete", isSelected);
     });
+  }
+
+  function renderSelectedOptionStep() {
+    const products = selectedProducts();
+    const list = stepSelectedOptions.querySelector(".selected-option-list");
+    if (!list) return;
+    list.innerHTML = products.length
+      ? products.map((product) => selectedOptionCard(product)).join("")
+      : `<div class="empty-state compact-empty"><strong>선택한 제품군이 없습니다.</strong><p>이전 단계에서 구매 예정 품목을 선택해주세요.</p></div>`;
   }
 
   function syncItemsField() {
@@ -324,7 +355,7 @@
 
   resetSelectOptions(purposeSelect, "구매사유 선택", purposeOptions.map((option) => ({
     value: option.value,
-    label: option.badge ? `${option.title} (${option.badge})` : option.title,
+    label: option.title,
   })));
   resetSelectOptions(brandSelect, "브랜드 선택", brandOptions.map((option) => ({
     value: option.value,
@@ -428,11 +459,24 @@
     <div class="wizard-step-head">
       <p class="eyebrow">Step 5</p>
       <h2>구매 예정 품목을 모두 선택해주세요.</h2>
-      <p>품목을 선택한 뒤 옵션을 눌러 상세 조건을 남겨주세요.</p>
+      <p>필요한 제품군만 먼저 선택해주세요. 상세 옵션은 다음 단계에서 선택합니다.</p>
     </div>
     <div class="wizard-product-list">
       ${productOptions.map((option) => productCard(option)).join("")}
     </div>
+  `;
+
+  const stepSelectedOptions = document.createElement("section");
+  stepSelectedOptions.className = "wizard-step";
+  stepSelectedOptions.dataset.step = "selected-options";
+  stepSelectedOptions.hidden = true;
+  stepSelectedOptions.innerHTML = `
+    <div class="wizard-step-head">
+      <p class="eyebrow">Step 6</p>
+      <h2>선택한 제품의 옵션을 골라주세요.</h2>
+      <p>선택한 제품군만 표시됩니다. 판매자가 정확히 제안할 수 있도록 상세 조건을 남겨주세요.</p>
+    </div>
+    <div class="wizard-product-list selected-option-list"></div>
   `;
 
   const stepQuote = document.createElement("section");
@@ -441,7 +485,7 @@
   stepQuote.hidden = true;
   stepQuote.innerHTML = `
     <div class="wizard-step-head">
-      <p class="eyebrow">Step 6</p>
+      <p class="eyebrow">Step 7</p>
       <h2>견적 정보를 등록해주세요.</h2>
       <p>금액은 만원 단위로 입력하고, 설치 예정일과 모델명을 함께 남겨주세요.</p>
     </div>
@@ -467,10 +511,10 @@
   submitButton.classList.add("wizard-submit");
   navigation.append(prevButton, nextButton, submitButton);
 
-  wizard.append(stepQuoteType, stepPersonal, stepPurpose, stepBrand, stepProducts, stepQuote, navigation, message);
+  wizard.append(stepQuoteType, stepPersonal, stepPurpose, stepBrand, stepProducts, stepSelectedOptions, stepQuote, navigation, message);
   form.replaceChildren(wizard);
 
-  const allSteps = [stepQuoteType, stepPersonal, stepPurpose, stepBrand, stepProducts, stepQuote];
+  const allSteps = [stepQuoteType, stepPersonal, stepPurpose, stepBrand, stepProducts, stepSelectedOptions, stepQuote];
   const topBackButton = wizard.querySelector("[data-wizard-prev]");
   const progress = wizard.querySelector(".wizard-progress");
   let currentStep = 0;
@@ -505,16 +549,13 @@
   stepProducts.addEventListener("change", (event) => {
     const input = event.target.closest('[name="wizardProductProxy"]');
     if (!input) return;
-    if (input.checked && productOptionSchema[input.value]) openOptionModal(input.value);
     syncItemsField();
   });
 
-  stepProducts.addEventListener("click", (event) => {
+  stepSelectedOptions.addEventListener("click", (event) => {
     const button = event.target.closest("[data-product-option]");
     if (!button) return;
     const product = button.dataset.productOption;
-    const checkbox = Array.from(stepProducts.querySelectorAll('[name="wizardProductProxy"]')).find((input) => input.value === product);
-    if (checkbox && !checkbox.checked) checkbox.checked = true;
     openOptionModal(product);
     syncItemsField();
   });
@@ -524,6 +565,7 @@
   optionConfirm.addEventListener("click", () => {
     storeModalSelections();
     syncItemsField();
+    renderSelectedOptionStep();
     closeOptionModal();
   });
   optionModal.addEventListener("click", (event) => {
@@ -555,6 +597,11 @@
         stepProducts.querySelector('[name="wizardProductProxy"]')?.reportValidity();
         return false;
       }
+      return true;
+    }
+    if (step === stepSelectedOptions) {
+      syncItemsField();
+      const products = selectedProducts();
       const incompleteProduct = products.find((product) => !hasRequiredProductOptions(product));
       if (incompleteProduct) {
         openOptionModal(incompleteProduct);
@@ -582,6 +629,7 @@
   }
 
   function renderProgress(steps) {
+    progress.style.setProperty("--wizard-step-count", String(steps.length));
     progress.innerHTML = steps.map((_, index) => `<span class="${index <= currentStep ? "is-active" : ""}"></span>`).join("");
   }
 
@@ -589,6 +637,7 @@
     const steps = activeSteps();
     if (currentStep >= steps.length) currentStep = steps.length - 1;
     updateQuoteStepMode();
+    renderSelectedOptionStep();
     allSteps.forEach((step) => {
       step.hidden = !steps.includes(step) || step !== steps[currentStep];
     });
