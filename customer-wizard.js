@@ -32,7 +32,7 @@
   const brandOptions = [
     { value: "LG전자", title: "LG전자", text: "LG전자 제품 중심으로 제안을 받고 싶어요." },
     { value: "삼성전자", title: "삼성전자", text: "삼성전자 제품 중심으로 제안을 받고 싶어요." },
-    { value: "비교 견적", title: "비교 견적", text: "LG와 삼성 조건을 함께 비교하고 싶어요." },
+    { value: "비교견적", title: "비교견적", text: "LG와 삼성 조건을 함께 비교하고 싶어요." },
   ];
 
   function resetSelectOptions(select, placeholder, options) {

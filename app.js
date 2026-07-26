@@ -433,6 +433,7 @@ async function apiJson(path, options = {}) {
   }
   try {
     const response = await fetch(path, {
+      cache: "no-store",
       headers: {
         "Content-Type": "application/json",
         ...(fetchOptions.headers || {}),
@@ -863,6 +864,11 @@ function getSellerBrandValue(request) {
   return getQuoteBrand(request) || "미선택";
 }
 
+function normalizeSellerBrandFilter(value) {
+  if (value === "all") return "all";
+  return normalizeQuoteBrand(value) || "미선택";
+}
+
 function getSelectedBid(request) {
   return bids.find((bid) => sameId(bid.id, request.selectedBidId)) || null;
 }
@@ -890,8 +896,10 @@ function getFilteredSellerRequests() {
     filteredRequests = requests.filter((request) => !isQuoteClosed(request));
   }
 
-  if (activeSellerBrandFilter !== "all") {
-    filteredRequests = filteredRequests.filter((request) => getSellerBrandValue(request) === activeSellerBrandFilter);
+  const normalizedBrandFilter = normalizeSellerBrandFilter(activeSellerBrandFilter);
+  activeSellerBrandFilter = normalizedBrandFilter;
+  if (normalizedBrandFilter !== "all") {
+    filteredRequests = filteredRequests.filter((request) => getSellerBrandValue(request) === normalizedBrandFilter);
   }
 
   if (activeSellerRegionFilter !== "all") {
@@ -935,18 +943,21 @@ function renderSellerFilterBar() {
     ["all", "전체"],
     ["LG전자", "LG전자"],
     ["삼성전자", "삼성전자"],
-    ["비교 견적", "비교견적"],
+    ["비교견적", "비교견적"],
   ];
 
   const regionOptions = [["all", "전체 지역"], ...availableRegions.map((region) => [region, region])];
 
   const makeButtons = (items, activeValue, filterName) =>
     items
-      .map(([value, label]) => `
-        <button type="button" class="${value === activeValue ? "is-active" : ""}" data-seller-filter="${filterName}" data-filter-value="${escapeHTML(value)}">
+      .map(([value, label]) => {
+        const normalizedActiveValue = filterName === "brand" ? normalizeSellerBrandFilter(activeValue) : activeValue;
+        return `
+        <button type="button" class="${value === normalizedActiveValue ? "is-active" : ""}" data-seller-filter="${filterName}" data-filter-value="${escapeHTML(value)}">
           ${escapeHTML(label)}
         </button>
-      `)
+      `;
+      })
       .join("");
 
   filterBar.innerHTML = `
@@ -1687,7 +1698,7 @@ document.addEventListener("click", (event) => {
   const filterValue = filterButton.dataset.filterValue || "all";
 
   if (filterType === "brand") {
-    activeSellerBrandFilter = filterValue;
+    activeSellerBrandFilter = normalizeSellerBrandFilter(filterValue);
     activeSellerRegionFilter = "all";
   }
 
