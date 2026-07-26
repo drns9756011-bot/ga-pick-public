@@ -480,18 +480,50 @@ async function saveSellerApplicationToServer(application) {
 }
 
 function replaceRequests(rows) {
-  requests.splice(0, requests.length, ...rows);
+  requests.splice(0, requests.length, ...rows.map(normalizeQuoteRequest));
 }
 
 function mergeRequests(rows) {
   rows.forEach((row) => {
+    const normalizedRow = normalizeQuoteRequest(row);
     const index = requests.findIndex((request) => sameId(request.id, row.id));
     if (index >= 0) {
-      requests[index] = { ...requests[index], ...row };
+      requests[index] = normalizeQuoteRequest({ ...requests[index], ...normalizedRow });
       return;
     }
-    requests.push(row);
+    requests.push(normalizedRow);
   });
+}
+
+function normalizeQuoteBrand(value) {
+  const raw = String(value || "").trim();
+  const compact = raw.replace(/\s+/g, "").toLowerCase();
+  if (!compact) return "";
+  if (compact.includes("비교")) return "비교견적";
+  if (compact.includes("lg") || compact.includes("엘지")) return "LG전자";
+  if (compact.includes("삼성") || compact.includes("samsung")) return "삼성전자";
+  return raw;
+}
+
+function getQuoteBrand(request) {
+  return normalizeQuoteBrand(
+    request?.desiredBrand ||
+      request?.desired_brand ||
+      request?.brand ||
+      request?.preferredBrand ||
+      request?.preferred_brand ||
+      ""
+  );
+}
+
+function normalizeQuoteRequest(request) {
+  if (!request) return request;
+  const brand = getQuoteBrand(request);
+  return {
+    ...request,
+    desiredBrand: brand,
+    brand,
+  };
 }
 
 async function syncCustomerQuotesFromServer() {
@@ -828,7 +860,7 @@ function normalizeSellerRegionCategory(region) {
 }
 
 function getSellerBrandValue(request) {
-  return request.desiredBrand || "미선택";
+  return getQuoteBrand(request) || "미선택";
 }
 
 function getSelectedBid(request) {
@@ -1030,9 +1062,8 @@ function renderRequests() {
     const safeCustomer = escapeHTML(isClosedTab ? request.customer : request.customer);
     const safePhone = escapeHTML(maskPhone(request.phone));
     const safeRegion = escapeHTML(request.region);
-    const safeDesiredBrandLegacy = escapeHTML(getSellerBrandValue(request));
     const safePurchasePurpose = escapeHTML(request.purchasePurpose || "미선택");
-    const safeDesiredBrand = escapeHTML(request.desiredBrand || "미선택");
+    const safeDesiredBrand = escapeHTML(getSellerBrandValue(request));
     const safeQuoteNumber = escapeHTML(request.quoteNumber || "번호 없음");
     const safeRemaining = escapeHTML(getQuoteRemainingLabel(request));
     const repeatNotice = getRepeatQuoteNotice(request);
@@ -1080,7 +1111,7 @@ function renderSelectedRequest() {
   const safeItems = escapeHTML(request.items);
   const safePhone = escapeHTML(visiblePhone);
   const safePurchasePurpose = escapeHTML(request.purchasePurpose || "미선택");
-  const safeDesiredBrand = escapeHTML(request.desiredBrand || "미선택");
+  const safeDesiredBrand = escapeHTML(getSellerBrandValue(request));
   const safeRegion = escapeHTML(request.region);
   const safeQuoteNumber = escapeHTML(request.quoteNumber || "번호 없음");
   const safeMemo = escapeHTML(request.memo || "추가 요청사항 없음");
@@ -1267,7 +1298,7 @@ async function createCustomerRequestOnServer(formData) {
     phone: formatPhoneNumber(formData.get("phone")),
     items: formData.get("items").trim(),
     purchasePurpose: formData.get("purchasePurpose"),
-    desiredBrand: formData.get("desiredBrand"),
+    desiredBrand: normalizeQuoteBrand(formData.get("desiredBrand")),
     price: parseManwon(formData.get("price")),
     region: formData.get("region").trim(),
     memo: formData.get("memo").trim(),
@@ -1316,7 +1347,7 @@ async function createCustomerRequest(formData) {
     phone: formatPhoneNumber(formData.get("phone")),
     items: formData.get("items").trim(),
     purchasePurpose: formData.get("purchasePurpose"),
-    desiredBrand: formData.get("desiredBrand"),
+    desiredBrand: normalizeQuoteBrand(formData.get("desiredBrand")),
     price: parseManwon(formData.get("price")),
     region: formData.get("region").trim(),
     memo: formData.get("memo").trim(),
@@ -2338,7 +2369,7 @@ renderRequests = function renderRequestsClean() {
     item.className = `request-item${request.id === selectedRequestId ? " is-active" : ""}`;
     item.innerHTML = `
       <strong>${safeItems}</strong>
-      <span>원하는 브랜드 ${safeDesiredBrand}</span>
+      <span>브랜드 ${safeDesiredBrand}</span>
       <span>${safeCustomer} · ${isClosedTab ? safePhone : safeRegion}</span>
       <span>견적번호 ${safeQuoteNumber}</span>
       <span class="${expired ? "deadline-expired" : "deadline-live"}">남은 시간 ${safeRemaining}</span>
@@ -2416,7 +2447,7 @@ renderSelectedRequest = function renderSelectedRequestClean() {
       <div><span>고객님</span><strong>${safeCustomer}</strong></div>
       <div><span>연락처</span><strong>${safePhone}</strong></div>
       <div><span>구매 목적</span><strong>${safePurchasePurpose}</strong></div>
-      <div><span>원하는 브랜드</span><strong>${safeDesiredBrand}</strong></div>
+      <div><span>브랜드</span><strong>${safeDesiredBrand}</strong></div>
       <div><span>설치 지역</span><strong>${safeRegion}</strong></div>
       ${
         isClosedTab

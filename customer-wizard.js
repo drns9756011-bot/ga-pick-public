@@ -90,7 +90,7 @@
     value: option.value,
     label: option.badge ? `${option.title} - ${option.badge}` : option.title,
   })));
-  resetSelectOptions(brandSelect, "원하는 브랜드 선택", brandOptions.map((option) => ({
+  resetSelectOptions(brandSelect, "브랜드 선택", brandOptions.map((option) => ({
     value: option.value,
     label: option.title,
   })));
@@ -156,8 +156,8 @@
   stepBrand.innerHTML = `
     <div class="wizard-step-head">
       <p class="eyebrow">Step 3</p>
-      <h2>원하는 브랜드를 선택해주세요.</h2>
-      <p>특정 브랜드만 받을지, 브랜드별 조건을 함께 비교할지 선택합니다.</p>
+      <h2>브랜드를 선택해주세요.</h2>
+      <p>LG전자, 삼성전자, 비교견적 중 견적을 받을 방향을 선택합니다.</p>
     </div>
     <div class="wizard-option-grid brand-grid">
       ${brandOptions.map((option) => optionCard(option, "wizardBrandProxy")).join("")}
