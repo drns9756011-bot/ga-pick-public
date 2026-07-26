@@ -1335,7 +1335,7 @@ function closeConsentModal() {
 }
 
 async function createCustomerRequest(formData) {
-  const quoteType = formData.get("quoteType") || "with_quote";
+  const quoteType = formData.get("quoteType");
   const hasQuoteImage = quoteType === "with_quote";
   const requestImages = hasQuoteImage ? uploadedImages.slice(0, 4) : [];
   const quoteNumber = createQuoteNumber();

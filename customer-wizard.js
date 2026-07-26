@@ -37,21 +37,21 @@
   form.noValidate = true;
 
   const quoteTypeOptions = [
-    { value: "with_quote", title: "견적서가 있어요!!", text: "받아둔 견적서 사진을 기준으로 더 좋은 조건을 비교합니다." },
+    { value: "with_quote", title: "견적서가 있어요!!", text: "받아둔 견적서 사진을 기준으로 판매자 제안을 비교합니다." },
     {
       value: "without_quote",
       title: "견적서가 없어요!!",
-      text: "제품군과 예산을 기준으로 제안받습니다. 견적 조건에 제한이 생길 수 있습니다.",
-      badge: "제한 있음",
+      text: "제품군과 희망 예산으로 제안받습니다. 견적서가 있는 요청보다 제안 조건에 제한이 생길 수 있습니다.",
+      badge: "제한 안내",
     },
   ];
 
   const purposeOptions = [
-    { value: "웨딩,혼수 특별혜택", title: "웨딩,혼수", text: "여러 품목을 한 번에 비교해 큰 혜택을 받기 좋아요.", badge: "특별혜택" },
-    { value: "신축입주 특별혜택", title: "신축입주", text: "입주 일정에 맞춘 배송, 설치 조건을 함께 확인해요.", badge: "특별혜택" },
-    { value: "이사", title: "이사", text: "이사 날짜와 설치 환경에 맞는 조건을 비교해요." },
-    { value: "인테리어", title: "인테리어", text: "공간 완성 일정에 맞춰 필요한 가전을 제안받아요." },
-    { value: "일반", title: "일반구매", text: "필요한 제품의 가격과 혜택을 차분히 비교해요." },
+    { value: "웨딩,혼수 특별혜택", title: "웨딩,혼수", text: "여러 품목을 한 번에 비교해 혼수 혜택을 확인합니다.", badge: "혜택 확인" },
+    { value: "신축입주 특별혜택", title: "신축입주", text: "입주 일정에 맞춘 배송, 설치 조건을 함께 봅니다.", badge: "혜택 확인" },
+    { value: "이사", title: "이사", text: "이사 날짜와 설치 환경에 맞는 조건을 비교합니다." },
+    { value: "인테리어", title: "인테리어", text: "공간 완성 일정에 맞춰 필요한 가전을 제안받습니다." },
+    { value: "일반", title: "일반구매", text: "필요한 제품의 가격과 혜택을 차분히 비교합니다." },
   ];
 
   const brandOptions = [
@@ -61,19 +61,58 @@
   ];
 
   const productOptions = [
-    { value: "TV", title: "TV", icon: "TV" },
-    { value: "냉장고", title: "냉장고", icon: "냉" },
-    { value: "세탁기/건조기", title: "세탁기/건조기", icon: "세" },
-    { value: "청소기", title: "청소기", icon: "청" },
-    { value: "김치냉장고", title: "김치냉장고", icon: "김" },
-    { value: "에어컨", title: "에어컨", icon: "에" },
-    { value: "식기세척기", title: "식기세척기", icon: "식" },
-    { value: "인덕션/전기레인지", title: "인덕션/전기레인지", icon: "인" },
-    { value: "공기청정기", title: "공기청정기", icon: "공" },
-    { value: "정수기", title: "정수기", icon: "정" },
-    { value: "의류관리기", title: "의류관리기", icon: "의" },
-    { value: "오븐/전자레인지", title: "오븐/전자레인지", icon: "오" },
+    { value: "TV", title: "TV", icon: "tv", optionButton: true },
+    { value: "냉장고", title: "냉장고", icon: "fridge", optionButton: true },
+    { value: "세탁기/건조기", title: "세탁기/건조기", icon: "washer", optionButton: true },
+    { value: "청소기", title: "청소기", icon: "vacuum", optionButton: true },
+    { value: "김치냉장고", title: "김치냉장고", icon: "kimchi", optionButton: true },
+    { value: "에어컨", title: "에어컨", icon: "aircon", optionButton: true },
+    { value: "식기세척기", title: "식기세척기", icon: "dishwasher", optionButton: true },
+    { value: "인덕션/전기레인지", title: "인덕션/전기레인지", icon: "induction", optionButton: true },
+    { value: "오븐/전자레인지", title: "오븐/전자레인지", icon: "oven", optionButton: true },
+    { value: "정수기", title: "정수기", icon: "water", optionButton: true },
+    { value: "의류관리기", title: "의류관리기", icon: "styler", optionButton: true },
+    { value: "공기청정기", title: "공기청정기", icon: "purifier", optionButton: true },
+    { value: "라이프스타일 TV", title: "라이프스타일 TV", icon: "lifestyle", optionButton: true },
   ];
+
+  const productOptionSchema = {
+    TV: [{ key: "size", title: "인치", mode: "single", options: ["43인치", "55인치", "65인치", "75인치", "85인치", "85인치 ↑"] }],
+    "세탁기/건조기": [
+      {
+        key: "type",
+        title: "설치/제품 형태",
+        mode: "single",
+        options: ["분리형(병렬설치 및 직렬설치, 분리설치 가능)", "복합형(콤보)", "일체형(원바디, 워시타워)"],
+      },
+    ],
+    냉장고: [
+      { key: "install", title: "설치형태", mode: "single", options: ["빌트인(키친핏, 핏앤맥스)", "프리스탠딩(용량이 큼)", "모르겠어요"] },
+    ],
+    청소기: [{ key: "type", title: "종류", mode: "multi", options: ["무선청소기", "로봇청소기", "유선청소기"] }],
+    "오븐/전자레인지": [{ key: "type", title: "종류", mode: "multi", options: ["오븐", "전자레인지"] }],
+    "인덕션/전기레인지": [
+      { key: "install", title: "설치형태", mode: "single", options: ["빌트인 O", "빌트인 X"] },
+      { key: "burner", title: "화구수", mode: "single", options: ["2구", "3구", "4구"] },
+    ],
+    김치냉장고: [
+      { key: "type", title: "형태", mode: "single", options: ["뚜껑식", "스탠드"] },
+      { key: "door", title: "스탠드 도어수", mode: "single", options: ["4도어", "3도어", "1도어"], dependsOn: { key: "type", value: "스탠드" } },
+    ],
+    에어컨: [
+      { key: "type", title: "종류", mode: "single", options: ["스탠드", "벽걸이", "2IN1", "천장형"] },
+      { key: "area", title: "냉방면적", mode: "single", options: ["18평", "24평", "34평", "40평형 이상"], excludeWhen: { key: "type", value: "천장형" } },
+      { key: "room", title: "천장형 실수", mode: "single", options: ["3실", "4실", "5실", "6실"], dependsOn: { key: "type", value: "천장형" } },
+    ],
+    식기세척기: [{ key: "install", title: "설치형태", mode: "single", options: ["빌트인", "카운터탑", "프리스탠딩"] }],
+    공기청정기: [{ key: "area", title: "사용면적", mode: "single", options: ["10평 이하", "10평대", "20평대", "30평대 이상"] }],
+    정수기: [{ key: "type", title: "종류", mode: "single", options: ["냉온정수기", "냉정수기", "정수전용", "얼음정수기"] }],
+    의류관리기: [{ key: "size", title: "용량", mode: "single", options: ["3벌 이하", "5벌", "대용량"] }],
+    "라이프스타일 TV": [{ key: "type", title: "종류", mode: "single", options: ["스탠바이미", "이동형 TV", "더 프레임/아트 TV", "포터블 스크린"] }],
+  };
+
+  const productOptionState = {};
+  let activeOptionProduct = "";
 
   function resetSelectOptions(select, placeholder, options) {
     select.innerHTML = "";
@@ -101,18 +140,34 @@
     return row;
   }
 
-  function optionCard(option, inputName, type = "radio") {
+  function optionCard(option, inputName) {
     return `
-      <label class="wizard-option-card${type === "checkbox" ? " product-card" : ""}">
-        <input type="${type}" name="${inputName}" value="${option.value}" />
-        <span class="${type === "checkbox" ? "wizard-check" : "wizard-radio"}"></span>
-        ${option.icon ? `<b class="product-icon">${option.icon}</b>` : ""}
+      <label class="wizard-option-card">
+        <input type="radio" name="${inputName}" value="${option.value}" />
+        <span class="wizard-radio"></span>
         <span>
           <strong>${option.title}</strong>
           ${option.text ? `<small>${option.text}</small>` : ""}
         </span>
         ${option.badge ? `<em>${option.badge}</em>` : ""}
       </label>
+    `;
+  }
+
+  function productCard(option) {
+    return `
+      <div class="wizard-product-card" data-product-row="${option.value}">
+        <label class="wizard-product-main">
+          <input type="checkbox" name="wizardProductProxy" value="${option.value}" />
+          <span class="wizard-check"></span>
+          <span class="product-thumb product-thumb-${option.icon}" aria-hidden="true"></span>
+          <span class="product-copy">
+            <strong>${option.title}</strong>
+            <small data-product-summary="${option.value}">옵션을 선택해주세요.</small>
+          </span>
+        </label>
+        <button class="product-option-btn" type="button" data-product-option="${option.value}">옵션 선택</button>
+      </div>
     `;
   }
 
@@ -131,18 +186,145 @@
     return Array.from(wizard.querySelectorAll('[name="wizardProductProxy"]:checked')).map((input) => input.value);
   }
 
+  function shouldShowGroup(group, selections) {
+    if (group.dependsOn && selections[group.dependsOn.key] !== group.dependsOn.value) return false;
+    if (group.excludeWhen && selections[group.excludeWhen.key] === group.excludeWhen.value) return false;
+    return true;
+  }
+
+  function getProductOptionText(product) {
+    const schema = productOptionSchema[product] || [];
+    const selections = productOptionState[product] || {};
+    const parts = [];
+    schema.forEach((group) => {
+      if (!shouldShowGroup(group, selections)) return;
+      const value = selections[group.key];
+      if (Array.isArray(value) && value.length) parts.push(value.join(", "));
+      if (!Array.isArray(value) && value) parts.push(value);
+    });
+    return parts.join(" / ");
+  }
+
+  function hasRequiredProductOptions(product) {
+    const schema = productOptionSchema[product] || [];
+    const selections = productOptionState[product] || {};
+    return schema.every((group) => {
+      if (!shouldShowGroup(group, selections)) return true;
+      const value = selections[group.key];
+      return Array.isArray(value) ? value.length > 0 : Boolean(value);
+    });
+  }
+
+  function syncProductSummaries() {
+    productOptions.forEach((product) => {
+      const summary = wizard.querySelector(`[data-product-summary="${product.value}"]`);
+      if (!summary) return;
+      const optionText = getProductOptionText(product.value);
+      const isSelected = selectedProducts().includes(product.value);
+      summary.textContent = isSelected ? optionText || "옵션 미선택" : "옵션을 선택해주세요.";
+      summary.classList.toggle("is-complete", Boolean(optionText));
+    });
+  }
+
   function syncItemsField() {
-    const quoteType = quoteTypeInput.value;
-    if (quoteType === "without_quote") {
-      itemsInput.value = selectedProducts().join(", ");
+    if (quoteTypeInput.value === "without_quote") {
+      itemsInput.value = selectedProducts()
+        .map((product) => {
+          const optionText = getProductOptionText(product);
+          return optionText ? `${product} (${optionText})` : product;
+        })
+        .join(", ");
+      syncProductSummaries();
       return;
     }
     itemsInput.value = "견적서 첨부";
   }
 
+  function makeOptionModal() {
+    const modal = document.createElement("div");
+    modal.className = "product-option-modal";
+    modal.hidden = true;
+    modal.innerHTML = `
+      <div class="product-option-panel" role="dialog" aria-modal="true" aria-labelledby="productOptionTitle">
+        <div class="product-option-handle"></div>
+        <div class="product-option-head">
+          <h3 id="productOptionTitle">옵션 선택</h3>
+          <button type="button" class="product-option-close" aria-label="옵션 닫기">×</button>
+        </div>
+        <div class="product-option-content"></div>
+        <div class="product-option-actions">
+          <button type="button" class="primary-btn full product-option-confirm">확인</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    return modal;
+  }
+
+  const optionModal = makeOptionModal();
+  const optionTitle = optionModal.querySelector("#productOptionTitle");
+  const optionContent = optionModal.querySelector(".product-option-content");
+  const optionClose = optionModal.querySelector(".product-option-close");
+  const optionConfirm = optionModal.querySelector(".product-option-confirm");
+
+  function optionInputMarkup(product, group, option) {
+    const state = productOptionState[product] || {};
+    const value = state[group.key];
+    const checked = Array.isArray(value) ? value.includes(option) : value === option;
+    return `
+      <label class="product-option-row">
+        <input type="${group.mode === "multi" ? "checkbox" : "radio"}" name="option-${group.key}" value="${option}" ${checked ? "checked" : ""} />
+        <span>${option}</span>
+        <b>✓</b>
+      </label>
+    `;
+  }
+
+  function renderOptionModal(product) {
+    const schema = productOptionSchema[product] || [];
+    const state = productOptionState[product] || {};
+    optionTitle.textContent = product;
+    optionContent.innerHTML = schema
+      .filter((group) => shouldShowGroup(group, state))
+      .map((group) => {
+        return `
+          <section class="product-option-group" data-option-group="${group.key}" data-option-mode="${group.mode}">
+            <h4>${group.title}</h4>
+            ${group.options.map((option) => optionInputMarkup(product, group, option)).join("")}
+          </section>
+        `;
+      })
+      .join("");
+  }
+
+  function openOptionModal(product) {
+    activeOptionProduct = product;
+    if (!productOptionState[product]) productOptionState[product] = {};
+    renderOptionModal(product);
+    optionModal.hidden = false;
+  }
+
+  function closeOptionModal() {
+    optionModal.hidden = true;
+    activeOptionProduct = "";
+  }
+
+  function storeModalSelections() {
+    if (!activeOptionProduct) return;
+    const state = productOptionState[activeOptionProduct] || {};
+    optionContent.querySelectorAll(".product-option-group").forEach((groupNode) => {
+      const key = groupNode.dataset.optionGroup;
+      const mode = groupNode.dataset.optionMode;
+      const checked = Array.from(groupNode.querySelectorAll("input:checked")).map((input) => input.value);
+      state[key] = mode === "multi" ? checked : checked[0] || "";
+    });
+    productOptionState[activeOptionProduct] = state;
+    renderOptionModal(activeOptionProduct);
+  }
+
   resetSelectOptions(purposeSelect, "구매사유 선택", purposeOptions.map((option) => ({
     value: option.value,
-    label: option.badge ? `${option.title} - ${option.badge}` : option.title,
+    label: option.badge ? `${option.title} (${option.badge})` : option.title,
   })));
   resetSelectOptions(brandSelect, "브랜드 선택", brandOptions.map((option) => ({
     value: option.value,
@@ -214,7 +396,7 @@
     <div class="wizard-step-head">
       <p class="eyebrow">Step 3</p>
       <h2>구매사유를 선택해주세요.</h2>
-      <p>구매 목적에 따라 받을 수 있는 혜택과 조건이 달라질 수 있습니다.</p>
+      <p>구매 목적에 따라 비교해야 할 혜택과 설치 조건이 달라질 수 있습니다.</p>
     </div>
     <div class="wizard-option-grid">
       ${purposeOptions.map((option) => optionCard(option, "wizardPurposeProxy")).join("")}
@@ -246,10 +428,10 @@
     <div class="wizard-step-head">
       <p class="eyebrow">Step 5</p>
       <h2>구매 예정 품목을 모두 선택해주세요.</h2>
-      <p>견적서가 없는 경우 필요한 제품군을 기준으로 판매자가 제안합니다.</p>
+      <p>품목을 선택한 뒤 옵션을 눌러 상세 조건을 남겨주세요.</p>
     </div>
-    <div class="wizard-option-grid product-grid">
-      ${productOptions.map((option) => optionCard(option, "wizardProductProxy", "checkbox")).join("")}
+    <div class="wizard-product-list">
+      ${productOptions.map((option) => productCard(option)).join("")}
     </div>
   `;
 
@@ -320,8 +502,32 @@
     input.addEventListener("change", () => setChoice(brandSelect, input.value));
   });
 
-  stepProducts.querySelectorAll('[name="wizardProductProxy"]').forEach((input) => {
-    input.addEventListener("change", syncItemsField);
+  stepProducts.addEventListener("change", (event) => {
+    const input = event.target.closest('[name="wizardProductProxy"]');
+    if (!input) return;
+    if (input.checked && productOptionSchema[input.value]) openOptionModal(input.value);
+    syncItemsField();
+  });
+
+  stepProducts.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-product-option]");
+    if (!button) return;
+    const product = button.dataset.productOption;
+    const checkbox = Array.from(stepProducts.querySelectorAll('[name="wizardProductProxy"]')).find((input) => input.value === product);
+    if (checkbox && !checkbox.checked) checkbox.checked = true;
+    openOptionModal(product);
+    syncItemsField();
+  });
+
+  optionContent.addEventListener("change", storeModalSelections);
+  optionClose.addEventListener("click", closeOptionModal);
+  optionConfirm.addEventListener("click", () => {
+    storeModalSelections();
+    syncItemsField();
+    closeOptionModal();
+  });
+  optionModal.addEventListener("click", (event) => {
+    if (event.target === optionModal) closeOptionModal();
   });
 
   function validateStep() {
@@ -344,9 +550,17 @@
     }
     if (step === stepProducts) {
       syncItemsField();
-      if (itemsInput.value) return true;
-      stepProducts.querySelector('[name="wizardProductProxy"]')?.reportValidity();
-      return false;
+      const products = selectedProducts();
+      if (!products.length) {
+        stepProducts.querySelector('[name="wizardProductProxy"]')?.reportValidity();
+        return false;
+      }
+      const incompleteProduct = products.find((product) => !hasRequiredProductOptions(product));
+      if (incompleteProduct) {
+        openOptionModal(incompleteProduct);
+        return false;
+      }
+      return true;
     }
     if (quoteTypeInput.value === "with_quote" && !document.querySelector("#quoteImage")?.files?.length) {
       document.querySelector("#quoteImage")?.reportValidity();
@@ -410,6 +624,7 @@
 
   form.addEventListener("reset", () => {
     window.setTimeout(() => {
+      Object.keys(productOptionState).forEach((key) => delete productOptionState[key]);
       currentStep = 0;
       syncItemsField();
       renderStep();
