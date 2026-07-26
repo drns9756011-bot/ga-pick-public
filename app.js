@@ -870,6 +870,10 @@ function getSellerBrandValue(request) {
   return getQuoteBrand(request) || "미선택";
 }
 
+function getQuoteTypeLabel(request) {
+  return request?.quoteType === "without_quote" ? "견적서 없음" : "견적서 있음";
+}
+
 function normalizeSellerBrandFilter(value) {
   if (value === "all") return "all";
   return normalizeQuoteBrand(value) || "미선택";
@@ -1055,14 +1059,14 @@ function renderRequests() {
         activeSellerTab === "proposed"
           ? "선택 대기 중인 제안 견적이 없습니다."
         : activeSellerTab === "selected"
-          ? "아직 고객님에게 선택받은 견적이 없습니다."
+          ? "선택받은 견적이 없습니다."
         : activeSellerTab === "closed"
           ? "종료된 견적이 없습니다."
           : "등록된 고객님 견적이 없습니다.";
     requestList.innerHTML = `
       <div class="empty-state compact-empty">
         <strong>${emptyLabel}</strong>
-        <p>해당하는 견적이 생기면 이 탭에 표시됩니다.</p>
+        <p>고객님이 제안을 선택하면 이곳에 표시됩니다.</p>
       </div>
     `;
     if (currentFilterBar) requestList.prepend(currentFilterBar);
@@ -1081,6 +1085,8 @@ function renderRequests() {
     const safeRegion = escapeHTML(request.region);
     const safePurchasePurpose = escapeHTML(request.purchasePurpose || "미선택");
     const safeDesiredBrand = escapeHTML(getSellerBrandValue(request));
+    const safeQuoteType = escapeHTML(getQuoteTypeLabel(request));
+    const safeInstallDate = escapeHTML(request.installDate || "미입력");
     const safeQuoteNumber = escapeHTML(request.quoteNumber || "번호 없음");
     const safeRemaining = escapeHTML(getQuoteRemainingLabel(request));
     const repeatNotice = getRepeatQuoteNotice(request);
@@ -1307,38 +1313,12 @@ function resetCustomerForm() {
 
 async function createCustomerRequestOnServer(formData) {
   showServerLoading("견적 요청을 등록 중입니다.", "견적서 이미지와 입력 내용을 처리하고 있습니다.");
-  await new Promise((resolve) => window.setTimeout(resolve, 450));
-  const newRequest = {
-    id: Date.now(),
-    quoteNumber: createQuoteNumber(),
-    customer: formData.get("customer").trim(),
-    phone: formatPhoneNumber(formData.get("phone")),
-    items: formData.get("items").trim(),
-    purchasePurpose: formData.get("purchasePurpose"),
-    desiredBrand: normalizeQuoteBrand(formData.get("desiredBrand")),
-    price: parseManwon(formData.get("price")),
-    region: formData.get("region").trim(),
-    memo: formData.get("memo").trim(),
-    image: uploadedImages[0] || "",
-    images: uploadedImages.slice(0, 4),
-    selectedBidId: null,
-    saleCompletedAt: "",
-    saleCompletedBidId: null,
-    reviewNotificationSentAt: "",
-    consent: {
-      collectionUse: true,
-      thirdPartyProvision: true,
-      agreedAt: new Date().toISOString(),
-    },
-  };
-
-  requests.unshift(newRequest);
-  selectedRequestId = newRequest.id;
-  renderRequests();
-  renderSelectedRequest();
-  resetCustomerForm();
-  setView("lookup");
-  hideServerLoading();
+  try {
+    await new Promise((resolve) => window.setTimeout(resolve, 450));
+    await createCustomerRequest(formData);
+  } finally {
+    hideServerLoading();
+  }
 }
 
 function openConsentModal(formData) {
@@ -1355,21 +1335,26 @@ function closeConsentModal() {
 }
 
 async function createCustomerRequest(formData) {
+  const quoteType = formData.get("quoteType") || "with_quote";
+  const hasQuoteImage = quoteType === "with_quote";
+  const requestImages = hasQuoteImage ? uploadedImages.slice(0, 4) : [];
   const quoteNumber = createQuoteNumber();
-  const thumbnailImage = await createLightweightImage(uploadedImages[0]);
+  const thumbnailImage = await createLightweightImage(requestImages[0]);
   const newRequest = {
     id: `quote-${Date.now()}`,
     quoteNumber,
     customer: formData.get("customer").trim(),
     phone: formatPhoneNumber(formData.get("phone")),
-    items: formData.get("items").trim(),
+    items: formData.get("items").trim() || (hasQuoteImage ? "견적서 첨부" : "제품군 미선택"),
+    quoteType,
     purchasePurpose: formData.get("purchasePurpose"),
     desiredBrand: normalizeQuoteBrand(formData.get("desiredBrand")),
     price: parseManwon(formData.get("price")),
     region: formData.get("region").trim(),
+    installDate: formData.get("installDate").trim(),
     memo: formData.get("memo").trim(),
-    image: uploadedImages[0] || "",
-    images: uploadedImages.slice(0, 4),
+    image: requestImages[0] || "",
+    images: requestImages,
     thumbnailImage,
     selectedBidId: null,
     saleCompletedAt: "",
@@ -1539,8 +1524,10 @@ function renderLookupResults(matches, label = "내 견적") {
       const safeCustomer = escapeHTML(request.customer);
       const safePhone = escapeHTML(request.phone);
       const safeItems = escapeHTML(request.items);
+      const safeQuoteType = escapeHTML(getQuoteTypeLabel(request));
       const safePurchasePurpose = escapeHTML(request.purchasePurpose || "미선택");
       const safeRegion = escapeHTML(request.region);
+      const safeInstallDate = escapeHTML(request.installDate || "미입력");
       const safeQuoteNumber = escapeHTML(request.quoteNumber || "번호 없음");
       const safeMemo = escapeHTML(request.memo || "추가 요청사항 없음");
       const expired = isQuoteExpired(request);
@@ -1562,9 +1549,11 @@ function renderLookupResults(matches, label = "내 견적") {
               <div><dt>견적번호</dt><dd>${safeQuoteNumber}</dd></div>
               <div><dt>고객님 성함</dt><dd>${safeCustomer}</dd></div>
               <div><dt>연락처</dt><dd>${safePhone}</dd></div>
+              <div><dt>견적서</dt><dd>${safeQuoteType}</dd></div>
               <div><dt>구매 목적</dt><dd>${safePurchasePurpose}</dd></div>
               <div><dt>기존 견적</dt><dd>${formatPrice(request.price)}</dd></div>
               <div><dt>설치 지역</dt><dd>${safeRegion}</dd></div>
+              <div><dt>설치 예정일</dt><dd>${safeInstallDate}</dd></div>
               <div><dt>남은 시간</dt><dd class="${expired ? "deadline-expired" : "deadline-live"}">${safeRemaining}</dd></div>
               <div><dt>선택 상태</dt><dd>${selectionState}</dd></div>
               <div><dt>요청사항</dt><dd>${safeMemo}</dd></div>
@@ -1848,6 +1837,14 @@ requestForm.addEventListener("submit", (event) => {
   const formData = new FormData(requestForm);
   const customerPhone = normalizePhone(formData.get("phone"));
   const quotePrice = parseManwon(formData.get("price"));
+  const quoteType = formData.get("quoteType") || "with_quote";
+  const hasQuoteImage = quoteType === "with_quote";
+  const selectedItems = String(formData.get("items") || "").trim();
+
+  if (!quoteType) {
+    setRequestFormMessage("견적서 보유 여부를 선택해주세요.", "error");
+    return;
+  }
 
   if (customerPhone.length < 9) {
     setRequestFormMessage("연락처를 정확히 입력해주세요.", "error");
@@ -1855,8 +1852,18 @@ requestForm.addEventListener("submit", (event) => {
     return;
   }
 
+  if (hasQuoteImage && !uploadedImages.length) {
+    setRequestFormMessage("견적서가 있는 경우 견적서 이미지를 1장 이상 첨부해주세요.", "error");
+    return;
+  }
+
+  if (!hasQuoteImage && !selectedItems) {
+    setRequestFormMessage("견적서가 없는 경우 구매 예정 품목을 1개 이상 선택해주세요.", "error");
+    return;
+  }
+
   if (!quotePrice) {
-    setRequestFormMessage("기존 견적 금액을 만원 단위로 입력해주세요.", "error");
+    setRequestFormMessage(`${hasQuoteImage ? "기존 견적 금액" : "희망 예산"}을 만원 단위로 입력해주세요.`, "error");
     requestForm.elements.price.focus();
     return;
   }
@@ -2325,10 +2332,6 @@ window.addEventListener("focus", hideSecurityBlanket);
 window.addEventListener("beforeprint", () => showSecurityBlanket(0));
 window.addEventListener("afterprint", hideSecurityBlanket);
 
-createCustomerRequestOnServer = async function createCustomerRequestOnServerClean(formData) {
-  await createCustomerRequest(formData);
-};
-
 renderRequests = function renderRequestsClean() {
   const isRegionTab = activeSellerTab === "region";
   sellerQuoteWorkspace.hidden = isRegionTab;
@@ -2358,14 +2361,14 @@ renderRequests = function renderRequestsClean() {
         activeSellerTab === "proposed"
           ? "선택 대기 중인 제안 견적이 없습니다."
         : activeSellerTab === "selected"
-          ? "아직 고객님에게 선택받은 견적이 없습니다."
+          ? "선택받은 견적이 없습니다."
         : activeSellerTab === "closed"
           ? "종료된 견적이 없습니다."
           : "등록된 고객님 견적이 없습니다.";
     requestList.innerHTML = `
       <div class="empty-state compact-empty">
         <strong>${emptyLabel}</strong>
-        <p>해당하는 견적이 생기면 이곳에 표시됩니다.</p>
+        <p>고객님이 제안을 선택하면 이곳에 표시됩니다.</p>
       </div>
     `;
     if (currentFilterBar) requestList.prepend(currentFilterBar);
@@ -2393,10 +2396,12 @@ renderRequests = function renderRequestsClean() {
     item.innerHTML = `
       <strong>${safeItems}</strong>
       <span>브랜드 ${safeDesiredBrand}</span>
+      <span>견적서 ${safeQuoteType}</span>
       <span>${safeCustomer} · ${isClosedTab ? safePhone : safeRegion}</span>
       <span>견적번호 ${safeQuoteNumber}</span>
       <span class="${expired ? "deadline-expired" : "deadline-live"}">남은 시간 ${safeRemaining}</span>
       <span>구매 목적 ${safePurchasePurpose}</span>
+      <span>설치 예정일 ${safeInstallDate}</span>
       ${
         isClosedTab
           ? `<span>1위 금액 ${lowestBid ? formatPrice(lowestBid.price) : "제안 없음"}</span>`
@@ -2439,6 +2444,8 @@ renderSelectedRequest = function renderSelectedRequestClean() {
   const safePurchasePurpose = escapeHTML(request.purchasePurpose || "미선택");
   const safeRegion = escapeHTML(request.region);
   const safeDesiredBrand = escapeHTML(getSellerBrandValue(request));
+  const safeQuoteType = escapeHTML(getQuoteTypeLabel(request));
+  const safeInstallDate = escapeHTML(request.installDate || "미입력");
   const safeQuoteNumber = escapeHTML(request.quoteNumber || "번호 없음");
   const safeMemo = escapeHTML(request.memo || "추가 요청사항 없음");
   const safeRemaining = escapeHTML(getQuoteRemainingLabel(request));
@@ -2471,7 +2478,9 @@ renderSelectedRequest = function renderSelectedRequestClean() {
       <div><span>연락처</span><strong>${safePhone}</strong></div>
       <div><span>구매 목적</span><strong>${safePurchasePurpose}</strong></div>
       <div><span>브랜드</span><strong>${safeDesiredBrand}</strong></div>
+      <div><span>견적서</span><strong>${safeQuoteType}</strong></div>
       <div><span>설치 지역</span><strong>${safeRegion}</strong></div>
+      <div><span>설치 예정일</span><strong>${safeInstallDate}</strong></div>
       ${
         isClosedTab
           ? `<div><span>1위 금액</span><strong>${lowestBid ? formatPrice(lowestBid.price) : "제안 없음"}</strong></div>`

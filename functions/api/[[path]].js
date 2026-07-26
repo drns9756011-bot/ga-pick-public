@@ -384,10 +384,12 @@ function normalizeCustomerQuote(row, images = []) {
     customer: row.customer,
     phone: row.phone,
     items: row.items,
+    quoteType: row.quote_type || "",
     purchasePurpose: row.purchase_purpose || "",
     desiredBrand: normalizeQuoteBrand(row.desired_brand || row.desiredBrand || row.brand || ""),
     price: Number(row.price || 0),
     region: row.region || "",
+    installDate: row.install_date || "",
     memo: row.memo || "",
     status: row.status || "open",
     selectedBidId: row.selected_bid_id || null,
@@ -447,6 +449,8 @@ async function ensureCustomerQuoteColumns(env) {
     "ALTER TABLE customer_quotes ADD COLUMN full_images_expires_at TEXT DEFAULT ''",
     "ALTER TABLE customer_quotes ADD COLUMN personal_expires_at TEXT DEFAULT ''",
     "ALTER TABLE customer_quotes ADD COLUMN desired_brand TEXT DEFAULT ''",
+    "ALTER TABLE customer_quotes ADD COLUMN quote_type TEXT DEFAULT ''",
+    "ALTER TABLE customer_quotes ADD COLUMN install_date TEXT DEFAULT ''",
     "ALTER TABLE customer_quotes ADD COLUMN contact_release_scope TEXT DEFAULT 'selected'",
     "ALTER TABLE customer_quotes ADD COLUMN contact_released_bid_ids TEXT DEFAULT '[]'",
     "ALTER TABLE customer_quotes ADD COLUMN submission_count INTEGER DEFAULT 1",
@@ -1281,11 +1285,11 @@ async function createCustomerQuote(env, request) {
 
   await env.DB.prepare(
     `INSERT INTO customer_quotes
-      (id, quote_number, customer, phone, items, purchase_purpose, desired_brand, price, region, memo, status,
+      (id, quote_number, customer, phone, items, quote_type, purchase_purpose, desired_brand, price, region, install_date, memo, status,
        selected_bid_id, contact_release_scope, contact_released_bid_ids, submission_count, previous_lowest_price,
        rank_notice_queued_at, sale_completed_at, thumbnail_image, thumbnail_image_key, quote_expires_at,
        full_images_expires_at, personal_expires_at, created_at, consent_json)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   )
     .bind(
       id,
@@ -1293,10 +1297,12 @@ async function createCustomerQuote(env, request) {
       body.customer,
       body.phone,
       body.items,
+      body.quoteType || "",
       body.purchasePurpose || "",
       normalizeQuoteBrand(body.desiredBrand || body.desired_brand || body.brand || ""),
       Number(body.price || 0),
       body.region || "",
+      body.installDate || "",
       body.memo || "",
       "open",
       "",

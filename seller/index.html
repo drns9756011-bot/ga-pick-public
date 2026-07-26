@@ -146,10 +146,10 @@
         display: block;
       }
     </style>
-    <link rel="stylesheet" href="/styles.css?v=20260726-card-modal-cleanup" />
-    <script defer src="/app.js?v=20260726-card-modal-cleanup"></script>
-    <script defer src="/customer-wizard.js?v=20260726-card-modal-cleanup"></script>
-    <script defer src="/page-guide.js?v=20260726-card-modal-cleanup"></script>
+    <link rel="stylesheet" href="/styles.css?v=20260726-quote-type-products" />
+    <script defer src="/app.js?v=20260726-quote-type-products"></script>
+    <script defer src="/customer-wizard.js?v=20260726-quote-type-products"></script>
+    <script defer src="/page-guide.js?v=20260726-quote-type-products"></script>
   </head>
   <body>
     <header class="topbar">
@@ -339,6 +339,8 @@
 
         <div class="request-grid app-grid">
           <form class="request-form" id="requestForm">
+            <input type="hidden" name="quoteType" value="" />
+            <input type="hidden" name="items" value="" />
             <label class="upload-box" for="quoteImage">
               <input id="quoteImage" name="quoteImage" type="file" accept="image/*" multiple />
               <span class="upload-icon">+</span>
@@ -356,11 +358,6 @@
                 <input type="text" name="phone" data-phone-input placeholder="010-0000-0000" required />
               </label>
             </div>
-
-            <label>
-              구매 예정 품목
-              <input type="text" name="items" placeholder="예: 냉장고, 세탁기, 건조기, TV" required />
-            </label>
 
             <label>
               구매 목적
@@ -393,8 +390,13 @@
             </div>
 
             <label>
+              설치 예정일
+              <input type="text" name="installDate" placeholder="예: 8월 말, 2026년 8월 15일" required />
+            </label>
+
+            <label>
               추가 요청사항
-              <textarea name="memo" rows="4" placeholder="희망 배송일, 카드 할인, 사은품, 보증 조건 등을 적어주세요."></textarea>
+              <textarea name="memo" rows="4" placeholder="모델명을 입력해주세요."></textarea>
             </label>
 
             <button class="primary-btn full" type="submit">견적 요청 등록</button>
