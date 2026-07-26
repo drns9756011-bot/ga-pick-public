@@ -17,10 +17,12 @@ const ADMIN_EMAIL = "di02013@naver.com";
 const STORAGE_KEYS = {
   sellerApplications: "pickquoteSellerApplications",
   approvedSellers: "pickquoteApprovedSellers",
+  activeSellerId: "pickquoteActiveSellerId",
 };
 const registeredSellerPhones = new Set();
 const sellerAccounts = new Map();
 hydrateApprovedSellerAccounts();
+restoreActiveSellerSession();
 const money = new Intl.NumberFormat("ko-KR");
 
 const pages = document.querySelectorAll(".page");
@@ -40,8 +42,6 @@ const VIEWS_BY_ROUTE = {
   "/quote/": "customer",
   "/my-quote": "lookup",
   "/my-quote/": "lookup",
-  "/seller": "sellerLogin",
-  "/seller/": "sellerLogin",
   "/seller/register": "sellerRegister",
   "/seller/register/": "sellerRegister",
 };
@@ -420,6 +420,33 @@ function writeStorageArray(key, rows) {
   localStorage.setItem(key, JSON.stringify(rows));
 }
 
+function readActiveSellerSession() {
+  try {
+    return sessionStorage.getItem(STORAGE_KEYS.activeSellerId) || "";
+  } catch (error) {
+    return "";
+  }
+}
+
+function writeActiveSellerSession(sellerId) {
+  try {
+    if (sellerId) {
+      sessionStorage.setItem(STORAGE_KEYS.activeSellerId, sellerId);
+      return;
+    }
+    sessionStorage.removeItem(STORAGE_KEYS.activeSellerId);
+  } catch (error) {
+    // 세션 저장을 사용할 수 없는 브라우저에서도 로그인 흐름은 계속 진행합니다.
+  }
+}
+
+function restoreActiveSellerSession() {
+  const sellerId = readActiveSellerSession();
+  if (sellerId && sellerAccounts.has(sellerId)) {
+    activeSellerId = sellerId;
+  }
+}
+
 function canUseApiServer() {
   return window.location.protocol !== "file:";
 }
@@ -612,7 +639,7 @@ function getApprovedSellerRows() {
 
 function hydrateApprovedSellerAccounts() {
   getApprovedSellerRows().forEach((seller) => {
-    if (!seller?.sellerId || sellerAccounts.has(seller.sellerId)) return;
+    if (!seller?.sellerId) return;
     sellerAccounts.set(seller.sellerId, {
       password: seller.password,
       channel: seller.channel,
@@ -626,6 +653,10 @@ function hydrateApprovedSellerAccounts() {
     });
     registeredSellerPhones.add(normalizePhone(seller.phone));
   });
+  if (activeSellerId && !sellerAccounts.has(activeSellerId)) {
+    activeSellerId = "";
+    writeActiveSellerSession("");
+  }
 }
 
 function hasPendingSellerApplication(sellerId, phone) {
@@ -724,11 +755,13 @@ function isBidContactReleased(request, bid) {
 }
 
 function normalizeAppPath(pathname) {
-  return String(pathname || "/") || "/";
+  return String(pathname || "/").replace(/\/+$/, "") || "/";
 }
 
 function getViewFromPath(pathname) {
-  return VIEWS_BY_ROUTE[normalizeAppPath(pathname)] || "home";
+  const path = normalizeAppPath(pathname);
+  if (path === "/seller") return activeSellerId ? "seller" : "sellerLogin";
+  return VIEWS_BY_ROUTE[path] || "home";
 }
 
 function getPathForView(view) {
@@ -1664,7 +1697,8 @@ document.querySelectorAll("input, textarea").forEach((field) => {
 navButtons.forEach((button) => {
   button.addEventListener("click", (event) => {
     event.preventDefault();
-    setView(button.dataset.view);
+    const nextView = button.dataset.view === "sellerLogin" && activeSellerId ? "seller" : button.dataset.view;
+    setView(nextView);
   });
 });
 
@@ -2043,10 +2077,16 @@ sellerQuoteWorkspace.addEventListener("click", (event) => {
 
 sellerLoginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  await syncApprovedSellersFromServer();
-  await syncCustomerQuotesFromServer();
-  await syncBidsFromServer();
-  hydrateApprovedSellerAccounts();
+  setSellerLoginMessage("");
+  showServerLoading("판매자 로그인을 확인 중입니다.", "승인된 계정과 견적 데이터를 불러오고 있습니다.");
+  try {
+    await syncApprovedSellersFromServer();
+    await syncCustomerQuotesFromServer();
+    await syncBidsFromServer();
+    hydrateApprovedSellerAccounts();
+  } finally {
+    hideServerLoading(true);
+  }
   const formData = new FormData(sellerLoginForm);
   const loginId = formData.get("loginId").trim();
   const loginPassword = formData.get("loginPassword");
@@ -2058,16 +2098,17 @@ sellerLoginForm.addEventListener("submit", async (event) => {
   }
 
   activeSellerId = loginId;
+  writeActiveSellerSession(loginId);
   activeSellerTab = "all";
   setSellerLoginMessage("");
   setBidFormMessage("");
   sellerLoginForm.reset();
-  bidForm.elements.branchName.value = account.branch;
-  bidForm.elements.managerName.value = account.manager;
-  bidForm.elements.managerPhone.value = formatPhoneNumber(account.phone);
+  if (bidForm.elements.branchName) bidForm.elements.branchName.value = account.branch || "";
+  if (bidForm.elements.managerName) bidForm.elements.managerName.value = account.manager || "";
+  if (bidForm.elements.managerPhone) bidForm.elements.managerPhone.value = formatPhoneNumber(account.phone || "");
   renderRequests();
   renderSelectedRequest();
-  setView("seller");
+  setView("seller", { replacePath: true });
 });
 
 bidForm.addEventListener("submit", async (event) => {
