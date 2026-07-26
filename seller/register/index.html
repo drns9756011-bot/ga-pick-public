@@ -132,24 +132,24 @@
       })();
     </script>
     <style>
-      html[data-initial-view="customer"] .page,
-      html[data-initial-view="lookup"] .page,
-      html[data-initial-view="sellerLogin"] .page,
-      html[data-initial-view="sellerRegister"] .page {
+      html:not(.app-ready)[data-initial-view="customer"] .page,
+      html:not(.app-ready)[data-initial-view="lookup"] .page,
+      html:not(.app-ready)[data-initial-view="sellerLogin"] .page,
+      html:not(.app-ready)[data-initial-view="sellerRegister"] .page {
         display: none;
       }
 
-      html[data-initial-view="customer"] [data-page="customer"],
-      html[data-initial-view="lookup"] [data-page="lookup"],
-      html[data-initial-view="sellerLogin"] [data-page="sellerLogin"],
-      html[data-initial-view="sellerRegister"] [data-page="sellerRegister"] {
+      html:not(.app-ready)[data-initial-view="customer"] [data-page="customer"],
+      html:not(.app-ready)[data-initial-view="lookup"] [data-page="lookup"],
+      html:not(.app-ready)[data-initial-view="sellerLogin"] [data-page="sellerLogin"],
+      html:not(.app-ready)[data-initial-view="sellerRegister"] [data-page="sellerRegister"] {
         display: block;
       }
     </style>
-    <link rel="stylesheet" href="/styles.css?v=20260725-route-lock" />
-    <script defer src="/app.js?v=20260725-route-lock"></script>
-    <script defer src="/customer-wizard.js?v=20260725-route-lock"></script>
-    <script defer src="/page-guide.js?v=20260725-route-lock"></script>
+    <link rel="stylesheet" href="/styles.css?v=20260726-navigation-unlock" />
+    <script defer src="/app.js?v=20260726-navigation-unlock"></script>
+    <script defer src="/customer-wizard.js?v=20260726-navigation-unlock"></script>
+    <script defer src="/page-guide.js?v=20260726-navigation-unlock"></script>
   </head>
   <body>
     <header class="topbar">
@@ -1067,6 +1067,7 @@
         }
 
         function lockInitialRoute() {
+          if (document.documentElement.classList.contains("app-ready")) return;
           const view = getRouteView();
           document.documentElement.dataset.initialView = view;
           document.querySelectorAll(".page").forEach((page) => {

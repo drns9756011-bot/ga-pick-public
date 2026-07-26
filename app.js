@@ -25,6 +25,7 @@ const money = new Intl.NumberFormat("ko-KR");
 
 const pages = document.querySelectorAll(".page");
 const navButtons = document.querySelectorAll("[data-view]");
+document.documentElement.classList.add("app-ready");
 const ROUTES_BY_VIEW = {
   home: "/",
   customer: "/quote",
@@ -733,6 +734,8 @@ function setView(view, options = {}) {
     view = "sellerLogin";
     setSellerLoginMessage("판매자 페이지는 로그인 후 이용할 수 있습니다.", "error");
   }
+
+  document.documentElement.dataset.initialView = view;
 
   if (view === "lookup") {
     lookupAccessGranted = false;
