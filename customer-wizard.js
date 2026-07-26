@@ -520,9 +520,18 @@
   let currentStep = 0;
 
   function activeSteps() {
-    return quoteTypeInput.value === "without_quote"
+    return isWithoutQuoteSelected()
       ? allSteps
       : [stepQuoteType, stepPersonal, stepPurpose, stepBrand, stepQuote];
+  }
+
+  function getSelectedQuoteType() {
+    const checkedProxy = stepQuoteType.querySelector('[name="wizardQuoteTypeProxy"]:checked');
+    return checkedProxy?.value || quoteTypeInput.value || "";
+  }
+
+  function isWithoutQuoteSelected() {
+    return getSelectedQuoteType() === "without_quote";
   }
 
   function setChoice(input, value) {
@@ -609,7 +618,9 @@
       }
       return true;
     }
-    if (quoteTypeInput.value === "with_quote" && !document.querySelector("#quoteImage")?.files?.length) {
+    const selectedQuoteType = getSelectedQuoteType();
+    quoteTypeInput.value = selectedQuoteType;
+    if (selectedQuoteType === "with_quote" && !document.querySelector("#quoteImage")?.files?.length) {
       document.querySelector("#quoteImage")?.reportValidity();
       alert("견적서가 있는 경우 견적서 이미지를 1장 이상 첨부해주세요.");
       return false;
@@ -619,7 +630,7 @@
   }
 
   function updateQuoteStepMode() {
-    const hasQuote = quoteTypeInput.value !== "without_quote";
+    const hasQuote = !isWithoutQuoteSelected();
     uploadBox.hidden = !hasQuote;
     const quoteImage = document.querySelector("#quoteImage");
     if (quoteImage) quoteImage.required = hasQuote;

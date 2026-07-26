@@ -907,6 +907,66 @@ function getQuoteTypeLabel(request) {
   return request?.quoteType === "without_quote" ? "견적서 없음" : "견적서 있음";
 }
 
+function isWithoutQuoteRequest(request) {
+  return request?.quoteType === "without_quote";
+}
+
+function splitTopLevelText(text, separators = [",", "/"]) {
+  const rows = [];
+  let depth = 0;
+  let start = 0;
+  const raw = String(text || "");
+
+  for (let index = 0; index < raw.length; index += 1) {
+    const char = raw[index];
+    if (char === "(") depth += 1;
+    if (char === ")") depth = Math.max(depth - 1, 0);
+    if (depth === 0 && separators.includes(char)) {
+      const part = raw.slice(start, index).trim();
+      if (part) rows.push(part);
+      start = index + 1;
+    }
+  }
+
+  const lastPart = raw.slice(start).trim();
+  if (lastPart) rows.push(lastPart);
+  return rows;
+}
+
+function getWithoutQuoteItems(request) {
+  if (!isWithoutQuoteRequest(request)) return [];
+  return splitTopLevelText(request?.items || "").map((item) => {
+    const match = item.match(/^(.+?)\s*\((.*)\)$/);
+    if (!match) {
+      return { name: item.trim(), options: [] };
+    }
+
+    return {
+      name: match[1].trim(),
+      options: splitTopLevelText(match[2], ["/"]).map((option) => option.trim()).filter(Boolean),
+    };
+  });
+}
+
+function withoutQuoteItemsMarkup(request) {
+  const items = getWithoutQuoteItems(request);
+  if (!items.length) return "";
+
+  return `
+    <div class="without-quote-items">
+      <strong>견적서 없음 · 선택 품목</strong>
+      <div class="without-quote-item-list">
+        ${items
+          .map((item) => {
+            const options = item.options.length ? item.options.join(" · ") : "상세 옵션 미입력";
+            return `<div class="without-quote-item"><span>[${escapeHTML(item.name)}]</span><em>${escapeHTML(options)}</em></div>`;
+          })
+          .join("")}
+      </div>
+    </div>
+  `;
+}
+
 function normalizeSellerBrandFilter(value) {
   if (value === "all") return "all";
   return normalizeQuoteBrand(value) || "미선택";
@@ -1112,7 +1172,7 @@ function renderRequests() {
     const isSaleCompleted = Boolean(request.saleCompletedAt && request.saleCompletedBidId === sellerBid?.id);
     const isClosedTab = activeSellerTab === "closed";
     const lowestBid = getLowestBidForRequest(request.id);
-    const safeItems = escapeHTML(request.items);
+    const safeItems = escapeHTML(isWithoutQuoteRequest(request) ? "견적서 없음 · 선택 품목" : request.items);
     const safeCustomer = escapeHTML(isClosedTab ? request.customer : request.customer);
     const safePhone = escapeHTML(maskPhone(request.phone));
     const safeRegion = escapeHTML(request.region);
@@ -1175,7 +1235,7 @@ function renderSelectedRequest() {
   const isSelectedSeller = canActiveSellerSeeCustomerPhone(request);
   const isSaleCompleted = isSaleCompletedForBid(request, activeSellerBid);
   selectedStatus.textContent = isSaleCompleted ? "판매완료" : isSelectedSeller ? "선택받음" : "응답 가능";
-  selectedTitle.textContent = request.items;
+  selectedTitle.textContent = isWithoutQuoteRequest(request) ? "견적서 없음 · 선택 품목" : request.items;
   selectedInfo.innerHTML = `
     <div class="seller-summary-grid">
       <div><span>견적번호</span><strong>${safeQuoteNumber}</strong></div>
@@ -1869,11 +1929,18 @@ sellerResetPasswordForm.addEventListener("submit", (event) => {
 requestForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const formData = new FormData(requestForm);
+  const checkedQuoteType = requestForm.querySelector('[name="wizardQuoteTypeProxy"]:checked')?.value || "";
+  if (checkedQuoteType) formData.set("quoteType", checkedQuoteType);
   const customerPhone = normalizePhone(formData.get("phone"));
   const quotePrice = parseManwon(formData.get("price"));
-  const quoteType = formData.get("quoteType") || "with_quote";
+  const quoteType = formData.get("quoteType") || "";
   const hasQuoteImage = quoteType === "with_quote";
   const selectedItems = String(formData.get("items") || "").trim();
+  if (!hasQuoteImage && quoteImage) {
+    quoteImage.required = false;
+    quoteImage.value = "";
+    uploadedImages = [];
+  }
 
   if (!quoteType) {
     setRequestFormMessage("견적서 보유 여부를 선택해주세요.", "error");
@@ -2546,6 +2613,7 @@ renderSelectedRequest = function renderSelectedRequestClean() {
       ${repeatNotice ? `<div><span>재등록 안내</span><strong>${escapeHTML(repeatNotice)}</strong></div>` : ""}
       ${rankNotice ? `<div><span>마감 결과</span><strong>${escapeHTML(rankNotice)}</strong></div>` : ""}
     </div>
+    ${withoutQuoteItemsMarkup(request)}
     <div class="seller-request-note">
       <span>요청사항</span>
       <p>${safeMemo}</p>
@@ -2579,7 +2647,9 @@ renderSelectedRequest = function renderSelectedRequestClean() {
         : ""
     }
   `;
-  sellerImage.innerHTML = quoteImageMarkup(request, `${request.customer} 고객님이 올린 견적서`);
+  sellerImage.innerHTML = isWithoutQuoteRequest(request)
+    ? withoutQuoteItemsMarkup(request)
+    : quoteImageMarkup(request, `${request.customer} 고객님이 올린 견적서`);
 };
 
 async function bootApplication() {
