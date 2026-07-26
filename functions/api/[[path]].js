@@ -74,6 +74,10 @@ function normalizePhone(value) {
   return String(value || "").replace(/[^0-9]/g, "");
 }
 
+function normalizeText(value) {
+  return String(value || "").trim().replace(/\s+/g, "");
+}
+
 function formatPhoneNumber(value) {
   const digits = normalizePhone(value);
   if (!digits) return "";
@@ -1556,6 +1560,39 @@ async function selectBid(env, request) {
   return json({ ok: true, row: hideSellerOnlyQuoteFields(normalizeCustomerQuote(row, images)), releasedBidIds, selectedAt: now });
 }
 
+async function closeQuoteByCustomer(env, request) {
+  await ensureCustomerQuoteColumns(env);
+  const body = await request.json();
+  const quoteId = String(body.requestId || "").trim();
+  const customer = normalizeText(body.customer);
+  const phone = normalizePhone(body.phone);
+
+  if (!quoteId || !customer || !phone) {
+    return json({ ok: false, message: "견적 종료를 확인할 고객님 정보가 필요합니다." }, 400);
+  }
+
+  const quote = await env.DB.prepare("SELECT * FROM customer_quotes WHERE id = ?").bind(quoteId).first();
+  if (!quote) return json({ ok: false, message: "고객님 견적을 찾을 수 없습니다." }, 404);
+
+  if (normalizeText(quote.customer) !== customer || normalizePhone(quote.phone) !== phone) {
+    return json({ ok: false, message: "견적 등록 정보와 일치하지 않아 종료할 수 없습니다." }, 403);
+  }
+
+  const alreadyClosed = quote.status === "closed" || Boolean(quote.selected_bid_id);
+  if (!alreadyClosed) {
+    const now = new Date().toISOString();
+    await env.DB.prepare(
+      "UPDATE customer_quotes SET status = 'closed', quote_expires_at = ? WHERE id = ?"
+    )
+      .bind(now, quoteId)
+      .run();
+  }
+
+  const row = await env.DB.prepare("SELECT * FROM customer_quotes WHERE id = ?").bind(quoteId).first();
+  const images = await getQuoteImages(env, quoteId, true);
+  return json({ ok: true, row: hideSellerOnlyQuoteFields(normalizeCustomerQuote(row, images)) });
+}
+
 async function getAlimtalk(env) {
   await ensureAlimtalkColumns(env);
   const result = await env.DB.prepare("SELECT * FROM alimtalk_queue ORDER BY created_at DESC").all();
@@ -1859,6 +1896,7 @@ export async function onRequest(context) {
   if (path === "bids" && method === "GET") return getBids(env, request);
   if (path === "bids" && method === "POST") return upsertBid(env, request);
   if (path === "bid-selection" && method === "POST") return selectBid(env, request);
+  if (path === "quote-close" && method === "POST") return closeQuoteByCustomer(env, request);
 
   if (path === "guide-dismissal" && method === "GET") return getGuideDismissal(env, request);
   if (path === "guide-dismissal" && method === "POST") return saveGuideDismissal(env, request);

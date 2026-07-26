@@ -11,6 +11,7 @@ let activeSellerBrandFilter = "all";
 let activeSellerRegionFilter = "all";
 let pendingQuoteFormData = null;
 let pendingBidSelection = null;
+let pendingQuoteCloseId = null;
 let lookupAccessGranted = false;
 
 const ADMIN_EMAIL = "di02013@naver.com";
@@ -621,6 +622,19 @@ async function selectBidOnServer(request, bid, contactReleaseScope) {
       requestId: request.id,
       bidId: bid.id,
       contactReleaseScope,
+    }),
+  });
+}
+
+async function closeQuoteOnServer(request) {
+  return apiJson("/api/quote-close", {
+    method: "POST",
+    loadingTitle: "견적 비교를 종료 중입니다.",
+    loadingText: "판매자 제안 접수를 마감하고 받은 제안만 확인할 수 있도록 변경하고 있습니다.",
+    body: JSON.stringify({
+      requestId: request.id,
+      customer: request.customer,
+      phone: request.phone,
     }),
   });
 }
@@ -1532,6 +1546,94 @@ function closeBidSelectConfirmModal() {
   if (cancelBidSelectBtn) cancelBidSelectBtn.textContent = "취소";
 }
 
+function getQuoteCloseModal() {
+  let modal = document.querySelector("#quoteCloseConfirmModal");
+  if (modal) return modal;
+
+  modal = document.createElement("div");
+  modal.id = "quoteCloseConfirmModal";
+  modal.className = "modal-backdrop quote-close-modal";
+  modal.hidden = true;
+  modal.innerHTML = `
+    <div class="modal-panel compact-modal" role="dialog" aria-modal="true" aria-labelledby="quoteCloseConfirmTitle">
+      <button class="modal-close" type="button" data-quote-close-cancel aria-label="닫기">×</button>
+      <p class="eyebrow">견적 비교 종료</p>
+      <h2 id="quoteCloseConfirmTitle">시간이 남았지만 견적을 종료하시겠습니까?</h2>
+      <p class="modal-description" id="quoteCloseConfirmDescription"></p>
+      <div class="modal-actions two-actions">
+        <button class="secondary-btn" type="button" data-quote-close-cancel>취소</button>
+        <button class="primary-btn" type="button" data-quote-close-confirm>종료</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal || event.target.closest("[data-quote-close-cancel]")) {
+      closeQuoteCloseConfirmModal();
+      return;
+    }
+    if (event.target.closest("[data-quote-close-confirm]")) {
+      confirmQuoteClose();
+    }
+  });
+  return modal;
+}
+
+function openQuoteCloseConfirmModal(request) {
+  pendingQuoteCloseId = request.id;
+  const modal = getQuoteCloseModal();
+  const description = modal.querySelector("#quoteCloseConfirmDescription");
+  const remainingLabel = getQuoteRemainingShortLabel(request);
+  description.innerHTML = `견적비교 가능시간이 아직 <strong>${escapeHTML(remainingLabel)}</strong> 남았습니다.<br />종료하면 판매자는 더 이상 제안할 수 없고, 받은 제안만 확인할 수 있습니다.`;
+  modal.hidden = false;
+}
+
+function closeQuoteCloseConfirmModal() {
+  pendingQuoteCloseId = null;
+  const modal = document.querySelector("#quoteCloseConfirmModal");
+  if (modal) modal.hidden = true;
+}
+
+async function confirmQuoteClose() {
+  const request = requests.find((item) => sameId(item.id, pendingQuoteCloseId));
+  if (!request) {
+    closeQuoteCloseConfirmModal();
+    return;
+  }
+
+  showServerLoading("견적 비교를 종료 중입니다.", "받은 제안은 유지하고 추가 제안 접수만 마감하고 있습니다.");
+  try {
+    let savedRequest = null;
+    if (canUseApiServer()) {
+      const serverResult = await closeQuoteOnServer(request);
+      if (!serverResult?.ok || !serverResult.row) {
+        setLookupActionMessage(serverResult?.message || "견적 비교 종료를 처리하지 못했습니다.");
+        closeQuoteCloseConfirmModal();
+        return;
+      }
+      savedRequest = serverResult.row;
+    }
+
+    if (savedRequest) {
+      Object.assign(request, savedRequest);
+    } else {
+      request.status = "closed";
+      request.quoteExpiresAt = new Date().toISOString();
+    }
+
+    closeQuoteCloseConfirmModal();
+    setLookupActionMessage("견적 비교가 종료되었습니다. 받은 제안 중 원하는 견적을 선택할 수 있습니다.");
+    renderLookupResults([request]);
+    renderRequests();
+    renderSelectedRequest();
+  } catch (error) {
+    console.error(error);
+    setLookupActionMessage("견적 비교 종료 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+  } finally {
+    hideServerLoading();
+  }
+}
+
 async function confirmBidSelection() {
   if (!pendingBidSelection) return;
   if (confirmBidSelectBtn) confirmBidSelectBtn.disabled = true;
@@ -1625,6 +1727,7 @@ function renderLookupResults(matches, label = "내 견적") {
       const safeMemo = escapeHTML(request.memo || "추가 요청사항 없음");
       const expired = isQuoteExpired(request);
       const safeRemaining = escapeHTML(getQuoteRemainingLabel(request));
+      const canCloseQuote = !hasValidSelectedBid(request) && request.status !== "closed" && !expired;
       const selectionState = request.selectedBidId
         ? "선택 완료"
         : expired
@@ -1658,6 +1761,15 @@ function renderLookupResults(matches, label = "내 견적") {
             <div class="seller-bid-grid">
               ${renderBidCards(request)}
             </div>
+            ${
+              canCloseQuote
+                ? `<div class="lookup-close-panel">
+                    <strong>견적을 일찍 종료할 수 있습니다.</strong>
+                    <p>종료하면 판매자는 더 이상 제안할 수 없고, 현재 받은 제안 중에서만 선택할 수 있습니다.</p>
+                    <button class="secondary-btn quote-close-btn" type="button" data-request-id="${request.id}">견적 비교 종료</button>
+                  </div>`
+                : ""
+            }
           </div>
         </article>
       `;
@@ -2059,6 +2171,22 @@ lookupResults.addEventListener("click", (event) => {
   const cardImageButton = event.target.closest("[data-card-image]");
   if (cardImageButton) {
     openQuoteImageModal(cardImageButton.dataset.cardImage, cardImageButton.dataset.cardAlt || "판매자 명함 이미지");
+    return;
+  }
+
+  const closeButton = event.target.closest(".quote-close-btn");
+  if (closeButton && !closeButton.disabled) {
+    const request = requests.find((item) => sameId(item.id, closeButton.dataset.requestId));
+    if (!request) {
+      setLookupActionMessage("조회된 견적 정보를 다시 확인해주세요.");
+      return;
+    }
+    if (hasValidSelectedBid(request) || request.status === "closed" || isQuoteExpired(request)) {
+      setLookupActionMessage("이미 종료된 견적입니다.");
+      renderLookupResults([request]);
+      return;
+    }
+    openQuoteCloseConfirmModal(request);
     return;
   }
 
