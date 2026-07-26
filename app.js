@@ -2115,8 +2115,21 @@ bidForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (!selectedRequestId) return;
 
+  if (canUseApiServer()) {
+    await syncApprovedSellersFromServer();
+    hydrateApprovedSellerAccounts();
+  }
+
   const formData = new FormData(bidForm);
   const account = sellerAccounts.get(activeSellerId);
+  if (!account) {
+    activeSellerId = "";
+    writeActiveSellerSession("");
+    setBidFormMessage("판매자 정보가 변경되었습니다. 다시 로그인해주세요.", "error");
+    setView("sellerLogin", { replacePath: true });
+    return;
+  }
+
   const branchName = account?.branch || "등록 지점";
   const channelName = account?.channel || "판매자";
   const request = getSelectedRequest();
@@ -2569,8 +2582,21 @@ renderSelectedRequest = function renderSelectedRequestClean() {
   sellerImage.innerHTML = quoteImageMarkup(request, `${request.customer} 고객님이 올린 견적서`);
 };
 
-renderRequests();
-renderSelectedRequest();
-applyViewFromCurrentPath();
-renderLookupResults([], "성함과 휴대전화로 등록한 견적을 조회하세요.");
+async function bootApplication() {
+  if (canUseApiServer()) {
+    await syncApprovedSellersFromServer();
+    restoreActiveSellerSession();
+
+    if (activeSellerId) {
+      await Promise.all([syncCustomerQuotesFromServer(), syncBidsFromServer()]);
+    }
+  }
+
+  applyViewFromCurrentPath({ replacePath: true });
+  renderRequests();
+  renderSelectedRequest();
+  renderLookupResults([], "성함과 휴대전화로 등록한 견적을 조회하세요.");
+}
+
+bootApplication();
 

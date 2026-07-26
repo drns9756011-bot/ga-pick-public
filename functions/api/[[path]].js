@@ -1407,6 +1407,28 @@ async function upsertBid(env, request) {
     return json({ ok: false, message: "견적 제안 가능 시간이 종료되었습니다." }, 400);
   }
 
+  await ensureSellerColumns(env);
+  await ensureMasterSeller(env);
+  const approvedSellerRow = await env.DB.prepare(
+    "SELECT * FROM approved_sellers WHERE seller_id = ? AND status = 'approved' LIMIT 1"
+  )
+    .bind(body.sellerId)
+    .first();
+  if (!approvedSellerRow) {
+    return json({ ok: false, message: "승인된 판매자 계정만 제안할 수 있습니다." }, 403);
+  }
+
+  const approvedSeller = normalizeApprovedSeller(approvedSellerRow);
+  const latestSeller = {
+    seller: sellerName(approvedSeller),
+    channel: approvedSeller.channel || "",
+    branch: approvedSeller.branch || "",
+    manager: approvedSeller.manager || "",
+    managerPosition: approvedSeller.managerPosition || "",
+    phone: approvedSeller.phone ? formatPhoneNumber(approvedSeller.phone) : "",
+    cardImage: approvedSeller.cardImage || "",
+  };
+
   const now = new Date().toISOString();
   const existing = await env.DB.prepare("SELECT * FROM bids WHERE quote_id = ? AND seller_id = ? LIMIT 1")
     .bind(body.requestId, body.sellerId)
@@ -1418,15 +1440,15 @@ async function upsertBid(env, request) {
        SET seller = ?, channel = ?, branch = ?, manager = ?, manager_position = ?, phone = ?,
            card_image = ?, price = ?, benefits = ?, updated_at = ?
        WHERE id = ?`
-    )
+      )
       .bind(
-        body.seller || "",
-        body.channel || "",
-        body.branch || "",
-        body.manager || "",
-        body.managerPosition || "",
-        body.phone || "",
-        body.cardImage || "",
+        latestSeller.seller,
+        latestSeller.channel,
+        latestSeller.branch,
+        latestSeller.manager,
+        latestSeller.managerPosition,
+        latestSeller.phone,
+        latestSeller.cardImage,
         Number(body.price || 0),
         body.benefits || "",
         now,
@@ -1444,13 +1466,13 @@ async function upsertBid(env, request) {
         body.id || createId("bid"),
         body.requestId,
         body.sellerId,
-        body.seller || "",
-        body.channel || "",
-        body.branch || "",
-        body.manager || "",
-        body.managerPosition || "",
-        body.phone || "",
-        body.cardImage || "",
+        latestSeller.seller,
+        latestSeller.channel,
+        latestSeller.branch,
+        latestSeller.manager,
+        latestSeller.managerPosition,
+        latestSeller.phone,
+        latestSeller.cardImage,
         Number(body.price || 0),
         body.benefits || "",
         now,
