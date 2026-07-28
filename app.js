@@ -843,14 +843,24 @@ function quoteImageMarkup(request, label) {
   const images = Array.isArray(request.images) && request.images.length ? request.images : request.image ? [request.image] : [];
 
   if (images.length) {
+    const visibleImages = images.slice(0, 4);
+    const extraCount = Math.max(0, images.length - visibleImages.length);
     return `
-      <div class="quote-image-grid image-count-${Math.min(images.length, 4)}">
-        ${images
-          .slice(0, 4)
+      <div class="quote-image-preview-strip image-count-${Math.min(images.length, 4)}" aria-label="${escapeHTML(label)} 미리보기">
+        ${visibleImages
           .map((image, index) => {
-            return `<img src="${image}" alt="${escapeHTML(`${label} ${index + 1}`)}" />`;
+            return `
+              <button class="quote-thumb-button" type="button" aria-label="${escapeHTML(`${label} ${index + 1} 원본 보기`)}">
+                <img src="${image}" alt="${escapeHTML(`${label} ${index + 1}`)}" />
+              </button>
+            `;
           })
           .join("")}
+        ${
+          extraCount
+            ? `<span class="quote-thumb-count">+${extraCount}</span>`
+            : `<span class="quote-thumb-hint">클릭해서 원본 보기</span>`
+        }
       </div>
     `;
   }

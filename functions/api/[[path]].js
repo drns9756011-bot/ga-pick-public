@@ -1874,6 +1874,63 @@ async function getSolapiAuthTest(env) {
   }, response.ok ? 200 : 502);
 }
 
+async function ensurePushTokenTable(env) {
+  await env.DB.prepare(
+    `CREATE TABLE IF NOT EXISTS push_tokens (
+      token TEXT PRIMARY KEY,
+      platform TEXT NOT NULL DEFAULT 'android',
+      app TEXT NOT NULL DEFAULT 'public',
+      role TEXT NOT NULL DEFAULT 'public',
+      device_id TEXT DEFAULT '',
+      user_agent TEXT DEFAULT '',
+      last_url TEXT DEFAULT '',
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )`
+  ).run();
+
+  await env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_push_tokens_role ON push_tokens(role)").run();
+  await env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_push_tokens_updated_at ON push_tokens(updated_at)").run();
+}
+
+function sanitizePushText(value, maxLength = 300) {
+  return String(value || "").trim().slice(0, maxLength);
+}
+
+async function savePushToken(env, request) {
+  await ensurePushTokenTable(env);
+
+  const body = await request.json().catch(() => ({}));
+  const token = sanitizePushText(body.token, 4096);
+  if (!token) return json({ ok: false, message: "푸시 토큰이 없습니다." }, 400);
+
+  const platform = sanitizePushText(body.platform || "android", 30);
+  const app = sanitizePushText(body.app || "public", 30);
+  const role = sanitizePushText(body.role || "public", 30);
+  const deviceId = sanitizePushText(body.deviceId, 120);
+  const lastUrl = sanitizePushText(body.lastUrl, 500);
+  const userAgent = sanitizePushText(request.headers.get("User-Agent"), 500);
+  const now = new Date().toISOString();
+
+  await env.DB.prepare(
+    `INSERT INTO push_tokens
+      (token, platform, app, role, device_id, user_agent, last_url, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(token) DO UPDATE SET
+       platform = excluded.platform,
+       app = excluded.app,
+       role = excluded.role,
+       device_id = excluded.device_id,
+       user_agent = excluded.user_agent,
+       last_url = excluded.last_url,
+       updated_at = excluded.updated_at`
+  )
+    .bind(token, platform, app, role, deviceId, userAgent, lastUrl, now, now)
+    .run();
+
+  return json({ ok: true, message: "푸시 토큰이 저장되었습니다." });
+}
+
 export async function onRequest(context) {
   const { request, env, params } = context;
   const pathParts = Array.isArray(params.path) ? params.path : [];
@@ -1918,6 +1975,8 @@ export async function onRequest(context) {
   if (path.startsWith("alimtalk/") && method === "PATCH") {
     return updateAlimtalk(env, request, decodeURIComponent(pathParts.slice(1).join("/")));
   }
+
+  if (path === "push-tokens" && method === "POST") return savePushToken(env, request);
 
   if (path === "uploads" && method === "POST") return uploadFile(env, request);
   if (path.startsWith("files/") && method === "GET") return getFile(env, decodeURIComponent(pathParts.slice(1).join("/")));

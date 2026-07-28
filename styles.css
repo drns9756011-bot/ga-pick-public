@@ -1792,7 +1792,7 @@ select {
   background: #fff;
 }
 
-.quote-image-grid {
+#imagePreview .quote-image-grid {
   display: grid;
   width: 100%;
   height: 100%;
@@ -1802,26 +1802,91 @@ select {
   background: #edf1f5;
 }
 
-.quote-image-grid.image-count-1 {
+#imagePreview .quote-image-grid.image-count-1 {
   grid-template-columns: 1fr;
 }
 
-.quote-image-grid.image-count-2 {
+#imagePreview .quote-image-grid.image-count-2 {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.quote-image-grid.image-count-3,
-.quote-image-grid.image-count-4 {
+#imagePreview .quote-image-grid.image-count-3,
+#imagePreview .quote-image-grid.image-count-4 {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.quote-image-grid img {
+#imagePreview .quote-image-grid img {
   min-width: 0;
   min-height: 0;
   max-height: none;
   border-radius: 6px;
   object-fit: contain;
   cursor: zoom-in;
+}
+
+.quote-image-preview-strip {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 10px;
+  width: 100%;
+  min-height: 128px;
+  padding: 12px;
+  background: #eef3f6;
+}
+
+.quote-thumb-button {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  height: 104px;
+  overflow: hidden;
+  border: 1px solid #d8e2ea;
+  border-radius: 8px;
+  background: #fff;
+  cursor: zoom-in;
+}
+
+.quote-thumb-button::after {
+  content: "원본 보기";
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(9, 28, 38, 0.78);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.quote-thumb-button img {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+  object-fit: cover;
+  cursor: zoom-in;
+}
+
+.quote-thumb-hint,
+.quote-thumb-count {
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 900;
+  box-shadow: 0 8px 20px rgba(15, 36, 48, 0.12);
+}
+
+.quote-thumb-count {
+  background: var(--primary);
+  color: #fff;
 }
 
 .preview-details {
@@ -2699,7 +2764,7 @@ select {
 }
 
 .seller-image {
-  min-height: 360px;
+  min-height: 150px;
 }
 
 .request-list {
@@ -4833,7 +4898,22 @@ td strong {
   }
 
   .seller-image {
-    min-height: 240px;
+    min-height: 128px;
+  }
+
+  .quote-image-preview-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    min-height: auto;
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .quote-thumb-button {
+    height: 88px;
+  }
+
+  .quote-thumb-button::after {
+    font-size: 10px;
   }
 
   .seller-detail .preview-details h3,

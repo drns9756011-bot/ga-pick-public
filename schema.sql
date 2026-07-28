@@ -164,3 +164,18 @@ CREATE TABLE IF NOT EXISTS guide_dismissals (
   created_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_guide_dismissals_lookup ON guide_dismissals(guide_type, ip_hash, dismiss_date);
+
+CREATE TABLE IF NOT EXISTS push_tokens (
+  token TEXT PRIMARY KEY,
+  platform TEXT NOT NULL DEFAULT 'android',
+  app TEXT NOT NULL DEFAULT 'public',
+  role TEXT NOT NULL DEFAULT 'public',
+  device_id TEXT DEFAULT '',
+  user_agent TEXT DEFAULT '',
+  last_url TEXT DEFAULT '',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_push_tokens_role ON push_tokens(role);
+CREATE INDEX IF NOT EXISTS idx_push_tokens_updated_at ON push_tokens(updated_at);
