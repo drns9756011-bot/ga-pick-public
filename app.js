@@ -1,4 +1,4 @@
-const requests = [];
+﻿const requests = [];
 const bids = [];
 const managerReviews = [];
 
@@ -69,6 +69,7 @@ const regionChangeMailLink = document.querySelector("#regionChangeMailLink");
 const sellerQuoteWorkspace = document.querySelector("#sellerQuoteWorkspace");
 const sellerRegionPanel = document.querySelector("#sellerRegionPanel");
 const requestList = document.querySelector("#requestList");
+const sellerMobileListBack = document.querySelector("#sellerMobileListBack");
 const sellerTabs = document.querySelectorAll("[data-seller-tab]");
 const selectedStatus = document.querySelector("#selectedStatus");
 const selectedTitle = document.querySelector("#selectedTitle");
@@ -313,7 +314,7 @@ function openManagerReviewModal(bidId) {
   const safeSeller = escapeHTML(sellerDisplayName);
   const safeManager = escapeHTML(managerDisplayName);
   const reviews = getReviewsForBid(bid);
-  managerReviewTitle.textContent = `${sellerDisplayName} · ${managerDisplayName}`;
+  managerReviewTitle.textContent = `${sellerDisplayName} 쨌 ${managerDisplayName}`;
   managerReviewList.innerHTML = reviews.length
     ? reviews
         .map((review) => {
@@ -331,8 +332,8 @@ function openManagerReviewModal(bidId) {
         .join("")
     : `
       <div class="empty-state compact-empty">
-        <strong>아직 등록된 후기가 없습니다.</strong>
-        <p>${safeSeller} ${safeManager}의 첫 후기를 기다리고 있습니다.</p>
+        <strong>?꾩쭅 ?깅줉???꾧린媛 ?놁뒿?덈떎.</strong>
+        <p>${safeSeller} ${safeManager}??泥??꾧린瑜?湲곕떎由ш퀬 ?덉뒿?덈떎.</p>
       </div>
     `;
   managerReviewModal.hidden = false;
@@ -437,7 +438,7 @@ function writeActiveSellerSession(sellerId) {
     }
     sessionStorage.removeItem(STORAGE_KEYS.activeSellerId);
   } catch (error) {
-    // 세션 저장을 사용할 수 없는 브라우저에서도 로그인 흐름은 계속 진행합니다.
+    // ?몄뀡 ??μ쓣 ?ъ슜?????녿뒗 釉뚮씪?곗??먯꽌??濡쒓렇???먮쫫? 怨꾩냽 吏꾪뻾?⑸땲??
   }
 }
 
@@ -473,15 +474,15 @@ async function apiJson(path, options = {}) {
       return {
         ok: false,
         status: response.status,
-        message: payload?.message || "서버 저장 요청에 실패했습니다.",
+        message: payload?.message || "?쒕쾭 ????붿껌???ㅽ뙣?덉뒿?덈떎.",
       };
     }
     return payload;
   } catch (error) {
-    console.warn("API 요청에 실패했습니다.", error);
+    console.warn("API ?붿껌???ㅽ뙣?덉뒿?덈떎.", error);
     return {
       ok: false,
-      message: "서버와 연결하지 못했습니다. 배포 상태 또는 네트워크를 확인해주세요.",
+      message: "?쒕쾭? ?곌껐?섏? 紐삵뻽?듬땲?? 諛고룷 ?곹깭 ?먮뒗 ?ㅽ듃?뚰겕瑜??뺤씤?댁＜?몄슂.",
     };
   } finally {
     if (showLoading) hideServerLoading();
@@ -492,8 +493,8 @@ async function syncApprovedSellersFromServer(options = {}) {
   const showLoading = options.showLoading !== false;
   const result = await apiJson("/api/approved-sellers", {
     showLoading,
-    loadingTitle: "판매자 정보를 확인 중입니다.",
-    loadingText: "승인된 판매자 계정을 서버에서 불러오고 있습니다.",
+    loadingTitle: "?먮ℓ???뺣낫瑜??뺤씤 以묒엯?덈떎.",
+    loadingText: "?뱀씤???먮ℓ??怨꾩젙???쒕쾭?먯꽌 遺덈윭?ㅺ퀬 ?덉뒿?덈떎.",
   });
   if (!result?.ok || !Array.isArray(result.rows)) return;
 
@@ -504,8 +505,8 @@ async function syncApprovedSellersFromServer(options = {}) {
 async function saveSellerApplicationToServer(application) {
   return apiJson("/api/seller-applications", {
     method: "POST",
-    loadingTitle: "판매자 등록 요청을 저장 중입니다.",
-    loadingText: "입력하신 정보를 서버에 안전하게 저장하고 있습니다.",
+    loadingTitle: "?먮ℓ???깅줉 ?붿껌?????以묒엯?덈떎.",
+    loadingText: "?낅젰?섏떊 ?뺣낫瑜??쒕쾭???덉쟾?섍쾶 ??ν븯怨??덉뒿?덈떎.",
     body: JSON.stringify(application),
   });
 }
@@ -530,7 +531,7 @@ function normalizeQuoteBrand(value) {
   const raw = String(value || "").trim();
   const compact = raw.replace(/\s+/g, "").toLowerCase();
   if (!compact) return "";
-  if (compact.includes("비교")) return "비교견적";
+  if (compact.includes("비교") || compact.includes("compare")) return "비교견적";
   if (compact.includes("lg") || compact.includes("엘지")) return "LG전자";
   if (compact.includes("삼성") || compact.includes("samsung")) return "삼성전자";
   return raw;
@@ -561,8 +562,8 @@ async function syncCustomerQuotesFromServer(options = {}) {
   const showLoading = options.showLoading !== false;
   const result = await apiJson("/api/customer-quotes", {
     showLoading,
-    loadingTitle: "고객님 견적을 불러오는 중입니다.",
-    loadingText: "48시간 이내 접수된 견적을 서버에서 확인하고 있습니다.",
+    loadingTitle: "怨좉컼??寃ъ쟻??遺덈윭?ㅻ뒗 以묒엯?덈떎.",
+    loadingText: "48?쒓컙 ?대궡 ?묒닔??寃ъ쟻???쒕쾭?먯꽌 ?뺤씤?섍퀬 ?덉뒿?덈떎.",
   });
 
   if (!result?.ok || !Array.isArray(result.rows)) return;
@@ -577,8 +578,8 @@ async function syncBidsFromServer(options = {}) {
   const showLoading = options.showLoading !== false;
   const result = await apiJson("/api/bids", {
     showLoading,
-    loadingTitle: "판매자 제안을 불러오는 중입니다.",
-    loadingText: "서버에 저장된 제안 금액과 순위를 확인하고 있습니다.",
+    loadingTitle: "?먮ℓ???쒖븞??遺덈윭?ㅻ뒗 以묒엯?덈떎.",
+    loadingText: "?쒕쾭????λ맂 ?쒖븞 湲덉븸怨??쒖쐞瑜??뺤씤?섍퀬 ?덉뒿?덈떎.",
   });
 
   if (!result?.ok || !Array.isArray(result.rows)) return;
@@ -594,8 +595,8 @@ async function lookupCustomerQuotesFromServer(customer, phone, quoteNumber = "")
   if (quoteNumber) params.set("quoteNumber", quoteNumber);
 
   const result = await apiJson(`/api/customer-quotes?${params.toString()}`, {
-    loadingTitle: "내 견적을 조회 중입니다.",
-    loadingText: "입력하신 성함과 연락처로 서버에서 견적을 확인하고 있습니다.",
+    loadingTitle: "??寃ъ쟻??議고쉶 以묒엯?덈떎.",
+    loadingText: "?낅젰?섏떊 ?깊븿怨??곕씫泥섎줈 ?쒕쾭?먯꽌 寃ъ쟻???뺤씤?섍퀬 ?덉뒿?덈떎.",
   });
 
   return result?.ok && Array.isArray(result.rows) ? result.rows : [];
@@ -604,8 +605,8 @@ async function lookupCustomerQuotesFromServer(customer, phone, quoteNumber = "")
 async function saveCustomerQuoteToServer(quote) {
   return apiJson("/api/customer-quotes", {
     method: "POST",
-    loadingTitle: "견적 요청을 서버에 저장 중입니다.",
-    loadingText: "대표 이미지는 1년, 전체 견적 이미지는 7일 기준으로 저장하고 있습니다.",
+    loadingTitle: "寃ъ쟻 ?붿껌???쒕쾭?????以묒엯?덈떎.",
+    loadingText: "????대?吏??1?? ?꾩껜 寃ъ쟻 ?대?吏??7??湲곗??쇰줈 ??ν븯怨??덉뒿?덈떎.",
     body: JSON.stringify(quote),
   });
 }
@@ -613,8 +614,8 @@ async function saveCustomerQuoteToServer(quote) {
 async function saveBidToServer(bid) {
   return apiJson("/api/bids", {
     method: "POST",
-    loadingTitle: "제안을 저장 중입니다.",
-    loadingText: "제안 금액과 제공 조건을 서버에 반영하고 있습니다.",
+    loadingTitle: "?쒖븞?????以묒엯?덈떎.",
+    loadingText: "?쒖븞 湲덉븸怨??쒓났 議곌굔???쒕쾭??諛섏쁺?섍퀬 ?덉뒿?덈떎.",
     body: JSON.stringify(bid),
   });
 }
@@ -622,8 +623,8 @@ async function saveBidToServer(bid) {
 async function selectBidOnServer(request, bid, contactReleaseScope) {
   return apiJson("/api/bid-selection", {
     method: "POST",
-    loadingTitle: "견적을 선택 중입니다.",
-    loadingText: "연락처 공개 범위와 선택 내용을 서버에 저장하고 있습니다.",
+    loadingTitle: "寃ъ쟻???좏깮 以묒엯?덈떎.",
+    loadingText: "?곕씫泥?怨듦컻 踰붿쐞? ?좏깮 ?댁슜???쒕쾭????ν븯怨??덉뒿?덈떎.",
     body: JSON.stringify({
       requestId: request.id,
       bidId: bid.id,
@@ -635,8 +636,8 @@ async function selectBidOnServer(request, bid, contactReleaseScope) {
 async function closeQuoteOnServer(request) {
   return apiJson("/api/quote-close", {
     method: "POST",
-    loadingTitle: "견적 비교를 종료 중입니다.",
-    loadingText: "판매자 제안 접수를 마감하고 받은 제안만 확인할 수 있도록 변경하고 있습니다.",
+    loadingTitle: "寃ъ쟻 鍮꾧탳瑜?醫낅즺 以묒엯?덈떎.",
+    loadingText: "?먮ℓ???쒖븞 ?묒닔瑜?留덇컧?섍퀬 諛쏆? ?쒖븞留??뺤씤?????덈룄濡?蹂寃쏀븯怨??덉뒿?덈떎.",
     body: JSON.stringify({
       requestId: request.id,
       customer: request.customer,
@@ -760,8 +761,8 @@ function getRepeatQuoteNotice(request) {
   if (count <= 1) return "";
   const previousLowest = Number(request.previousLowestPrice || 0);
   return previousLowest
-    ? `${count}번째 올린 견적입니다. 이전 견적 최저가는 ${formatPrice(previousLowest)}입니다.`
-    : `${count}번째 올린 견적입니다. 이전 견적에는 판매자 제안 최저가가 없었습니다.`;
+    ? `${count}踰덉㎏ ?щ┛ 寃ъ쟻?낅땲?? ?댁쟾 寃ъ쟻 理쒖?媛??${formatPrice(previousLowest)}?낅땲??`
+    : `${count}踰덉㎏ ?щ┛ 寃ъ쟻?낅땲?? ?댁쟾 寃ъ쟻?먮뒗 ?먮ℓ???쒖븞 理쒖?媛媛 ?놁뿀?듬땲??`;
 }
 
 function getReleasedBidIds(request) {
@@ -786,6 +787,25 @@ function getViewFromPath(pathname) {
 
 function getPathForView(view) {
   return ROUTES_BY_VIEW[view] || "/";
+}
+
+function isMobileSellerLayout() {
+  return window.matchMedia("(max-width: 760px)").matches;
+}
+
+function setSellerMobileDetailOpen(isOpen) {
+  document.documentElement.classList.toggle("seller-mobile-detail-open", Boolean(isOpen));
+}
+
+function openSellerMobileDetail() {
+  if (!isMobileSellerLayout()) return;
+  setSellerMobileDetailOpen(true);
+  document.querySelector("#sellerPage")?.scrollIntoView({ block: "start", behavior: "smooth" });
+}
+
+function closeSellerMobileDetail() {
+  setSellerMobileDetailOpen(false);
+  document.querySelector("#sellerPage")?.scrollIntoView({ block: "start", behavior: "smooth" });
 }
 
 function updateBrowserPath(view, replace = false) {
@@ -818,14 +838,14 @@ function setView(view, options = {}) {
   const shouldReplacePath = options.replacePath === true;
   if (view === "seller" && !activeSellerId) {
     view = "sellerLogin";
-    setSellerLoginMessage("판매자 페이지는 로그인 후 이용할 수 있습니다.", "error");
+    setSellerLoginMessage("?먮ℓ???섏씠吏??濡쒓렇?????댁슜?????덉뒿?덈떎.", "error");
   }
 
   document.documentElement.dataset.initialView = view;
 
   if (view === "lookup") {
     lookupAccessGranted = false;
-    renderLookupResults([], "성함과 휴대전화로 등록한 견적을 조회하세요.");
+    renderLookupResults([], "?깊븿怨??대??꾪솕濡??깅줉??寃ъ쟻??議고쉶?섏꽭??");
   }
 
   pages.forEach((page) => {
@@ -845,6 +865,78 @@ function setView(view, options = {}) {
   }
 }
 
+async function refreshCurrentViewFromServer() {
+  if (!canUseApiServer()) return;
+  const view = document.documentElement.dataset.initialView || getViewFromPath(window.location.pathname);
+  showServerLoading("새로고침 중입니다.", "최신 견적과 제안 정보를 다시 불러오고 있습니다.");
+
+  try {
+    if (view === "seller" || view === "sellerLogin" || view === "sellerRegister") {
+      await syncApprovedSellersFromServer({ showLoading: false });
+    }
+
+    if (view === "seller" && activeSellerId) {
+      await Promise.all([
+        syncCustomerQuotesFromServer({ showLoading: false }),
+        syncBidsFromServer({ showLoading: false }),
+      ]);
+      hydrateApprovedSellerAccounts();
+      renderRequests();
+      renderSelectedRequest();
+      return;
+    }
+
+    if (view === "lookup" && lookupAccessGranted) {
+      await syncBidsFromServer({ showLoading: false });
+      return;
+    }
+  } finally {
+    hideServerLoading(true);
+  }
+}
+
+function installMobilePullRefresh() {
+  let startY = 0;
+  let tracking = false;
+  let refreshing = false;
+  const threshold = 86;
+
+  document.addEventListener(
+    "touchstart",
+    (event) => {
+      if (!isMobileSellerLayout() || window.scrollY > 0 || serverLoadingCount > 0) return;
+      const target = event.target;
+      if (target?.closest?.("input, textarea, select, button, a, .modal-backdrop")) return;
+      startY = event.touches[0]?.clientY || 0;
+      tracking = true;
+    },
+    { passive: true }
+  );
+
+  document.addEventListener(
+    "touchmove",
+    (event) => {
+      if (!tracking || refreshing || window.scrollY > 0) return;
+      const currentY = event.touches[0]?.clientY || 0;
+      if (currentY - startY < threshold) return;
+      tracking = false;
+      refreshing = true;
+      refreshCurrentViewFromServer().finally(() => {
+        refreshing = false;
+      });
+    },
+    { passive: true }
+  );
+
+  document.addEventListener(
+    "touchend",
+    () => {
+      tracking = false;
+    },
+    { passive: true }
+  );
+}
+
 function quoteImageMarkup(request, label) {
   const images = Array.isArray(request.images) && request.images.length ? request.images : request.image ? [request.image] : [];
 
@@ -852,11 +944,11 @@ function quoteImageMarkup(request, label) {
     const visibleImages = images.slice(0, 4);
     const extraCount = Math.max(0, images.length - visibleImages.length);
     return `
-      <div class="quote-image-preview-strip image-count-${Math.min(images.length, 4)}" aria-label="${escapeHTML(label)} 미리보기">
+      <div class="quote-image-preview-strip image-count-${Math.min(images.length, 4)}" aria-label="${escapeHTML(label)} 誘몃━蹂닿린">
         ${visibleImages
           .map((image, index) => {
             return `
-              <button class="quote-thumb-button" type="button" aria-label="${escapeHTML(`${label} ${index + 1} 원본 보기`)}">
+              <button class="quote-thumb-button" type="button" aria-label="${escapeHTML(`${label} ${index + 1} ?먮낯 蹂닿린`)}">
                 <img src="${image}" alt="${escapeHTML(`${label} ${index + 1}`)}" />
               </button>
             `;
@@ -865,13 +957,13 @@ function quoteImageMarkup(request, label) {
         ${
           extraCount
             ? `<span class="quote-thumb-count">+${extraCount}</span>`
-            : `<span class="quote-thumb-hint">클릭해서 원본 보기</span>`
+            : `<span class="quote-thumb-hint">?대┃?댁꽌 ?먮낯 蹂닿린</span>`
         }
       </div>
     `;
   }
 
-  return "<span>등록된 견적서 이미지가 없습니다.</span>";
+  return "<span>?깅줉??寃ъ쟻???대?吏媛 ?놁뒿?덈떎.</span>";
 }
 
 function canActiveSellerSeeCustomerPhone(request) {
@@ -893,40 +985,31 @@ function normalizeSellerRegionCategory(region) {
   const text = String(region || "").replace(/\s+/g, " ").trim();
   if (!text) return "기타";
 
-  const normalized = text
-    .replace(/특별자치시/g, "")
-    .replace(/특별자치도/g, "")
-    .replace(/광역시/g, "")
-    .replace(/특별시/g, "")
-    .replace(/자치시/g, "")
-    .replace(/자치도/g, "")
-    .replace(/시$/g, "")
-    .trim();
-
-  const firstToken = normalized.split(" ")[0] || text.split(" ")[0] || "기타";
+  const compact = text.replace(/\s+/g, "");
   const aliases = [
-    ["서울", ["서울", "서울시"]],
-    ["부산", ["부산", "부산시"]],
-    ["대구", ["대구", "대구시"]],
-    ["인천", ["인천", "인천시"]],
-    ["광주", ["광주", "광주시"]],
-    ["대전", ["대전", "대전시"]],
-    ["울산", ["울산", "울산시"]],
-    ["세종", ["세종", "세종시"]],
+    ["서울", ["서울", "서울시", "서울특별시"]],
+    ["부산", ["부산", "부산시", "부산광역시"]],
+    ["대구", ["대구", "대구시", "대구광역시"]],
+    ["인천", ["인천", "인천시", "인천광역시"]],
+    ["광주", ["광주", "광주시", "광주광역시"]],
+    ["대전", ["대전", "대전시", "대전광역시"]],
+    ["울산", ["울산", "울산시", "울산광역시"]],
+    ["세종", ["세종", "세종시", "세종특별자치시"]],
     ["경기", ["경기", "경기도"]],
-    ["강원", ["강원", "강원도"]],
+    ["강원", ["강원", "강원도", "강원특별자치도"]],
     ["충북", ["충북", "충청북도"]],
     ["충남", ["충남", "충청남도"]],
-    ["전북", ["전북", "전라북도"]],
+    ["전북", ["전북", "전라북도", "전북특별자치도"]],
     ["전남", ["전남", "전라남도"]],
     ["경북", ["경북", "경상북도"]],
     ["경남", ["경남", "경상남도"]],
-    ["제주", ["제주", "제주도"]],
+    ["제주", ["제주", "제주도", "제주특별자치도"]],
   ];
 
-  const compact = text.replace(/\s+/g, "");
-  const matched = aliases.find(([, names]) => names.some((name) => compact.startsWith(name)));
-  return matched ? matched[0] : firstToken;
+  const matched = aliases.find(([, names]) => names.some((name) => compact.includes(name)));
+  if (matched) return matched[0];
+
+  return text.split(" ")[0] || "기타";
 }
 
 function getSellerBrandValue(request) {
@@ -1156,158 +1239,6 @@ function syncBidFormForRequest(request) {
     : "고객님에게 제안 보내기";
 }
 
-function renderRequests() {
-  const isRegionTab = activeSellerTab === "region";
-  sellerQuoteWorkspace.hidden = isRegionTab;
-  sellerRegionPanel.hidden = !isRegionTab;
-
-  if (isRegionTab) {
-    sellerTabs.forEach((tab) => {
-      tab.classList.toggle("is-active", tab.dataset.sellerTab === activeSellerTab);
-    });
-    syncRegionChangeForm();
-    return;
-  }
-
-  requestList.innerHTML = "";
-  const filteredRequests = syncSelectedRequestWithTab();
-
-  sellerTabs.forEach((tab) => {
-    tab.classList.toggle("is-active", tab.dataset.sellerTab === activeSellerTab);
-  });
-
-  if (!filteredRequests.length) {
-      const currentFilterBar = document.querySelector("#sellerFilterBar");
-      const emptyLabel =
-        activeSellerTab === "proposed"
-          ? "선택 대기 중인 제안 견적이 없습니다."
-        : activeSellerTab === "selected"
-          ? "선택받은 견적이 없습니다."
-        : activeSellerTab === "closed"
-          ? "종료된 견적이 없습니다."
-          : "등록된 고객님 견적이 없습니다.";
-    requestList.innerHTML = `
-      <div class="empty-state compact-empty">
-        <strong>${emptyLabel}</strong>
-        <p>고객님이 제안을 선택하면 이곳에 표시됩니다.</p>
-      </div>
-    `;
-    if (currentFilterBar) requestList.prepend(currentFilterBar);
-    return;
-  }
-
-  filteredRequests.forEach((request) => {
-    const sellerBid = getActiveSellerBid(request);
-    const isSelectedByCustomer = canActiveSellerSeeCustomerPhone(request);
-    const isSaleCompleted = Boolean(request.saleCompletedAt && request.saleCompletedBidId === sellerBid?.id);
-    const isClosedTab = activeSellerTab === "closed";
-    const lowestBid = getLowestBidForRequest(request.id);
-    const safeItems = escapeHTML(isWithoutQuoteRequest(request) ? "견적서 없음 · 선택 품목" : request.items);
-    const safeCustomer = escapeHTML(isClosedTab ? request.customer : request.customer);
-    const safePhone = escapeHTML(maskPhone(request.phone));
-    const safeRegion = escapeHTML(request.region);
-    const safePurchasePurpose = escapeHTML(request.purchasePurpose || "미선택");
-    const safeDesiredBrand = escapeHTML(getSellerBrandValue(request));
-    const safeQuoteType = escapeHTML(getQuoteTypeLabel(request));
-    const safeInstallDate = escapeHTML(request.installDate || "미입력");
-    const safeQuoteNumber = escapeHTML(request.quoteNumber || "번호 없음");
-    const safeRemaining = escapeHTML(getQuoteRemainingLabel(request));
-    const repeatNotice = getRepeatQuoteNotice(request);
-    const expired = isQuoteExpired(request);
-    const item = document.createElement("button");
-    item.type = "button";
-    item.className = `request-item${request.id === selectedRequestId ? " is-active" : ""}`;
-    item.innerHTML = `
-      <strong>${safeItems}</strong>
-      <span>${safeCustomer} · ${safeRegion}</span>
-      <span>견적번호 ${safeQuoteNumber}</span>
-      <span>구매 목적 ${safePurchasePurpose}</span>
-      <span>기존 견적 ${formatPrice(request.price)}</span>
-      ${repeatNotice ? `<span class="request-repeat">${escapeHTML(repeatNotice)}</span>` : ""}
-      ${sellerBid ? `<span>내 제안 ${formatPrice(sellerBid.price)}</span>` : ""}
-      ${isSelectedByCustomer ? `<span class="request-badge">선택받음</span>` : ""}
-      ${isSaleCompleted ? `<span class="request-badge done">판매완료</span>` : ""}
-    `;
-    item.addEventListener("click", () => {
-      selectedRequestId = request.id;
-      setBidFormMessage("");
-      renderRequests();
-      renderSelectedRequest();
-    });
-    requestList.appendChild(item);
-  });
-}
-
-function renderSelectedRequest() {
-  const request = getSelectedRequest();
-  if (!request) {
-    selectedStatus.textContent = "선택 대기";
-    selectedTitle.textContent = "표시할 견적이 없습니다.";
-    selectedInfo.innerHTML = "현재 탭에 해당하는 고객님 견적이 없습니다.";
-    sellerImage.innerHTML = "<span>등록된 견적서 이미지가 없습니다.</span>";
-    syncBidFormForRequest(null);
-    setBidFormEnabled(false);
-    return;
-  }
-
-  setBidFormEnabled(true);
-  syncBidFormForRequest(request);
-  const visiblePhone = canActiveSellerSeeCustomerPhone(request) ? request.phone : maskPhone(request.phone);
-  const safeCustomer = escapeHTML(request.customer);
-  const safeItems = escapeHTML(request.items);
-  const safePhone = escapeHTML(visiblePhone);
-  const safePurchasePurpose = escapeHTML(request.purchasePurpose || "미선택");
-  const safeDesiredBrand = escapeHTML(getSellerBrandValue(request));
-  const safeRegion = escapeHTML(request.region);
-  const safeQuoteNumber = escapeHTML(request.quoteNumber || "번호 없음");
-  const safeMemo = escapeHTML(request.memo || "추가 요청사항 없음");
-  const activeSellerBid = getActiveSellerBid(request);
-  const isSelectedSeller = canActiveSellerSeeCustomerPhone(request);
-  const isSaleCompleted = isSaleCompletedForBid(request, activeSellerBid);
-  selectedStatus.textContent = isSaleCompleted ? "판매완료" : isSelectedSeller ? "선택받음" : "응답 가능";
-  selectedTitle.textContent = isWithoutQuoteRequest(request) ? "견적서 없음 · 선택 품목" : request.items;
-  selectedInfo.innerHTML = `
-    <div class="seller-summary-grid">
-      <div><span>견적번호</span><strong>${safeQuoteNumber}</strong></div>
-      <div><span>고객님</span><strong>${safeCustomer}</strong></div>
-      <div><span>연락처</span><strong>${safePhone}</strong></div>
-      <div><span>구매 목적</span><strong>${safePurchasePurpose}</strong></div>
-      <div><span>설치 지역</span><strong>${safeRegion}</strong></div>
-      <div><span>기존 견적</span><strong>${formatPrice(request.price)}</strong></div>
-    </div>
-    <div class="seller-request-note">
-      <span>요청사항</span>
-      <p>${safeMemo}</p>
-    </div>
-    <p class="privacy-note">${
-      isSaleCompleted
-        ? `판매완료 처리되었습니다. 고객님에게 후기 요청 알림톡 발송 상태: ${
-            request.reviewNotificationSentAt ? "발송 완료" : "발송 대기"
-          }`
-        : isSelectedSeller
-        ? "고객님이 내 제안을 선택해 연락처가 공개되었습니다."
-        : "연락처는 고객님이 제안을 선택한 후 공개됩니다."
-    }</p>
-    ${
-      isSelectedSeller
-        ? `<div class="sale-complete-panel">
-            <strong>${isSaleCompleted ? "판매완료 처리됨" : "판매가 완료되었나요?"}</strong>
-            <p>${
-              isSaleCompleted
-                ? "고객님에게 후기 작성 안내가 발송되었습니다."
-                : "선택받은 견적에서 판매완료를 누르면 고객님 후기 작성 안내가 열립니다."
-            }</p>
-            <button class="primary-btn full sale-complete-btn" type="button" data-request-id="${request.id}" ${
-              isSaleCompleted ? "disabled" : ""
-            }>
-              ${isSaleCompleted ? "판매완료 완료" : "판매완료 처리"}
-            </button>
-          </div>`
-        : ""
-    }
-  `;
-  sellerImage.innerHTML = quoteImageMarkup(request, `${request.customer} 고객님이 올린 견적서`);
-}
 
 function renderBidCards(request) {
   const rows = getBidsForRequest(request.id);
@@ -1315,8 +1246,8 @@ function renderBidCards(request) {
   if (!rows.length) {
     return `
       <div class="empty-state compact-empty">
-        <strong>아직 도착한 판매자 제안이 없습니다.</strong>
-        <p>판매자가 제안을 보내면 이 영역에 카드로 표시됩니다.</p>
+        <strong>아직 판매자 제안이 없습니다.</strong>
+        <p>판매자가 제안을 보내면 이 영역에 표시됩니다.</p>
       </div>
     `;
   }
@@ -1326,6 +1257,7 @@ function renderBidCards(request) {
       const saving = Math.max(0, request.price - bid.price);
       const isSelected = sameId(request.selectedBidId, bid.id);
       const isContactReleased = isBidContactReleased(request, bid);
+      const isBusinessCardReleased = isContactReleased;
       const isLockedBySelection = hasValidSelectedBid(request);
       const isSaleCompleted = isSaleCompletedForBid(request, bid);
       const sellerDisplayName = formatSellerDisplayName(bid.channel, bid.branch) || bid.seller;
@@ -1341,21 +1273,54 @@ function renderBidCards(request) {
       const selectedReview = managerReviews.find(
         (review) => sameId(review.requestId, request.id) && sameId(review.bidId, bid.id)
       );
+      const cardAlt = `${safeSeller} ${safeManager} 명함`;
+      const cardButton = isBusinessCardReleased && bid.cardImage
+        ? `<button class="card-image-open-btn" type="button" data-card-image="${escapeHTML(bid.cardImage)}" data-card-alt="${cardAlt}">명함 보기</button>`
+        : "";
+      const reviewArea = isSelected
+        ? selectedReview
+          ? `<div class="review-complete-box">
+              <span class="review-stars">${starText(selectedReview.rating)}</span>
+              <strong>후기가 등록되었습니다.</strong>
+              <p>${escapeHTML(selectedReview.content)}</p>
+            </div>`
+          : isSaleCompleted
+            ? `<form class="manager-review-form" data-review-form data-request-id="${request.id}" data-bid-id="${bid.id}">
+                <strong>${safeManager} 후기 작성</strong>
+                <p class="review-guide">판매 완료 후 고객님이 남기는 후기입니다.</p>
+                <label>
+                  별점
+                  <select name="rating" required>
+                    <option value="5">★★★★★ 아주 만족</option>
+                    <option value="4">★★★★ 만족</option>
+                    <option value="3">★★★ 보통</option>
+                    <option value="2">★★ 아쉬움</option>
+                    <option value="1">★ 불만족</option>
+                  </select>
+                </label>
+                <label>
+                  후기
+                  <textarea name="content" rows="3" placeholder="상담, 가격, 배송, 설치 조건에 대한 후기를 남겨주세요." required></textarea>
+                </label>
+                <button class="secondary-btn full" type="submit">후기 등록</button>
+              </form>`
+            : `<div class="review-wait-box">
+                <strong>판매 완료 후 후기 작성 가능</strong>
+                <p>판매자가 판매 완료를 누르면 후기 작성 안내가 진행됩니다.</p>
+              </div>`
+        : "";
+
       return `
         <article class="seller-bid-card${isSelected ? " is-selected" : ""}">
-          <div class="bid-card-visual${isContactReleased ? " is-released" : " is-locked"}">
+          <div class="bid-card-visual${isBusinessCardReleased ? " is-released" : " is-locked"}">
             <button class="heart-btn" type="button" aria-label="관심 제안">♡</button>
-            <div class="bid-card-thumb${isContactReleased ? "" : " is-private-card"}">
+            <div class="bid-card-thumb${isBusinessCardReleased ? "" : " is-private-card"}">
               <div class="manager-card-placeholder">
-                <strong>${isContactReleased ? "명함 확인 가능" : "선택 후 명함 공개"}</strong>
+                <strong>${isBusinessCardReleased ? "명함 확인 가능" : "선택 후 명함 공개"}</strong>
                 <span>${safeManager}</span>
                 <small>${safeSeller}</small>
               </div>
-              ${
-                isContactReleased && bid.cardImage
-                  ? `<button class="card-image-open-btn" type="button" data-card-image="${escapeHTML(bid.cardImage)}" data-card-alt="${safeSeller} ${safeManager} 명함">명함 보기</button>`
-                  : ""
-              }
+              ${cardButton}
             </div>
           </div>
           <div class="bid-card-body">
@@ -1384,40 +1349,7 @@ function renderBidCards(request) {
             }" data-bid-id="${bid.id}" ${isLockedBySelection && !isSelected ? "disabled" : ""}>
               ${isSelected ? "선택 완료" : isLockedBySelection ? "선택 변경 불가" : "이 제안 선택"}
             </button>
-            ${
-              isSelected
-                ? selectedReview
-                  ? `<div class="review-complete-box">
-                      <span class="review-stars">${starText(selectedReview.rating)}</span>
-                      <strong>후기가 등록되었습니다.</strong>
-                      <p>${escapeHTML(selectedReview.content)}</p>
-                    </div>`
-                  : isSaleCompleted
-                    ? `<form class="manager-review-form" data-review-form data-request-id="${request.id}" data-bid-id="${bid.id}">
-                      <strong>${safeManager} 후기 작성</strong>
-                      <p class="review-guide">판매완료 후 발송된 후기 요청 안내를 통해 작성하는 화면입니다.</p>
-                      <label>
-                        별점
-                        <select name="rating" required>
-                          <option value="5">★★★★★ 아주 만족</option>
-                          <option value="4">★★★★ 만족</option>
-                          <option value="3">★★★ 보통</option>
-                          <option value="2">★★ 아쉬움</option>
-                          <option value="1">★ 불만족</option>
-                        </select>
-                      </label>
-                      <label>
-                        후기
-                        <textarea name="content" rows="3" placeholder="상담, 가격, 배송, 설치 조건에 대한 후기를 남겨주세요." required></textarea>
-                      </label>
-                      <button class="secondary-btn full" type="submit">후기 등록</button>
-                    </form>`
-                    : `<div class="review-wait-box">
-                        <strong>판매완료 후 후기 작성 가능</strong>
-                        <p>판매자가 판매완료를 누르면 고객님에게 후기 요청 알림톡을 보내는 구조입니다.</p>
-                      </div>`
-                : ""
-            }
+            ${reviewArea}
           </div>
         </article>
       `;
@@ -1428,14 +1360,14 @@ function renderBidCards(request) {
 function resetCustomerForm() {
   requestForm.reset();
   uploadedImages = [];
-  imagePreview.innerHTML = "<span>이미지 미리보기</span>";
-  previewTitle.textContent = "견적 요청서가 여기에 표시됩니다.";
-  previewMeta.textContent = "등록 후 판매자 페이지와 내 견적 확인 페이지에서 볼 수 있습니다.";
+  imagePreview.innerHTML = "<span>?대?吏 誘몃━蹂닿린</span>";
+  previewTitle.textContent = "寃ъ쟻 ?붿껌?쒓? ?ш린???쒖떆?⑸땲??";
+  previewMeta.textContent = "?깅줉 ???먮ℓ???섏씠吏? ??寃ъ쟻 ?뺤씤 ?섏씠吏?먯꽌 蹂????덉뒿?덈떎.";
   setRequestFormMessage("");
 }
 
 async function createCustomerRequestOnServer(formData) {
-  showServerLoading("견적 요청을 등록 중입니다.", "견적서 이미지와 입력 내용을 처리하고 있습니다.");
+  showServerLoading("寃ъ쟻 ?붿껌???깅줉 以묒엯?덈떎.", "寃ъ쟻???대?吏? ?낅젰 ?댁슜??泥섎━?섍퀬 ?덉뒿?덈떎.");
   try {
     await new Promise((resolve) => window.setTimeout(resolve, 450));
     await createCustomerRequest(formData);
@@ -1500,7 +1432,7 @@ async function createCustomerRequest(formData) {
   if (canUseApiServer()) {
     const serverResult = await saveCustomerQuoteToServer(newRequest);
     if (!serverResult?.ok || !serverResult.row) {
-      setRequestFormMessage(serverResult?.message || "견적 요청을 서버에 저장하지 못했습니다. 잠시 후 다시 시도해주세요.", "error");
+      setRequestFormMessage(serverResult?.message || "寃ъ쟻 ?붿껌???쒕쾭????ν븯吏 紐삵뻽?듬땲?? ?좎떆 ???ㅼ떆 ?쒕룄?댁＜?몄슂.", "error");
       return;
     }
     savedRequest = serverResult.row;
@@ -1529,14 +1461,14 @@ function openBidSelectConfirmModal(request, bid) {
   }
   if (bidSelectConfirmDescription) {
     bidSelectConfirmDescription.innerHTML = shouldCloseEarly
-      ? `견적비교 가능시간이 아직 <strong>${escapeHTML(remainingLabel)}</strong> 남았는데<br />종료하고 선택할까요?`
+      ? `견적비교 가능시간이 아직 <strong>${escapeHTML(remainingLabel)}</strong> 남았습니다.<br />종료하고 선택할까요?`
       : "선택하신 견적은 이후 변경할 수 없습니다. 연락처 공개 범위를 선택한 뒤 확인을 눌러주세요.";
   }
   if (confirmBidSelectBtn) {
-    confirmBidSelectBtn.textContent = shouldCloseEarly ? "네 종료하고 선택합니다." : "확인";
+    confirmBidSelectBtn.textContent = shouldCloseEarly ? "네 종료하고 선택합니다" : "확인";
   }
   if (cancelBidSelectBtn) {
-    cancelBidSelectBtn.textContent = shouldCloseEarly ? "아니오 조금더 지켜볼께요" : "취소";
+    cancelBidSelectBtn.textContent = shouldCloseEarly ? "아니오 조금 더 지켜볼게요" : "취소";
   }
   bidSelectConfirmSummary.innerHTML = `
     <div><span>선택 견적</span><strong>${escapeHTML(sellerDisplayName)}</strong></div>
@@ -1572,13 +1504,13 @@ function getQuoteCloseModal() {
   modal.hidden = true;
   modal.innerHTML = `
     <div class="modal-panel compact-modal" role="dialog" aria-modal="true" aria-labelledby="quoteCloseConfirmTitle">
-      <button class="modal-close" type="button" data-quote-close-cancel aria-label="닫기">×</button>
-      <p class="eyebrow">견적 비교 종료</p>
-      <h2 id="quoteCloseConfirmTitle">시간이 남았지만 견적을 종료하시겠습니까?</h2>
+      <button class="modal-close" type="button" data-quote-close-cancel aria-label="?リ린">횞</button>
+      <p class="eyebrow">寃ъ쟻 鍮꾧탳 醫낅즺</p>
+      <h2 id="quoteCloseConfirmTitle">?쒓컙???⑥븯吏留?寃ъ쟻??醫낅즺?섏떆寃좎뒿?덇퉴?</h2>
       <p class="modal-description" id="quoteCloseConfirmDescription"></p>
       <div class="modal-actions two-actions">
-        <button class="secondary-btn" type="button" data-quote-close-cancel>취소</button>
-        <button class="primary-btn" type="button" data-quote-close-confirm>종료</button>
+        <button class="secondary-btn" type="button" data-quote-close-cancel>痍⑥냼</button>
+        <button class="primary-btn" type="button" data-quote-close-confirm>醫낅즺</button>
       </div>
     </div>
   `;
@@ -1600,7 +1532,7 @@ function openQuoteCloseConfirmModal(request) {
   const modal = getQuoteCloseModal();
   const description = modal.querySelector("#quoteCloseConfirmDescription");
   const remainingLabel = getQuoteRemainingShortLabel(request);
-  description.innerHTML = `견적비교 가능시간이 아직 <strong>${escapeHTML(remainingLabel)}</strong> 남았습니다.<br />종료하면 판매자는 더 이상 제안할 수 없고, 받은 제안만 확인할 수 있습니다.`;
+  description.innerHTML = `寃ъ쟻鍮꾧탳 媛?μ떆媛꾩씠 ?꾩쭅 <strong>${escapeHTML(remainingLabel)}</strong> ?⑥븯?듬땲??<br />醫낅즺?섎㈃ ?먮ℓ?먮뒗 ???댁긽 ?쒖븞?????녾퀬, 諛쏆? ?쒖븞留??뺤씤?????덉뒿?덈떎.`;
   modal.hidden = false;
 }
 
@@ -1617,13 +1549,13 @@ async function confirmQuoteClose() {
     return;
   }
 
-  showServerLoading("견적 비교를 종료 중입니다.", "받은 제안은 유지하고 추가 제안 접수만 마감하고 있습니다.");
+  showServerLoading("寃ъ쟻 鍮꾧탳瑜?醫낅즺 以묒엯?덈떎.", "諛쏆? ?쒖븞? ?좎??섍퀬 異붽? ?쒖븞 ?묒닔留?留덇컧?섍퀬 ?덉뒿?덈떎.");
   try {
     let savedRequest = null;
     if (canUseApiServer()) {
       const serverResult = await closeQuoteOnServer(request);
       if (!serverResult?.ok || !serverResult.row) {
-        setLookupActionMessage(serverResult?.message || "견적 비교 종료를 처리하지 못했습니다.");
+        setLookupActionMessage(serverResult?.message || "寃ъ쟻 鍮꾧탳 醫낅즺瑜?泥섎━?섏? 紐삵뻽?듬땲??");
         closeQuoteCloseConfirmModal();
         return;
       }
@@ -1638,13 +1570,13 @@ async function confirmQuoteClose() {
     }
 
     closeQuoteCloseConfirmModal();
-    setLookupActionMessage("견적 비교가 종료되었습니다. 받은 제안 중 원하는 견적을 선택할 수 있습니다.");
+    setLookupActionMessage("寃ъ쟻 鍮꾧탳媛 醫낅즺?섏뿀?듬땲?? 諛쏆? ?쒖븞 以??먰븯??寃ъ쟻???좏깮?????덉뒿?덈떎.");
     renderLookupResults([request]);
     renderRequests();
     renderSelectedRequest();
   } catch (error) {
     console.error(error);
-    setLookupActionMessage("견적 비교 종료 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+    setLookupActionMessage("寃ъ쟻 鍮꾧탳 醫낅즺 泥섎━ 以??ㅻ쪟媛 諛쒖깮?덉뒿?덈떎. ?좎떆 ???ㅼ떆 ?쒕룄?댁＜?몄슂.");
   } finally {
     hideServerLoading();
   }
@@ -1653,7 +1585,7 @@ async function confirmQuoteClose() {
 async function confirmBidSelection() {
   if (!pendingBidSelection) return;
   if (confirmBidSelectBtn) confirmBidSelectBtn.disabled = true;
-  showServerLoading("견적 선택을 저장 중입니다.", "견적 비교를 종료하고 선택 내용을 서버에 반영하고 있습니다.");
+  showServerLoading("寃ъ쟻 ?좏깮?????以묒엯?덈떎.", "寃ъ쟻 鍮꾧탳瑜?醫낅즺?섍퀬 ?좏깮 ?댁슜???쒕쾭??諛섏쁺?섍퀬 ?덉뒿?덈떎.");
 
   try {
     const request = requests.find((item) => sameId(item.id, pendingBidSelection.requestId));
@@ -1675,7 +1607,7 @@ async function confirmBidSelection() {
       const serverResult = await selectBidOnServer(request, bid, scope);
       if (!serverResult?.ok || !serverResult.row) {
         closeBidSelectConfirmModal();
-        setLookupActionMessage(serverResult?.message || "견적 선택을 저장하지 못했습니다.");
+        setLookupActionMessage(serverResult?.message || "寃ъ쟻 ?좏깮????ν븯吏 紐삵뻽?듬땲??");
         return;
       }
       savedRequest = serverResult.row;
@@ -1701,7 +1633,7 @@ async function confirmBidSelection() {
     renderSelectedRequest();
   } catch (error) {
     console.error(error);
-    setLookupActionMessage("견적 선택 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+    setLookupActionMessage("寃ъ쟻 ?좏깮 泥섎━ 以??ㅻ쪟媛 諛쒖깮?덉뒿?덈떎. ?좎떆 ???ㅼ떆 ?쒕룄?댁＜?몄슂.");
   } finally {
     if (confirmBidSelectBtn) confirmBidSelectBtn.disabled = false;
     hideServerLoading();
@@ -1714,7 +1646,7 @@ function renderLookupResults(matches, label = "내 견적") {
     lookupResults.innerHTML = `
       <div class="empty-state">
         <strong>성함과 휴대전화로 내 견적을 조회하세요.</strong>
-        <p>고객님 개인정보 보호를 위해 등록 당시 입력한 성함과 휴대전화가 일치해야 견적 내용과 판매자 제안을 확인할 수 있습니다.</p>
+        <p>개인정보 보호를 위해 견적 등록 시 입력한 성함과 휴대전화가 일치해야 견적 내용과 판매자 제안을 확인할 수 있습니다.</p>
       </div>
     `;
     return;
@@ -1780,7 +1712,7 @@ function renderLookupResults(matches, label = "내 견적") {
             ${
               canCloseQuote
                 ? `<div class="lookup-close-panel">
-                    <strong>견적을 일찍 종료할 수 있습니다.</strong>
+                    <strong>견적을 먼저 종료할 수 있습니다.</strong>
                     <p>종료하면 판매자는 더 이상 제안할 수 없고, 현재 받은 제안 중에서만 선택할 수 있습니다.</p>
                     <button class="secondary-btn quote-close-btn" type="button" data-request-id="${request.id}">견적 비교 종료</button>
                   </div>`
@@ -1826,7 +1758,7 @@ function buildMailtoLink(subject, body) {
 
 async function sendAdminMail(subject, body, fallbackLink) {
   fallbackLink.href = buildMailtoLink(subject, body);
-  fallbackLink.textContent = "메일 앱으로 변경 신청 보내기";
+  fallbackLink.textContent = "메일 앱으로 변경 요청 보내기";
   fallbackLink.hidden = false;
   return false;
 }
@@ -1896,11 +1828,13 @@ window.addEventListener("popstate", () => {
 
 document.addEventListener("DOMContentLoaded", () => {
   applyViewFromCurrentPath();
+  installMobilePullRefresh();
 });
 
 sellerTabs.forEach((tab) => {
   tab.addEventListener("click", () => {
     activeSellerTab = tab.dataset.sellerTab;
+    closeSellerMobileDetail();
     setBidFormMessage("");
     renderRequests();
     renderSelectedRequest();
@@ -1924,16 +1858,19 @@ document.addEventListener("click", (event) => {
   }
 
   setBidFormMessage("");
+  closeSellerMobileDetail();
   renderRequests();
   renderSelectedRequest();
 });
+
+sellerMobileListBack?.addEventListener("click", closeSellerMobileDetail);
 
 quoteImage.addEventListener("change", async (event) => {
   const files = Array.from(event.target.files || []).filter((file) => file.type.startsWith("image/")).slice(0, 4);
 
   if (!files.length) {
     uploadedImages = [];
-    imagePreview.innerHTML = "<span>이미지 미리보기</span>";
+    imagePreview.innerHTML = "<span>?대?吏 誘몃━蹂닿린</span>";
     return;
   }
 
@@ -1950,13 +1887,13 @@ quoteImage.addEventListener("change", async (event) => {
   imagePreview.innerHTML = `
     <div class="quote-image-grid image-count-${uploadedImages.length}">
       ${uploadedImages
-        .map((image, index) => `<img src="${image}" alt="업로드한 견적서 미리보기 ${index + 1}" />`)
+        .map((image, index) => `<img src="${image}" alt="?낅줈?쒗븳 寃ъ쟻??誘몃━蹂닿린 ${index + 1}" />`)
         .join("")}
     </div>
   `;
 
   setRequestFormMessage(
-    event.target.files.length > 4 ? "견적서 이미지는 최대 4장까지 등록됩니다. 앞의 4장만 반영했습니다." : ""
+    event.target.files.length > 4 ? "寃ъ쟻???대?吏??理쒕? 4?κ퉴吏 ?깅줉?⑸땲?? ?욎쓽 4?λ쭔 諛섏쁺?덉뒿?덈떎." : ""
   );
 });
 
@@ -1967,7 +1904,7 @@ businessCardInput.addEventListener("change", (event) => {
   const reader = new FileReader();
   reader.addEventListener("load", () => {
     businessCardImage = reader.result;
-    businessCardPreview.innerHTML = `<img src="${businessCardImage}" alt="첨부한 지점 명함 미리보기" />`;
+    businessCardPreview.innerHTML = `<img src="${businessCardImage}" alt="泥⑤???吏??紐낇븿 誘몃━蹂닿린" />`;
   });
   reader.readAsDataURL(file);
 });
@@ -1976,7 +1913,7 @@ sellerImage.addEventListener("click", (event) => {
   const image = event.target.closest("img");
   if (!image) return;
 
-  openQuoteImageModal(image.src, image.alt || "견적서 원본 이미지");
+  openQuoteImageModal(image.src, image.alt || "寃ъ쟻???먮낯 ?대?吏");
 });
 
 closeQuoteImageModal.addEventListener("click", closeQuoteImagePreview);
@@ -2020,11 +1957,11 @@ sellerFindIdForm.addEventListener("submit", (event) => {
   });
 
   if (!match) {
-    setFindIdMessage("일치하는 판매자 계정을 찾을 수 없습니다.", "error");
+    setFindIdMessage("?쇱튂?섎뒗 ?먮ℓ??怨꾩젙??李얠쓣 ???놁뒿?덈떎.", "error");
     return;
   }
 
-  setFindIdMessage(`등록된 아이디는 ${match[0]} 입니다.`);
+  setFindIdMessage(`?깅줉???꾩씠?붾뒗 ${match[0]} ?낅땲??`);
 });
 
 sellerResetPasswordForm.addEventListener("submit", (event) => {
@@ -2039,19 +1976,19 @@ sellerResetPasswordForm.addEventListener("submit", (event) => {
   });
 
   if (!match) {
-    setResetPasswordMessage("입력한 정보와 일치하는 판매자 계정이 없습니다.", "error");
+    setResetPasswordMessage("?낅젰???뺣낫? ?쇱튂?섎뒗 ?먮ℓ??怨꾩젙???놁뒿?덈떎.", "error");
     return;
   }
 
   const nextPassword = formData.get("newPassword");
   if (String(nextPassword).length < 4) {
-    setResetPasswordMessage("새 비밀번호는 4자리 이상으로 입력해주세요.", "error");
+    setResetPasswordMessage("??鍮꾨?踰덊샇??4?먮━ ?댁긽?쇰줈 ?낅젰?댁＜?몄슂.", "error");
     return;
   }
 
   match[1].password = nextPassword;
   sellerResetPasswordForm.reset();
-  setResetPasswordMessage("비밀번호가 새 비밀번호로 재설정되었습니다.");
+  setResetPasswordMessage("鍮꾨?踰덊샇媛 ??鍮꾨?踰덊샇濡??ъ꽕?뺣릺?덉뒿?덈떎.");
 });
 
 requestForm.addEventListener("submit", (event) => {
@@ -2071,35 +2008,35 @@ requestForm.addEventListener("submit", (event) => {
   }
 
   if (!quoteType) {
-    setRequestFormMessage("견적서 보유 여부를 선택해주세요.", "error");
+    setRequestFormMessage("寃ъ쟻??蹂댁쑀 ?щ?瑜??좏깮?댁＜?몄슂.", "error");
     return;
   }
 
   if (customerPhone.length < 9) {
-    setRequestFormMessage("연락처를 정확히 입력해주세요.", "error");
+    setRequestFormMessage("?곕씫泥섎? ?뺥솗???낅젰?댁＜?몄슂.", "error");
     requestForm.elements.phone.focus();
     return;
   }
 
   if (hasQuoteImage && !uploadedImages.length) {
-    setRequestFormMessage("견적서가 있는 경우 견적서 이미지를 1장 이상 첨부해주세요.", "error");
+    setRequestFormMessage("寃ъ쟻?쒓? ?덈뒗 寃쎌슦 寃ъ쟻???대?吏瑜?1???댁긽 泥⑤??댁＜?몄슂.", "error");
     return;
   }
 
   if (!hasQuoteImage && !selectedItems) {
-    setRequestFormMessage("견적서가 없는 경우 구매 예정 품목을 1개 이상 선택해주세요.", "error");
+    setRequestFormMessage("寃ъ쟻?쒓? ?녿뒗 寃쎌슦 援щℓ ?덉젙 ?덈ぉ??1媛??댁긽 ?좏깮?댁＜?몄슂.", "error");
     return;
   }
 
   if (!quotePrice) {
-    setRequestFormMessage(`${hasQuoteImage ? "기존 견적 금액" : "희망 예산"}을 만원 단위로 입력해주세요.`, "error");
+    setRequestFormMessage(`${hasQuoteImage ? "湲곗〈 寃ъ쟻 湲덉븸" : "?щ쭩 ?덉궛"}??留뚯썝 ?⑥쐞濡??낅젰?댁＜?몄슂.`, "error");
     requestForm.elements.price.focus();
     return;
   }
 
   if (registeredSellerPhones.has(customerPhone)) {
     setRequestFormMessage(
-      "판매자로 등록된 연락처로는 견적을 등록할 수 없습니다. 다른 고객님 연락처를 입력해주세요.",
+      "?먮ℓ?먮줈 ?깅줉???곕씫泥섎줈??寃ъ쟻???깅줉?????놁뒿?덈떎. ?ㅻⅨ 怨좉컼???곕씫泥섎? ?낅젰?댁＜?몄슂.",
       "error"
     );
     return;
@@ -2134,7 +2071,7 @@ sellerRegisterCompleteModal?.addEventListener("click", (event) => {
 
 confirmConsentBtn.addEventListener("click", () => {
   if (!collectionConsent.checked || !thirdPartyConsent.checked) {
-    setConsentMessage("필수 동의 항목을 모두 체크해야 견적 요청을 등록할 수 있습니다.", "error");
+    setConsentMessage("?꾩닔 ?숈쓽 ??ぉ??紐⑤몢 泥댄겕?댁빞 寃ъ쟻 ?붿껌???깅줉?????덉뒿?덈떎.", "error");
     return;
   }
 
@@ -2174,7 +2111,7 @@ lookupForm.addEventListener("submit", async (event) => {
 lookupResults.addEventListener("click", (event) => {
   const lookupImage = event.target.closest(".lookup-image img");
   if (lookupImage) {
-    openQuoteImageModal(lookupImage.src, lookupImage.alt || "견적서 원본 이미지");
+    openQuoteImageModal(lookupImage.src, lookupImage.alt || "寃ъ쟻???먮낯 ?대?吏");
     return;
   }
 
@@ -2186,7 +2123,7 @@ lookupResults.addEventListener("click", (event) => {
 
   const cardImageButton = event.target.closest("[data-card-image]");
   if (cardImageButton) {
-    openQuoteImageModal(cardImageButton.dataset.cardImage, cardImageButton.dataset.cardAlt || "판매자 명함 이미지");
+    openQuoteImageModal(cardImageButton.dataset.cardImage, cardImageButton.dataset.cardAlt || "?먮ℓ??紐낇븿 ?대?吏");
     return;
   }
 
@@ -2194,11 +2131,11 @@ lookupResults.addEventListener("click", (event) => {
   if (closeButton && !closeButton.disabled) {
     const request = requests.find((item) => sameId(item.id, closeButton.dataset.requestId));
     if (!request) {
-      setLookupActionMessage("조회된 견적 정보를 다시 확인해주세요.");
+      setLookupActionMessage("議고쉶??寃ъ쟻 ?뺣낫瑜??ㅼ떆 ?뺤씤?댁＜?몄슂.");
       return;
     }
     if (hasValidSelectedBid(request) || request.status === "closed" || isQuoteExpired(request)) {
-      setLookupActionMessage("이미 종료된 견적입니다.");
+      setLookupActionMessage("?대? 醫낅즺??寃ъ쟻?낅땲??");
       renderLookupResults([request]);
       return;
     }
@@ -2212,11 +2149,11 @@ lookupResults.addEventListener("click", (event) => {
   const request = requests.find((item) => sameId(item.id, button.dataset.requestId));
   const bid = bids.find((item) => sameId(item.id, button.dataset.bidId));
   if (!request) {
-    setLookupActionMessage("조회된 견적 정보를 다시 확인해주세요. 내 견적 조회를 다시 실행한 뒤 선택해주세요.");
+    setLookupActionMessage("議고쉶??寃ъ쟻 ?뺣낫瑜??ㅼ떆 ?뺤씤?댁＜?몄슂. ??寃ъ쟻 議고쉶瑜??ㅼ떆 ?ㅽ뻾?????좏깮?댁＜?몄슂.");
     return;
   }
   if (!bid) {
-    setLookupActionMessage("선택할 판매자 제안을 찾지 못했습니다. 새로고침 후 다시 시도해주세요.");
+    setLookupActionMessage("?좏깮???먮ℓ???쒖븞??李얠? 紐삵뻽?듬땲?? ?덈줈怨좎묠 ???ㅼ떆 ?쒕룄?댁＜?몄슂.");
     return;
   }
   if (hasValidSelectedBid(request) && !sameId(request.selectedBidId, bid.id)) return;
@@ -2248,7 +2185,7 @@ lookupResults.addEventListener("submit", (event) => {
     bidId: bid.id,
     sellerId: bid.sellerId,
     seller: bid.seller,
-    manager: bid.manager || "담당 매니저",
+    manager: bid.manager || "?대떦 留ㅻ땲?",
     customer: maskCustomerName(request.customer),
     rating,
     content,
@@ -2271,7 +2208,7 @@ sellerQuoteWorkspace.addEventListener("click", (event) => {
   const request = requests.find((item) => sameId(item.id, button.dataset.requestId));
   const selectedBid = request ? getSelectedBid(request) : null;
   if (!request || !selectedBid || selectedBid.sellerId !== activeSellerId) {
-    setBidFormMessage("선택받은 견적만 판매완료 처리할 수 있습니다.", "error");
+    setBidFormMessage("?좏깮諛쏆? 寃ъ쟻留??먮ℓ?꾨즺 泥섎━?????덉뒿?덈떎.", "error");
     return;
   }
 
@@ -2280,7 +2217,7 @@ sellerQuoteWorkspace.addEventListener("click", (event) => {
   request.saleCompletedBidId = selectedBid.id;
   request.reviewNotificationSentAt = completedAt;
   setBidFormMessage(
-    "판매완료 처리되었습니다. 고객님에게 후기 작성 안내를 발송했습니다."
+    "?먮ℓ?꾨즺 泥섎━?섏뿀?듬땲?? 怨좉컼?섏뿉寃??꾧린 ?묒꽦 ?덈궡瑜?諛쒖넚?덉뒿?덈떎."
   );
   renderRequests();
   renderSelectedRequest();
@@ -2289,11 +2226,9 @@ sellerQuoteWorkspace.addEventListener("click", (event) => {
 sellerLoginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   setSellerLoginMessage("");
-  showServerLoading("판매자 로그인을 확인 중입니다.", "승인된 계정과 견적 데이터를 불러오고 있습니다.");
+  showServerLoading("?먮ℓ??濡쒓렇?몄쓣 ?뺤씤 以묒엯?덈떎.", "?뱀씤??怨꾩젙怨?寃ъ쟻 ?곗씠?곕? 遺덈윭?ㅺ퀬 ?덉뒿?덈떎.");
   try {
-    await syncApprovedSellersFromServer();
-    await syncCustomerQuotesFromServer();
-    await syncBidsFromServer();
+    await syncApprovedSellersFromServer({ showLoading: false });
     hydrateApprovedSellerAccounts();
   } finally {
     hideServerLoading(true);
@@ -2304,7 +2239,7 @@ sellerLoginForm.addEventListener("submit", async (event) => {
   const account = sellerAccounts.get(loginId);
 
   if (!account || account.password !== loginPassword) {
-    setSellerLoginMessage("아이디 또는 비밀번호가 일치하지 않습니다.", "error");
+    setSellerLoginMessage("?꾩씠???먮뒗 鍮꾨?踰덊샇媛 ?쇱튂?섏? ?딆뒿?덈떎.", "error");
     return;
   }
 
@@ -2320,6 +2255,13 @@ sellerLoginForm.addEventListener("submit", async (event) => {
   renderRequests();
   renderSelectedRequest();
   setView("seller", { replacePath: true });
+  Promise.all([
+    syncCustomerQuotesFromServer({ showLoading: false }),
+    syncBidsFromServer({ showLoading: false }),
+  ]).then(() => {
+    renderRequests();
+    renderSelectedRequest();
+  });
 });
 
 bidForm.addEventListener("submit", async (event) => {
@@ -2342,7 +2284,7 @@ bidForm.addEventListener("submit", async (event) => {
   }
 
   const branchName = account?.branch || "등록 지점";
-  const channelName = account?.channel || "판매자";
+  const channelName = account?.channel || "판매처";
   const request = getSelectedRequest();
   const existingBid = request ? getActiveSellerBid(request) : null;
   const bidPrice = parseManwon(formData.get("bidPrice"));
@@ -2371,7 +2313,7 @@ bidForm.addEventListener("submit", async (event) => {
     benefits,
     channel: channelName,
     branch: branchName,
-    manager: account?.manager || "담당 매니저",
+    manager: account?.manager || "?대떦 留ㅻ땲?",
     managerPosition: account?.managerPosition || "",
     phone: account?.phone ? formatPhoneNumber(account.phone) : "",
     cardImage: account?.cardImage || "",
@@ -2391,7 +2333,7 @@ bidForm.addEventListener("submit", async (event) => {
   if (canUseApiServer()) {
     const serverResult = await saveBidToServer(bidPayload);
     if (!serverResult?.ok || !serverResult.row) {
-      setBidFormMessage(serverResult?.message || "제안을 서버에 저장하지 못했습니다.", "error");
+      setBidFormMessage(serverResult?.message || "?쒖븞???쒕쾭????ν븯吏 紐삵뻽?듬땲??", "error");
       return;
     }
     savedBid = serverResult.row;
@@ -2407,7 +2349,7 @@ bidForm.addEventListener("submit", async (event) => {
   renderRequests();
   syncBidFormForRequest(getSelectedRequest());
   renderSelectedRequest();
-  setBidFormMessage(existingBid ? "제안 내용이 수정되었습니다." : "고객님에게 제안이 전달되었습니다.");
+  setBidFormMessage(existingBid ? "?쒖븞 ?댁슜???섏젙?섏뿀?듬땲??" : "怨좉컼?섏뿉寃??쒖븞???꾨떖?섏뿀?듬땲??");
 });
 
 sellerRegisterForm.addEventListener("submit", async (event) => {
@@ -2422,36 +2364,36 @@ sellerRegisterForm.addEventListener("submit", async (event) => {
   const managerPosition = formData.get("managerPosition").trim();
   const sellerPhone = formatPhoneNumber(formData.get("sellerPhone"));
   const normalizedSellerPhone = normalizePhone(sellerPhone);
-  const sellerMemo = formData.get("sellerMemo").trim() || "추가 메모 없음";
+  const sellerMemo = formData.get("sellerMemo").trim() || "異붽? 硫붾え ?놁쓬";
 
   hydrateApprovedSellerAccounts();
 
   if (sellerAccounts.has(sellerId)) {
-    sellerRegisterTitle.textContent = "이미 사용 중인 판매자 아이디입니다.";
-    sellerRegisterMeta.textContent = "다른 아이디로 다시 신청해주세요.";
+    sellerRegisterTitle.textContent = "?대? ?ъ슜 以묒씤 ?먮ℓ???꾩씠?붿엯?덈떎.";
+    sellerRegisterMeta.textContent = "?ㅻⅨ ?꾩씠?붾줈 ?ㅼ떆 ?좎껌?댁＜?몄슂.";
     return;
   }
 
   if (registeredSellerPhones.has(normalizedSellerPhone)) {
-    sellerRegisterTitle.textContent = "이미 등록된 판매자 연락처입니다.";
-    sellerRegisterMeta.textContent = "다른 연락처를 입력하거나 계정 찾기를 이용해주세요.";
+    sellerRegisterTitle.textContent = "?대? ?깅줉???먮ℓ???곕씫泥섏엯?덈떎.";
+    sellerRegisterMeta.textContent = "?ㅻⅨ ?곕씫泥섎? ?낅젰?섍굅??怨꾩젙 李얘린瑜??댁슜?댁＜?몄슂.";
     return;
   }
 
   if (!canUseApiServer() && hasPendingSellerApplication(sellerId, sellerPhone)) {
-    sellerRegisterTitle.textContent = "이미 검토 대기 중인 신청입니다.";
-    sellerRegisterMeta.textContent = "관리자 승인 또는 반려 후 다시 신청할 수 있습니다.";
+    sellerRegisterTitle.textContent = "?대? 寃???湲?以묒씤 ?좎껌?낅땲??";
+    sellerRegisterMeta.textContent = "愿由ъ옄 ?뱀씤 ?먮뒗 諛섎젮 ???ㅼ떆 ?좎껌?????덉뒿?덈떎.";
     return;
   }
 
   const submitButton = sellerRegisterForm.querySelector('button[type="submit"]');
-  const originalSubmitText = submitButton?.textContent || "판매자 등록 요청";
+  const originalSubmitText = submitButton?.textContent || "?먮ℓ???깅줉 ?붿껌";
   if (submitButton) {
     submitButton.disabled = true;
-    submitButton.textContent = "서버에 저장 중입니다...";
+    submitButton.textContent = "?쒕쾭?????以묒엯?덈떎...";
   }
-  sellerRegisterTitle.textContent = "판매자 등록 요청을 저장 중입니다.";
-  sellerRegisterMeta.textContent = "잠시만 기다려주세요. 정상 저장 후 관리자 페이지에서 확인할 수 있습니다.";
+  sellerRegisterTitle.textContent = "?먮ℓ???깅줉 ?붿껌?????以묒엯?덈떎.";
+  sellerRegisterMeta.textContent = "?좎떆留?湲곕떎?ㅼ＜?몄슂. ?뺤긽 ?????愿由ъ옄 ?섏씠吏?먯꽌 ?뺤씤?????덉뒿?덈떎.";
 
   try {
     const application = {
@@ -2480,9 +2422,9 @@ sellerRegisterForm.addEventListener("submit", async (event) => {
     const serverResult = await saveSellerApplicationToServer(application);
 
     if (canUseApiServer() && !serverResult?.ok) {
-      sellerRegisterTitle.textContent = "판매자 등록 요청을 저장하지 못했습니다.";
+      sellerRegisterTitle.textContent = "?먮ℓ???깅줉 ?붿껌????ν븯吏 紐삵뻽?듬땲??";
       sellerRegisterMeta.textContent =
-        serverResult?.message || "잠시 후 다시 시도해주세요. 문제가 계속되면 운영자에게 문의해주세요.";
+        serverResult?.message || "?좎떆 ???ㅼ떆 ?쒕룄?댁＜?몄슂. 臾몄젣媛 怨꾩냽?섎㈃ ?댁쁺?먯뿉寃?臾몄쓽?댁＜?몄슂.";
       return;
     }
 
@@ -2494,13 +2436,13 @@ sellerRegisterForm.addEventListener("submit", async (event) => {
     sellerRegisterForm.reset();
     businessCardImage = "";
     businessCardPreview.innerHTML = "";
-    sellerRegisterTitle.textContent = "정상적으로 완료되었습니다.";
-    sellerRegisterMeta.textContent = `${formatSellerDisplayName(sellerChannel, branch)} 등록 요청이 저장되었습니다. 관리자 검토 후 승인 또는 반려 안내가 진행됩니다.`;
+    sellerRegisterTitle.textContent = "?뺤긽?곸쑝濡??꾨즺?섏뿀?듬땲??";
+    sellerRegisterMeta.textContent = `${formatSellerDisplayName(sellerChannel, branch)} ?깅줉 ?붿껌????λ릺?덉뒿?덈떎. 愿由ъ옄 寃?????뱀씤 ?먮뒗 諛섎젮 ?덈궡媛 吏꾪뻾?⑸땲??`;
     showSellerRegisterCompleteModal();
   } catch (error) {
-    console.warn("판매자 등록 처리 중 오류가 발생했습니다.", error);
-    sellerRegisterTitle.textContent = "판매자 등록 요청을 처리하지 못했습니다.";
-    sellerRegisterMeta.textContent = "잠시 후 다시 시도해주세요. 문제가 계속되면 운영자에게 문의해주세요.";
+    console.warn("?먮ℓ???깅줉 泥섎━ 以??ㅻ쪟媛 諛쒖깮?덉뒿?덈떎.", error);
+    sellerRegisterTitle.textContent = "?먮ℓ???깅줉 ?붿껌??泥섎━?섏? 紐삵뻽?듬땲??";
+    sellerRegisterMeta.textContent = "?좎떆 ???ㅼ떆 ?쒕룄?댁＜?몄슂. 臾몄젣媛 怨꾩냽?섎㈃ ?댁쁺?먯뿉寃?臾몄쓽?댁＜?몄슂.";
   } finally {
     if (submitButton) {
       submitButton.disabled = false;
@@ -2525,22 +2467,22 @@ regionChangeForm.addEventListener("submit", async (event) => {
   const nextBranch = formData.get("nextBranch").trim();
   const reason = formData.get("changeReason").trim();
   const mailBody = [
-    "[픽견적 판매자 매니저 정보 변경 신청]",
+    "[?쎄껄???먮ℓ??留ㅻ땲? ?뺣낫 蹂寃??좎껌]",
     "",
-    `판매자 아이디: ${activeSellerId}`,
-    `근무지점: ${branch}`,
-    `매니저 이름: ${manager}`,
-    `현재 지역: ${currentRegion}`,
-    `변경 희망 지점: ${nextBranch}`,
-    `변경 희망 지역: ${nextRegion}`,
-    `변경 사유: ${reason}`,
+    `?먮ℓ???꾩씠?? ${activeSellerId}`,
+    `洹쇰Т吏?? ${branch}`,
+    `留ㅻ땲? ?대쫫: ${manager}`,
+    `?꾩옱 吏?? ${currentRegion}`,
+    `蹂寃??щ쭩 吏?? ${nextBranch}`,
+    `蹂寃??щ쭩 吏?? ${nextRegion}`,
+    `蹂寃??ъ쑀: ${reason}`,
     "",
-    "관리자 검토 후 승인 시 등록 지점 및 판매 가능 지역 등 매니저 정보가 변경됩니다.",
+    "愿由ъ옄 寃?????뱀씤 ???깅줉 吏??諛??먮ℓ 媛??吏????留ㅻ땲? ?뺣낫媛 蹂寃쎈맗?덈떎.",
   ].join("\n");
 
   regionChangePreview.textContent = mailBody;
   regionChangePreview.hidden = false;
-  await sendAdminMail("[픽견적] 판매자 매니저 정보 변경 신청", mailBody, regionChangeMailLink);
+  await sendAdminMail("[?쎄껄?? ?먮ℓ??留ㅻ땲? ?뺣낫 蹂寃??좎껌", mailBody, regionChangeMailLink);
 });
 
 document.addEventListener("keydown", (event) => {
@@ -2597,7 +2539,7 @@ window.addEventListener("focus", hideSecurityBlanket);
 window.addEventListener("beforeprint", () => showSecurityBlanket(0));
 window.addEventListener("afterprint", hideSecurityBlanket);
 
-renderRequests = function renderRequestsClean() {
+function renderRequests() {
   const isRegionTab = activeSellerTab === "region";
   sellerQuoteWorkspace.hidden = isRegionTab;
   sellerRegionPanel.hidden = !isRegionTab;
@@ -2633,7 +2575,7 @@ renderRequests = function renderRequestsClean() {
     requestList.innerHTML = `
       <div class="empty-state compact-empty">
         <strong>${emptyLabel}</strong>
-        <p>고객님이 제안을 선택하면 이곳에 표시됩니다.</p>
+        <p>해당하는 견적이 생기면 이곳에 표시됩니다.</p>
       </div>
     `;
     if (currentFilterBar) requestList.prepend(currentFilterBar);
@@ -2684,12 +2626,13 @@ renderRequests = function renderRequestsClean() {
       setBidFormMessage("");
       renderRequests();
       renderSelectedRequest();
+      openSellerMobileDetail();
     });
     requestList.appendChild(item);
   });
-};
+}
 
-renderSelectedRequest = function renderSelectedRequestClean() {
+function renderSelectedRequest() {
   const request = getSelectedRequest();
   if (!request) {
     selectedStatus.textContent = "선택 대기";
@@ -2764,13 +2707,13 @@ renderSelectedRequest = function renderSelectedRequestClean() {
     </div>
     <p class="privacy-note">${
       isSaleCompleted
-        ? `판매완료 처리되었습니다. 고객님에게 후기 요청 알림톡 발송 상태: ${
+        ? `판매완료 처리되었습니다. 고객님 후기 요청 알림톡 발송 상태: ${
             request.reviewNotificationSentAt ? "발송 완료" : "발송 대기"
           }`
         : isClosedTab
         ? "종료된 견적에서는 고객님 연락처가 마스킹 처리되며 1위 금액만 표시됩니다."
         : isSelectedSeller
-        ? "고객님이 이 제안을 선택해 연락처가 공개되었습니다."
+        ? "고객님이 내 제안을 선택해 연락처가 공개되었습니다."
         : "연락처는 고객님이 제안을 선택한 뒤 공개됩니다."
     }</p>
     ${
@@ -2794,7 +2737,7 @@ renderSelectedRequest = function renderSelectedRequestClean() {
   sellerImage.innerHTML = isWithoutQuoteRequest(request)
     ? withoutQuoteItemsMarkup(request)
     : quoteImageMarkup(request, `${request.customer} 고객님이 올린 견적서`);
-};
+}
 
 async function bootApplication() {
   const initialPath = normalizeAppPath(window.location.pathname);
@@ -2803,24 +2746,31 @@ async function bootApplication() {
 
   if (canUseApiServer()) {
     if (isSellerPath || activeSellerId) {
-      await syncApprovedSellersFromServer({ showLoading: true });
+      showServerLoading("?먮ℓ???섏씠吏瑜?以鍮?以묒엯?덈떎.", "怨꾩젙怨?寃ъ쟻 ?곗씠?곕? 遺덈윭?ㅺ퀬 ?덉뒿?덈떎.");
+      await syncApprovedSellersFromServer({ showLoading: false });
       restoreActiveSellerSession();
     } else if (isSellerRegisterPath) {
       await syncApprovedSellersFromServer({ showLoading: false });
     }
 
-    if (activeSellerId) {
-      await Promise.all([
-        syncCustomerQuotesFromServer({ showLoading: isSellerPath }),
-        syncBidsFromServer({ showLoading: isSellerPath }),
-      ]);
+    try {
+      if (activeSellerId) {
+        await Promise.all([
+          syncCustomerQuotesFromServer({ showLoading: false }),
+          syncBidsFromServer({ showLoading: false }),
+        ]);
+      }
+    } finally {
+      if (isSellerPath || activeSellerId) {
+        hideServerLoading(true);
+      }
     }
   }
 
   applyViewFromCurrentPath({ replacePath: true });
   renderRequests();
   renderSelectedRequest();
-  renderLookupResults([], "성함과 휴대전화로 등록한 견적을 조회하세요.");
+  renderLookupResults([], "?깊븿怨??대??꾪솕濡??깅줉??寃ъ쟻??議고쉶?섏꽭??");
 }
 
 bootApplication();

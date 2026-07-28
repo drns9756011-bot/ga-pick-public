@@ -2754,6 +2754,10 @@ select {
   gap: 22px;
 }
 
+.seller-mobile-list-back {
+  display: none;
+}
+
 .seller-quote-card {
   position: relative;
   overflow: hidden;
@@ -5031,6 +5035,60 @@ td strong {
   .seller-layout {
     display: flex;
     flex-direction: column;
+  }
+
+  .seller-page-layout {
+    display: block;
+  }
+
+  .seller-page-layout .request-list {
+    display: grid;
+  }
+
+  .seller-page-layout .seller-detail {
+    display: none;
+  }
+
+  .seller-mobile-detail-open .seller-page-layout .request-list {
+    display: none;
+  }
+
+  .seller-mobile-detail-open .seller-page-layout .seller-detail {
+    display: grid;
+  }
+
+  .seller-mobile-list-back {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 46px;
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--primary);
+    font-weight: 900;
+    font-size: 16px;
+  }
+
+  .request-item {
+    position: relative;
+    padding-right: 92px;
+  }
+
+  .request-item::after {
+    content: "상세 보기";
+    position: absolute;
+    right: 14px;
+    top: 16px;
+    min-height: 30px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: #e9f4f1;
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 900;
+    line-height: 1;
   }
 
   .request-list,
