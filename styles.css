@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   --bg: #f6f7f9;
   --ink: #16202a;
   --muted: #687483;
@@ -1850,7 +1850,7 @@ select {
 }
 
 .quote-thumb-button::after {
-  content: "원본 보기";
+  content: "?먮낯 蹂닿린";
   position: absolute;
   right: 8px;
   bottom: 8px;
@@ -3021,7 +3021,7 @@ select {
 .wizard-product-main input:checked + .wizard-check::after,
 .wizard-option-card input:checked + .wizard-check::after,
 .fixed-check::after {
-  content: "✓";
+  content: "??;
   display: grid;
   place-items: center;
   height: 100%;
@@ -5073,22 +5073,28 @@ td strong {
 
   .request-item {
     position: relative;
-    padding-right: 92px;
+    padding: 20px 20px 78px;
   }
 
   .request-item::after {
     content: "상세 보기";
     position: absolute;
-    right: 14px;
-    top: 16px;
-    min-height: 30px;
-    padding: 6px 10px;
+    left: 50%;
+    bottom: 18px;
+    transform: translateX(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 128px;
+    min-height: 42px;
+    padding: 0 18px;
     border-radius: 999px;
-    background: #e9f4f1;
-    color: var(--primary);
-    font-size: 12px;
+    background: #dff4ef;
+    color: #0f6d5c;
+    font-size: 15px;
     font-weight: 900;
-    line-height: 1;
+    line-height: 1.2;
+    text-align: center;
   }
 
   .request-list,

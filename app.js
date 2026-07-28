@@ -493,8 +493,8 @@ async function syncApprovedSellersFromServer(options = {}) {
   const showLoading = options.showLoading !== false;
   const result = await apiJson("/api/approved-sellers", {
     showLoading,
-    loadingTitle: "?먮ℓ???뺣낫瑜??뺤씤 以묒엯?덈떎.",
-    loadingText: "?뱀씤???먮ℓ??怨꾩젙???쒕쾭?먯꽌 遺덈윭?ㅺ퀬 ?덉뒿?덈떎.",
+    loadingTitle: "판매자 정보를 확인 중입니다.",
+    loadingText: "승인된 판매자 계정을 서버에서 불러오고 있습니다.",
   });
   if (!result?.ok || !Array.isArray(result.rows)) return;
 
@@ -505,8 +505,8 @@ async function syncApprovedSellersFromServer(options = {}) {
 async function saveSellerApplicationToServer(application) {
   return apiJson("/api/seller-applications", {
     method: "POST",
-    loadingTitle: "?먮ℓ???깅줉 ?붿껌?????以묒엯?덈떎.",
-    loadingText: "?낅젰?섏떊 ?뺣낫瑜??쒕쾭???덉쟾?섍쾶 ??ν븯怨??덉뒿?덈떎.",
+    loadingTitle: "판매자 등록 요청을 저장 중입니다.",
+    loadingText: "입력하신 정보를 서버에 안전하게 저장하고 있습니다.",
     body: JSON.stringify(application),
   });
 }
@@ -562,8 +562,8 @@ async function syncCustomerQuotesFromServer(options = {}) {
   const showLoading = options.showLoading !== false;
   const result = await apiJson("/api/customer-quotes", {
     showLoading,
-    loadingTitle: "怨좉컼??寃ъ쟻??遺덈윭?ㅻ뒗 以묒엯?덈떎.",
-    loadingText: "48?쒓컙 ?대궡 ?묒닔??寃ъ쟻???쒕쾭?먯꽌 ?뺤씤?섍퀬 ?덉뒿?덈떎.",
+    loadingTitle: "고객님 견적을 불러오는 중입니다.",
+    loadingText: "서버에 저장된 견적 정보를 확인하고 있습니다.",
   });
 
   if (!result?.ok || !Array.isArray(result.rows)) return;
@@ -578,8 +578,8 @@ async function syncBidsFromServer(options = {}) {
   const showLoading = options.showLoading !== false;
   const result = await apiJson("/api/bids", {
     showLoading,
-    loadingTitle: "?먮ℓ???쒖븞??遺덈윭?ㅻ뒗 以묒엯?덈떎.",
-    loadingText: "?쒕쾭????λ맂 ?쒖븞 湲덉븸怨??쒖쐞瑜??뺤씤?섍퀬 ?덉뒿?덈떎.",
+    loadingTitle: "판매자 제안을 불러오는 중입니다.",
+    loadingText: "서버에 저장된 제안 금액과 순위를 확인하고 있습니다.",
   });
 
   if (!result?.ok || !Array.isArray(result.rows)) return;
@@ -595,8 +595,8 @@ async function lookupCustomerQuotesFromServer(customer, phone, quoteNumber = "")
   if (quoteNumber) params.set("quoteNumber", quoteNumber);
 
   const result = await apiJson(`/api/customer-quotes?${params.toString()}`, {
-    loadingTitle: "??寃ъ쟻??議고쉶 以묒엯?덈떎.",
-    loadingText: "?낅젰?섏떊 ?깊븿怨??곕씫泥섎줈 ?쒕쾭?먯꽌 寃ъ쟻???뺤씤?섍퀬 ?덉뒿?덈떎.",
+    loadingTitle: "내 견적을 조회 중입니다.",
+    loadingText: "입력하신 성함과 연락처로 견적을 확인하고 있습니다.",
   });
 
   return result?.ok && Array.isArray(result.rows) ? result.rows : [];
@@ -605,8 +605,8 @@ async function lookupCustomerQuotesFromServer(customer, phone, quoteNumber = "")
 async function saveCustomerQuoteToServer(quote) {
   return apiJson("/api/customer-quotes", {
     method: "POST",
-    loadingTitle: "寃ъ쟻 ?붿껌???쒕쾭?????以묒엯?덈떎.",
-    loadingText: "????대?吏??1?? ?꾩껜 寃ъ쟻 ?대?吏??7??湲곗??쇰줈 ??ν븯怨??덉뒿?덈떎.",
+    loadingTitle: "견적 요청을 서버에 저장 중입니다.",
+    loadingText: "고객님 정보와 견적 내용을 안전하게 저장하고 있습니다.",
     body: JSON.stringify(quote),
   });
 }
@@ -614,8 +614,8 @@ async function saveCustomerQuoteToServer(quote) {
 async function saveBidToServer(bid) {
   return apiJson("/api/bids", {
     method: "POST",
-    loadingTitle: "?쒖븞?????以묒엯?덈떎.",
-    loadingText: "?쒖븞 湲덉븸怨??쒓났 議곌굔???쒕쾭??諛섏쁺?섍퀬 ?덉뒿?덈떎.",
+    loadingTitle: "제안을 저장 중입니다.",
+    loadingText: "제안 금액과 제공 조건을 서버에 반영하고 있습니다.",
     body: JSON.stringify(bid),
   });
 }
@@ -623,8 +623,8 @@ async function saveBidToServer(bid) {
 async function selectBidOnServer(request, bid, contactReleaseScope) {
   return apiJson("/api/bid-selection", {
     method: "POST",
-    loadingTitle: "寃ъ쟻???좏깮 以묒엯?덈떎.",
-    loadingText: "?곕씫泥?怨듦컻 踰붿쐞? ?좏깮 ?댁슜???쒕쾭????ν븯怨??덉뒿?덈떎.",
+    loadingTitle: "견적을 선택 중입니다.",
+    loadingText: "선택 내용과 연락처 공개 범위를 서버에 저장하고 있습니다.",
     body: JSON.stringify({
       requestId: request.id,
       bidId: bid.id,
@@ -636,8 +636,8 @@ async function selectBidOnServer(request, bid, contactReleaseScope) {
 async function closeQuoteOnServer(request) {
   return apiJson("/api/quote-close", {
     method: "POST",
-    loadingTitle: "寃ъ쟻 鍮꾧탳瑜?醫낅즺 以묒엯?덈떎.",
-    loadingText: "?먮ℓ???쒖븞 ?묒닔瑜?留덇컧?섍퀬 諛쏆? ?쒖븞留??뺤씤?????덈룄濡?蹂寃쏀븯怨??덉뒿?덈떎.",
+    loadingTitle: "견적 비교를 종료 중입니다.",
+    loadingText: "추가 제안 접수를 마감하고 받은 제안만 확인할 수 있도록 변경하고 있습니다.",
     body: JSON.stringify({
       requestId: request.id,
       customer: request.customer,
@@ -797,15 +797,41 @@ function setSellerMobileDetailOpen(isOpen) {
   document.documentElement.classList.toggle("seller-mobile-detail-open", Boolean(isOpen));
 }
 
+function isSellerMobileDetailOpen() {
+  return document.documentElement.classList.contains("seller-mobile-detail-open");
+}
+
 function openSellerMobileDetail() {
   if (!isMobileSellerLayout()) return;
+  const state = window.history?.state || {};
+  if (!isSellerMobileDetailOpen() && !state.sellerMobileDetail) {
+    window.history.pushState(
+      {
+        view: "seller",
+        sellerMobileDetail: true,
+        selectedRequestId,
+      },
+      "",
+      getPathForView("seller")
+    );
+  }
   setSellerMobileDetailOpen(true);
   document.querySelector("#sellerPage")?.scrollIntoView({ block: "start", behavior: "smooth" });
 }
 
-function closeSellerMobileDetail() {
+function closeSellerMobileDetail(options = {}) {
   setSellerMobileDetailOpen(false);
-  document.querySelector("#sellerPage")?.scrollIntoView({ block: "start", behavior: "smooth" });
+  if (options.scroll !== false) {
+    document.querySelector("#sellerPage")?.scrollIntoView({ block: "start", behavior: "smooth" });
+  }
+}
+
+function leaveSellerMobileDetail() {
+  if (window.history?.state?.sellerMobileDetail) {
+    window.history.back();
+    return;
+  }
+  closeSellerMobileDetail();
 }
 
 function updateBrowserPath(view, replace = false) {
@@ -838,10 +864,13 @@ function setView(view, options = {}) {
   const shouldReplacePath = options.replacePath === true;
   if (view === "seller" && !activeSellerId) {
     view = "sellerLogin";
-    setSellerLoginMessage("?먮ℓ???섏씠吏??濡쒓렇?????댁슜?????덉뒿?덈떎.", "error");
+    setSellerLoginMessage("판매자 페이지는 로그인 후 이용할 수 있습니다.", "error");
   }
 
   document.documentElement.dataset.initialView = view;
+  if (view !== "seller") {
+    closeSellerMobileDetail({ scroll: false });
+  }
 
   if (view === "lookup") {
     lookupAccessGranted = false;
@@ -1367,7 +1396,7 @@ function resetCustomerForm() {
 }
 
 async function createCustomerRequestOnServer(formData) {
-  showServerLoading("寃ъ쟻 ?붿껌???깅줉 以묒엯?덈떎.", "寃ъ쟻???대?吏? ?낅젰 ?댁슜??泥섎━?섍퀬 ?덉뒿?덈떎.");
+  showServerLoading("견적 요청을 등록 중입니다.", "견적서 이미지와 입력 내용을 처리하고 있습니다.");
   try {
     await new Promise((resolve) => window.setTimeout(resolve, 450));
     await createCustomerRequest(formData);
@@ -1549,7 +1578,7 @@ async function confirmQuoteClose() {
     return;
   }
 
-  showServerLoading("寃ъ쟻 鍮꾧탳瑜?醫낅즺 以묒엯?덈떎.", "諛쏆? ?쒖븞? ?좎??섍퀬 異붽? ?쒖븞 ?묒닔留?留덇컧?섍퀬 ?덉뒿?덈떎.");
+  showServerLoading("견적 비교를 종료 중입니다.", "받은 제안은 유지하고 추가 제안 접수만 마감하고 있습니다.");
   try {
     let savedRequest = null;
     if (canUseApiServer()) {
@@ -1585,7 +1614,7 @@ async function confirmQuoteClose() {
 async function confirmBidSelection() {
   if (!pendingBidSelection) return;
   if (confirmBidSelectBtn) confirmBidSelectBtn.disabled = true;
-  showServerLoading("寃ъ쟻 ?좏깮?????以묒엯?덈떎.", "寃ъ쟻 鍮꾧탳瑜?醫낅즺?섍퀬 ?좏깮 ?댁슜???쒕쾭??諛섏쁺?섍퀬 ?덉뒿?덈떎.");
+  showServerLoading("견적 선택을 저장 중입니다.", "견적 비교를 종료하고 선택 내용을 서버에 반영하고 있습니다.");
 
   try {
     const request = requests.find((item) => sameId(item.id, pendingBidSelection.requestId));
@@ -1741,15 +1770,35 @@ function hideSecurityBlanket() {
   securityBlanket.classList.remove("is-active");
 }
 
+function isQuoteImageModalOpen() {
+  return quoteImageModal && !quoteImageModal.hidden;
+}
+
 function openQuoteImageModal(src, alt) {
   quoteImageModalImg.src = src;
   quoteImageModalImg.alt = alt;
   quoteImageModal.hidden = false;
+
+  if (!window.history?.state?.quoteImageModal) {
+    window.history.pushState(
+      {
+        ...(window.history.state || {}),
+        view: getViewFromPath(window.location.pathname),
+        quoteImageModal: true,
+      },
+      "",
+      window.location.href
+    );
+  }
 }
 
-function closeQuoteImagePreview() {
+function closeQuoteImagePreview(options = {}) {
   quoteImageModal.hidden = true;
   quoteImageModalImg.removeAttribute("src");
+
+  if (options.fromHistory !== true && window.history?.state?.quoteImageModal) {
+    window.history.back();
+  }
 }
 
 function buildMailtoLink(subject, body) {
@@ -1822,7 +1871,19 @@ navButtons.forEach((button) => {
   });
 });
 
-window.addEventListener("popstate", () => {
+window.addEventListener("popstate", (event) => {
+  if (isQuoteImageModalOpen() && !event.state?.quoteImageModal) {
+    closeQuoteImagePreview({ fromHistory: true });
+    return;
+  }
+
+  if (isMobileSellerLayout() && normalizeAppPath(window.location.pathname) === "/seller") {
+    if (event.state?.sellerMobileDetail) {
+      setSellerMobileDetailOpen(true);
+    } else {
+      closeSellerMobileDetail({ scroll: false });
+    }
+  }
   applyViewFromCurrentPath({ scroll: true });
 });
 
@@ -1863,7 +1924,7 @@ document.addEventListener("click", (event) => {
   renderSelectedRequest();
 });
 
-sellerMobileListBack?.addEventListener("click", closeSellerMobileDetail);
+sellerMobileListBack?.addEventListener("click", leaveSellerMobileDetail);
 
 quoteImage.addEventListener("change", async (event) => {
   const files = Array.from(event.target.files || []).filter((file) => file.type.startsWith("image/")).slice(0, 4);
@@ -2226,7 +2287,7 @@ sellerQuoteWorkspace.addEventListener("click", (event) => {
 sellerLoginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   setSellerLoginMessage("");
-  showServerLoading("?먮ℓ??濡쒓렇?몄쓣 ?뺤씤 以묒엯?덈떎.", "?뱀씤??怨꾩젙怨?寃ъ쟻 ?곗씠?곕? 遺덈윭?ㅺ퀬 ?덉뒿?덈떎.");
+  showServerLoading("판매자 로그인을 확인 중입니다.", "승인된 계정과 견적 데이터를 불러오고 있습니다.");
   try {
     await syncApprovedSellersFromServer({ showLoading: false });
     hydrateApprovedSellerAccounts();
@@ -2746,7 +2807,7 @@ async function bootApplication() {
 
   if (canUseApiServer()) {
     if (isSellerPath || activeSellerId) {
-      showServerLoading("?먮ℓ???섏씠吏瑜?以鍮?以묒엯?덈떎.", "怨꾩젙怨?寃ъ쟻 ?곗씠?곕? 遺덈윭?ㅺ퀬 ?덉뒿?덈떎.");
+      showServerLoading("판매자 페이지를 준비 중입니다.", "계정과 견적 데이터를 불러오고 있습니다.");
       await syncApprovedSellersFromServer({ showLoading: false });
       restoreActiveSellerSession();
     } else if (isSellerRegisterPath) {
