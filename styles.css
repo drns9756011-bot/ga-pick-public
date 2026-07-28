@@ -1850,7 +1850,7 @@ select {
 }
 
 .quote-thumb-button::after {
-  content: "?먮낯 蹂닿린";
+  content: "원본 보기";
   position: absolute;
   right: 8px;
   bottom: 8px;
@@ -3021,7 +3021,7 @@ select {
 .wizard-product-main input:checked + .wizard-check::after,
 .wizard-option-card input:checked + .wizard-check::after,
 .fixed-check::after {
-  content: "??;
+  content: "✓";
   display: grid;
   place-items: center;
   height: 100%;
