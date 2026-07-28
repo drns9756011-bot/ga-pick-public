@@ -488,8 +488,10 @@ async function apiJson(path, options = {}) {
   }
 }
 
-async function syncApprovedSellersFromServer() {
+async function syncApprovedSellersFromServer(options = {}) {
+  const showLoading = options.showLoading !== false;
   const result = await apiJson("/api/approved-sellers", {
+    showLoading,
     loadingTitle: "판매자 정보를 확인 중입니다.",
     loadingText: "승인된 판매자 계정을 서버에서 불러오고 있습니다.",
   });
@@ -555,8 +557,10 @@ function normalizeQuoteRequest(request) {
   };
 }
 
-async function syncCustomerQuotesFromServer() {
+async function syncCustomerQuotesFromServer(options = {}) {
+  const showLoading = options.showLoading !== false;
   const result = await apiJson("/api/customer-quotes", {
+    showLoading,
     loadingTitle: "고객님 견적을 불러오는 중입니다.",
     loadingText: "48시간 이내 접수된 견적을 서버에서 확인하고 있습니다.",
   });
@@ -569,8 +573,10 @@ function replaceBids(rows) {
   bids.splice(0, bids.length, ...rows);
 }
 
-async function syncBidsFromServer() {
+async function syncBidsFromServer(options = {}) {
+  const showLoading = options.showLoading !== false;
   const result = await apiJson("/api/bids", {
+    showLoading,
     loadingTitle: "판매자 제안을 불러오는 중입니다.",
     loadingText: "서버에 저장된 제안 금액과 순위를 확인하고 있습니다.",
   });
@@ -2791,12 +2797,23 @@ renderSelectedRequest = function renderSelectedRequestClean() {
 };
 
 async function bootApplication() {
+  const initialPath = normalizeAppPath(window.location.pathname);
+  const isSellerPath = initialPath === "/seller";
+  const isSellerRegisterPath = initialPath === "/seller/register";
+
   if (canUseApiServer()) {
-    await syncApprovedSellersFromServer();
-    restoreActiveSellerSession();
+    if (isSellerPath || activeSellerId) {
+      await syncApprovedSellersFromServer({ showLoading: true });
+      restoreActiveSellerSession();
+    } else if (isSellerRegisterPath) {
+      await syncApprovedSellersFromServer({ showLoading: false });
+    }
 
     if (activeSellerId) {
-      await Promise.all([syncCustomerQuotesFromServer(), syncBidsFromServer()]);
+      await Promise.all([
+        syncCustomerQuotesFromServer({ showLoading: isSellerPath }),
+        syncBidsFromServer({ showLoading: isSellerPath }),
+      ]);
     }
   }
 
