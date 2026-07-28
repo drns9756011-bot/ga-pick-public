@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS seller_applications (
+﻿CREATE TABLE IF NOT EXISTS seller_applications (
   id TEXT PRIMARY KEY,
   status TEXT NOT NULL DEFAULT 'pending',
   requested_at TEXT NOT NULL,
@@ -179,3 +179,4 @@ CREATE TABLE IF NOT EXISTS push_tokens (
 
 CREATE INDEX IF NOT EXISTS idx_push_tokens_role ON push_tokens(role);
 CREATE INDEX IF NOT EXISTS idx_push_tokens_updated_at ON push_tokens(updated_at);
+

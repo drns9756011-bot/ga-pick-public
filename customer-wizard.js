@@ -1,4 +1,4 @@
-(function () {
+﻿(function () {
   const form = document.querySelector("#requestForm");
   if (!form || form.dataset.wizardReady === "true") return;
 
@@ -37,78 +37,78 @@
   form.noValidate = true;
 
   const quoteTypeOptions = [
-    { value: "with_quote", title: "견적서가 있어요!!", text: "받아둔 견적서 사진을 기준으로 판매자 제안을 비교합니다." },
+    { value: "with_quote", title: "寃ъ쟻?쒓? ?덉뼱??!", text: "諛쏆븘??寃ъ쟻???ъ쭊??湲곗??쇰줈 ?먮ℓ???쒖븞??鍮꾧탳?⑸땲??" },
     {
       value: "without_quote",
-      title: "견적서가 없어요!!",
-      text: "제품군과 희망 예산으로 제안받습니다. 견적서가 있는 요청보다 제안 조건에 제한이 생길 수 있습니다.",
-      badge: "제한 안내",
+      title: "寃ъ쟻?쒓? ?놁뼱??!",
+      text: "?쒗뭹援곌낵 ?щ쭩 ?덉궛?쇰줈 ?쒖븞諛쏆뒿?덈떎. 寃ъ쟻?쒓? ?덈뒗 ?붿껌蹂대떎 ?쒖븞 議곌굔???쒗븳???앷만 ???덉뒿?덈떎.",
+      badge: "?쒗븳 ?덈궡",
     },
   ];
 
   const purposeOptions = [
-    { value: "웨딩,혼수 특별혜택", title: "웨딩,혼수", text: "여러 품목을 한 번에 비교합니다.", badge: "특별혜택" },
-    { value: "신축입주 특별혜택", title: "신축입주", text: "입주 일정에 맞춘 조건을 비교합니다.", badge: "특별혜택" },
-    { value: "이사", title: "이사", text: "이사 날짜와 설치 환경에 맞는 조건을 비교합니다." },
-    { value: "인테리어", title: "인테리어", text: "공간 완성 일정에 맞춰 필요한 가전을 제안받습니다." },
-    { value: "일반", title: "일반구매", text: "필요한 제품의 가격과 혜택을 차분히 비교합니다." },
+    { value: "?⑤뵫,?쇱닔 ?밸퀎?쒗깮", title: "?⑤뵫,?쇱닔", text: "?щ윭 ?덈ぉ????踰덉뿉 鍮꾧탳?⑸땲??", badge: "?밸퀎?쒗깮" },
+    { value: "?좎텞?낆＜ ?밸퀎?쒗깮", title: "?좎텞?낆＜", text: "?낆＜ ?쇱젙??留욎텣 議곌굔??鍮꾧탳?⑸땲??", badge: "?밸퀎?쒗깮" },
+    { value: "?댁궗", title: "?댁궗", text: "?댁궗 ?좎쭨? ?ㅼ튂 ?섍꼍??留욌뒗 議곌굔??鍮꾧탳?⑸땲??" },
+    { value: "?명뀒由ъ뼱", title: "?명뀒由ъ뼱", text: "怨듦컙 ?꾩꽦 ?쇱젙??留욎떠 ?꾩슂??媛?꾩쓣 ?쒖븞諛쏆뒿?덈떎." },
+    { value: "?쇰컲", title: "?쇰컲援щℓ", text: "?꾩슂???쒗뭹??媛寃⑷낵 ?쒗깮??李⑤텇??鍮꾧탳?⑸땲??" },
   ];
 
   const brandOptions = [
-    { value: "LG전자", title: "LG전자", text: "LG전자 제품 중심으로 제안을 받고 싶어요." },
-    { value: "삼성전자", title: "삼성전자", text: "삼성전자 제품 중심으로 제안을 받고 싶어요." },
-    { value: "비교견적", title: "비교견적", text: "LG와 삼성 조건을 함께 비교하고 싶어요." },
+    { value: "LG?꾩옄", title: "LG?꾩옄", text: "LG?꾩옄 ?쒗뭹 以묒떖?쇰줈 ?쒖븞??諛쏄퀬 ?띠뼱??" },
+    { value: "?쇱꽦?꾩옄", title: "?쇱꽦?꾩옄", text: "?쇱꽦?꾩옄 ?쒗뭹 以묒떖?쇰줈 ?쒖븞??諛쏄퀬 ?띠뼱??" },
+    { value: "鍮꾧탳寃ъ쟻", title: "鍮꾧탳寃ъ쟻", text: "LG? ?쇱꽦 議곌굔???④퍡 鍮꾧탳?섍퀬 ?띠뼱??" },
   ];
 
   const productOptions = [
     { value: "TV", title: "TV", icon: "tv", optionButton: true },
-    { value: "냉장고", title: "냉장고", icon: "fridge", optionButton: true },
-    { value: "세탁기/건조기", title: "세탁기/건조기", icon: "washer", optionButton: true },
-    { value: "청소기", title: "청소기", icon: "vacuum", optionButton: true },
-    { value: "김치냉장고", title: "김치냉장고", icon: "kimchi", optionButton: true },
-    { value: "에어컨", title: "에어컨", icon: "aircon", optionButton: true },
-    { value: "식기세척기", title: "식기세척기", icon: "dishwasher", optionButton: true },
-    { value: "인덕션/전기레인지", title: "인덕션/전기레인지", icon: "induction", optionButton: true },
-    { value: "오븐/전자레인지", title: "오븐/전자레인지", icon: "oven", optionButton: true },
-    { value: "정수기", title: "정수기", icon: "water", optionButton: true },
-    { value: "의류관리기", title: "의류관리기", icon: "styler", optionButton: true },
-    { value: "공기청정기", title: "공기청정기", icon: "purifier", optionButton: true },
-    { value: "라이프스타일 TV", title: "라이프스타일 TV", icon: "lifestyle", optionButton: true },
+    { value: "?됱옣怨?, title: "?됱옣怨?, icon: "fridge", optionButton: true },
+    { value: "?명긽湲?嫄댁“湲?, title: "?명긽湲?嫄댁“湲?, icon: "washer", optionButton: true },
+    { value: "泥?냼湲?, title: "泥?냼湲?, icon: "vacuum", optionButton: true },
+    { value: "源移섎깋?κ퀬", title: "源移섎깋?κ퀬", icon: "kimchi", optionButton: true },
+    { value: "?먯뼱而?, title: "?먯뼱而?, icon: "aircon", optionButton: true },
+    { value: "?앷린?몄쿃湲?, title: "?앷린?몄쿃湲?, icon: "dishwasher", optionButton: true },
+    { value: "?몃뜒???꾧린?덉씤吏", title: "?몃뜒???꾧린?덉씤吏", icon: "induction", optionButton: true },
+    { value: "?ㅻ툙/?꾩옄?덉씤吏", title: "?ㅻ툙/?꾩옄?덉씤吏", icon: "oven", optionButton: true },
+    { value: "?뺤닔湲?, title: "?뺤닔湲?, icon: "water", optionButton: true },
+    { value: "?섎쪟愿由ш린", title: "?섎쪟愿由ш린", icon: "styler", optionButton: true },
+    { value: "怨듦린泥?젙湲?, title: "怨듦린泥?젙湲?, icon: "purifier", optionButton: true },
+    { value: "?쇱씠?꾩뒪???TV", title: "?쇱씠?꾩뒪???TV", icon: "lifestyle", optionButton: true },
   ];
 
   const productOptionSchema = {
-    TV: [{ key: "size", title: "인치", mode: "single", options: ["43인치", "55인치", "65인치", "75인치", "85인치", "85인치 ↑"] }],
-    "세탁기/건조기": [
+    TV: [{ key: "size", title: "?몄튂", mode: "single", options: ["43?몄튂", "55?몄튂", "65?몄튂", "75?몄튂", "85?몄튂", "85?몄튂 ??] }],
+    "?명긽湲?嫄댁“湲?: [
       {
         key: "type",
-        title: "설치/제품 형태",
+        title: "?ㅼ튂/?쒗뭹 ?뺥깭",
         mode: "single",
-        options: ["분리형(병렬설치 및 직렬설치, 분리설치 가능)", "복합형(콤보)", "일체형(원바디, 워시타워)"],
+        options: ["遺꾨━??蹂묐젹?ㅼ튂 諛?吏곷젹?ㅼ튂, 遺꾨━?ㅼ튂 媛??", "蹂듯빀??肄ㅻ낫)", "?쇱껜???먮컮?? ?뚯떆???"],
       },
     ],
-    냉장고: [
-      { key: "install", title: "설치형태", mode: "single", options: ["빌트인(키친핏, 핏앤맥스)", "프리스탠딩(용량이 큼)", "모르겠어요"] },
+    ?됱옣怨? [
+      { key: "install", title: "?ㅼ튂?뺥깭", mode: "single", options: ["鍮뚰듃???ㅼ튇?? ?륁븻留μ뒪)", "?꾨━?ㅽ깲???⑸웾????", "紐⑤Ⅴ寃좎뼱??] },
     ],
-    청소기: [{ key: "type", title: "종류", mode: "multi", options: ["무선청소기", "로봇청소기", "유선청소기"] }],
-    "오븐/전자레인지": [{ key: "type", title: "종류", mode: "multi", options: ["오븐", "전자레인지"] }],
-    "인덕션/전기레인지": [
-      { key: "install", title: "설치형태", mode: "single", options: ["빌트인 O", "빌트인 X"] },
-      { key: "burner", title: "화구수", mode: "single", options: ["2구", "3구", "4구"] },
+    泥?냼湲? [{ key: "type", title: "醫낅쪟", mode: "multi", options: ["臾댁꽑泥?냼湲?, "濡쒕큸泥?냼湲?, "?좎꽑泥?냼湲?] }],
+    "?ㅻ툙/?꾩옄?덉씤吏": [{ key: "type", title: "醫낅쪟", mode: "multi", options: ["?ㅻ툙", "?꾩옄?덉씤吏"] }],
+    "?몃뜒???꾧린?덉씤吏": [
+      { key: "install", title: "?ㅼ튂?뺥깭", mode: "single", options: ["鍮뚰듃??O", "鍮뚰듃??X"] },
+      { key: "burner", title: "?붽뎄??, mode: "single", options: ["2援?, "3援?, "4援?] },
     ],
-    김치냉장고: [
-      { key: "type", title: "형태", mode: "single", options: ["뚜껑식", "스탠드"] },
-      { key: "door", title: "스탠드 도어수", mode: "single", options: ["4도어", "3도어", "1도어"], dependsOn: { key: "type", value: "스탠드" } },
+    源移섎깋?κ퀬: [
+      { key: "type", title: "?뺥깭", mode: "single", options: ["?쒓퍚??, "?ㅽ깲??] },
+      { key: "door", title: "?ㅽ깲???꾩뼱??, mode: "single", options: ["4?꾩뼱", "3?꾩뼱", "1?꾩뼱"], dependsOn: { key: "type", value: "?ㅽ깲?? } },
     ],
-    에어컨: [
-      { key: "type", title: "종류", mode: "single", options: ["스탠드", "벽걸이", "2IN1", "천장형"] },
-      { key: "area", title: "냉방면적", mode: "single", options: ["18평", "24평", "34평", "40평형 이상"], excludeWhen: { key: "type", value: "천장형" } },
-      { key: "room", title: "천장형 실수", mode: "single", options: ["3실", "4실", "5실", "6실"], dependsOn: { key: "type", value: "천장형" } },
+    ?먯뼱而? [
+      { key: "type", title: "醫낅쪟", mode: "single", options: ["?ㅽ깲??, "踰쎄구??, "2IN1", "泥쒖옣??] },
+      { key: "area", title: "?됰갑硫댁쟻", mode: "single", options: ["18??, "24??, "34??, "40?됲삎 ?댁긽"], excludeWhen: { key: "type", value: "泥쒖옣?? } },
+      { key: "room", title: "泥쒖옣???ㅼ닔", mode: "single", options: ["3??, "4??, "5??, "6??], dependsOn: { key: "type", value: "泥쒖옣?? } },
     ],
-    식기세척기: [{ key: "install", title: "설치형태", mode: "single", options: ["빌트인", "카운터탑", "프리스탠딩"] }],
-    공기청정기: [{ key: "area", title: "사용면적", mode: "single", options: ["10평 이하", "10평대", "20평대", "30평대 이상"] }],
-    정수기: [{ key: "type", title: "종류", mode: "single", options: ["냉온정수기", "냉정수기", "정수전용", "얼음정수기"] }],
-    의류관리기: [{ key: "size", title: "용량", mode: "single", options: ["3벌 이하", "5벌", "대용량"] }],
-    "라이프스타일 TV": [{ key: "type", title: "종류", mode: "single", options: ["스탠바이미", "이동형 TV", "더 프레임/아트 TV", "포터블 스크린"] }],
+    ?앷린?몄쿃湲? [{ key: "install", title: "?ㅼ튂?뺥깭", mode: "single", options: ["鍮뚰듃??, "移댁슫?고깙", "?꾨━?ㅽ깲??] }],
+    怨듦린泥?젙湲? [{ key: "area", title: "?ъ슜硫댁쟻", mode: "single", options: ["10???댄븯", "10?됰?", "20?됰?", "30?됰? ?댁긽"] }],
+    ?뺤닔湲? [{ key: "type", title: "醫낅쪟", mode: "single", options: ["?됱삩?뺤닔湲?, "?됱젙?섍린", "?뺤닔?꾩슜", "?쇱쓬?뺤닔湲?] }],
+    ?섎쪟愿由ш린: [{ key: "size", title: "?⑸웾", mode: "single", options: ["3踰??댄븯", "5踰?, "??⑸웾"] }],
+    "?쇱씠?꾩뒪???TV": [{ key: "type", title: "醫낅쪟", mode: "single", options: ["?ㅽ깲諛붿씠誘?, "?대룞??TV", "???꾨젅???꾪듃 TV", "?ы꽣釉??ㅽ겕由?] }],
   };
 
   const productOptionState = {};
@@ -163,7 +163,7 @@
           <span class="product-thumb product-thumb-${option.icon}" aria-hidden="true"></span>
           <span class="product-copy">
             <strong>${option.title}</strong>
-            <small data-product-summary="${option.value}">선택 후 다음 단계에서 상세 옵션을 고릅니다.</small>
+            <small data-product-summary="${option.value}">?좏깮 ???ㅼ쓬 ?④퀎?먯꽌 ?곸꽭 ?듭뀡??怨좊쫭?덈떎.</small>
           </span>
         </label>
       </div>
@@ -181,11 +181,11 @@
           <span class="product-thumb product-thumb-${icon}" aria-hidden="true"></span>
           <span class="product-copy">
             <strong>${product}</strong>
-            <small class="${optionText ? "is-complete" : ""}">${optionText || "상세 옵션을 선택해주세요."}</small>
+            <small class="${optionText ? "is-complete" : ""}">${optionText || "?곸꽭 ?듭뀡???좏깮?댁＜?몄슂."}</small>
           </span>
         </div>
         <button class="product-option-btn" type="button" data-product-option="${product}">
-          ${optionText ? "옵션 변경" : "옵션 선택"}
+          ${optionText ? "?듭뀡 蹂寃? : "?듭뀡 ?좏깮"}
         </button>
       </div>
     `;
@@ -243,7 +243,7 @@
       const optionText = getProductOptionText(product.value);
       const isSelected = selectedProducts().includes(product.value);
       if (row) row.classList.toggle("is-selected", isSelected);
-      summary.textContent = isSelected ? "선택됨" : "선택 후 다음 단계에서 상세 옵션을 고릅니다.";
+      summary.textContent = isSelected ? "?좏깮?? : "?좏깮 ???ㅼ쓬 ?④퀎?먯꽌 ?곸꽭 ?듭뀡??怨좊쫭?덈떎.";
       summary.classList.toggle("is-complete", isSelected);
     });
   }
@@ -254,7 +254,7 @@
     if (!list) return;
     list.innerHTML = products.length
       ? products.map((product) => selectedOptionCard(product)).join("")
-      : `<div class="empty-state compact-empty"><strong>선택한 제품군이 없습니다.</strong><p>이전 단계에서 구매 예정 품목을 선택해주세요.</p></div>`;
+      : `<div class="empty-state compact-empty"><strong>?좏깮???쒗뭹援곗씠 ?놁뒿?덈떎.</strong><p>?댁쟾 ?④퀎?먯꽌 援щℓ ?덉젙 ?덈ぉ???좏깮?댁＜?몄슂.</p></div>`;
   }
 
   function syncItemsField() {
@@ -268,7 +268,7 @@
       syncProductSummaries();
       return;
     }
-    itemsInput.value = "견적서 첨부";
+    itemsInput.value = "寃ъ쟻??泥⑤?";
   }
 
   function makeOptionModal() {
@@ -279,12 +279,12 @@
       <div class="product-option-panel" role="dialog" aria-modal="true" aria-labelledby="productOptionTitle">
         <div class="product-option-handle"></div>
         <div class="product-option-head">
-          <h3 id="productOptionTitle">옵션 선택</h3>
-          <button type="button" class="product-option-close" aria-label="옵션 닫기">×</button>
+          <h3 id="productOptionTitle">?듭뀡 ?좏깮</h3>
+          <button type="button" class="product-option-close" aria-label="?듭뀡 ?リ린">횞</button>
         </div>
         <div class="product-option-content"></div>
         <div class="product-option-actions">
-          <button type="button" class="primary-btn full product-option-confirm">확인</button>
+          <button type="button" class="primary-btn full product-option-confirm">?뺤씤</button>
         </div>
       </div>
     `;
@@ -306,7 +306,7 @@
       <label class="product-option-row">
         <input type="${group.mode === "multi" ? "checkbox" : "radio"}" name="option-${group.key}" value="${option}" ${checked ? "checked" : ""} />
         <span>${option}</span>
-        <b>✓</b>
+        <b>??/b>
       </label>
     `;
   }
@@ -353,11 +353,11 @@
     renderOptionModal(activeOptionProduct);
   }
 
-  resetSelectOptions(purposeSelect, "구매사유 선택", purposeOptions.map((option) => ({
+  resetSelectOptions(purposeSelect, "援щℓ?ъ쑀 ?좏깮", purposeOptions.map((option) => ({
     value: option.value,
     label: option.title,
   })));
-  resetSelectOptions(brandSelect, "브랜드 선택", brandOptions.map((option) => ({
+  resetSelectOptions(brandSelect, "釉뚮옖???좏깮", brandOptions.map((option) => ({
     value: option.value,
     label: option.title,
   })));
@@ -387,8 +387,8 @@
   const wizard = document.createElement("div");
   wizard.className = "customer-wizard";
   wizard.innerHTML = `
-    <button class="wizard-back" type="button" data-wizard-prev aria-label="이전 단계">←</button>
-    <div class="wizard-progress" aria-label="견적 등록 단계"></div>
+    <button class="wizard-back" type="button" data-wizard-prev aria-label="?댁쟾 ?④퀎">??/button>
+    <div class="wizard-progress" aria-label="寃ъ쟻 ?깅줉 ?④퀎"></div>
   `;
 
   const stepQuoteType = document.createElement("section");
@@ -397,8 +397,8 @@
   stepQuoteType.innerHTML = `
     <div class="wizard-step-head">
       <p class="eyebrow">Step 1</p>
-      <h2>견적서가 있으신가요?</h2>
-      <p>견적서 보유 여부에 따라 입력 단계가 달라집니다.</p>
+      <h2>寃ъ쟻?쒓? ?덉쑝?좉???</h2>
+      <p>寃ъ쟻??蹂댁쑀 ?щ????곕씪 ?낅젰 ?④퀎媛 ?щ씪吏묐땲??</p>
     </div>
     <div class="wizard-option-grid quote-type-grid">
       ${quoteTypeOptions.map((option) => optionCard(option, "wizardQuoteTypeProxy")).join("")}
@@ -413,8 +413,8 @@
   stepPersonal.innerHTML = `
     <div class="wizard-step-head">
       <p class="eyebrow">Step 2</p>
-      <h2>인적사항을 입력해주세요.</h2>
-      <p>견적 확인에 사용할 성함과 연락처입니다.</p>
+      <h2>?몄쟻?ы빆???낅젰?댁＜?몄슂.</h2>
+      <p>寃ъ쟻 ?뺤씤???ъ슜???깊븿怨??곕씫泥섏엯?덈떎.</p>
     </div>
   `;
   stepPersonal.appendChild(makeRow(customerLabel, phoneLabel));
@@ -426,8 +426,8 @@
   stepPurpose.innerHTML = `
     <div class="wizard-step-head">
       <p class="eyebrow">Step 3</p>
-      <h2>구매사유를 선택해주세요.</h2>
-      <p>구매 목적에 따라 비교해야 할 혜택과 설치 조건이 달라질 수 있습니다.</p>
+      <h2>援щℓ?ъ쑀瑜??좏깮?댁＜?몄슂.</h2>
+      <p>援щℓ 紐⑹쟻???곕씪 鍮꾧탳?댁빞 ???쒗깮怨??ㅼ튂 議곌굔???щ씪吏????덉뒿?덈떎.</p>
     </div>
     <div class="wizard-option-grid">
       ${purposeOptions.map((option) => optionCard(option, "wizardPurposeProxy")).join("")}
@@ -442,8 +442,8 @@
   stepBrand.innerHTML = `
     <div class="wizard-step-head">
       <p class="eyebrow">Step 4</p>
-      <h2>브랜드를 선택해주세요.</h2>
-      <p>LG전자, 삼성전자, 비교견적 중 견적을 받을 방향을 선택합니다.</p>
+      <h2>釉뚮옖?쒕? ?좏깮?댁＜?몄슂.</h2>
+      <p>LG?꾩옄, ?쇱꽦?꾩옄, 鍮꾧탳寃ъ쟻 以?寃ъ쟻??諛쏆쓣 諛⑺뼢???좏깮?⑸땲??</p>
     </div>
     <div class="wizard-option-grid brand-grid">
       ${brandOptions.map((option) => optionCard(option, "wizardBrandProxy")).join("")}
@@ -458,8 +458,8 @@
   stepProducts.innerHTML = `
     <div class="wizard-step-head">
       <p class="eyebrow">Step 5</p>
-      <h2>구매 예정 품목을 모두 선택해주세요.</h2>
-      <p>필요한 제품군만 먼저 선택해주세요. 상세 옵션은 다음 단계에서 선택합니다.</p>
+      <h2>援щℓ ?덉젙 ?덈ぉ??紐⑤몢 ?좏깮?댁＜?몄슂.</h2>
+      <p>?꾩슂???쒗뭹援곕쭔 癒쇱? ?좏깮?댁＜?몄슂. ?곸꽭 ?듭뀡? ?ㅼ쓬 ?④퀎?먯꽌 ?좏깮?⑸땲??</p>
     </div>
     <div class="wizard-product-list">
       ${productOptions.map((option) => productCard(option)).join("")}
@@ -473,8 +473,8 @@
   stepSelectedOptions.innerHTML = `
     <div class="wizard-step-head">
       <p class="eyebrow">Step 6</p>
-      <h2>선택한 제품의 옵션을 골라주세요.</h2>
-      <p>선택한 제품군만 표시됩니다. 판매자가 정확히 제안할 수 있도록 상세 조건을 남겨주세요.</p>
+      <h2>?좏깮???쒗뭹???듭뀡??怨⑤씪二쇱꽭??</h2>
+      <p>?좏깮???쒗뭹援곕쭔 ?쒖떆?⑸땲?? ?먮ℓ?먭? ?뺥솗???쒖븞?????덈룄濡??곸꽭 議곌굔???④꺼二쇱꽭??</p>
     </div>
     <div class="wizard-product-list selected-option-list"></div>
   `;
@@ -486,8 +486,8 @@
   stepQuote.innerHTML = `
     <div class="wizard-step-head">
       <p class="eyebrow">Step 7</p>
-      <h2>견적 정보를 등록해주세요.</h2>
-      <p>금액은 만원 단위로 입력하고, 설치 예정일과 모델명을 함께 남겨주세요.</p>
+      <h2>寃ъ쟻 ?뺣낫瑜??깅줉?댁＜?몄슂.</h2>
+      <p>湲덉븸? 留뚯썝 ?⑥쐞濡??낅젰?섍퀬, ?ㅼ튂 ?덉젙?쇨낵 紐⑤뜽紐낆쓣 ?④퍡 ?④꺼二쇱꽭??</p>
     </div>
   `;
   stepQuote.appendChild(uploadBox);
@@ -501,12 +501,12 @@
   const prevButton = document.createElement("button");
   prevButton.type = "button";
   prevButton.className = "secondary-btn wizard-prev";
-  prevButton.textContent = "이전";
+  prevButton.textContent = "?댁쟾";
 
   const nextButton = document.createElement("button");
   nextButton.type = "button";
   nextButton.className = "primary-btn wizard-next";
-  nextButton.textContent = "다음";
+  nextButton.textContent = "?ㅼ쓬";
 
   submitButton.classList.add("wizard-submit");
   navigation.append(prevButton, nextButton, submitButton);
@@ -622,7 +622,7 @@
     quoteTypeInput.value = selectedQuoteType;
     if (selectedQuoteType === "with_quote" && !document.querySelector("#quoteImage")?.files?.length) {
       document.querySelector("#quoteImage")?.reportValidity();
-      alert("견적서가 있는 경우 견적서 이미지를 1장 이상 첨부해주세요.");
+      alert("寃ъ쟻?쒓? ?덈뒗 寃쎌슦 寃ъ쟻???대?吏瑜?1???댁긽 泥⑤??댁＜?몄슂.");
       return false;
     }
     syncItemsField();
@@ -636,7 +636,7 @@
     if (quoteImage) quoteImage.required = hasQuote;
     if (!hasQuote && quoteImage) quoteImage.value = "";
     const priceLabelText = Array.from(priceLabel.childNodes).find((node) => node.nodeType === Node.TEXT_NODE);
-    if (priceLabelText) priceLabelText.textContent = hasQuote ? "기존 견적 금액(만원)" : "희망 예산(만원)";
+    if (priceLabelText) priceLabelText.textContent = hasQuote ? "湲곗〈 寃ъ쟻 湲덉븸(留뚯썝)" : "?щ쭩 ?덉궛(留뚯썝)";
   }
 
   function renderProgress(steps) {
@@ -693,3 +693,4 @@
 
   renderStep();
 })();
+

@@ -511,6 +511,33 @@ async function saveSellerApplicationToServer(application) {
   });
 }
 
+async function loginSellerToServer(sellerId, password) {
+  return apiJson("/api/seller-login", {
+    method: "POST",
+    loadingTitle: "판매자 로그인을 확인 중입니다.",
+    loadingText: "승인된 계정 정보를 서버에서 확인하고 있습니다.",
+    body: JSON.stringify({ sellerId, password }),
+  });
+}
+
+async function findSellerAccountFromServer(payload) {
+  return apiJson("/api/seller-account-find", {
+    method: "POST",
+    loadingTitle: "판매자 계정을 찾는 중입니다.",
+    loadingText: "입력한 정보를 승인 판매자 정보와 대조하고 있습니다.",
+    body: JSON.stringify(payload),
+  });
+}
+
+async function resetSellerPasswordOnServer(payload) {
+  return apiJson("/api/seller-password-reset", {
+    method: "POST",
+    loadingTitle: "비밀번호를 재설정하는 중입니다.",
+    loadingText: "새 비밀번호를 서버에 안전하게 저장하고 있습니다.",
+    body: JSON.stringify(payload),
+  });
+}
+
 function replaceRequests(rows) {
   requests.splice(0, requests.length, ...rows.map(normalizeQuoteRequest));
 }
@@ -662,7 +689,6 @@ function hydrateApprovedSellerAccounts() {
   getApprovedSellerRows().forEach((seller) => {
     if (!seller?.sellerId) return;
     sellerAccounts.set(seller.sellerId, {
-      password: seller.password,
       channel: seller.channel,
       branch: seller.branch,
       branchRegion: seller.branchRegion,
@@ -2007,49 +2033,49 @@ accountTabs.forEach((tab) => {
   });
 });
 
-sellerFindIdForm.addEventListener("submit", (event) => {
+sellerFindIdForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const formData = new FormData(sellerFindIdForm);
-  const match = findSellerByProfile({
+  const result = await findSellerAccountFromServer({
     channel: formData.get("findChannel"),
     branch: formData.get("findBranch"),
     manager: formData.get("findManager"),
     phone: formData.get("findPhone"),
   });
 
-  if (!match) {
-    setFindIdMessage("일치하는 판매자 계정을 찾을 수 없습니다.", "error");
+  if (!result?.ok) {
+    setFindIdMessage(result?.message || "일치하는 판매자 계정을 찾을 수 없습니다.", "error");
     return;
   }
 
-  setFindIdMessage(`등록된 아이디는 ${match[0]} 입니다.`);
+  setFindIdMessage(`등록된 아이디는 ${result.sellerId} 입니다.`);
 });
 
-sellerResetPasswordForm.addEventListener("submit", (event) => {
+sellerResetPasswordForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const formData = new FormData(sellerResetPasswordForm);
-  const match = findSellerByProfile({
-    channel: formData.get("resetChannel"),
-    branch: formData.get("resetBranch"),
-    manager: formData.get("resetManager"),
-    phone: formData.get("resetPhone"),
-    sellerId: formData.get("resetSellerId"),
-  });
-
-  if (!match) {
-    setResetPasswordMessage("입력한 정보와 일치하는 판매자 계정이 없습니다.", "error");
-    return;
-  }
-
   const nextPassword = formData.get("newPassword");
   if (String(nextPassword).length < 4) {
     setResetPasswordMessage("새 비밀번호는 4자리 이상으로 입력해주세요.", "error");
     return;
   }
 
-  match[1].password = nextPassword;
+  const result = await resetSellerPasswordOnServer({
+    channel: formData.get("resetChannel"),
+    branch: formData.get("resetBranch"),
+    manager: formData.get("resetManager"),
+    phone: formData.get("resetPhone"),
+    sellerId: formData.get("resetSellerId"),
+    newPassword: nextPassword,
+  });
+
+  if (!result?.ok) {
+    setResetPasswordMessage(result?.message || "입력한 정보와 일치하는 판매자 계정이 없습니다.", "error");
+    return;
+  }
+
   sellerResetPasswordForm.reset();
-  setResetPasswordMessage("비밀번호가 새 비밀번호로 재설정되었습니다.");
+  setResetPasswordMessage(result.message || "비밀번호가 새 비밀번호로 재설정되었습니다.");
 });
 
 requestForm.addEventListener("submit", (event) => {
@@ -2287,22 +2313,31 @@ sellerQuoteWorkspace.addEventListener("click", (event) => {
 sellerLoginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   setSellerLoginMessage("");
-  showServerLoading("판매자 로그인을 확인 중입니다.", "승인된 계정과 견적 데이터를 불러오고 있습니다.");
-  try {
-    await syncApprovedSellersFromServer({ showLoading: false });
-    hydrateApprovedSellerAccounts();
-  } finally {
-    hideServerLoading(true);
-  }
   const formData = new FormData(sellerLoginForm);
   const loginId = formData.get("loginId").trim();
   const loginPassword = formData.get("loginPassword");
-  const account = sellerAccounts.get(loginId);
+  const loginResult = await loginSellerToServer(loginId, loginPassword);
 
-  if (!account || account.password !== loginPassword) {
-    setSellerLoginMessage("아이디 또는 비밀번호가 일치하지 않습니다.", "error");
+  if (!loginResult?.ok || !loginResult.row) {
+    setSellerLoginMessage(loginResult?.message || "아이디 또는 비밀번호가 일치하지 않습니다.", "error");
     return;
   }
+
+  const account = loginResult.row;
+  sellerAccounts.set(loginId, {
+    channel: account.channel,
+    branch: account.branch,
+    branchRegion: account.branchRegion,
+    manager: account.manager,
+    managerPosition: account.managerPosition,
+    phone: account.phone,
+    cardImage: account.cardImage || "",
+    consent: account.consent,
+  });
+  writeStorageArray(STORAGE_KEYS.approvedSellers, [
+    ...getApprovedSellerRows().filter((seller) => seller.sellerId !== loginId),
+    account,
+  ]);
 
   activeSellerId = loginId;
   writeActiveSellerSession(loginId);
@@ -2806,7 +2841,7 @@ async function bootApplication() {
   const isSellerRegisterPath = initialPath === "/seller/register";
 
   if (canUseApiServer()) {
-    if (isSellerPath || activeSellerId) {
+    if (isSellerPath) {
       showServerLoading("판매자 페이지를 준비 중입니다.", "계정과 견적 데이터를 불러오고 있습니다.");
       await syncApprovedSellersFromServer({ showLoading: false });
       restoreActiveSellerSession();
@@ -2815,14 +2850,14 @@ async function bootApplication() {
     }
 
     try {
-      if (activeSellerId) {
+      if (isSellerPath && activeSellerId) {
         await Promise.all([
           syncCustomerQuotesFromServer({ showLoading: false }),
           syncBidsFromServer({ showLoading: false }),
         ]);
       }
     } finally {
-      if (isSellerPath || activeSellerId) {
+      if (isSellerPath) {
         hideServerLoading(true);
       }
     }
@@ -2835,4 +2870,5 @@ async function bootApplication() {
 }
 
 bootApplication();
+
 

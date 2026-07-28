@@ -1,7 +1,8 @@
-User-agent: *
+﻿User-agent: *
 Allow: /
 
 User-agent: Yeti
 Allow: /
 
 Sitemap: https://ga-pick.com/sitemap.xml
+

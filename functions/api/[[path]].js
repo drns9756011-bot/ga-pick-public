@@ -2,7 +2,7 @@
   "Content-Type": "application/json; charset=utf-8",
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Headers": "Content-Type, X-Admin-Token",
   "Cache-Control": "no-store",
 };
 
@@ -30,6 +30,18 @@ function json(payload, status = 200) {
     status,
     headers: jsonHeaders,
   });
+}
+
+function getAdminToken(env) {
+  return String(env.ADMIN_API_TOKEN || "").trim();
+}
+
+function requireAdmin(request, env) {
+  const expected = getAdminToken(env);
+  if (!expected) return json({ ok: false, message: "ADMIN_API_TOKEN 설정이 필요합니다." }, 500);
+  const actual = String(request.headers.get("X-Admin-Token") || "").trim();
+  if (actual !== expected) return json({ ok: false, message: "관리자 인증이 필요합니다." }, 401);
+  return null;
 }
 
 function createId(prefix) {
@@ -64,6 +76,69 @@ async function sha256Hex(value) {
   return Array.from(new Uint8Array(digest))
     .map((byte) => byte.toString(16).padStart(2, "0"))
     .join("");
+}
+
+function bytesToHex(bytes) {
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function hexToBytes(hex) {
+  const clean = String(hex || "").trim();
+  const bytes = new Uint8Array(clean.length / 2);
+  for (let index = 0; index < bytes.length; index += 1) {
+    bytes[index] = parseInt(clean.slice(index * 2, index * 2 + 2), 16);
+  }
+  return bytes;
+}
+
+function constantTimeEqual(a, b) {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let index = 0; index < a.length; index += 1) diff |= a[index] ^ b[index];
+  return diff === 0;
+}
+
+async function hashPassword(password) {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(String(password || "")),
+    "PBKDF2",
+    false,
+    ["deriveBits"]
+  );
+  const iterations = 120000;
+  const bits = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", hash: "SHA-256", salt, iterations },
+    key,
+    256
+  );
+  return `pbkdf2$${iterations}$${bytesToHex(salt)}$${bytesToHex(new Uint8Array(bits))}`;
+}
+
+async function verifyPassword(password, storedPassword) {
+  const stored = String(storedPassword || "");
+  if (!stored.startsWith("pbkdf2$")) return stored === String(password || "");
+  const [, iterationText, saltHex, hashHex] = stored.split("$");
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(String(password || "")),
+    "PBKDF2",
+    false,
+    ["deriveBits"]
+  );
+  const bits = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", hash: "SHA-256", salt: hexToBytes(saltHex), iterations: Number(iterationText || 120000) },
+    key,
+    256
+  );
+  return constantTimeEqual(new Uint8Array(bits), hexToBytes(hashHex));
+}
+
+async function protectStoredPassword(storedPassword) {
+  const stored = String(storedPassword || "");
+  if (!stored) return "";
+  return stored.startsWith("pbkdf2$") ? stored : hashPassword(stored);
 }
 
 function sellerName(row) {
@@ -109,7 +184,6 @@ function normalizeSellerApplication(row) {
     reviewedAt: row.reviewed_at || "",
     reviewMemo: row.review_memo || "",
     sellerId: row.seller_id,
-    password: row.password,
     channel: row.channel,
     branch: row.branch,
     branchRegion: row.branch_region,
@@ -129,7 +203,6 @@ function normalizeApprovedSeller(row) {
     id: row.id,
     status: row.status,
     sellerId: row.seller_id,
-    password: row.password,
     channel: row.channel,
     branch: row.branch,
     branchRegion: row.branch_region,
@@ -145,61 +218,6 @@ function normalizeApprovedSeller(row) {
     reviewMemo: row.review_memo || "",
     approvedAt: row.approved_at || "",
   };
-}
-
-const MASTER_SELLER = {
-  id: "master-pickgj",
-  status: "approved",
-  sellerId: "pickgj",
-  password: "qwer1234!!",
-  channel: "픽견적",
-  branch: "마스터 관리자",
-  branchRegion: "전국",
-  manager: "마스터",
-  managerPosition: "관리자",
-  phone: "010-0000-0000",
-  cardImage: "",
-  cardImageKey: "",
-  memo: "운영자 마스터 계정",
-  consent: { systemAccount: true },
-};
-
-async function ensureMasterSeller(env) {
-  await ensureSellerColumns(env);
-  const now = new Date().toISOString();
-  const existing = await env.DB.prepare("SELECT id FROM approved_sellers WHERE seller_id = ? LIMIT 1")
-    .bind(MASTER_SELLER.sellerId)
-    .first();
-
-  if (existing) return;
-
-  await env.DB.prepare(
-    `INSERT INTO approved_sellers
-      (id, status, seller_id, password, channel, branch, branch_region, manager, manager_position, phone,
-       card_image, card_image_key, memo, consent_json, requested_at, reviewed_at, review_memo, approved_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-  )
-    .bind(
-      MASTER_SELLER.id,
-      MASTER_SELLER.status,
-      MASTER_SELLER.sellerId,
-      MASTER_SELLER.password,
-      MASTER_SELLER.channel,
-      MASTER_SELLER.branch,
-      MASTER_SELLER.branchRegion,
-      MASTER_SELLER.manager,
-      MASTER_SELLER.managerPosition,
-      MASTER_SELLER.phone,
-      MASTER_SELLER.cardImage,
-      MASTER_SELLER.cardImageKey,
-      MASTER_SELLER.memo,
-      JSON.stringify(MASTER_SELLER.consent),
-      now,
-      now,
-      "마스터 계정 자동 등록",
-      now
-    )
-    .run();
 }
 
 function normalizeMessage(row) {
@@ -600,6 +618,97 @@ async function closeExpiredQuotes(env) {
       .bind(now, quote.id)
       .run();
   }
+}
+
+async function deleteR2Object(env, key) {
+  if (!env.FILES || !key) return;
+  try {
+    await env.FILES.delete(key);
+  } catch (error) {
+    console.warn("R2 object delete failed", key, error);
+  }
+}
+
+async function cleanupExpiredStoredData(env) {
+  await ensureCustomerQuoteColumns(env);
+  const now = new Date().toISOString();
+  const expiredFullImages = await env.DB.prepare(
+    `SELECT id, object_key
+     FROM quote_images
+     WHERE image_type = 'full'
+       AND expires_at != ''
+       AND expires_at < ?
+     LIMIT 200`
+  )
+    .bind(now)
+    .all();
+
+  for (const image of expiredFullImages.results || []) {
+    await deleteR2Object(env, image.object_key);
+    await env.DB.prepare("DELETE FROM quote_images WHERE id = ?").bind(image.id).run();
+  }
+
+  const expiredQuotes = await env.DB.prepare(
+    `SELECT id
+     FROM customer_quotes
+     WHERE personal_expires_at != ''
+       AND personal_expires_at < ?
+     LIMIT 100`
+  )
+    .bind(now)
+    .all();
+
+  for (const quote of expiredQuotes.results || []) {
+    const images = await env.DB.prepare("SELECT object_key FROM quote_images WHERE quote_id = ?").bind(quote.id).all();
+    for (const image of images.results || []) {
+      await deleteR2Object(env, image.object_key);
+    }
+    await env.DB.prepare("DELETE FROM quote_images WHERE quote_id = ?").bind(quote.id).run();
+    await env.DB.prepare("DELETE FROM bids WHERE quote_id = ?").bind(quote.id).run();
+    await env.DB.prepare("DELETE FROM reviews WHERE quote_id = ?").bind(quote.id).run();
+    await env.DB.prepare("DELETE FROM customer_quotes WHERE id = ?").bind(quote.id).run();
+  }
+
+  return {
+    fullImagesDeleted: Number((expiredFullImages.results || []).length),
+    quotesDeleted: Number((expiredQuotes.results || []).length),
+  };
+}
+
+async function migrateLegacySellerPasswords(env) {
+  await ensureSellerColumns(env);
+  let migrated = 0;
+  const targets = [
+    { table: "approved_sellers", key: "seller_id" },
+    { table: "seller_applications", key: "seller_id" },
+  ];
+
+  for (const target of targets) {
+    const rows = await env.DB.prepare(
+      `SELECT ${target.key} AS seller_id, password
+       FROM ${target.table}
+       WHERE password IS NOT NULL
+         AND password != ''
+         AND password NOT LIKE 'pbkdf2$%'
+       LIMIT 100`
+    ).all();
+
+    for (const row of rows.results || []) {
+      await env.DB.prepare(`UPDATE ${target.table} SET password = ? WHERE ${target.key} = ?`)
+        .bind(await hashPassword(row.password), row.seller_id)
+        .run();
+      migrated += 1;
+    }
+  }
+
+  return { migrated };
+}
+
+async function runMaintenance(env) {
+  await closeExpiredQuotes(env);
+  const cleanup = await cleanupExpiredStoredData(env);
+  const passwordMigration = await migrateLegacySellerPasswords(env);
+  return json({ ok: true, cleanup, passwordMigration });
 }
 
 async function ensureGuideDismissalTable(env) {
@@ -1040,6 +1149,10 @@ async function createSellerApplication(env, request) {
   if (!body.sellerId || !body.branch || !body.manager || !body.phone) {
     return json({ ok: false, message: "판매자 아이디, 지점명, 매니저 이름, 연락처가 필요합니다." }, 400);
   }
+  const nextPassword = String(body.password || "").trim();
+  if (nextPassword.length < 4) {
+    return json({ ok: false, message: "비밀번호는 4자 이상으로 입력해주세요." }, 400);
+  }
 
   const id = body.id || createId("seller");
   const now = body.requestedAt || new Date().toISOString();
@@ -1070,7 +1183,7 @@ async function createSellerApplication(env, request) {
       body.reviewedAt || "",
       body.reviewMemo || "",
       body.sellerId,
-      body.password || "",
+      await hashPassword(nextPassword),
       body.channel || "",
       body.branch || "",
       body.branchRegion || "",
@@ -1107,9 +1220,8 @@ async function createSellerApplication(env, request) {
 async function updateSellerApplication(env, request, id) {
   await ensureSellerColumns(env);
   const body = await request.json();
-  const row = normalizeSellerApplication(
-    await env.DB.prepare("SELECT * FROM seller_applications WHERE id = ?").bind(id).first()
-  );
+  const rawRow = await env.DB.prepare("SELECT * FROM seller_applications WHERE id = ?").bind(id).first();
+  const row = normalizeSellerApplication(rawRow);
   if (!row) return json({ ok: false, message: "신청 정보를 찾을 수 없습니다." }, 404);
 
   const status = body.status || row.status;
@@ -1141,7 +1253,7 @@ async function updateSellerApplication(env, request, id) {
         updated.id,
         "approved",
         updated.sellerId,
-        updated.password,
+        await protectStoredPassword(rawRow.password),
         updated.channel,
         updated.branch,
         updated.branchRegion,
@@ -1193,9 +1305,97 @@ async function updateSellerApplication(env, request, id) {
   return json({ ok: true, row: updated });
 }
 
+async function loginSeller(env, request) {
+  await ensureSellerColumns(env);
+  const body = await request.json().catch(() => ({}));
+  const sellerId = String(body.sellerId || body.loginId || "").trim();
+  const password = String(body.password || body.loginPassword || "");
+  if (!sellerId || !password) return json({ ok: false, message: "아이디와 비밀번호를 입력해주세요." }, 400);
+
+  const row = await env.DB.prepare("SELECT * FROM approved_sellers WHERE seller_id = ? AND status = 'approved' LIMIT 1")
+    .bind(sellerId)
+    .first();
+  if (!row || !(await verifyPassword(password, row.password))) {
+    return json({ ok: false, message: "아이디 또는 비밀번호가 일치하지 않습니다." }, 401);
+  }
+
+  if (!String(row.password || "").startsWith("pbkdf2$")) {
+    await env.DB.prepare("UPDATE approved_sellers SET password = ? WHERE id = ?")
+      .bind(await hashPassword(password), row.id)
+      .run();
+  }
+
+  const updated = await env.DB.prepare("SELECT * FROM approved_sellers WHERE id = ?").bind(row.id).first();
+  return json({ ok: true, row: normalizeApprovedSeller(updated) });
+}
+
+async function findSellerAccount(env, request) {
+  await ensureSellerColumns(env);
+  const body = await request.json().catch(() => ({}));
+  const channel = String(body.channel || "").trim();
+  const branch = normalizeText(body.branch || "");
+  const manager = normalizeText(body.manager || "");
+  const phone = normalizePhone(body.phone || "");
+  if (!channel || !branch || !manager || !phone) {
+    return json({ ok: false, message: "채널, 지점명, 매니저명, 연락처를 모두 입력해주세요." }, 400);
+  }
+
+  const row = await env.DB.prepare(
+    `SELECT * FROM approved_sellers
+     WHERE channel = ?
+       AND REPLACE(REPLACE(branch, ' ', ''), '\t', '') = ?
+       AND REPLACE(REPLACE(manager, ' ', ''), '\t', '') = ?
+       AND REPLACE(REPLACE(phone, '-', ''), ' ', '') = ?
+       AND status = 'approved'
+     LIMIT 1`
+  )
+    .bind(channel, branch, manager, phone)
+    .first();
+
+  if (!row) return json({ ok: false, message: "일치하는 판매자 계정을 찾을 수 없습니다." }, 404);
+  return json({ ok: true, sellerId: row.seller_id });
+}
+
+async function resetSellerPassword(env, request) {
+  await ensureSellerColumns(env);
+  const body = await request.json().catch(() => ({}));
+  const channel = String(body.channel || "").trim();
+  const branch = normalizeText(body.branch || "");
+  const manager = normalizeText(body.manager || "");
+  const phone = normalizePhone(body.phone || "");
+  const sellerId = String(body.sellerId || "").trim();
+  const nextPassword = String(body.password || body.newPassword || "").trim();
+
+  if (!channel || !branch || !manager || !phone || !sellerId) {
+    return json({ ok: false, message: "채널, 지점명, 매니저명, 연락처, 아이디를 모두 입력해주세요." }, 400);
+  }
+  if (nextPassword.length < 4) {
+    return json({ ok: false, message: "새 비밀번호는 4자 이상으로 입력해주세요." }, 400);
+  }
+
+  const row = await env.DB.prepare(
+    `SELECT * FROM approved_sellers
+     WHERE seller_id = ?
+       AND channel = ?
+       AND REPLACE(REPLACE(branch, ' ', ''), '\t', '') = ?
+       AND REPLACE(REPLACE(manager, ' ', ''), '\t', '') = ?
+       AND REPLACE(REPLACE(phone, '-', ''), ' ', '') = ?
+       AND status = 'approved'
+     LIMIT 1`
+  )
+    .bind(sellerId, channel, branch, manager, phone)
+    .first();
+
+  if (!row) return json({ ok: false, message: "일치하는 판매자 계정을 찾을 수 없습니다." }, 404);
+
+  await env.DB.prepare("UPDATE approved_sellers SET password = ? WHERE id = ?")
+    .bind(await hashPassword(nextPassword), row.id)
+    .run();
+  return json({ ok: true, message: "비밀번호가 새 비밀번호로 재설정되었습니다." });
+}
+
 async function getApprovedSellers(env) {
   await ensureSellerColumns(env);
-  await ensureMasterSeller(env);
   const result = await env.DB.prepare("SELECT * FROM approved_sellers ORDER BY approved_at DESC").all();
   return json({ ok: true, rows: result.results.map(normalizeApprovedSeller) });
 }
@@ -1412,7 +1612,6 @@ async function upsertBid(env, request) {
   }
 
   await ensureSellerColumns(env);
-  await ensureMasterSeller(env);
   const approvedSellerRow = await env.DB.prepare(
     "SELECT * FROM approved_sellers WHERE seller_id = ? AND status = 'approved' LIMIT 1"
   )
@@ -1940,9 +2139,19 @@ export async function onRequest(context) {
   if (method === "OPTIONS") return new Response(null, { status: 204, headers: jsonHeaders });
   if (!env.DB) return json({ ok: false, message: "D1 DB 바인딩(DB)이 필요합니다." }, 500);
 
-  if (path === "seller-applications" && method === "GET") return getSellerApplications(env);
   if (path === "seller-applications" && method === "POST") return createSellerApplication(env, request);
+  if (path === "seller-login" && method === "POST") return loginSeller(env, request);
+  if (path === "seller-account-find" && method === "POST") return findSellerAccount(env, request);
+  if (path === "seller-password-reset" && method === "POST") return resetSellerPassword(env, request);
+
+  if (path === "seller-applications" && method === "GET") {
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
+    return getSellerApplications(env);
+  }
   if (path.startsWith("seller-applications/") && method === "PATCH") {
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
     return updateSellerApplication(env, request, decodeURIComponent(pathParts.slice(1).join("/")));
   }
 
@@ -1957,29 +2166,71 @@ export async function onRequest(context) {
 
   if (path === "guide-dismissal" && method === "GET") return getGuideDismissal(env, request);
   if (path === "guide-dismissal" && method === "POST") return saveGuideDismissal(env, request);
-  if (path === "solapi-health" && method === "GET") return getSolapiHealth(env);
-  if (path === "solapi-auth-test" && method === "GET") return getSolapiAuthTest(env);
+  if (path === "solapi-health" && method === "GET") {
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
+    return getSolapiHealth(env);
+  }
+  if (path === "solapi-auth-test" && method === "GET") {
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
+    return getSolapiAuthTest(env);
+  }
 
-  if (path === "alimtalk" && method === "GET") return getAlimtalk(env);
-  if (path === "alimtalk-debug" && method === "GET") return getAlimtalkDebug(env);
-  if (path === "alimtalk" && method === "POST") return createAlimtalk(env, request);
+  if (path === "alimtalk" && method === "GET") {
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
+    return getAlimtalk(env);
+  }
+  if (path === "alimtalk-debug" && method === "GET") {
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
+    return getAlimtalkDebug(env);
+  }
+  if (path === "alimtalk" && method === "POST") {
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
+    return createAlimtalk(env, request);
+  }
   if (path.startsWith("alimtalk/") && path.endsWith("/resend") && method === "POST") {
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
     return resendAlimtalk(env, decodeURIComponent(pathParts.slice(1, -1).join("/")));
   }
   if (path.startsWith("alimtalk/") && path.endsWith("/refresh") && method === "POST") {
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
     return refreshAlimtalkStatus(env, decodeURIComponent(pathParts.slice(1, -1).join("/")));
   }
   if (path.startsWith("alimtalk/") && method === "DELETE") {
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
     return deleteAlimtalk(env, decodeURIComponent(pathParts.slice(1).join("/")));
   }
   if (path.startsWith("alimtalk/") && method === "PATCH") {
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
     return updateAlimtalk(env, request, decodeURIComponent(pathParts.slice(1).join("/")));
   }
 
   if (path === "push-tokens" && method === "POST") return savePushToken(env, request);
+  if (path === "maintenance" && method === "POST") {
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
+    return runMaintenance(env);
+  }
 
   if (path === "uploads" && method === "POST") return uploadFile(env, request);
   if (path.startsWith("files/") && method === "GET") return getFile(env, decodeURIComponent(pathParts.slice(1).join("/")));
 
   return json({ ok: false, message: "API를 찾을 수 없습니다." }, 404);
 }
+
+export async function onScheduled(context) {
+  const { env } = context;
+  if (!env.DB) return;
+  await closeExpiredQuotes(env);
+  await cleanupExpiredStoredData(env);
+  await migrateLegacySellerPasswords(env);
+}
+

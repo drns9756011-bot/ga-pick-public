@@ -1,4 +1,4 @@
-import { onRequest } from "../functions/api/[[path]].js";
+﻿import { onRequest, onScheduled } from "../functions/api/[[path]].js";
 
 export default {
   async fetch(request, env, ctx) {
@@ -87,4 +87,8 @@ export default {
 
     return env.ASSETS.fetch(request);
   },
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(onScheduled({ event, env, ctx }));
+  },
 };
+
