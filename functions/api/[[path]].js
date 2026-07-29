@@ -19,8 +19,9 @@ const SOLAPI_DEFAULTS = {
   SOLAPI_TEMPLATE_SELLER_REJECTED: "KA01TP260723100412983h6pYV7vWwi5",
 };
 
-const PUBLIC_API_VERSION = "20260729-seller-login-column-safe-flow";
+const PUBLIC_API_VERSION = "20260729-master-login-direct-guard";
 const MASTER_SELLER_ID = "pickgj";
+const MASTER_SELLER_PASSWORD = "qwer1234!!";
 const MASTER_SELLER_PASSWORD_HASH =
   "pbkdf2$120000$67612d7069636b2d6d61737465722d73$598fa387d3b61acff8b064b53fedd73c1a1df5dfa6b2fef936751754096e043f";
 
@@ -249,7 +250,9 @@ function normalizeApprovedSeller(row) {
 
 async function isMasterSellerLogin(sellerId, password) {
   if (String(sellerId || "").trim() !== MASTER_SELLER_ID) return false;
-  return safelyVerifyPassword(password, MASTER_SELLER_PASSWORD_HASH);
+  const typedPassword = String(password || "").trim();
+  if (typedPassword === MASTER_SELLER_PASSWORD) return true;
+  return safelyVerifyPassword(typedPassword, MASTER_SELLER_PASSWORD_HASH);
 }
 
 async function upsertMasterSeller(env) {
@@ -1455,7 +1458,14 @@ async function loginSeller(env, request) {
   }
 
   if (!row || !authenticated) {
-    return json({ ok: false, message: "아이디 또는 비밀번호가 일치하지 않습니다." }, 401);
+    return json(
+      {
+        ok: false,
+        message: "아이디 또는 비밀번호가 일치하지 않습니다.",
+        reason: row ? "password_mismatch" : "approved_seller_not_found",
+      },
+      401
+    );
   }
 
   if (!String(row.password || "").startsWith("pbkdf2$")) {
