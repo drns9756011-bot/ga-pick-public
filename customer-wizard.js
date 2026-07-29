@@ -62,8 +62,8 @@
   ];
 
   const purposeOptions = [
-    { value: "웨딩,혼수 특별혜택", title: "웨딩,혼수", text: "혼수 패키지 조건과 카드 혜택을 함께 비교합니다.", badge: "혜택 비교" },
-    { value: "신축입주 특별혜택", title: "신축입주", text: "입주 일정에 맞춘 배송, 설치 조건을 확인합니다.", badge: "혜택 비교" },
+    { value: "웨딩,혼수 특별혜택", title: "웨딩,혼수", text: "혼수 패키지 조건과 카드 혜택을 함께 비교합니다.", badge: "특별혜택" },
+    { value: "신축입주 특별혜택", title: "신축입주", text: "입주 일정에 맞춘 배송, 설치 조건을 확인합니다.", badge: "특별혜택" },
     { value: "이사", title: "이사", text: "이사 일정에 맞춰 필요한 품목을 비교합니다." },
     { value: "인테리어", title: "인테리어", text: "공간과 빌트인 조건을 기준으로 비교합니다." },
     { value: "일반", title: "일반", text: "교체와 단품 구매 조건을 비교합니다." },
@@ -76,21 +76,16 @@
   ];
 
   const productOptions = [
-    { value: "TV", title: "TV", icon: "TV" },
-    { value: "냉장고", title: "냉장고", icon: "냉" },
-    { value: "세탁기/건조기", title: "세탁기/건조기", icon: "세" },
-    { value: "청소기", title: "청소기", icon: "청" },
-    { value: "김치냉장고", title: "김치냉장고", icon: "김" },
-    { value: "에어컨", title: "에어컨", icon: "에" },
-    { value: "식기세척기", title: "식기세척기", icon: "식" },
-    { value: "인덕션/전기레인지", title: "인덕션/전기레인지", icon: "인" },
-    { value: "정수기", title: "정수기", icon: "정" },
-    { value: "의류관리기", title: "의류관리기", icon: "의" },
-    { value: "오븐/전자레인지", title: "오븐/전자레인지", icon: "오" },
-    { value: "공기청정기", title: "공기청정기", icon: "공" },
-    { value: "제습기", title: "제습기", icon: "제" },
-    { value: "가습기", title: "가습기", icon: "가" },
-    { value: "라이프스타일 TV", title: "라이프스타일 TV", icon: "라" },
+    { value: "TV", title: "TV", icon: "TV", thumb: "tv" },
+    { value: "라이프스타일 TV", title: "라이프스타일TV", icon: "LS", thumb: "lifestyle" },
+    { value: "냉장고", title: "냉장고", icon: "냉", thumb: "fridge" },
+    { value: "김치냉장고", title: "김치냉장고", icon: "김", thumb: "kimchi" },
+    { value: "세탁기/건조기", title: "세탁기+건조기", icon: "세", thumb: "washer" },
+    { value: "의류관리기", title: "의류 관리기", icon: "의", thumb: "styler" },
+    { value: "에어컨", title: "에어컨", icon: "에", thumb: "aircon" },
+    { value: "청소기", title: "청소기", icon: "청", thumb: "vacuum" },
+    { value: "식기세척기", title: "식기세척기", icon: "식", thumb: "dishwasher" },
+    { value: "공기청정기", title: "공기청정기", icon: "공", thumb: "purifier" },
   ];
 
   const optionSchema = {
@@ -142,7 +137,7 @@
       { key: "type", title: "종류", type: "single", values: ["초음파식", "가열식", "복합식", "대용량", "모르겠어요"] },
     ],
     "라이프스타일 TV": [
-      { key: "type", title: "형태", type: "single", values: ["이동형 TV", "스탠바이미류", "포터블 스크린", "모르겠어요"] },
+      { key: "type", title: "형태", type: "single", values: ["이동형 TV", "스탠바이미", "포터블 스크린", "모르겠어요"] },
     ],
   };
 
@@ -260,7 +255,7 @@
     const list = visibleSteps();
     const wizard = form.querySelector(".customer-wizard");
     wizard.innerHTML = `
-      <div class="wizard-progress" aria-label="견적 등록 진행 단계">
+      <div class="wizard-progress" style="--wizard-step-count:${list.length}" aria-label="견적 등록 진행 단계">
         ${list.map((_, index) => `<span class="${index <= state.stepIndex ? "is-active" : ""}"></span>`).join("")}
       </div>
       <div class="wizard-step-label">Step ${state.stepIndex + 1}</div>
@@ -357,7 +352,7 @@
             return `
               <button type="button" class="wizard-product-card ${checked ? "is-selected" : ""}" data-product="${escapeHtml(product.value)}">
                 <span class="wizard-checkbox" aria-hidden="true">${checked ? "✓" : ""}</span>
-                <span class="product-thumb"><span>${escapeHtml(product.icon)}</span></span>
+                <span class="product-thumb product-thumb-${escapeHtml(product.thumb)}" aria-hidden="true"><span>${escapeHtml(product.icon)}</span></span>
                 <strong>${escapeHtml(product.title)}</strong>
               </button>
             `;
@@ -855,8 +850,15 @@
     const matchers = [];
 
     if (product === "TV" && options.size) {
-      const size = options.size.match(/\d+/)?.[0];
-      if (size) matchers.push((name) => name.includes(size));
+      const selectedSize = Number(options.size.match(/\d+/)?.[0] || 0);
+      const isOrAbove = options.size.includes("↑") || options.size.includes("이상");
+      if (selectedSize) {
+        matchers.push((name) => {
+          const inches = extractTvInches(name);
+          if (!inches) return false;
+          return isOrAbove ? inches >= selectedSize : inches === selectedSize;
+        });
+      }
     }
     if (product === "냉장고" && options.type) {
       if (options.type.includes("빌트인")) matchers.push((name) => /빌트|키친|핏|오브제|스템/i.test(name));
@@ -882,6 +884,23 @@
 
     const matched = matchers.length ? normalized.filter((model) => matchers.every((matcher) => matcher(model.modelName))) : normalized;
     return matched.length ? matched : normalized;
+  }
+
+  function extractTvInches(modelName) {
+    const name = String(modelName || "").toUpperCase().replace(/\s+/g, "");
+    const patterns = [
+      /OLED(\d{2,3})/,
+      /^(\d{2,3})(?:QNED|NANO)/,
+      /(^|[^A-Z0-9])(\d{2,3})(?:QNED|NANO)/,
+    ];
+
+    for (const pattern of patterns) {
+      const match = name.match(pattern);
+      const raw = match?.[2] || match?.[1];
+      const inches = Number(raw || 0);
+      if (inches >= 20 && inches <= 120) return inches;
+    }
+    return 0;
   }
 
   async function fetchLowestPrice(modelName) {
