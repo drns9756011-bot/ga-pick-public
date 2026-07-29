@@ -1103,7 +1103,25 @@ function splitTopLevelText(text, separators = [",", "/"]) {
 
 function getWithoutQuoteItems(request) {
   if (!isWithoutQuoteRequest(request)) return [];
-  return splitTopLevelText(request?.items || "").map((item) => {
+  const rawItems = String(request?.items || "").trim();
+  const bracketRows = rawItems
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line && line !== "견적서 없음 · 선택 품목")
+    .map((line) => {
+      const match = line.match(/^\[(.+?)\]\s*(.*)$/);
+      if (!match) return null;
+
+      return {
+        name: match[1].trim(),
+        options: splitTopLevelText(match[2], ["/", "·"]).map((option) => option.trim()).filter(Boolean),
+      };
+    })
+    .filter(Boolean);
+
+  if (bracketRows.length) return bracketRows;
+
+  return splitTopLevelText(rawItems).map((item) => {
     const match = item.match(/^(.+?)\s*\((.*)\)$/);
     if (!match) {
       return { name: item.trim(), options: [] };

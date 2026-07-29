@@ -236,7 +236,7 @@ button:disabled {
   padding: 8vh 6vw 9vh;
   background:
     linear-gradient(90deg, rgba(246, 247, 249, 0.96) 0%, rgba(246, 247, 249, 0.9) 52%, rgba(246, 247, 249, 0.72) 100%),
-    url("assets/customer-quote-comparison.png") right center/cover;
+    url("assets/pickquote-main-comparison-20260729.png") right center/cover;
 }
 
 .hero-copy {
@@ -1327,7 +1327,7 @@ h3 {
   background:
     radial-gradient(circle at 7% 20%, rgba(18, 107, 93, 0.13), rgba(18, 107, 93, 0) 28%),
     linear-gradient(90deg, rgba(248, 250, 252, 0.98) 0%, rgba(248, 250, 252, 0.92) 58%, rgba(248, 250, 252, 0.72) 100%),
-    url("assets/customer-quote-comparison.png") right center/cover;
+    url("assets/pickquote-main-comparison-20260729.png") right center/cover;
   border-bottom: 1px solid var(--line);
 }
 
@@ -4717,7 +4717,7 @@ td strong {
     overflow: hidden;
     background:
       linear-gradient(rgba(248, 250, 252, 0.97), rgba(248, 250, 252, 0.95)),
-      url("assets/customer-quote-comparison.png") center top/cover;
+      url("assets/pickquote-main-comparison-20260729.png") center top/cover;
   }
 
   .home-hero-copy,
@@ -5041,7 +5041,7 @@ td strong {
     overflow: hidden;
     background:
       linear-gradient(rgba(246, 247, 249, 0.96), rgba(246, 247, 249, 0.94)),
-      url("assets/customer-quote-comparison.png") center top/cover;
+      url("assets/pickquote-main-comparison-20260729.png") center top/cover;
   }
 
   .hero-copy,
@@ -5749,6 +5749,17 @@ td strong {
 .home-campaign-visual {
   position: relative;
   min-width: 0;
+}
+
+.home-hero-real-image {
+  width: min(100%, 540px);
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  display: block;
+  margin: 0 auto 18px;
+  border: 10px solid rgba(255, 255, 255, 0.92);
+  border-radius: 28px;
+  box-shadow: 0 28px 80px rgba(5, 22, 30, 0.26);
 }
 
 .phone-mockup {
