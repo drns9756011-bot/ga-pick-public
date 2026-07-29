@@ -1593,6 +1593,13 @@ async function createCustomerRequestOnServer(formData) {
   }
 }
 
+function buildRequestMemo(formData, hasQuoteImage) {
+  const memo = String(formData.get("memo") || "").trim();
+  const aiSummary = String(formData.get("aiRequestSummary") || "").trim();
+  if (hasQuoteImage || !aiSummary) return memo;
+  return [aiSummary, memo ? `[추가 요청사항]\n${memo}` : ""].filter(Boolean).join("\n\n");
+}
+
 function openConsentModal(formData) {
   pendingQuoteFormData = formData;
   collectionConsent.checked = false;
@@ -1624,7 +1631,7 @@ async function createCustomerRequest(formData) {
     price: parseManwon(formData.get("price")),
     region: formData.get("region").trim(),
     installDate: formData.get("installDate").trim(),
-    memo: formData.get("memo").trim(),
+    memo: buildRequestMemo(formData, hasQuoteImage),
     image: requestImages[0] || "",
     images: requestImages,
     thumbnailImage,

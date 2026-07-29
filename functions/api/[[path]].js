@@ -19,7 +19,7 @@ const SOLAPI_DEFAULTS = {
   SOLAPI_TEMPLATE_SELLER_REJECTED: "KA01TP260725102900428RYxfTGV9SoG",
 };
 
-const PUBLIC_API_VERSION = "20260729-solapi-template-refresh";
+const PUBLIC_API_VERSION = "20260729-naver-shopping-lowest-ready";
 const MASTER_SELLER_ID = "pickgj";
 const MASTER_SELLER_PASSWORD = "qwer1234!!";
 const MASTER_SELLER_PASSWORD_HASH =
@@ -212,6 +212,87 @@ function formatAlimtalkPrice(value) {
   if (!amount) return "";
   if (amount >= 10000) return `${amount.toLocaleString("ko-KR")}원`;
   return `${amount.toLocaleString("ko-KR")}만원`;
+}
+
+function getNaverShoppingConfig(env) {
+  return {
+    clientId: String(env.NAVER_SHOPPING_CLIENT_ID || env.NAVER_CLIENT_ID || "").trim(),
+    clientSecret: String(env.NAVER_SHOPPING_CLIENT_SECRET || env.NAVER_CLIENT_SECRET || "").trim(),
+  };
+}
+
+function stripHtmlTags(value) {
+  return String(value || "").replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
+}
+
+async function getNaverShoppingLowest(env, request) {
+  const config = getNaverShoppingConfig(env);
+  if (!config.clientId || !config.clientSecret) {
+    return json({
+      ok: false,
+      configured: false,
+      message: "네이버 쇼핑 검색 API 키가 필요합니다.",
+      required: ["NAVER_SHOPPING_CLIENT_ID", "NAVER_SHOPPING_CLIENT_SECRET"],
+    });
+  }
+
+  const url = new URL(request.url);
+  const query = String(url.searchParams.get("query") || "").trim();
+  const display = Math.min(Math.max(Number(url.searchParams.get("display") || 10), 1), 30);
+  if (!query) return json({ ok: false, message: "검색할 모델명을 입력해주세요." }, 400);
+
+  const apiUrl = new URL("https://openapi.naver.com/v1/search/shop.json");
+  apiUrl.searchParams.set("query", query);
+  apiUrl.searchParams.set("display", String(display));
+  apiUrl.searchParams.set("start", "1");
+  apiUrl.searchParams.set("sort", "asc");
+
+  const response = await fetch(apiUrl.toString(), {
+    method: "GET",
+    headers: {
+      "X-Naver-Client-Id": config.clientId,
+      "X-Naver-Client-Secret": config.clientSecret,
+    },
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    return json({
+      ok: false,
+      configured: true,
+      status: response.status,
+      message: payload.errorMessage || "네이버 쇼핑 최저가 조회에 실패했습니다.",
+      errorCode: payload.errorCode || "",
+    }, response.status);
+  }
+
+  const items = (payload.items || [])
+    .map((item) => ({
+      title: stripHtmlTags(item.title),
+      link: item.link || "",
+      image: item.image || "",
+      mallName: item.mallName || "",
+      productId: item.productId || "",
+      productType: item.productType || "",
+      maker: item.maker || "",
+      brand: item.brand || "",
+      category1: item.category1 || "",
+      category2: item.category2 || "",
+      category3: item.category3 || "",
+      category4: item.category4 || "",
+      lprice: Number(item.lprice || 0),
+      hprice: Number(item.hprice || 0),
+    }))
+    .filter((item) => item.lprice > 0)
+    .sort((a, b) => a.lprice - b.lprice);
+
+  return json({
+    ok: true,
+    configured: true,
+    query,
+    lowestPrice: items[0]?.lprice || 0,
+    lowestItem: items[0] || null,
+    items,
+  });
 }
 
 function normalizeSellerApplication(row) {
@@ -2614,6 +2695,7 @@ export async function onRequest(context) {
   if (path === "reviews" && method === "POST") return createReview(env, request);
   if (path === "bid-selection" && method === "POST") return selectBid(env, request);
   if (path === "quote-close" && method === "POST") return closeQuoteByCustomer(env, request);
+  if (path === "naver-shopping-lowest" && method === "GET") return getNaverShoppingLowest(env, request);
 
   if (path === "guide-dismissal" && method === "GET") return getGuideDismissal(env, request);
   if (path === "guide-dismissal" && method === "POST") return saveGuideDismissal(env, request);

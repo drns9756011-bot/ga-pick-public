@@ -2,9 +2,27 @@
   const form = document.querySelector("#requestForm");
   if (!form || form.dataset.wizardReady === "true") return;
 
+  function ensureHiddenField(name) {
+    let field = form.querySelector(`[name="${name}"]`);
+    if (!field) {
+      field = document.createElement("input");
+      field.type = "hidden";
+      field.name = name;
+      field.value = "";
+      form.prepend(field);
+    }
+    return field;
+  }
+
   const fields = {
     quoteType: form.querySelector('[name="quoteType"]'),
     items: form.querySelector('[name="items"]'),
+    aiSituation: ensureHiddenField("aiSituation"),
+    familyComposition: ensureHiddenField("familyComposition"),
+    budgetStatus: ensureHiddenField("budgetStatus"),
+    budgetRange: ensureHiddenField("budgetRange"),
+    purchasePriority: ensureHiddenField("purchasePriority"),
+    aiRequestSummary: ensureHiddenField("aiRequestSummary"),
     file: form.querySelector("#quoteImage"),
     customer: form.querySelector('[name="customer"]'),
     phone: form.querySelector('[name="phone"]'),
@@ -29,21 +47,21 @@
     {
       value: "with_quote",
       title: "견적서가 있어요",
-      text: "받은 견적서 사진을 기준으로 판매자 제안을 비교합니다.",
+      text: "이미 받은 견적서 사진을 기준으로 판매자 제안가와 혜택을 비교합니다.",
     },
     {
       value: "without_quote",
       title: "견적서가 없어요",
-      text: "품목과 예산으로 먼저 요청합니다. 견적서가 없는 경우 제안 범위에 제한이 생길 수 있습니다.",
-      badge: "제한 안내",
+      text: "필요 품목, 상황, 예산 정보를 정리해 판매자가 모델명과 견적을 제안합니다.",
+      badge: "상담형",
     },
   ];
 
   const purposes = [
-    { value: "웨딩,혼수 특별혜택", title: "웨딩,혼수", text: "여러 품목을 한 번에 비교합니다.", badge: "특별혜택" },
-    { value: "신축입주 특별혜택", title: "신축입주", text: "입주 일정에 맞춘 조건을 비교합니다.", badge: "특별혜택" },
-    { value: "이사", title: "이사", text: "이사 일정과 설치 조건에 맞춰 비교합니다." },
-    { value: "인테리어", title: "인테리어", text: "공간 완성 일정에 맞춘 제안을 받습니다." },
+    { value: "웨딩,혼수 특별혜택", title: "웨딩,혼수", text: "여러 품목을 한 번에 비교하기 좋습니다.", badge: "혜택" },
+    { value: "신축입주 특별혜택", title: "신축입주", text: "입주 일정과 설치 조건을 함께 확인합니다.", badge: "혜택" },
+    { value: "이사", title: "이사", text: "배송일과 설치 일정을 맞춰 비교합니다." },
+    { value: "인테리어", title: "인테리어", text: "공간 완성 일정과 제품 조건을 정리합니다." },
     { value: "일반", title: "일반", text: "필요한 제품의 가격과 혜택을 비교합니다." },
   ];
 
@@ -75,15 +93,10 @@
     TV: [{ key: "size", title: "화면 크기", mode: "single", options: ["43인치", "55인치", "65인치", "75인치", "85인치", "85인치 ↑"] }],
     냉장고: [
       { key: "type", title: "설치 형태", mode: "single", options: ["빌트인(키친핏, 핏앤맥스)", "프리스탠딩(용량이 큼)"] },
-      { key: "door", title: "도어 수", mode: "single", options: ["1도어", "2도어", "4도어", "잘 모르겠어요"], optional: true },
+      { key: "door", title: "도어 수", mode: "single", options: ["1도어", "2도어", "4도어", "모르겠어요"], optional: true },
     ],
     "세탁기/건조기": [
-      {
-        key: "type",
-        title: "제품 형태",
-        mode: "single",
-        options: ["분리형(병렬설치 및 직렬설치, 분리설치 가능)", "복합형(콤보)", "일체형(원바디, 워시타워)"],
-      },
+      { key: "type", title: "제품 형태", mode: "single", options: ["분리형(병렬/직렬/분리 설치 가능)", "복합형(콤보)", "일체형(원바디, 워시타워)"] },
     ],
     청소기: [{ key: "type", title: "종류", mode: "multi", options: ["무선청소기", "로봇청소기", "유선청소기"] }],
     김치냉장고: [
@@ -101,13 +114,17 @@
       { key: "burner", title: "화구 수", mode: "single", options: ["2구", "3구", "4구"], optional: true },
     ],
     정수기: [{ key: "type", title: "종류", mode: "single", options: ["냉온정수기", "얼음정수기", "냉정수기", "직수형"] }],
-    의류관리기: [{ key: "size", title: "용량", mode: "single", options: ["3벌", "5벌", "대용량", "잘 모르겠어요"] }],
+    의류관리기: [{ key: "size", title: "용량", mode: "single", options: ["3벌", "5벌", "대용량", "모르겠어요"] }],
     "오븐/전자레인지": [{ key: "type", title: "종류", mode: "multi", options: ["오븐", "전자레인지"] }],
     공기청정기: [{ key: "area", title: "사용 면적", mode: "single", options: ["10평 이하", "10평대", "20평대", "30평대 이상"] }],
-    제습기: [{ key: "capacity", title: "용량", mode: "single", options: ["10L 이하", "10L대", "20L 이상", "잘 모르겠어요"] }],
-    가습기: [{ key: "type", title: "종류", mode: "single", options: ["초음파식", "가열식", "복합식", "대용량", "잘 모르겠어요"] }],
-    "라이프스타일 TV": [{ key: "type", title: "종류", mode: "single", options: ["이동형 TV", "스탠바이미류", "포터블 스크린", "잘 모르겠어요"] }],
+    제습기: [{ key: "capacity", title: "용량", mode: "single", options: ["10L 이하", "10L대", "20L 이상", "모르겠어요"] }],
+    가습기: [{ key: "type", title: "종류", mode: "single", options: ["초음파식", "가열식", "복합형", "대용량", "모르겠어요"] }],
+    "라이프스타일 TV": [{ key: "type", title: "종류", mode: "single", options: ["이동형 TV", "스탠바이미류", "포터블 스크린", "모르겠어요"] }],
   };
+
+  const aiSituations = ["신혼·혼수", "신축 입주", "이사·입주", "기존 가전 교체", "사업장/B2B"];
+  const familyOptions = ["1인", "2인", "3~4인", "5인 이상", "아이 있음", "반려동물 있음", "부모님 함께 거주"];
+  const priorityOptions = ["총 구매가 절감", "배송·설치 일정", "카드 혜택", "사은품", "AS·보증", "공간/디자인", "상위 등급 제품"];
 
   const optionState = {};
   let currentStepIndex = 0;
@@ -159,6 +176,19 @@
         </label>
       </div>
     `;
+  }
+
+  function pillList(options, name, mode = "radio") {
+    return options
+      .map(
+        (option) => `
+          <label class="ai-pill">
+            <input type="${mode === "multi" ? "checkbox" : "radio"}" name="${name}" value="${option}" />
+            <span>${option}</span>
+          </label>
+        `
+      )
+      .join("");
   }
 
   function selectedProducts() {
@@ -234,6 +264,50 @@
     syncProductSummaries();
   }
 
+  function selectedValues(name) {
+    return Array.from(wizard.querySelectorAll(`[name="${name}"]:checked`)).map((input) => input.value);
+  }
+
+  function syncAiFields() {
+    if (!isWithoutQuote()) {
+      fields.aiSituation.value = "";
+      fields.familyComposition.value = "";
+      fields.budgetStatus.value = "";
+      fields.budgetRange.value = "";
+      fields.purchasePriority.value = "";
+      fields.aiRequestSummary.value = "";
+      return;
+    }
+
+    const situation = wizard.querySelector('[name="aiSituationProxy"]:checked')?.value || "";
+    const family = selectedValues("aiFamilyProxy");
+    const budgetStatus = wizard.querySelector('[name="aiBudgetStatusProxy"]:checked')?.value || "";
+    const budgetRange = wizard.querySelector('[name="aiBudgetRangeProxy"]')?.value.trim() || "";
+    const priorities = selectedValues("aiPriorityProxy");
+    const note = wizard.querySelector('[name="aiSituationNote"]')?.value.trim() || "";
+    const budgetLabel = budgetStatus === "예산 확정" ? `정해진 예산 ${budgetRange || "미입력"}` : "예산 미정";
+
+    fields.aiSituation.value = situation;
+    fields.familyComposition.value = family.join(", ");
+    fields.budgetStatus.value = budgetStatus;
+    fields.budgetRange.value = budgetRange;
+    fields.purchasePriority.value = priorities.join(", ");
+
+    fields.aiRequestSummary.value = [
+      "[AI 상담 요청]",
+      `고객 상황: ${situation || "미입력"}`,
+      `가족 구성: ${family.join(", ") || "미입력"}`,
+      `예산: ${budgetLabel}`,
+      `우선순위: ${priorities.join(", ") || "미입력"}`,
+      note ? `생활/설치 메모: ${note}` : "",
+      "AI 모델 추천 범위: LG전자 제품 기준",
+      "가격 참고 기준: 네이버 쇼핑 최저가 연동 시 최저가를 우선 참고",
+      "요청 방식: 매장에서 실제 판매 가능한 LG전자 모델명, 구성 품목, 제안 금액, 설치/배송 조건을 함께 제안해주세요.",
+    ]
+      .filter(Boolean)
+      .join("\n");
+  }
+
   function setNativeValue(field, value) {
     field.value = value;
     field.dispatchEvent(new Event("input", { bubbles: true }));
@@ -277,7 +351,7 @@
 
     list.innerHTML = selected.length
       ? selected.map((product) => selectedOptionCard(product)).join("")
-      : `<div class="empty-state compact-empty"><strong>선택된 품목이 없습니다.</strong><p>이전 단계에서 구매 예정 품목을 선택해주세요.</p></div>`;
+      : `<div class="empty-state compact-empty"><strong>선택한 품목이 없습니다.</strong><p>이전 단계에서 구매 예정 품목을 선택해주세요.</p></div>`;
   }
 
   function createProductOptionModal() {
@@ -381,7 +455,16 @@
       ${quoteTypes.map((option) => optionCard(option, "wizardQuoteTypeProxy")).join("")}
     </div>
   `;
-  stepQuoteType.append(wrapHidden(fields.quoteType), wrapHidden(fields.items));
+  stepQuoteType.append(
+    wrapHidden(fields.quoteType),
+    wrapHidden(fields.items),
+    wrapHidden(fields.aiSituation),
+    wrapHidden(fields.familyComposition),
+    wrapHidden(fields.budgetStatus),
+    wrapHidden(fields.budgetRange),
+    wrapHidden(fields.purchasePriority),
+    wrapHidden(fields.aiRequestSummary)
+  );
 
   const stepPersonal = document.createElement("section");
   stepPersonal.className = "wizard-step";
@@ -403,8 +486,8 @@
   stepPurpose.innerHTML = `
     <div class="wizard-step-head">
       <p class="eyebrow">Step 3</p>
-      <h2>구매사유를 선택해주세요.</h2>
-      <p>구매 상황에 따라 배송, 설치, 혜택 조건을 더 정확히 비교할 수 있습니다.</p>
+      <h2>구매 목적을 선택해주세요.</h2>
+      <p>구매 상황에 따라 배송, 설치, 혜택 조건을 더 정확하게 비교할 수 있습니다.</p>
     </div>
     <div class="wizard-option-grid">
       ${purposes.map((option) => optionCard(option, "wizardPurposeProxy")).join("")}
@@ -436,7 +519,7 @@
     <div class="wizard-step-head">
       <p class="eyebrow">Step 5</p>
       <h2>구매 예정 품목을 모두 선택해주세요.</h2>
-      <p>견적서가 없는 고객님은 판매자가 이해할 수 있도록 품목을 먼저 선택합니다.</p>
+      <p>견적서가 없는 고객님은 판매자가 이해할 수 있도록 품목을 먼저 정리합니다.</p>
     </div>
     <div class="wizard-product-list">
       ${products.map((product) => productCard(product)).join("")}
@@ -451,9 +534,47 @@
     <div class="wizard-step-head">
       <p class="eyebrow">Step 6</p>
       <h2>선택한 품목의 옵션을 골라주세요.</h2>
-      <p>선택한 제품군만 표시됩니다. 판매자가 보기 쉬운 견적 요청서로 정리됩니다.</p>
+      <p>선택한 제품군만 표시합니다. 판매자가 보기 쉬운 견적 요청서로 정리됩니다.</p>
     </div>
     <div class="wizard-product-list selected-option-list"></div>
+  `;
+
+  const stepAiContext = document.createElement("section");
+  stepAiContext.className = "wizard-step";
+  stepAiContext.dataset.step = "aiContext";
+  stepAiContext.hidden = true;
+  stepAiContext.innerHTML = `
+    <div class="wizard-step-head">
+      <p class="eyebrow">AI 상담 정보</p>
+      <h2>고객님 상황을 알려주세요.</h2>
+      <p>AI 모델 추천은 LG전자 제품 기준으로만 제공됩니다. 선택 옵션으로 후보 모델을 추린 뒤 네이버 최저가를 우선 참고합니다.</p>
+    </div>
+    <div class="ai-intake-card">
+      <section>
+        <h3>고객님 상황</h3>
+        <div class="ai-pill-grid">${pillList(aiSituations, "aiSituationProxy")}</div>
+      </section>
+      <section>
+        <h3>가족 구성</h3>
+        <div class="ai-pill-grid">${pillList(familyOptions, "aiFamilyProxy", "multi")}</div>
+      </section>
+      <section>
+        <h3>예산</h3>
+        <div class="ai-pill-grid">
+          <label class="ai-pill"><input type="radio" name="aiBudgetStatusProxy" value="예산 확정" /><span>정해진 예산이 있어요</span></label>
+          <label class="ai-pill"><input type="radio" name="aiBudgetStatusProxy" value="예산 미정" /><span>아직 정하지 않았어요</span></label>
+        </div>
+        <input class="ai-budget-input" type="text" name="aiBudgetRangeProxy" placeholder="예: 1,000~1,500만원, 2,000만원 이하" />
+      </section>
+      <section>
+        <h3>중요한 기준</h3>
+        <div class="ai-pill-grid">${pillList(priorityOptions, "aiPriorityProxy", "multi")}</div>
+      </section>
+      <label class="ai-note-field">
+        생활 패턴이나 설치 환경
+        <textarea name="aiSituationNote" rows="3" placeholder="예: 거실 TV를 크게 보고 싶고, 배송은 입주일 전후로 맞추고 싶어요."></textarea>
+      </label>
+    </div>
   `;
 
   const stepQuoteInfo = document.createElement("section");
@@ -489,10 +610,10 @@
   submitButton.textContent = "견적 요청 등록";
   navigation.append(prevButton, nextButton, submitButton);
 
-  wizard.append(stepQuoteType, stepPersonal, stepPurpose, stepBrand, stepProducts, stepSelectedOptions, stepQuoteInfo, navigation, message);
+  wizard.append(stepQuoteType, stepPersonal, stepPurpose, stepBrand, stepProducts, stepSelectedOptions, stepAiContext, stepQuoteInfo, navigation, message);
   form.replaceChildren(wizard);
 
-  const allSteps = [stepQuoteType, stepPersonal, stepPurpose, stepBrand, stepProducts, stepSelectedOptions, stepQuoteInfo];
+  const allSteps = [stepQuoteType, stepPersonal, stepPurpose, stepBrand, stepProducts, stepSelectedOptions, stepAiContext, stepQuoteInfo];
   const compactSteps = [stepQuoteType, stepPersonal, stepPurpose, stepBrand, stepQuoteInfo];
   const progress = wizard.querySelector(".wizard-progress");
   const topBackButton = wizard.querySelector(".wizard-back");
@@ -524,6 +645,7 @@
 
     renderSelectedOptions();
     syncItemsField();
+    syncAiFields();
     updateQuoteInfoMode();
 
     allSteps.forEach((step) => {
@@ -536,6 +658,29 @@
     nextButton.hidden = currentStepIndex === steps.length - 1;
     submitButton.hidden = currentStepIndex !== steps.length - 1;
     navigation.classList.toggle("is-final", currentStepIndex === steps.length - 1);
+  }
+
+  function validateAiContext() {
+    syncAiFields();
+    const situationInput = stepAiContext.querySelector('[name="aiSituationProxy"]:checked');
+    const budgetInput = stepAiContext.querySelector('[name="aiBudgetStatusProxy"]:checked');
+    if (!situationInput) {
+      stepAiContext.querySelector('[name="aiSituationProxy"]')?.reportValidity();
+      return false;
+    }
+    if (!selectedValues("aiFamilyProxy").length) {
+      stepAiContext.querySelector('[name="aiFamilyProxy"]')?.reportValidity();
+      return false;
+    }
+    if (!budgetInput) {
+      stepAiContext.querySelector('[name="aiBudgetStatusProxy"]')?.reportValidity();
+      return false;
+    }
+    if (!selectedValues("aiPriorityProxy").length) {
+      stepAiContext.querySelector('[name="aiPriorityProxy"]')?.reportValidity();
+      return false;
+    }
+    return true;
   }
 
   function validateCurrentStep() {
@@ -574,6 +719,8 @@
       return false;
     }
 
+    if (step === stepAiContext) return validateAiContext();
+
     if (!isWithoutQuote() && !fields.file.files.length) {
       fields.file.reportValidity();
       alert("견적서가 있는 경우 견적서 이미지를 1장 이상 첨부해주세요.");
@@ -581,6 +728,7 @@
     }
 
     syncItemsField();
+    syncAiFields();
     return reportFirstInvalid([fields.price, fields.region, fields.installDate]);
   }
 
@@ -613,6 +761,9 @@
     if (!button) return;
     openOptionModal(button.dataset.productOption);
   });
+
+  stepAiContext.addEventListener("change", syncAiFields);
+  stepAiContext.addEventListener("input", syncAiFields);
 
   optionContent.addEventListener("change", () => {
     storeOptionSelections();
@@ -653,6 +804,7 @@
       return;
     }
     syncItemsField();
+    syncAiFields();
   });
 
   form.addEventListener("reset", () => {
