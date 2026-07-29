@@ -131,6 +131,49 @@ button {
   font-size: 15px;
 }
 
+.header-ad-slot {
+  flex: 1 1 420px;
+  max-width: 760px;
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 10px 18px;
+  border: 1px solid #dbe6e3;
+  border-radius: 14px;
+  background:
+    linear-gradient(90deg, rgba(18, 107, 93, 0.09), rgba(232, 180, 79, 0.13)),
+    #fff;
+  color: #20303b;
+  box-shadow: 0 10px 26px rgba(22, 32, 42, 0.06);
+  white-space: nowrap;
+}
+
+.header-ad-slot .ad-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 42px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.header-ad-slot strong {
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.header-ad-slot span:last-child {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
 .nav button {
   border: 0;
   background: transparent;
@@ -5192,6 +5235,26 @@ td strong {
     align-items: flex-start;
     flex-direction: column;
     padding: 18px 5vw;
+  }
+
+  .header-ad-slot {
+    order: 3;
+    width: 100%;
+    max-width: none;
+    min-height: 46px;
+    flex-basis: auto;
+    justify-content: flex-start;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 12px;
+  }
+
+  .header-ad-slot strong {
+    font-size: 14px;
+  }
+
+  .header-ad-slot span:last-child {
+    display: none;
   }
 
   .nav {
