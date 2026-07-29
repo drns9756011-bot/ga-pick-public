@@ -93,7 +93,7 @@
       { key: "size", title: "화면 크기", type: "single", values: ["43인치", "55인치", "65인치", "75인치", "85인치", "85인치 ↑"] },
     ],
     냉장고: [
-      { key: "type", title: "설치 형태", type: "single", values: ["빌트인(키친핏, 핏앤맥스)", "프리스탠딩(용량이 큼)", "모르겠어요"] },
+      { key: "type", title: "설치 형태", type: "single", values: ["빌트인(핏앤맥스)", "프리스탠딩(용량이 큼)", "모르겠어요"] },
       { key: "door", title: "도어 수", type: "single", values: ["1도어", "2도어", "4도어", "모르겠어요"] },
     ],
     "세탁기/건조기": [
@@ -254,6 +254,7 @@
     const step = currentStep();
     const list = visibleSteps();
     const wizard = form.querySelector(".customer-wizard");
+    const busyAttr = state.recommending ? "disabled aria-disabled=\"true\"" : "";
     wizard.innerHTML = `
       <div class="wizard-progress" style="--wizard-step-count:${list.length}" aria-label="견적 등록 진행 단계">
         ${list.map((_, index) => `<span class="${index <= state.stepIndex ? "is-active" : ""}"></span>`).join("")}
@@ -262,7 +263,7 @@
       <div class="wizard-step" data-step="${step.key}">${step.render()}</div>
       <div class="wizard-actions">
         ${state.stepIndex > 0 ? '<button type="button" class="wizard-back">이전</button>' : ""}
-        <button type="${isFinalVisibleStep() ? "submit" : "button"}" class="wizard-next primary-btn">${isFinalVisibleStep() ? "견적 요청 등록" : "다음"}</button>
+        <button type="${isFinalVisibleStep() ? "submit" : "button"}" class="wizard-next primary-btn" ${busyAttr}>${state.recommending ? "AI 추천 중" : isFinalVisibleStep() ? "견적 요청 등록" : "다음"}</button>
       </div>
     `;
 
@@ -409,7 +410,7 @@
         <div class="wizard-chip-grid">${priorityOptions.map((item) => chip(item, "ai-priority", state.aiContext.priorities.includes(item))).join("")}</div>
       </div>
       <label class="wizard-wide-label">추가 상황
-        <textarea data-ai-note rows="4" placeholder="예: 34평 신축 입주, 주방은 키친핏 선호, 11월 설치 예정">${escapeHtml(state.aiContext.note)}</textarea>
+        <textarea data-ai-note rows="4" placeholder="예: 34평 신축 입주, 주방은 핏앤맥스 선호, 11월 설치 예정">${escapeHtml(state.aiContext.note)}</textarea>
       </label>
     `;
   }
@@ -707,6 +708,15 @@
   }
 
   function validateQuoteInfo() {
+    if (state.recommending) {
+      setMessage("AI가 추천 모델을 찾고 있습니다. 잠시만 기다려주세요.");
+      return false;
+    }
+    if (shouldUseAiRecommendation() && !state.recommendationGroups.length) {
+      setMessage("AI 추천 모델이 아직 정리되지 않았습니다. 잠시 후 다시 시도해주세요.");
+      runAiRecommendation();
+      return false;
+    }
     if (isWithQuote() && (!fields.image.files || !fields.image.files.length)) {
       setMessage("견적서가 있는 경우 견적서 이미지를 최소 1장 첨부해주세요.");
       return false;
@@ -797,6 +807,7 @@
 
   async function runAiRecommendation() {
     state.recommending = true;
+    showAiRecommendationLoading();
     render();
     try {
       const groups = await buildAiModelRecommendations();
@@ -809,9 +820,26 @@
       fields.price.value = "0";
     } finally {
       state.recommending = false;
+      hideAiRecommendationLoading();
       syncAllFields();
       render();
     }
+  }
+
+  function showAiRecommendationLoading() {
+    const modal = document.querySelector("#serverLoadingModal");
+    const title = document.querySelector("#serverLoadingTitle");
+    const text = document.querySelector("#serverLoadingText");
+    if (title) title.textContent = "AI가 추천모델을 찾는 중입니다.";
+    if (text) text.textContent = "선택한 품목, 옵션, 예산을 기준으로 판매 가능한 LG전자 모델을 정리하고 있습니다.";
+    if (modal) modal.hidden = false;
+    document.body.classList.add("modal-open");
+  }
+
+  function hideAiRecommendationLoading() {
+    const modal = document.querySelector("#serverLoadingModal");
+    if (modal) modal.hidden = true;
+    document.body.classList.remove("modal-open");
   }
 
   async function loadCatalog() {
@@ -824,19 +852,28 @@
 
   async function buildAiModelRecommendations() {
     const catalog = await loadCatalog();
+    const selectedProducts = state.selectedProducts.filter(Boolean);
+    const totalWeight = selectedProducts.reduce((sum, product) => sum + productBudgetWeight(product), 0) || 1;
+    const budgetWon = parseBudgetWon(state.aiContext.budgetRange);
     const groups = [];
-    for (const product of state.selectedProducts) {
+    for (const product of selectedProducts) {
       const models = Array.isArray(catalog?.[product]?.models) ? catalog[product].models : [];
-      const filtered = filterModelsByProductOptions(product, models).slice(0, 3);
+      const candidates = filterModelsByProductOptions(product, models);
+      const targetPrice = budgetWon
+        ? Math.round((budgetWon * productBudgetWeight(product)) / totalWeight)
+        : defaultTargetPrice(product, candidates);
+      const shortlist = rankModelCandidates(product, candidates, targetPrice).slice(0, 14);
       const enriched = [];
-      for (const model of filtered) {
+      for (const model of shortlist) {
         const lowest = await fetchLowestPrice(model.modelName);
         enriched.push({ ...model, naverLowestPrice: lowest || 0 });
       }
+      const chosen = chooseRecommendedModel(product, enriched.length ? enriched : shortlist, targetPrice);
       groups.push({
         product,
         optionSummary: productOptionSummary(product),
-        models: enriched.length ? enriched : [{ modelName: "판매자 상담 후 모델 확정", normalPrice: 0, naverLowestPrice: 0 }],
+        targetPrice,
+        models: chosen ? [chosen] : [{ modelName: "판매자 상담 후 모델 확정", normalPrice: 0, naverLowestPrice: 0 }],
       });
     }
     return groups;
@@ -846,7 +883,9 @@
     const options = state.productOptions[product] || {};
     const normalized = models
       .filter((model) => model && model.modelName)
-      .sort((a, b) => Number(a.normalPrice || 0) - Number(b.normalPrice || 0));
+      .map((model) => ({ ...model, normalPrice: Number(model.normalPrice || 0) }))
+      .filter((model) => model.normalPrice > 0)
+      .sort((a, b) => b.normalPrice - a.normalPrice);
     const matchers = [];
 
     if (product === "TV" && options.size) {
@@ -860,30 +899,150 @@
         });
       }
     }
-    if (product === "냉장고" && options.type) {
-      if (options.type.includes("빌트인")) matchers.push((name) => /빌트|키친|핏|오브제|스템/i.test(name));
-      if (options.type.includes("프리스탠딩")) matchers.push((name) => !/김치|정수기/i.test(name));
+    if (product === "냉장고") {
+      if (options.type?.includes("빌트인")) {
+        matchers.push((name) => /핏앤맥스|핏\s?앤\s?맥스|fit\s?&?\s?max|^M\d{3}|^T\d{3}|^W\d{3}/i.test(name) && !/^(B18|B182|A202|D\d{3})/i.test(name));
+      }
+      if (options.type?.includes("프리스탠딩")) {
+        matchers.push((name) => !/김치|정수기|와인|핏앤맥스|fit\s?&?\s?max/i.test(name));
+      }
+      if (options.door === "4도어") {
+        matchers.push((name) => /4도어|노크온|상냉장|매직스페이스|^M\d{3}|^T\d{3}|^W\d{3}/i.test(name) && !/^(B18|B182|A202|D\d{3})/i.test(name));
+      }
+      if (options.door === "2도어") {
+        matchers.push((name) => /2도어|양문형|일반냉장고|^B\d{3}|^D\d{3}/i.test(name));
+      }
     }
     if (product === "세탁기/건조기" && options.type) {
-      if (options.type.includes("일체형")) matchers.push((name) => /워시|타워|원바디|일체/i.test(name));
-      if (options.type.includes("복합형")) matchers.push((name) => /콤보|세탁건조/i.test(name));
+      if (options.type.includes("분리형")) matchers.push((name) => /(F\d{2}|RH|RD|FX|세탁|건조)/i.test(name));
+      if (options.type.includes("복합형")) matchers.push((name) => /콤보|세탁건조|FX|FH/i.test(name) && !/^TR/i.test(name));
+      if (options.type.includes("일체형")) matchers.push((name) => /워시|타워|원바디|W\d{2}|WL|WK|FX|FH/i.test(name));
     }
     if (product === "청소기" && Array.isArray(options.type) && options.type.length) {
       matchers.push((name) => options.type.some((type) => name.includes(type.replace("청소기", ""))));
     }
-    if (product === "김치냉장고") matchers.push((name) => /김치/i.test(name));
+    if (product === "김치냉장고") {
+      matchers.push((name) => /김치|Z\d{3}/i.test(name));
+      if (options.door === "4도어") matchers.push((name) => /4도어|Z4|Z5/i.test(name));
+      if (options.door === "3도어") matchers.push((name) => /3도어|Z3/i.test(name));
+      if (options.type === "뚜껑식") matchers.push((name) => /뚜껑|K\d{3}|Z1/i.test(name));
+    }
     if (product === "에어컨" && options.type) {
       if (options.type === "천장형") matchers.push((name) => /천장|시스템/i.test(name));
-      if (options.type === "2IN1") matchers.push((name) => /2IN1|2in1|투인원|멀티/i.test(name));
+      if (options.type === "2IN1") matchers.push((name) => /2IN1|2in1|투인원|멀티|FQ.*2/i.test(name));
+      if (options.type === "스탠드") matchers.push((name) => /스탠드|FQ/i.test(name));
+      if (options.type === "벽걸이") matchers.push((name) => /벽걸이|SQ|SW/i.test(name));
     }
-    if (product === "식기세척기") matchers.push((name) => /식기|식세/i.test(name));
-    if (product === "인덕션/전기레인지") matchers.push((name) => /인덕션|전기레인지|하이라이트/i.test(name));
-    if (product === "오븐/전자레인지") matchers.push((name) => /오븐|전자레인지/i.test(name));
-    if (product === "공기청정기") matchers.push((name) => /공기|퓨리|청정/i.test(name));
-    if (product === "라이프스타일 TV") matchers.push((name) => /스탠바이미|이동|포터블|라이프/i.test(name));
+    if (product === "식기세척기") matchers.push((name) => /식기|식세|D[FBE]/i.test(name));
+    if (product === "인덕션/전기레인지") matchers.push((name) => /인덕션|전기레인지|하이라이트|BE|CB/i.test(name));
+    if (product === "오븐/전자레인지") matchers.push((name) => /오븐|전자레인지|ML|MW/i.test(name));
+    if (product === "공기청정기") matchers.push((name) => /공기|퓨리|청정|AS/i.test(name));
+    if (product === "의류관리기") matchers.push((name) => /스타일러|의류|SC|S5|S3/i.test(name));
+    if (product === "라이프스타일 TV") matchers.push((name) => /스탠바이미|stanbyme|27LX|32LX|라이프/i.test(name));
 
-    const matched = matchers.length ? normalized.filter((model) => matchers.every((matcher) => matcher(model.modelName))) : normalized;
+    const matched = matchers.length ? normalized.filter((model) => matchers.every((matcher) => matcher(modelSearchText(model)))) : normalized;
     return matched.length ? matched : normalized;
+  }
+
+  function modelSearchText(model) {
+    return [model?.modelName, model?.productGroup, model?.category, model?.title].filter(Boolean).join(" ");
+  }
+
+  function productBudgetWeight(product) {
+    return {
+      TV: 1.45,
+      "라이프스타일 TV": 0.7,
+      냉장고: 1.25,
+      김치냉장고: 0.95,
+      "세탁기/건조기": 1.35,
+      의류관리기: 0.75,
+      에어컨: 1.25,
+      청소기: 0.45,
+      식기세척기: 0.55,
+      공기청정기: 0.4,
+      "인덕션/전기레인지": 0.55,
+      "오븐/전자레인지": 0.35,
+    }[product] || 0.8;
+  }
+
+  function parseBudgetWon(value) {
+    const source = String(value || "").replace(/,/g, "").trim();
+    if (!source) return 0;
+    const numbers = [...source.matchAll(/(\d+(?:\.\d+)?)/g)].map((match) => Number(match[1])).filter(Boolean);
+    if (!numbers.length) return 0;
+    const number = Math.max(...numbers);
+    if (/억/.test(source)) return Math.round(number * 100000000);
+    if (/만원|만/.test(source) || number < 100000) return Math.round(number * 10000);
+    return Math.round(number);
+  }
+
+  function defaultTargetPrice(product, candidates) {
+    const prices = candidates.map((model) => Number(model.normalPrice || 0)).filter(Boolean).sort((a, b) => a - b);
+    if (!prices.length) return productBudgetWeight(product) * 1800000;
+    const indexRatio = isPremiumAiContext() ? 0.72 : 0.58;
+    return prices[Math.min(prices.length - 1, Math.floor(prices.length * indexRatio))];
+  }
+
+  function isPremiumAiContext() {
+    const text = [state.aiContext.situation, state.aiContext.budgetRange, ...state.aiContext.priorities, state.aiContext.note].join(" ");
+    return /혼수|웨딩|신축|입주|프리미엄|하이엔드|오브제|핏앤맥스/i.test(text);
+  }
+
+  function estimatedOnlinePrice(model) {
+    const normalPrice = Number(model?.normalPrice || 0);
+    return normalPrice ? Math.round(normalPrice * 0.62) : 0;
+  }
+
+  function rankModelCandidates(product, candidates, targetPrice) {
+    const premium = isPremiumAiContext();
+    return [...candidates].sort((a, b) => modelPreScore(product, a, targetPrice, premium) - modelPreScore(product, b, targetPrice, premium));
+  }
+
+  function modelPreScore(product, model, targetPrice, premium) {
+    const price = estimatedOnlinePrice(model) || Number(model.normalPrice || 0);
+    const target = targetPrice || price || 1;
+    let score = Math.abs(price - target) / target;
+    if (premium && price < target * 0.55) score += 0.8;
+    if (price > target * 1.5) score += 0.25;
+    return score + modelQualityAdjustment(product, model.modelName);
+  }
+
+  function chooseRecommendedModel(product, candidates, targetPrice) {
+    const premium = isPremiumAiContext();
+    return [...candidates]
+      .filter((model) => model && model.modelName)
+      .sort((a, b) => {
+        const aPrice = Number(a.naverLowestPrice || 0) > 100000 ? Number(a.naverLowestPrice) : estimatedOnlinePrice(a);
+        const bPrice = Number(b.naverLowestPrice || 0) > 100000 ? Number(b.naverLowestPrice) : estimatedOnlinePrice(b);
+        const target = targetPrice || Math.max(aPrice, bPrice, 1);
+        let aScore = Math.abs(aPrice - target) / target;
+        let bScore = Math.abs(bPrice - target) / target;
+        if (premium && aPrice < target * 0.55) aScore += 0.85;
+        if (premium && bPrice < target * 0.55) bScore += 0.85;
+        if (aPrice > target * 1.55) aScore += 0.2;
+        if (bPrice > target * 1.55) bScore += 0.2;
+        return aScore + modelQualityAdjustment(product, a.modelName) - (bScore + modelQualityAdjustment(product, b.modelName));
+      })[0];
+  }
+
+  function modelQualityAdjustment(product, modelName) {
+    const name = String(modelName || "").toUpperCase();
+    let score = 0;
+    if (product === "TV") {
+      if (/OLED|QNED9|QNED8/.test(name)) score -= 0.18;
+      if (/QNED70|NANO70/.test(name)) score += 0.22;
+    }
+    if (product === "냉장고") {
+      if (/W826|W825|M87|T87|오브제|핏앤맥스|FIT/.test(name)) score -= 0.18;
+      if (/B18|B182|A202|^D\d{3}/.test(name)) score += 0.35;
+    }
+    if (product === "세탁기/건조기") {
+      if (/FX|FH|W2|WL|WK/.test(name)) score -= 0.18;
+      if (/TR16|RH9|단품/.test(name)) score += 0.4;
+    }
+    if (product === "청소기" && /B95|B94|A9/.test(name)) score -= 0.12;
+    if (product === "의류관리기" && /SC5|S5/.test(name)) score -= 0.12;
+    return score;
   }
 
   function extractTvInches(modelName) {
@@ -937,8 +1096,10 @@
 
   function applyAutoLowestPrice(groups) {
     const total = groups.reduce((sum, group) => {
-      const prices = group.models.map((model) => Number(model.naverLowestPrice || 0)).filter((price) => price > 100000);
-      return sum + (prices[0] || 0);
+      const model = group.models?.[0];
+      const naverPrice = Number(model?.naverLowestPrice || 0);
+      const price = naverPrice > 100000 ? naverPrice : estimatedOnlinePrice(model);
+      return sum + (price > 100000 ? price : 0);
     }, 0);
     fields.price.value = total ? String(Math.ceil(total / 10000)) : "0";
   }
