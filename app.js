@@ -2369,13 +2369,17 @@ sellerLoginForm.addEventListener("submit", async (event) => {
   renderRequests();
   renderSelectedRequest();
   setView("seller", { replacePath: true });
-  Promise.all([
-    syncCustomerQuotesFromServer({ showLoading: false }),
-    syncBidsFromServer({ showLoading: false }),
-  ]).then(() => {
+  try {
+    await Promise.all([
+      syncCustomerQuotesFromServer({ showLoading: false }),
+      syncBidsFromServer({ showLoading: false }),
+    ]);
     renderRequests();
     renderSelectedRequest();
-  });
+  } catch (error) {
+    console.warn("판매자 로그인 후 서버 동기화에 실패했습니다.", error);
+    setBidFormMessage("로그인은 완료되었습니다. 목록을 새로고침하면 최신 견적을 다시 불러옵니다.", "error");
+  }
 });
 
 bidForm.addEventListener("submit", async (event) => {

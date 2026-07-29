@@ -19,7 +19,7 @@ const SOLAPI_DEFAULTS = {
   SOLAPI_TEMPLATE_SELLER_REJECTED: "KA01TP260723100412983h6pYV7vWwi5",
 };
 
-const PUBLIC_API_VERSION = "20260729-seller-login-stable-master-flow";
+const PUBLIC_API_VERSION = "20260729-seller-login-column-safe-flow";
 const MASTER_SELLER_ID = "pickgj";
 const MASTER_SELLER_PASSWORD_HASH =
   "pbkdf2$120000$67612d7069636b2d6d61737465722d73$598fa387d3b61acff8b064b53fedd73c1a1df5dfa6b2fef936751754096e043f";
@@ -275,8 +275,10 @@ async function upsertMasterSeller(env) {
     approved_at: now,
   };
 
-  const existing = await env.DB.prepare("SELECT id FROM approved_sellers WHERE seller_id = ? LIMIT 1")
-    .bind(MASTER_SELLER_ID)
+  const existing = await env.DB.prepare(
+    "SELECT id FROM approved_sellers WHERE id = ? OR seller_id = ? LIMIT 1"
+  )
+    .bind(masterRow.id, MASTER_SELLER_ID)
     .first();
 
   if (existing?.id) {
@@ -642,6 +644,7 @@ async function ensureSellerColumns(env) {
     "ALTER TABLE approved_sellers ADD COLUMN requested_at TEXT DEFAULT ''",
     "ALTER TABLE approved_sellers ADD COLUMN reviewed_at TEXT DEFAULT ''",
     "ALTER TABLE approved_sellers ADD COLUMN review_memo TEXT DEFAULT ''",
+    "ALTER TABLE approved_sellers ADD COLUMN approved_at TEXT DEFAULT ''",
   ];
 
   for (const statement of statements) {
