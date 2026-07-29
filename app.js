@@ -1596,8 +1596,15 @@ async function createCustomerRequestOnServer(formData) {
 function buildRequestMemo(formData, hasQuoteImage) {
   const memo = String(formData.get("memo") || "").trim();
   const aiSummary = String(formData.get("aiRequestSummary") || "").trim();
-  if (hasQuoteImage || !aiSummary) return memo;
-  return [aiSummary, memo ? `[추가 요청사항]\n${memo}` : ""].filter(Boolean).join("\n\n");
+  const aiModelRecommendations = String(formData.get("aiModelRecommendations") || "").trim();
+  if (hasQuoteImage || (!aiSummary && !aiModelRecommendations)) return memo;
+  return [
+    aiSummary,
+    aiModelRecommendations ? `[AI 추천 간이 견적서]\n${aiModelRecommendations}` : "",
+    memo ? `[추가 요청사항]\n${memo}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
 }
 
 function openConsentModal(formData) {
@@ -2254,7 +2261,6 @@ requestForm.addEventListener("submit", (event) => {
   const checkedQuoteType = requestForm.querySelector('[name="wizardQuoteTypeProxy"]:checked')?.value || "";
   if (checkedQuoteType) formData.set("quoteType", checkedQuoteType);
   const customerPhone = normalizePhone(formData.get("phone"));
-  const quotePrice = parseManwon(formData.get("price"));
   const quoteType = formData.get("quoteType") || "";
   const hasQuoteImage = quoteType === "with_quote";
   const selectedItems = String(formData.get("items") || "").trim();
@@ -2285,11 +2291,7 @@ requestForm.addEventListener("submit", (event) => {
     return;
   }
 
-  if (!quotePrice) {
-    setRequestFormMessage(`${hasQuoteImage ? "기존 견적 금액" : "희망 예산"}을 만원 단위로 입력해주세요.`, "error");
-    requestForm.elements.price.focus();
-    return;
-  }
+  if (!formData.get("price")) formData.set("price", "0");
 
   if (registeredSellerPhones.has(customerPhone)) {
     setRequestFormMessage(

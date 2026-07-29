@@ -19,7 +19,7 @@ const SOLAPI_DEFAULTS = {
   SOLAPI_TEMPLATE_SELLER_REJECTED: "KA01TP260725102900428RYxfTGV9SoG",
 };
 
-const PUBLIC_API_VERSION = "20260729-naver-shopping-lowest-ready";
+const PUBLIC_API_VERSION = "20260729-naver-lowest-exact-product-filter";
 const NAVER_SHOPPING_CLIENT_ID_DEFAULT = "x1CsXB5ZCYULxcGnclGq";
 const MASTER_SELLER_ID = "pickgj";
 const MASTER_SELLER_PASSWORD = "qwer1234!!";
@@ -226,6 +226,52 @@ function stripHtmlTags(value) {
   return String(value || "").replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
 }
 
+function normalizeSearchText(value) {
+  return String(value || "")
+    .toUpperCase()
+    .replace(/<[^>]*>/g, "")
+    .replace(/[^A-Z0-9가-힣]/g, "");
+}
+
+function getModelSearchTokens(query) {
+  const raw = String(query || "").trim();
+  const compact = normalizeSearchText(raw);
+  const beforeDot = normalizeSearchText(raw.split(".")[0] || raw);
+  return Array.from(new Set([compact, beforeDot].filter((token) => token.length >= 5)));
+}
+
+function isAccessoryShoppingItem(item) {
+  const text = normalizeSearchText(`${item.title} ${item.category3} ${item.category4}`);
+  const blockedWords = [
+    "리모컨",
+    "리모콘",
+    "케이블",
+    "안테나",
+    "호환",
+    "부품",
+    "필터",
+    "받침대",
+    "거치대",
+    "브라켓",
+    "스탠드거치",
+    "벽걸이브라켓",
+    "액세서리",
+    "악세사리",
+    "소모품",
+    "청소용품",
+    "커버",
+    "어댑터",
+    "충전기",
+  ];
+  return blockedWords.some((word) => text.includes(normalizeSearchText(word)));
+}
+
+function isLikelySameModel(item, query) {
+  const titleText = normalizeSearchText(item.title);
+  const tokens = getModelSearchTokens(query);
+  return tokens.some((token) => titleText.includes(token));
+}
+
 async function getNaverShoppingLowest(env, request) {
   const config = getNaverShoppingConfig(env);
   if (!config.clientId || !config.clientSecret) {
@@ -269,7 +315,7 @@ async function getNaverShoppingLowest(env, request) {
     }, response.status);
   }
 
-  const items = (payload.items || [])
+  const rawItems = (payload.items || [])
     .map((item) => ({
       title: stripHtmlTags(item.title),
       link: item.link || "",
@@ -289,12 +335,18 @@ async function getNaverShoppingLowest(env, request) {
     .filter((item) => item.lprice > 0)
     .sort((a, b) => a.lprice - b.lprice);
 
+  const items = rawItems.filter((item) => isLikelySameModel(item, query) && !isAccessoryShoppingItem(item));
+
   return json({
     ok: true,
     configured: true,
     query,
+    confidence: items.length ? "exact-model-filtered" : "no-exact-model-price",
     lowestPrice: items[0]?.lprice || 0,
     lowestItem: items[0] || null,
+    rawResultCount: rawItems.length,
+    filteredResultCount: items.length,
+    ignoredResultCount: rawItems.length - items.length,
     items,
   });
 }
