@@ -4690,6 +4690,225 @@ select {
   display: none;
 }
 
+.quote-wizard {
+  display: grid;
+  gap: 24px;
+}
+
+.quote-wizard .wizard-step {
+  gap: 24px;
+}
+
+.quote-wizard .wizard-choice-grid {
+  gap: 14px;
+  align-items: stretch;
+}
+
+.quote-wizard .wizard-choice-card {
+  min-height: 112px;
+  padding: 22px 20px;
+  background: #fbfcfd;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.quote-wizard .wizard-choice-card strong {
+  font-size: 21px;
+  line-height: 1.25;
+  word-break: keep-all;
+}
+
+.quote-wizard .wizard-choice-card small {
+  max-width: 560px;
+  line-height: 1.5;
+  word-break: keep-all;
+}
+
+.quote-wizard .wizard-product-list {
+  gap: 12px;
+}
+
+.quote-wizard .wizard-product-card {
+  min-height: 94px;
+  padding: 18px 20px;
+  border-radius: 8px;
+}
+
+.quote-wizard .wizard-product-card:not(.selected-option-card) {
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: center;
+}
+
+.quote-wizard .selected-option-card {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.quote-wizard .selected-option-card .wizard-product-main {
+  gap: 6px;
+}
+
+.quote-wizard .selected-option-card strong {
+  font-size: 20px;
+  line-height: 1.25;
+}
+
+.quote-wizard .selected-option-card small {
+  color: #647382;
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1.35;
+}
+
+.quote-wizard .selected-option-card small.is-complete {
+  color: var(--primary);
+}
+
+.quote-wizard .option-select-btn {
+  min-width: 118px;
+  min-height: 48px;
+  padding: 0 18px;
+  white-space: nowrap;
+}
+
+.wizard-navigation {
+  align-items: stretch;
+  gap: 14px;
+  padding-top: 0;
+}
+
+.wizard-navigation:not(.has-prev) {
+  grid-template-columns: 1fr;
+}
+
+.wizard-navigation:not(.has-prev) .wizard-next,
+.wizard-navigation:not(.has-prev) .wizard-submit {
+  grid-column: 1;
+}
+
+.wizard-navigation .primary-btn,
+.wizard-navigation .secondary-btn {
+  min-height: 64px;
+  font-size: 18px;
+}
+
+.option-sheet-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(15, 25, 34, 0.48);
+}
+
+.option-sheet-modal[hidden] {
+  display: none !important;
+}
+
+.option-sheet-panel {
+  position: relative;
+  display: grid;
+  gap: 18px;
+  width: min(720px, 100%);
+  max-height: min(760px, 88vh);
+  padding: 34px 32px 28px;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 26px 80px rgba(12, 26, 37, 0.24);
+  overflow: hidden;
+}
+
+.option-sheet-panel .modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+}
+
+.option-sheet-handle {
+  justify-self: center;
+  width: 56px;
+  height: 5px;
+  border-radius: 999px;
+  background: #eef2f5;
+}
+
+.option-sheet-panel h3 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 28px;
+  font-weight: 950;
+  line-height: 1.2;
+}
+
+.option-sheet-content {
+  display: grid;
+  gap: 18px;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.option-group {
+  display: grid;
+  gap: 10px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #edf1f4;
+}
+
+.option-group:last-child {
+  border-bottom: 0;
+}
+
+.option-group h4 {
+  margin: 0;
+  color: #9aa6b2;
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.option-group h4 span {
+  color: #b2bbc4;
+}
+
+.option-choice-list {
+  display: grid;
+  gap: 4px;
+}
+
+.option-choice {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  min-height: 54px;
+  padding: 0 4px;
+  color: #4b5967;
+  font-size: 18px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.option-choice input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.option-choice::after {
+  content: "✓";
+  color: #d5dce2;
+  font-size: 22px;
+  font-weight: 950;
+}
+
+.option-choice:has(input:checked) {
+  color: #176b5d;
+}
+
+.option-choice:has(input:checked)::after {
+  color: #176b5d;
+}
+
 .table-wrap {
   overflow-x: auto;
   box-shadow: none;
@@ -6781,6 +7000,86 @@ td strong {
 
   .visual-story-grid div {
     padding: 20px;
+  }
+}
+
+@media (max-width: 720px) {
+  .quote-wizard {
+    gap: 18px;
+  }
+
+  .quote-wizard .wizard-step {
+    gap: 18px;
+  }
+
+  .quote-wizard .wizard-choice-grid,
+  .quote-wizard .wizard-choice-grid-two,
+  .quote-wizard .wizard-choice-grid-three {
+    grid-template-columns: 1fr;
+  }
+
+  .quote-wizard .wizard-choice-card {
+    min-height: 94px;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    padding: 18px 16px;
+  }
+
+  .quote-wizard .wizard-choice-card strong {
+    font-size: 19px;
+  }
+
+  .quote-wizard .wizard-choice-card small {
+    font-size: 13px;
+  }
+
+  .quote-wizard .wizard-product-card:not(.selected-option-card) {
+    grid-template-columns: auto auto minmax(0, 1fr);
+  }
+
+  .quote-wizard .selected-option-card {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .quote-wizard .option-select-btn {
+    width: 100%;
+  }
+
+  .wizard-navigation,
+  .wizard-navigation.has-prev,
+  .wizard-navigation.is-final {
+    grid-template-columns: 0.42fr 1fr;
+    gap: 10px;
+  }
+
+  .wizard-navigation:not(.has-prev) {
+    grid-template-columns: 1fr;
+  }
+
+  .wizard-navigation .primary-btn,
+  .wizard-navigation .secondary-btn {
+    min-height: 58px;
+    font-size: 17px;
+  }
+
+  .option-sheet-modal {
+    align-items: end;
+    padding: 10px;
+  }
+
+  .option-sheet-panel {
+    width: 100%;
+    max-height: 86vh;
+    padding: 24px 18px 18px;
+  }
+
+  .option-sheet-panel h3 {
+    font-size: 24px;
+  }
+
+  .option-choice {
+    min-height: 52px;
+    font-size: 17px;
   }
 }
 

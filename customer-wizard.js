@@ -529,8 +529,15 @@
   function openOptionModal(product) {
     activeOptionProduct = product;
     const productData = products.find((item) => item.value === product);
+    const groups = optionSchema[product] || [];
+
+    if (!groups.length) {
+      alert("선택 가능한 옵션을 불러오지 못했습니다. 다시 선택해주세요.");
+      return;
+    }
+
     optionTitle.textContent = productData?.title || product;
-    optionContent.innerHTML = (optionSchema[product] || []).map((group) => optionGroupMarkup(product, group)).join("");
+    optionContent.innerHTML = groups.map((group) => optionGroupMarkup(product, group)).join("");
     optionModal.hidden = false;
   }
 
@@ -828,6 +835,8 @@
     nextButton.hidden = currentStepIndex === steps.length - 1;
     submitButton.hidden = currentStepIndex !== steps.length - 1;
     navigation.classList.toggle("is-final", currentStepIndex === steps.length - 1);
+    navigation.classList.toggle("has-prev", currentStepIndex > 0);
+    message.textContent = "";
 
     if (steps[currentStepIndex] === stepAiContext) {
       renderAiQuoteCard();
@@ -965,6 +974,21 @@
     if (event.target === optionModal) closeOptionModal();
   });
 
+  form.addEventListener(
+    "keydown",
+    (event) => {
+      if (event.key !== "Enter" || event.target?.tagName === "TEXTAREA") return;
+
+      const steps = activeSteps();
+      if (currentStepIndex < steps.length - 1) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        nextButton.click();
+      }
+    },
+    true
+  );
+
   nextButton.addEventListener("click", async () => {
     if (!validateCurrentStep()) return;
     if (activeSteps()[currentStepIndex] === stepAiContext) {
@@ -989,10 +1013,29 @@
   prevButton.addEventListener("click", goPrevious);
   topBackButton.addEventListener("click", goPrevious);
 
-  form.addEventListener("submit", () => {
-    syncItemsField();
-    syncAiFields();
-  }, { capture: true });
+  form.addEventListener(
+    "submit",
+    (event) => {
+      const steps = activeSteps();
+
+      if (currentStepIndex < steps.length - 1) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        nextButton.click();
+        return;
+      }
+
+      if (!validateCurrentStep()) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        return;
+      }
+
+      syncItemsField();
+      syncAiFields();
+    },
+    { capture: true }
+  );
 
   fields.customer.placeholder = "예: 홍길동";
   fields.memo.placeholder = "모델명을 입력해주세요.";
