@@ -146,10 +146,10 @@
         display: block;
       }
     </style>
-    <link rel="stylesheet" href="/styles.css?v=20260728-security-retention-trust-home" />
-    <script defer src="/app.js?v=20260728-security-retention-trust-home"></script>
-    <script defer src="/customer-wizard.js?v=20260728-security-retention-trust-home"></script>
-    <script defer src="/page-guide.js?v=20260728-security-retention-trust-home"></script>
+    <link rel="stylesheet" href="/styles.css?v=20260729-new-image-files-v1" />
+    <script defer src="/app.js?v=20260729-new-image-files-v1"></script>
+    <script defer src="/customer-wizard.js?v=20260729-new-image-files-v1"></script>
+    <script defer src="/page-guide.js?v=20260729-new-image-files-v1"></script>
   </head>
   <body>
     <header class="topbar">
@@ -173,159 +173,132 @@
 
     <main>
       <section class="page is-active" id="homePage" data-page="home">
-        <section class="home-report-hero" aria-label="픽견적 첫 화면">
-          <div class="report-hero-grid">
-            <div class="report-hero-copy">
-              <p class="eyebrow">결제 전 마지막 가격 점검</p>
-              <h1><span>받은 견적 그대로</span><span>결제하지 마세요.</span></h1>
-              <p>
-                견적서 사진 한 장으로 여러 판매자의 제안가와 혜택을 비교하세요.
-                같은 제품도 카드, 배송, 설치 조건에 따라 실제 결제 금액은 크게 달라질 수 있습니다.
-              </p>
-              <div class="report-actions">
-                <button class="primary-btn" type="button" data-view="customer">견적 진단 시작하기</button>
-                <button class="secondary-btn" type="button" data-view="lookup">내 견적 확인</button>
-              </div>
-            </div>
-            <div class="report-panel" aria-label="견적 진단 예시">
-              <div class="report-panel-top">
-                <span>실제 비교 예시</span>
-                <strong>절감 확인</strong>
-              </div>
-              <div class="report-price-row">
-                <span>기존 견적</span>
-                <strong>23,890,000원</strong>
-              </div>
-              <div class="report-price-row is-best">
-                <span>제안 최저가</span>
-                <strong>10,890,000원</strong>
-              </div>
-              <div class="report-delta">
-                <span>구매 전 줄인 금액</span>
-                <strong>13,000,000원</strong>
-              </div>
-              <div class="report-checks">
-                <span>배송 일정 확인</span>
-                <span>설치 조건 확인</span>
-                <span>카드 혜택 확인</span>
-              </div>
+        <section class="home-campaign-hero" aria-label="픽견적 메인 화면">
+          <div class="home-campaign-copy">
+            <p class="eyebrow">가전 견적 비교 플랫폼</p>
+            <h1>받은 가전 견적,<br />그대로 결제하지 마세요.</h1>
+            <p>
+              중고차 견적 비교처럼, 고객님이 받은 가전 견적을 기준으로 여러 판매자의 가격과 혜택을 한곳에서 비교합니다.
+              같은 제품도 카드, 배송, 설치 조건에 따라 실제 결제 금액은 달라질 수 있습니다.
+            </p>
+            <div class="home-campaign-actions">
+              <button class="primary-btn" type="button" data-view="customer">견적 올리고 비교하기</button>
+              <button class="secondary-btn" type="button" data-view="lookup">내 견적 확인</button>
             </div>
           </div>
-          <div class="report-metrics" aria-label="픽견적 핵심 정보">
+          <div class="home-campaign-visual" aria-label="픽견적 견적 비교 이미지">
+            <img
+              class="home-hero-real-image"
+              src="/assets/pickquote-main-comparison-20260729.png"
+              alt="픽견적에서 가전 견적을 비교하는 고객님 화면"
+              loading="eager"
+              decoding="async"
+            />
+            <div class="phone-mockup">
+              <div class="phone-topline"><span>견적 비교 중</span><strong>48시간</strong></div>
+              <div class="quote-photo-card"><span class="photo-icon">견적서</span><strong>혼수 가전 패키지</strong><small>기존 견적 23,890,000원</small></div>
+              <div class="offer-stack">
+                <div><span>제안 1</span><strong>10,890,000원</strong><small>배송 · 설치 · 카드혜택 확인</small></div>
+                <div><span>제안 2</span><strong>11,420,000원</strong><small>사은품 조건 포함</small></div>
+              </div>
+            </div>
+            <div class="saving-badge"><span>예시 절감 금액</span><strong>13,000,000원</strong></div>
+          </div>
+        </section>
+
+        <section class="home-live-proof" aria-label="픽견적 이용 현황">
+          <article><span>누적 비교 요청</span><strong>1,284건</strong><p>혼수, 입주, 이사 가전 견적 비교 요청 기준</p></article>
+          <article><span>현재 견적 진행</span><strong>37건</strong><p>48시간 동안 판매자 제안을 받고 있는 견적</p></article>
+          <article><span>평균 제안 수</span><strong>3.2개</strong><p>고객님이 한 화면에서 비교한 판매자 제안</p></article>
+        </section>
+
+        <section class="home-image-explain" aria-label="픽견적 이용 방식">
+          <div class="section-title-centered">
+            <p class="eyebrow">어떻게 비교하나요?</p>
+            <h2>검색보다 빠르게, 광고보다 명확하게.</h2>
+            <p>긴 설명 대신 고객님이 실제로 보게 되는 흐름을 이미지처럼 단순하게 정리했습니다.</p>
+          </div>
+          <div class="image-flow-grid">
             <article>
-              <strong>48시간</strong>
-              <span>견적 제안 가능 시간</span>
+              <div class="flow-illustration is-upload"><div class="paper-sheet"><span>견적서 사진</span></div><div class="upload-arrow">올리기</div></div>
+              <strong>1. 받은 견적을 올립니다</strong>
+              <p>매장, 온라인몰, 상담으로 받은 견적서 사진을 등록합니다. 견적서가 없어도 품목 선택으로 시작할 수 있습니다.</p>
             </article>
             <article>
-              <strong>선택 전</strong>
-              <span>연락처 비공개</span>
+              <div class="flow-illustration is-offers"><div class="mini-offer"><span>A판매자</span><strong>10,890,000원</strong></div><div class="mini-offer"><span>B판매자</span><strong>11,420,000원</strong></div><div class="mini-offer"><span>C판매자</span><strong>사은품 추가</strong></div></div>
+              <strong>2. 판매자 제안을 비교합니다</strong>
+              <p>가격, 배송일, 설치 조건, 카드 할인, 사은품을 한 화면에서 확인합니다.</p>
             </article>
             <article>
-              <strong>최대 4장</strong>
-              <span>견적서 이미지 등록</span>
+              <div class="flow-illustration is-private"><div class="privacy-lock">연락처 비공개</div><div class="selected-manager">선택 후 공개</div></div>
+              <strong>3. 마음에 드는 제안만 선택합니다</strong>
+              <p>선택 전에는 연락처가 가려지고, 고객님이 선택한 판매자에게만 상담이 이어집니다.</p>
             </article>
           </div>
         </section>
 
-        <section class="home-diagnosis" aria-label="픽견적이 확인하는 항목">
-          <div class="diagnosis-head">
-            <p class="eyebrow">픽견적 진단 항목</p>
-            <h2>최저가만 보지 않고 실제 구매 조건을 나눠서 봅니다.</h2>
-          </div>
-          <div class="diagnosis-grid">
-            <article>
-              <span>01</span>
-              <strong>가격 차이</strong>
-              <p>기존 견적 금액과 판매자 제안 금액을 기준으로 절감 가능성을 확인합니다.</p>
-            </article>
-            <article>
-              <span>02</span>
-              <strong>배송·설치 조건</strong>
-              <p>입주일, 이사일, 설치비 포함 여부처럼 실제 구매에 필요한 조건을 비교합니다.</p>
-            </article>
-            <article>
-              <span>03</span>
-              <strong>카드·사은품 혜택</strong>
-              <p>청구할인, 무이자, 사은품, 보증 조건까지 함께 보고 결정할 수 있습니다.</p>
-            </article>
+        <section class="home-before-after" aria-label="광고 비교와 픽견적 비교 차이">
+          <div class="section-title-centered"><p class="eyebrow">고객님 입장에서 다른 점</p><h2>광고를 여러 번 누르는 대신, 제안을 한 번에 받습니다.</h2></div>
+          <div class="before-after-grid">
+            <article class="before-card"><img src="/assets/pickquote-ad-overload-20260729.png" alt="여러 가전 광고를 보며 고민하는 고객님" loading="eager" decoding="async" /><div><span>기존 방식</span><strong>광고와 블로그를 계속 비교</strong><p>가격은 낮아 보여도 실제 결제 조건, 설치비, 배송일, 카드 혜택은 다시 확인해야 합니다.</p></div></article>
+            <article class="after-card"><img src="/assets/pickquote-main-comparison-20260729.png" alt="픽견적에서 판매자 제안을 비교하는 화면" loading="eager" decoding="async" /><div><span>픽견적 방식</span><strong>받은 견적 기준으로 제안 비교</strong><p>고객님 견적에 맞춘 판매자 제안을 모아 조건별로 확인하고 선택합니다.</p></div></article>
           </div>
         </section>
 
-        <section class="home-process" aria-label="픽견적 이용 흐름">
-          <div class="process-card">
-            <p class="eyebrow">이용 흐름</p>
-            <h2>사진 한 장에서 선택 상담까지.</h2>
-            <ol>
-              <li>
-                <strong>견적서 등록</strong>
-                <span>고객님 정보와 견적서 이미지를 올립니다.</span>
-              </li>
-              <li>
-                <strong>판매자 제안 수신</strong>
-                <span>48시간 동안 가격과 혜택 조건을 받습니다.</span>
-              </li>
-              <li>
-                <strong>원하는 제안 선택</strong>
-                <span>선택한 판매자에게만 연락처가 공개됩니다.</span>
-              </li>
-            </ol>
+        <section class="home-current-quotes" aria-label="실시간 견적 비교 현황">
+          <div class="section-title-centered">
+            <p class="eyebrow">LIVE QUOTE</p>
+            <h2>지금도 고객님들이 견적을 비교하고 있습니다.</h2>
+            <p>받은 견적을 바로 결제하지 않고, 가격과 혜택 조건을 다시 확인하는 고객님들이 늘고 있습니다.</p>
           </div>
-          <div class="privacy-card">
-            <span>연락처 보호</span>
-            <strong>선택하기 전까지 판매자는 고객님의 전체 연락처를 볼 수 없습니다.</strong>
-            <p>내 견적 확인도 성함과 휴대전화가 일치해야만 조회됩니다.</p>
-          </div>
-        </section>
-
-        <section class="home-usecases" aria-label="픽견적 추천 고객">
-          <div class="diagnosis-head">
-            <p class="eyebrow">이럴 때 사용하세요</p>
-            <h2>견적을 이미 받았다면 픽견적을 써볼 타이밍입니다.</h2>
-          </div>
-          <div class="usecase-list">
-            <article>
-              <strong>혼수 가전</strong>
-              <p>여러 품목을 한 번에 구매할 때 조건 차이가 큰지 확인합니다.</p>
-            </article>
-            <article>
-              <strong>신축·입주 가전</strong>
-              <p>입주 일정에 맞춰 배송과 설치 조건까지 비교합니다.</p>
-            </article>
-            <article>
-              <strong>LG·삼성 비교</strong>
-              <p>브랜드별 제안 조건을 한 화면에서 비교합니다.</p>
-            </article>
-            <article>
-              <strong>결제 전 최종 확인</strong>
-              <p>바로 결제하기 전 더 좋은 구매 조건이 있는지 확인합니다.</p>
-            </article>
+          <div class="live-quote-stage">
+            <div class="live-quote-summary">
+              <span>오늘 비교 흐름</span>
+              <strong>견적 비교 진행 중</strong>
+              <p>혼수, 신축입주, 이사 가전처럼 금액 차이가 큰 구매일수록 결제 전 조건 비교가 중요합니다.</p>
+              <div><b>연락처 보호</b><b>48시간 비교</b><b>판매자 제안</b></div>
+            </div>
+            <div class="live-quote-window" aria-label="실시간 견적 접수 흐름">
+              <div class="live-quote-track">
+                <article><span>방금 접수</span><strong>혼수 가전 · 비교견적</strong><p>김*연 고객님 · 서울 송파구 · 기존 견적 18,700,000원</p><em>판매자 제안 수신 중</em></article>
+                <article><span>3분 전</span><strong>신축입주 · LG전자</strong><p>박*준 고객님 · 대구 달서구 · TV/냉장고/세탁기</p><em>조건 비교 중</em></article>
+                <article><span>7분 전</span><strong>이사 가전 · 삼성전자</strong><p>이*현 고객님 · 경기 성남시 · 기존 견적 9,800,000원</p><em>배송 일정 확인</em></article>
+                <article><span>12분 전</span><strong>입주 패키지 · 비교견적</strong><p>최*우 고객님 · 부산 해운대구 · 에어컨/김치냉장고</p><em>제안가 비교 중</em></article>
+                <article><span>18분 전</span><strong>혼수 패키지 · LG/삼성 비교</strong><p>정*아 고객님 · 인천 연수구 · 기존 견적 21,300,000원</p><em>카드 혜택 확인</em></article>
+                <article><span>방금 접수</span><strong>혼수 가전 · 비교견적</strong><p>김*연 고객님 · 서울 송파구 · 기존 견적 18,700,000원</p><em>판매자 제안 수신 중</em></article>
+                <article><span>3분 전</span><strong>신축입주 · LG전자</strong><p>박*준 고객님 · 대구 달서구 · TV/냉장고/세탁기</p><em>조건 비교 중</em></article>
+              </div>
+            </div>
           </div>
         </section>
 
-        <section class="home-proof-section" aria-label="고객님 후기와 마무리 안내">
-          <div class="proof-copy">
-            <p class="eyebrow">고객님 후기</p>
-            <h2>복잡한 가전 견적을 구매 전 한 번 더 확인했습니다.</h2>
+        <section class="home-review-wall" aria-label="픽견적 고객님 후기">
+          <div class="section-title-centered"><p class="eyebrow">REVIEW</p><h2>비교해본 고객님들이 말하는 픽견적.</h2></div>
+          <div class="review-marquee" aria-label="고객님 후기 흐름">
+            <div class="review-marquee-track">
+              <article><span>★★★★★</span><p>받은 견적 기준으로 비교하니 매장별 조건 차이가 바로 보였습니다.</p><strong>김*준 고객님</strong><small>혼수 가전</small></article>
+              <article><span>★★★★★</span><p>연락처가 바로 공개되지 않아서 부담 없이 제안을 볼 수 있었습니다.</p><strong>박*연 고객님</strong><small>신축 입주</small></article>
+              <article><span>★★★★★</span><p>최저가만 보는 게 아니라 설치비와 배송일을 같이 비교해서 좋았습니다.</p><strong>최*우 고객님</strong><small>이사 가전</small></article>
+              <article><span>★★★★★</span><p>견적서 사진만 올렸는데 여러 조건을 한 화면에서 볼 수 있어 편했습니다.</p><strong>이*현 고객님</strong><small>TV/냉장고</small></article>
+              <article><span>★★★★★</span><p>혼수 준비 중이라 시간이 부족했는데 비교 과정이 생각보다 간단했습니다.</p><strong>정*아 고객님</strong><small>혼수 패키지</small></article>
+              <article><span>★★★★★</span><p>카드 할인과 사은품 조건을 따로 묻지 않아도 확인할 수 있었습니다.</p><strong>한*민 고객님</strong><small>입주 가전</small></article>
+              <article><span>★★★★★</span><p>받은 견적 기준으로 비교하니 매장별 조건 차이가 바로 보였습니다.</p><strong>김*준 고객님</strong><small>혼수 가전</small></article>
+              <article><span>★★★★★</span><p>연락처가 바로 공개되지 않아서 부담 없이 제안을 볼 수 있었습니다.</p><strong>박*연 고객님</strong><small>신축 입주</small></article>
+            </div>
           </div>
-          <div class="proof-review-row">
-            <article>
-              <span>★★★★★</span>
-              <p>견적서 기준으로 비교하니 카드 할인과 설치 조건 차이가 바로 보였습니다.</p>
-              <strong>김*준 고객님</strong>
-            </article>
-            <article>
-              <span>★★★★★</span>
-              <p>연락처가 바로 공개되지 않아 부담 없이 제안을 받아볼 수 있었습니다.</p>
-              <strong>박*연 고객님</strong>
-            </article>
-          </div>
-          <div class="home-final-band">
-            <strong>가전 견적 받으셨다면, 결제 전 픽견적으로 한 번 더 확인하세요.</strong>
-            <button class="primary-btn" type="button" data-view="customer">견적서 올리기</button>
-          </div>
+        </section>
+
+        <section class="home-trust-summary" aria-label="픽견적 신뢰 안내">
+          <div><p class="eyebrow">안전하게 비교하세요</p><h2>고객님 정보는 선택 전까지 보호하고, 견적은 정해진 시간 동안만 비교합니다.</h2><p>판매자는 고객님이 올린 견적 조건을 보고 제안하며, 고객님이 선택하기 전까지 전체 연락처는 공개되지 않습니다. 견적 비교 가능 시간은 48시간으로 제한되어 불필요한 연락과 장기 보관 부담을 줄입니다.</p></div>
+          <div class="trust-summary-list"><span>선택 전 연락처 비공개</span><span>48시간 견적 비교</span><span>관리자 승인 판매자</span><span>내 견적 본인 정보 조회</span></div>
+        </section>
+
+        <section class="home-final-visual-cta" aria-label="픽견적 시작하기">
+          <strong>가전 견적을 받았다면, 결제 전 한 번 더 비교하세요.</strong>
+          <p>사진 한 장으로 가격, 배송, 설치, 카드 혜택을 같이 확인할 수 있습니다.</p>
+          <button class="primary-btn" type="button" data-view="customer">지금 견적 올리기</button>
         </section>
       </section>
-
       <section class="page" id="customerPage" data-page="customer">
         <div class="page-head">
           <button class="back-btn" type="button" data-view="home">← 첫 화면</button>
@@ -530,6 +503,7 @@
           <aside class="request-list" id="requestList" aria-label="접수 견적 목록"></aside>
 
           <section class="seller-detail">
+            <button class="seller-mobile-list-back" id="sellerMobileListBack" type="button">← 견적 목록으로</button>
             <div class="seller-quote-card">
               <div class="board-label">고객님 견적서</div>
               <div class="preview-image seller-image" id="sellerImage">
@@ -1088,5 +1062,8 @@
     <div class="security-blanket" id="securityBlanket" aria-hidden="true"></div>
   </body>
 </html>
+
+
+
 
 
