@@ -109,6 +109,10 @@ const managerReviewList = document.querySelector("#managerReviewList");
 const serverLoadingModal = document.querySelector("#serverLoadingModal");
 const serverLoadingTitle = document.querySelector("#serverLoadingTitle");
 const serverLoadingText = document.querySelector("#serverLoadingText");
+const homeLiveBoard = document.querySelector(".pick-live-board");
+const homeReviewGrid = document.querySelector(".pick-review-grid");
+const fallbackHomeLiveHTML = homeLiveBoard?.innerHTML || "";
+const fallbackHomeReviewHTML = homeReviewGrid?.innerHTML || "";
 
 let securityBlanketTimer;
 let serverLoadingCount = 0;
@@ -540,6 +544,7 @@ async function resetSellerPasswordOnServer(payload) {
 
 function replaceRequests(rows) {
   requests.splice(0, requests.length, ...rows.map(normalizeQuoteRequest));
+  renderHomeFeeds();
 }
 
 function mergeRequests(rows) {
@@ -552,6 +557,7 @@ function mergeRequests(rows) {
     }
     requests.push(normalizedRow);
   });
+  renderHomeFeeds();
 }
 
 function normalizeQuoteBrand(value) {
@@ -599,6 +605,7 @@ async function syncCustomerQuotesFromServer(options = {}) {
 
 function replaceBids(rows) {
   bids.splice(0, bids.length, ...rows);
+  renderHomeFeeds();
 }
 
 async function syncBidsFromServer(options = {}) {
@@ -611,6 +618,49 @@ async function syncBidsFromServer(options = {}) {
 
   if (!result?.ok || !Array.isArray(result.rows)) return;
   replaceBids(result.rows);
+}
+
+function normalizeReviewRow(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    requestId: row.requestId || row.quoteId || row.quote_id || "",
+    quoteId: row.quoteId || row.requestId || row.quote_id || "",
+    bidId: row.bidId || row.bid_id || "",
+    sellerId: row.sellerId || row.seller_id || "",
+    seller: row.seller || "",
+    manager: row.manager || "",
+    customer: row.customer || "",
+    rating: Number(row.rating || 0),
+    content: row.content || "",
+    createdAt: row.createdAt || row.created_at || "",
+  };
+}
+
+function replaceReviews(rows) {
+  managerReviews.splice(0, managerReviews.length, ...rows.map(normalizeReviewRow).filter(Boolean));
+  renderHomeFeeds();
+}
+
+async function syncReviewsFromServer(options = {}) {
+  const showLoading = options.showLoading === true;
+  const result = await apiJson("/api/reviews?limit=40", {
+    showLoading,
+    loadingTitle: "후기를 불러오는 중입니다.",
+    loadingText: "고객님이 작성한 실제 후기를 확인하고 있습니다.",
+  });
+
+  if (!result?.ok || !Array.isArray(result.rows)) return;
+  replaceReviews(result.rows);
+}
+
+async function saveReviewToServer(review) {
+  return apiJson("/api/reviews", {
+    method: "POST",
+    loadingTitle: "후기를 저장 중입니다.",
+    loadingText: "작성하신 후기를 서버에 저장하고 있습니다.",
+    body: JSON.stringify(review),
+  });
 }
 
 async function lookupCustomerQuotesFromServer(customer, phone, quoteNumber = "") {
@@ -934,6 +984,7 @@ async function refreshCurrentViewFromServer() {
       await Promise.all([
         syncCustomerQuotesFromServer({ showLoading: false }),
         syncBidsFromServer({ showLoading: false }),
+        syncReviewsFromServer({ showLoading: false }),
       ]);
       hydrateApprovedSellerAccounts();
       renderRequests();
@@ -942,7 +993,10 @@ async function refreshCurrentViewFromServer() {
     }
 
     if (view === "lookup" && lookupAccessGranted) {
-      await syncBidsFromServer({ showLoading: false });
+      await Promise.all([
+        syncBidsFromServer({ showLoading: false }),
+        syncReviewsFromServer({ showLoading: false }),
+      ]);
       return;
     }
   } finally {
@@ -1151,6 +1205,96 @@ function withoutQuoteItemsMarkup(request) {
       </div>
     </div>
   `;
+}
+
+function homeQuoteTitle(request) {
+  if (isWithoutQuoteRequest(request)) {
+    const items = getWithoutQuoteItems(request)
+      .slice(0, 4)
+      .map((item) => {
+        const optionText = item.options.length ? ` (${item.options.slice(0, 2).join(", ")})` : "";
+        return `${item.name}${optionText}`;
+      });
+    return items.join(", ") || "선택 품목 견적";
+  }
+
+  const itemText = String(request?.items || "")
+    .replace(/\r?\n/g, ", ")
+    .replace(/\s+/g, " ")
+    .trim();
+  const parts = splitTopLevelText(itemText, [",", "/"]).slice(0, 4);
+  return parts.join(", ") || "견적서 첨부";
+}
+
+function duplicateRelayRows(rows, minimum = 8) {
+  if (!rows.length) return [];
+  const relayRows = [...rows];
+  while (relayRows.length < minimum) {
+    relayRows.push(...rows);
+  }
+  return relayRows.slice(0, Math.max(minimum, rows.length));
+}
+
+function quoteHomeStatus(request, quoteBids) {
+  if (hasValidSelectedBid(request)) return "선택 완료";
+  if (isQuoteClosed(request)) return "비교 종료";
+  if (quoteBids.length) return `${quoteBids.length}개 제안 비교 중`;
+  return "판매자 제안 대기";
+}
+
+function renderHomeFeeds() {
+  if (homeLiveBoard) {
+    const quoteRows = requests
+      .slice()
+      .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+      .slice(0, 8);
+
+    if (quoteRows.length) {
+      homeLiveBoard.innerHTML = duplicateRelayRows(quoteRows)
+        .map((request) => {
+          const quoteBids = bids.filter((bid) => sameId(bid.requestId, request.id));
+          const bidPrices = quoteBids.map((bid) => Number(bid.price || 0)).filter(Boolean);
+          const lowestBidPrice = bidPrices.length ? Math.min(...bidPrices) : 0;
+          const priceText = lowestBidPrice
+            ? `최저 제안 ${formatPrice(lowestBidPrice)}`
+            : request.price
+              ? `기존 견적 ${formatPrice(request.price)}`
+              : getQuoteTypeLabel(request);
+          return `
+            <article>
+              <span>${escapeHTML(request.purchasePurpose || getQuoteBrand(request) || "가전 견적")}</span>
+              <strong>${escapeHTML(priceText)}</strong>
+              <p>${escapeHTML(homeQuoteTitle(request))}</p>
+              <em>${escapeHTML(quoteHomeStatus(request, quoteBids))}</em>
+            </article>
+          `;
+        })
+        .join("");
+    } else {
+      homeLiveBoard.innerHTML = fallbackHomeLiveHTML;
+    }
+  }
+
+  if (homeReviewGrid) {
+    const reviewRows = managerReviews
+      .filter((review) => review.content)
+      .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+      .slice(0, 8);
+
+    if (reviewRows.length) {
+      homeReviewGrid.innerHTML = duplicateRelayRows(reviewRows)
+        .map((review) => `
+          <article>
+            <span>${escapeHTML(starText(review.rating || 5))}</span>
+            <p>${escapeHTML(review.content)}</p>
+            <strong>${escapeHTML(maskCustomerName(review.customer || "고객님"))} 고객님</strong>
+          </article>
+        `)
+        .join("");
+    } else {
+      homeReviewGrid.innerHTML = fallbackHomeReviewHTML;
+    }
+  }
 }
 
 function normalizeSellerBrandFilter(value) {
@@ -1513,6 +1657,7 @@ async function createCustomerRequest(formData) {
 
   requests.unshift(savedRequest);
   selectedRequestId = savedRequest.id;
+  renderHomeFeeds();
   renderRequests();
   renderSelectedRequest();
   resetCustomerForm();
@@ -2202,7 +2347,10 @@ lookupForm.addEventListener("submit", async (event) => {
   const serverMatches = canUseApiServer() ? await lookupCustomerQuotesFromServer(formData.get("lookupCustomer").trim(), phone) : [];
   if (serverMatches.length && canUseApiServer()) {
     mergeRequests(serverMatches);
-    await syncBidsFromServer();
+    await Promise.all([
+      syncBidsFromServer(),
+      syncReviewsFromServer({ showLoading: false }),
+    ]);
   }
   const matches = serverMatches.length
     ? serverMatches
@@ -2267,7 +2415,7 @@ lookupResults.addEventListener("click", (event) => {
   openBidSelectConfirmModal(request, bid);
 });
 
-lookupResults.addEventListener("submit", (event) => {
+lookupResults.addEventListener("submit", async (event) => {
   const form = event.target.closest("[data-review-form]");
   if (!form) return;
   event.preventDefault();
@@ -2297,12 +2445,20 @@ lookupResults.addEventListener("submit", (event) => {
     createdAt: new Date().toISOString().slice(0, 10),
   };
 
-  if (existingReview) {
-    Object.assign(existingReview, nextReview);
-  } else {
-    managerReviews.unshift(nextReview);
+  const savedReview = await saveReviewToServer(nextReview);
+  if (savedReview?.ok === false) {
+    alert(savedReview.message || "후기 저장에 실패했습니다. 잠시 후 다시 시도해주세요.");
+    return;
   }
 
+  const reviewToStore = savedReview?.row ? normalizeReviewRow(savedReview.row) : nextReview;
+  if (existingReview) {
+    Object.assign(existingReview, reviewToStore);
+  } else {
+    managerReviews.unshift(reviewToStore);
+  }
+
+  renderHomeFeeds();
   renderLookupResults([request]);
 });
 
@@ -2463,6 +2619,7 @@ bidForm.addEventListener("submit", async (event) => {
     bids.push(savedBid);
   }
 
+  renderHomeFeeds();
   bidForm.reset();
   renderRequests();
   syncBidFormForRequest(getSelectedRequest());
@@ -2861,8 +3018,17 @@ async function bootApplication() {
   const initialPath = normalizeAppPath(window.location.pathname);
   const isSellerPath = initialPath === "/seller";
   const isSellerRegisterPath = initialPath === "/seller/register";
+  const isHomePath = initialPath === "/";
 
   if (canUseApiServer()) {
+    if (isHomePath) {
+      await Promise.all([
+        syncCustomerQuotesFromServer({ showLoading: false }),
+        syncBidsFromServer({ showLoading: false }),
+        syncReviewsFromServer({ showLoading: false }),
+      ]);
+    }
+
     if (isSellerPath) {
       showServerLoading("판매자 페이지를 준비 중입니다.", "계정과 견적 데이터를 불러오고 있습니다.");
       await syncApprovedSellersFromServer({ showLoading: false });
@@ -2876,6 +3042,7 @@ async function bootApplication() {
         await Promise.all([
           syncCustomerQuotesFromServer({ showLoading: false }),
           syncBidsFromServer({ showLoading: false }),
+          syncReviewsFromServer({ showLoading: false }),
         ]);
       }
     } finally {

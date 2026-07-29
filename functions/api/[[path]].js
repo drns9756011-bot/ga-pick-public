@@ -184,6 +184,14 @@ function normalizeText(value) {
   return String(value || "").trim().replace(/\s+/g, "");
 }
 
+function maskCustomerName(value) {
+  const text = String(value || "").trim();
+  if (!text) return "고객";
+  if (text.length <= 1) return text;
+  if (text.length === 2) return `${text[0]}*`;
+  return `${text[0]}*${text.slice(-1)}`;
+}
+
 function formatPhoneNumber(value) {
   const digits = normalizePhone(value);
   if (!digits) return "";
@@ -598,6 +606,44 @@ function normalizeBid(row) {
     createdAt: row.created_at || "",
     updatedAt: row.updated_at || "",
   };
+}
+
+function normalizeReview(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    requestId: row.quote_id,
+    quoteId: row.quote_id,
+    bidId: row.bid_id,
+    sellerId: row.seller_id || "",
+    seller: row.seller || "",
+    manager: row.manager || "",
+    customer: row.customer || "",
+    rating: Number(row.rating || 0),
+    content: row.content || "",
+    createdAt: row.created_at || "",
+  };
+}
+
+async function ensureReviewsTable(env) {
+  await env.DB.prepare(
+    `CREATE TABLE IF NOT EXISTS reviews (
+      id TEXT PRIMARY KEY,
+      quote_id TEXT NOT NULL,
+      bid_id TEXT NOT NULL,
+      seller_id TEXT DEFAULT '',
+      seller TEXT DEFAULT '',
+      manager TEXT DEFAULT '',
+      customer TEXT DEFAULT '',
+      rating INTEGER NOT NULL,
+      content TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      FOREIGN KEY (quote_id) REFERENCES customer_quotes(id),
+      FOREIGN KEY (bid_id) REFERENCES bids(id)
+    )`
+  ).run();
+  await env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_reviews_seller_id ON reviews(seller_id)").run();
+  await env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_reviews_quote_id ON reviews(quote_id)").run();
 }
 
 async function ensureCustomerQuoteColumns(env) {
@@ -1755,6 +1801,83 @@ async function getBids(env, request) {
   return json({ ok: true, rows: (result.results || []).map(normalizeBid) });
 }
 
+async function getReviews(env, request) {
+  await ensureReviewsTable(env);
+  const url = new URL(request.url);
+  const quoteId = String(url.searchParams.get("quoteId") || "").trim();
+  const sellerId = String(url.searchParams.get("sellerId") || "").trim();
+  const limit = Math.min(Math.max(Number(url.searchParams.get("limit") || 40), 1), 100);
+  let sql = "SELECT * FROM reviews";
+  const bindings = [];
+  const where = [];
+
+  if (quoteId) {
+    where.push("quote_id = ?");
+    bindings.push(quoteId);
+  }
+  if (sellerId) {
+    where.push("seller_id = ?");
+    bindings.push(sellerId);
+  }
+  if (where.length) sql += ` WHERE ${where.join(" AND ")}`;
+  sql += " ORDER BY created_at DESC LIMIT ?";
+  bindings.push(limit);
+
+  const result = await env.DB.prepare(sql).bind(...bindings).all();
+  return json({ ok: true, rows: (result.results || []).map(normalizeReview) });
+}
+
+async function createReview(env, request) {
+  await ensureReviewsTable(env);
+  const body = await request.json();
+  const quoteId = String(body.requestId || body.quoteId || "").trim();
+  const bidId = String(body.bidId || "").trim();
+  const rating = Number(body.rating || 0);
+  const content = String(body.content || "").trim();
+
+  if (!quoteId || !bidId) return json({ ok: false, message: "후기를 남길 견적 정보가 필요합니다." }, 400);
+  if (!content) return json({ ok: false, message: "후기 내용을 입력해주세요." }, 400);
+  if (!Number.isFinite(rating) || rating < 1 || rating > 5) {
+    return json({ ok: false, message: "별점은 1점부터 5점까지 선택할 수 있습니다." }, 400);
+  }
+
+  const quote = await env.DB.prepare("SELECT * FROM customer_quotes WHERE id = ?").bind(quoteId).first();
+  if (!quote) return json({ ok: false, message: "고객 견적을 찾을 수 없습니다." }, 404);
+  if (String(quote.selected_bid_id || "") !== bidId) {
+    return json({ ok: false, message: "선택한 견적에 대해서만 후기를 작성할 수 있습니다." }, 403);
+  }
+
+  const bid = await env.DB.prepare("SELECT * FROM bids WHERE id = ? AND quote_id = ? LIMIT 1")
+    .bind(bidId, quoteId)
+    .first();
+  if (!bid) return json({ ok: false, message: "선택한 판매자 제안을 찾을 수 없습니다." }, 404);
+
+  const id = createId("review");
+  const now = new Date().toISOString();
+  await env.DB.prepare("DELETE FROM reviews WHERE quote_id = ? AND bid_id = ?").bind(quoteId, bidId).run();
+  await env.DB.prepare(
+    `INSERT INTO reviews
+      (id, quote_id, bid_id, seller_id, seller, manager, customer, rating, content, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  )
+    .bind(
+      id,
+      quoteId,
+      bidId,
+      bid.seller_id || "",
+      bid.seller || "",
+      bid.manager || "",
+      maskCustomerName(quote.customer),
+      rating,
+      content,
+      now
+    )
+    .run();
+
+  const row = await env.DB.prepare("SELECT * FROM reviews WHERE id = ?").bind(id).first();
+  return json({ ok: true, row: normalizeReview(row) }, 201);
+}
+
 async function upsertBid(env, request) {
   await closeExpiredQuotes(env);
   const body = await request.json();
@@ -2487,6 +2610,8 @@ export async function onRequest(context) {
   if (path === "customer-quotes" && method === "POST") return createCustomerQuote(env, request);
   if (path === "bids" && method === "GET") return getBids(env, request);
   if (path === "bids" && method === "POST") return upsertBid(env, request);
+  if (path === "reviews" && method === "GET") return getReviews(env, request);
+  if (path === "reviews" && method === "POST") return createReview(env, request);
   if (path === "bid-selection" && method === "POST") return selectBid(env, request);
   if (path === "quote-close" && method === "POST") return closeQuoteByCustomer(env, request);
 
