@@ -19,7 +19,7 @@ const SOLAPI_DEFAULTS = {
   SOLAPI_TEMPLATE_SELLER_REJECTED: "KA01TP260723100412983h6pYV7vWwi5",
 };
 
-const PUBLIC_API_VERSION = "20260729-master-seller-login-repair";
+const PUBLIC_API_VERSION = "20260729-seller-login-stable-master-flow";
 const MASTER_SELLER_ID = "pickgj";
 const MASTER_SELLER_PASSWORD_HASH =
   "pbkdf2$120000$67612d7069636b2d6d61737465722d73$598fa387d3b61acff8b064b53fedd73c1a1df5dfa6b2fef936751754096e043f";
@@ -275,27 +275,52 @@ async function upsertMasterSeller(env) {
     approved_at: now,
   };
 
-  await env.DB.prepare(
-    `INSERT INTO approved_sellers
-      (id, status, seller_id, password, channel, branch, branch_region, manager, manager_position, phone,
-       card_image, card_image_key, memo, consent_json, requested_at, reviewed_at, review_memo, approved_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-     ON CONFLICT(seller_id) DO UPDATE SET
-       status = excluded.status,
-       password = excluded.password,
-       channel = excluded.channel,
-       branch = excluded.branch,
-       branch_region = excluded.branch_region,
-       manager = excluded.manager,
-       manager_position = excluded.manager_position,
-       phone = excluded.phone,
-       card_image = COALESCE(NULLIF(approved_sellers.card_image, ''), excluded.card_image),
-       card_image_key = COALESCE(NULLIF(approved_sellers.card_image_key, ''), excluded.card_image_key),
-       memo = excluded.memo,
-       consent_json = excluded.consent_json,
-       reviewed_at = excluded.reviewed_at,
-       review_memo = excluded.review_memo`
-  )
+  const existing = await env.DB.prepare("SELECT id FROM approved_sellers WHERE seller_id = ? LIMIT 1")
+    .bind(MASTER_SELLER_ID)
+    .first();
+
+  if (existing?.id) {
+    await env.DB.prepare(
+      `UPDATE approved_sellers SET
+        status = ?,
+        password = ?,
+        channel = ?,
+        branch = ?,
+        branch_region = ?,
+        manager = ?,
+        manager_position = ?,
+        phone = ?,
+        memo = ?,
+        consent_json = ?,
+        reviewed_at = ?,
+        review_memo = ?,
+        approved_at = ?
+       WHERE id = ?`
+    )
+      .bind(
+        masterRow.status,
+        masterRow.password,
+        masterRow.channel,
+        masterRow.branch,
+        masterRow.branch_region,
+        masterRow.manager,
+        masterRow.manager_position,
+        masterRow.phone,
+        masterRow.memo,
+        masterRow.consent_json,
+        masterRow.reviewed_at,
+        masterRow.review_memo,
+        masterRow.approved_at,
+        existing.id
+      )
+      .run();
+  } else {
+    await env.DB.prepare(
+      `INSERT INTO approved_sellers
+        (id, status, seller_id, password, channel, branch, branch_region, manager, manager_position, phone,
+         card_image, card_image_key, memo, consent_json, requested_at, reviewed_at, review_memo, approved_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    )
     .bind(
       masterRow.id,
       masterRow.status,
@@ -317,6 +342,7 @@ async function upsertMasterSeller(env) {
       masterRow.approved_at
     )
     .run();
+  }
 
   return env.DB.prepare("SELECT * FROM approved_sellers WHERE seller_id = ? AND status = 'approved' LIMIT 1")
     .bind(MASTER_SELLER_ID)
@@ -1419,12 +1445,13 @@ async function loginSeller(env, request) {
     .bind(sellerId)
     .first();
 
-  const passwordMatched = row ? await safelyVerifyPassword(password, row.password) : false;
-  if (!passwordMatched && (await isMasterSellerLogin(sellerId, password))) {
+  let authenticated = row ? await safelyVerifyPassword(password, row.password) : false;
+  if (!authenticated && (await isMasterSellerLogin(sellerId, password))) {
     row = await upsertMasterSeller(env);
+    authenticated = Boolean(row);
   }
 
-  if (!row || !(await safelyVerifyPassword(password, row.password))) {
+  if (!row || !authenticated) {
     return json({ ok: false, message: "아이디 또는 비밀번호가 일치하지 않습니다." }, 401);
   }
 

@@ -6109,10 +6109,17 @@ td strong {
 }
 
 .live-quote-summary strong {
+  display: grid;
+  gap: 4px;
   color: #fff;
   font-size: clamp(34px, 4.2vw, 58px);
   line-height: 1.08;
   letter-spacing: 0;
+}
+
+.live-quote-summary strong span {
+  display: block;
+  white-space: nowrap;
 }
 
 .live-quote-summary p {
