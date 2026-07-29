@@ -20,6 +20,7 @@ const SOLAPI_DEFAULTS = {
 };
 
 const PUBLIC_API_VERSION = "20260729-naver-shopping-lowest-ready";
+const NAVER_SHOPPING_CLIENT_ID_DEFAULT = "x1CsXB5ZCYULxcGnclGq";
 const MASTER_SELLER_ID = "pickgj";
 const MASTER_SELLER_PASSWORD = "qwer1234!!";
 const MASTER_SELLER_PASSWORD_HASH =
@@ -216,7 +217,7 @@ function formatAlimtalkPrice(value) {
 
 function getNaverShoppingConfig(env) {
   return {
-    clientId: String(env.NAVER_SHOPPING_CLIENT_ID || env.NAVER_CLIENT_ID || "").trim(),
+    clientId: String(env.NAVER_SHOPPING_CLIENT_ID || env.NAVER_CLIENT_ID || NAVER_SHOPPING_CLIENT_ID_DEFAULT).trim(),
     clientSecret: String(env.NAVER_SHOPPING_CLIENT_SECRET || env.NAVER_CLIENT_SECRET || "").trim(),
   };
 }
@@ -228,11 +229,14 @@ function stripHtmlTags(value) {
 async function getNaverShoppingLowest(env, request) {
   const config = getNaverShoppingConfig(env);
   if (!config.clientId || !config.clientSecret) {
+    const required = [];
+    if (!config.clientId) required.push("NAVER_SHOPPING_CLIENT_ID");
+    if (!config.clientSecret) required.push("NAVER_SHOPPING_CLIENT_SECRET");
     return json({
       ok: false,
       configured: false,
       message: "네이버 쇼핑 검색 API 키가 필요합니다.",
-      required: ["NAVER_SHOPPING_CLIENT_ID", "NAVER_SHOPPING_CLIENT_SECRET"],
+      required,
     });
   }
 
