@@ -19,11 +19,11 @@ const SOLAPI_DEFAULTS = {
   SOLAPI_TEMPLATE_SELLER_REJECTED: "KA01TP260723100412983h6pYV7vWwi5",
 };
 
-const PUBLIC_API_VERSION = "20260729-master-login-direct-guard";
+const PUBLIC_API_VERSION = "20260729-cloudflare-pbkdf2-100000-fix";
 const MASTER_SELLER_ID = "pickgj";
 const MASTER_SELLER_PASSWORD = "qwer1234!!";
 const MASTER_SELLER_PASSWORD_HASH =
-  "pbkdf2$120000$67612d7069636b2d6d61737465722d73$598fa387d3b61acff8b064b53fedd73c1a1df5dfa6b2fef936751754096e043f";
+  "pbkdf2$100000$67612d7069636b2d6d61737465722d73$23a61a5e679dd6475f9ddca3667166c9ea839ff7de5eed9de20a7e8964f4408c";
 
 function solapiValue(env, key) {
   return String(env?.[key] || SOLAPI_DEFAULTS[key] || "").trim();
@@ -126,7 +126,7 @@ async function hashPassword(password) {
     false,
     ["deriveBits"]
   );
-  const iterations = 120000;
+  const iterations = 100000;
   const bits = await crypto.subtle.deriveBits(
     { name: "PBKDF2", hash: "SHA-256", salt, iterations },
     key,
@@ -148,7 +148,7 @@ async function verifyPassword(password, storedPassword) {
     ["deriveBits"]
   );
   const bits = await crypto.subtle.deriveBits(
-    { name: "PBKDF2", hash: "SHA-256", salt: hexToBytes(saltHex), iterations: Number(iterationText || 120000) },
+    { name: "PBKDF2", hash: "SHA-256", salt: hexToBytes(saltHex), iterations: Math.min(Number(iterationText || 100000), 100000) },
     key,
     256
   );
