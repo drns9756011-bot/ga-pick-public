@@ -131,6 +131,50 @@ button {
   font-size: 15px;
 }
 
+.header-ad-slot {
+  flex: 1 1 420px;
+  max-width: 760px;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 10px 18px;
+  border: 1px solid #dbe6e2;
+  border-radius: 16px;
+  background:
+    linear-gradient(90deg, rgba(15, 118, 101, 0.1), rgba(245, 190, 80, 0.15)),
+    #fff;
+  color: #18242d;
+  text-decoration: none;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
+  white-space: nowrap;
+}
+
+.header-ad-slot .ad-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 42px;
+  height: 26px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.header-ad-slot strong {
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.header-ad-slot span:last-child {
+  color: #687482;
+  font-size: 13px;
+  font-weight: 800;
+}
+
 .nav button {
   border: 0;
   background: transparent;
@@ -1066,52 +1110,17 @@ h3 {
   gap: 22px;
 }
 
-.pick-hero-brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.pick-hero-mark {
-  display: grid;
-  place-items: center;
-  width: 50px;
-  height: 50px;
-  border-radius: 14px;
-  background: #0f7665;
-  color: #fff;
-  font-size: 25px;
-  font-weight: 900;
-  box-shadow: 0 16px 36px rgba(15, 118, 101, 0.2);
-}
-
-.pick-hero-brand strong,
-.pick-hero-brand span {
-  display: block;
-}
-
-.pick-hero-brand strong {
-  font-size: 28px;
-  line-height: 1.1;
-}
-
-.pick-hero-brand span {
-  margin-top: 4px;
-  color: #697584;
-  font-weight: 800;
-}
-
 .home-ad-slot {
-  width: min(860px, 100%);
-  min-height: 58px;
-  margin: -4px auto 0;
+  width: min(1060px, 100%);
+  min-height: 86px;
+  margin: 0 auto 4px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
-  padding: 12px 22px;
+  gap: 18px;
+  padding: 18px 28px;
   border: 1px solid #d9e5e1;
-  border-radius: 16px;
+  border-radius: 22px;
   background:
     linear-gradient(90deg, rgba(18, 107, 93, 0.09), rgba(232, 180, 79, 0.16)),
     #fff;
@@ -1134,13 +1143,13 @@ h3 {
 }
 
 .home-ad-slot strong {
-  font-size: 16px;
+  font-size: clamp(18px, 2vw, 24px);
   font-weight: 900;
 }
 
 .home-ad-slot span:last-child {
   color: var(--muted);
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 800;
 }
 
@@ -1433,6 +1442,11 @@ h3 {
   gap: 14px;
 }
 
+.pick-relay-viewport {
+  overflow: hidden;
+  padding: 2px;
+}
+
 .pick-category-list {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -1538,6 +1552,18 @@ h3 {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.pick-relay-track,
+.pick-review-relay-track {
+  display: flex;
+  width: max-content;
+  gap: 14px;
+  animation: pickRelaySlide 34s linear infinite;
+}
+
+.pick-review-relay-track {
+  animation-duration: 38s;
+}
+
 .pick-live-board article,
 .pick-review-grid article {
   display: grid;
@@ -1546,6 +1572,17 @@ h3 {
   border: 1px solid #e0e6ed;
   border-radius: 22px;
   background: #fafcff;
+}
+
+.pick-relay-track article,
+.pick-review-relay-track article {
+  width: min(340px, 78vw);
+  flex: 0 0 auto;
+}
+
+.pick-relay-track:hover,
+.pick-review-relay-track:hover {
+  animation-play-state: paused;
 }
 
 .pick-live-board span,
@@ -1607,6 +1644,16 @@ h3 {
   color: #0f7665;
 }
 
+@keyframes pickRelaySlide {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(calc(-50% - 7px));
+  }
+}
+
 @media (max-width: 900px) {
   .pick-home-shell {
     padding: 24px 18px 72px;
@@ -1629,6 +1676,15 @@ h3 {
   .home-ad-slot {
     width: 100%;
     justify-content: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pick-relay-track,
+  .pick-review-relay-track {
+    width: auto;
+    flex-wrap: wrap;
+    animation: none;
   }
 }
 
@@ -5257,7 +5313,26 @@ td strong {
     padding: 18px 5vw;
   }
 
+  .header-ad-slot {
+    order: 2;
+    width: 100%;
+    max-width: none;
+    min-height: 44px;
+    justify-content: flex-start;
+    gap: 10px;
+    padding: 9px 12px;
+  }
+
+  .header-ad-slot strong {
+    font-size: 14px;
+  }
+
+  .header-ad-slot span:last-child {
+    display: none;
+  }
+
   .nav {
+    order: 3;
     width: 100%;
     overflow-x: auto;
     padding-bottom: 2px;
