@@ -19,7 +19,10 @@ const SOLAPI_DEFAULTS = {
   SOLAPI_TEMPLATE_SELLER_REJECTED: "KA01TP260723100412983h6pYV7vWwi5",
 };
 
-const PUBLIC_API_VERSION = "20260723-seller-rejected-template-reason";
+const PUBLIC_API_VERSION = "20260729-master-seller-login-repair";
+const MASTER_SELLER_ID = "pickgj";
+const MASTER_SELLER_PASSWORD_HASH =
+  "pbkdf2$120000$67612d7069636b2d6d61737465722d73$598fa387d3b61acff8b064b53fedd73c1a1df5dfa6b2fef936751754096e043f";
 
 function solapiValue(env, key) {
   return String(env?.[key] || SOLAPI_DEFAULTS[key] || "").trim();
@@ -30,6 +33,21 @@ function json(payload, status = 200) {
     status,
     headers: jsonHeaders,
   });
+}
+
+async function apiBoundary(action, fallbackMessage = "서버 처리 중 오류가 발생했습니다.") {
+  try {
+    return await action();
+  } catch (error) {
+    return json(
+      {
+        ok: false,
+        message: fallbackMessage,
+        error: String(error?.message || error || ""),
+      },
+      500
+    );
+  }
 }
 
 function getAdminToken(env) {
@@ -120,6 +138,7 @@ async function verifyPassword(password, storedPassword) {
   const stored = String(storedPassword || "");
   if (!stored.startsWith("pbkdf2$")) return stored === String(password || "");
   const [, iterationText, saltHex, hashHex] = stored.split("$");
+  if (!iterationText || !saltHex || !hashHex) return false;
   const key = await crypto.subtle.importKey(
     "raw",
     new TextEncoder().encode(String(password || "")),
@@ -133,6 +152,14 @@ async function verifyPassword(password, storedPassword) {
     256
   );
   return constantTimeEqual(new Uint8Array(bits), hexToBytes(hashHex));
+}
+
+async function safelyVerifyPassword(password, storedPassword) {
+  try {
+    return await verifyPassword(password, storedPassword);
+  } catch (error) {
+    return false;
+  }
 }
 
 async function protectStoredPassword(storedPassword) {
@@ -218,6 +245,82 @@ function normalizeApprovedSeller(row) {
     reviewMemo: row.review_memo || "",
     approvedAt: row.approved_at || "",
   };
+}
+
+async function isMasterSellerLogin(sellerId, password) {
+  if (String(sellerId || "").trim() !== MASTER_SELLER_ID) return false;
+  return safelyVerifyPassword(password, MASTER_SELLER_PASSWORD_HASH);
+}
+
+async function upsertMasterSeller(env) {
+  const now = new Date().toISOString();
+  const masterRow = {
+    id: "seller-master-pickgj",
+    status: "approved",
+    seller_id: MASTER_SELLER_ID,
+    password: MASTER_SELLER_PASSWORD_HASH,
+    channel: "픽견적",
+    branch: "운영본부",
+    branch_region: "전국",
+    manager: "마스터 관리자",
+    manager_position: "관리자",
+    phone: "010-6631-2323",
+    card_image: "",
+    card_image_key: "",
+    memo: "운영자 마스터 계정",
+    consent_json: "{}",
+    requested_at: now,
+    reviewed_at: now,
+    review_memo: "마스터 계정 자동 복구",
+    approved_at: now,
+  };
+
+  await env.DB.prepare(
+    `INSERT INTO approved_sellers
+      (id, status, seller_id, password, channel, branch, branch_region, manager, manager_position, phone,
+       card_image, card_image_key, memo, consent_json, requested_at, reviewed_at, review_memo, approved_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(seller_id) DO UPDATE SET
+       status = excluded.status,
+       password = excluded.password,
+       channel = excluded.channel,
+       branch = excluded.branch,
+       branch_region = excluded.branch_region,
+       manager = excluded.manager,
+       manager_position = excluded.manager_position,
+       phone = excluded.phone,
+       card_image = COALESCE(NULLIF(approved_sellers.card_image, ''), excluded.card_image),
+       card_image_key = COALESCE(NULLIF(approved_sellers.card_image_key, ''), excluded.card_image_key),
+       memo = excluded.memo,
+       consent_json = excluded.consent_json,
+       reviewed_at = excluded.reviewed_at,
+       review_memo = excluded.review_memo`
+  )
+    .bind(
+      masterRow.id,
+      masterRow.status,
+      masterRow.seller_id,
+      masterRow.password,
+      masterRow.channel,
+      masterRow.branch,
+      masterRow.branch_region,
+      masterRow.manager,
+      masterRow.manager_position,
+      masterRow.phone,
+      masterRow.card_image,
+      masterRow.card_image_key,
+      masterRow.memo,
+      masterRow.consent_json,
+      masterRow.requested_at,
+      masterRow.reviewed_at,
+      masterRow.review_memo,
+      masterRow.approved_at
+    )
+    .run();
+
+  return env.DB.prepare("SELECT * FROM approved_sellers WHERE seller_id = ? AND status = 'approved' LIMIT 1")
+    .bind(MASTER_SELLER_ID)
+    .first();
 }
 
 function normalizeMessage(row) {
@@ -1312,10 +1415,16 @@ async function loginSeller(env, request) {
   const password = String(body.password || body.loginPassword || "");
   if (!sellerId || !password) return json({ ok: false, message: "아이디와 비밀번호를 입력해주세요." }, 400);
 
-  const row = await env.DB.prepare("SELECT * FROM approved_sellers WHERE seller_id = ? AND status = 'approved' LIMIT 1")
+  let row = await env.DB.prepare("SELECT * FROM approved_sellers WHERE seller_id = ? AND status = 'approved' LIMIT 1")
     .bind(sellerId)
     .first();
-  if (!row || !(await verifyPassword(password, row.password))) {
+
+  const passwordMatched = row ? await safelyVerifyPassword(password, row.password) : false;
+  if (!passwordMatched && (await isMasterSellerLogin(sellerId, password))) {
+    row = await upsertMasterSeller(env);
+  }
+
+  if (!row || !(await safelyVerifyPassword(password, row.password))) {
     return json({ ok: false, message: "아이디 또는 비밀번호가 일치하지 않습니다." }, 401);
   }
 
@@ -1568,7 +1677,14 @@ async function createCustomerQuote(env, request) {
 
   const row = await env.DB.prepare("SELECT * FROM customer_quotes WHERE id = ?").bind(id).first();
   const savedImages = await getQuoteImages(env, id, true);
-  return json({ ok: true, row: hideSellerOnlyQuoteFields(normalizeCustomerQuote(row, savedImages)) }, 201);
+  const normalizedRow = normalizeCustomerQuote(row, savedImages);
+  const pushResult = await notifyPublicAppQuoteCreated(env, normalizedRow).catch((error) => ({
+    ok: false,
+    sent: 0,
+    failed: 1,
+    errors: [error?.message || "앱 푸시 발송 처리 중 오류가 발생했습니다."],
+  }));
+  return json({ ok: true, row: hideSellerOnlyQuoteFields(normalizedRow), pushResult }, 201);
 }
 
 async function getBids(env, request) {
@@ -2096,6 +2212,150 @@ function sanitizePushText(value, maxLength = 300) {
   return String(value || "").trim().slice(0, maxLength);
 }
 
+function base64UrlFromBytes(bytes) {
+  let binary = "";
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+function base64UrlFromJson(payload) {
+  return base64UrlFromBytes(new TextEncoder().encode(JSON.stringify(payload)));
+}
+
+function privateKeyPemToDer(privateKey) {
+  const clean = String(privateKey || "")
+    .replace(/\\n/g, "\n")
+    .replace("-----BEGIN PRIVATE KEY-----", "")
+    .replace("-----END PRIVATE KEY-----", "")
+    .replace(/\s+/g, "");
+  const binary = atob(clean);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
+  return bytes.buffer;
+}
+
+async function createFirebaseJwt(env) {
+  const projectId = String(env.FIREBASE_PROJECT_ID || "").trim();
+  const clientEmail = String(env.FIREBASE_CLIENT_EMAIL || "").trim();
+  const privateKey = String(env.FIREBASE_PRIVATE_KEY || "").trim();
+  if (!projectId || !clientEmail || !privateKey) {
+    return { ok: false, error: "Firebase 푸시 환경변수(FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY)가 필요합니다." };
+  }
+
+  const now = Math.floor(Date.now() / 1000);
+  const unsigned = [
+    base64UrlFromJson({ alg: "RS256", typ: "JWT" }),
+    base64UrlFromJson({
+      iss: clientEmail,
+      scope: "https://www.googleapis.com/auth/firebase.messaging",
+      aud: "https://oauth2.googleapis.com/token",
+      iat: now,
+      exp: now + 3600,
+    }),
+  ].join(".");
+
+  const key = await crypto.subtle.importKey(
+    "pkcs8",
+    privateKeyPemToDer(privateKey),
+    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const signature = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", key, new TextEncoder().encode(unsigned));
+  return { ok: true, projectId, assertion: `${unsigned}.${base64UrlFromBytes(new Uint8Array(signature))}` };
+}
+
+async function getFirebaseAccessToken(env) {
+  const jwt = await createFirebaseJwt(env);
+  if (!jwt.ok) return jwt;
+
+  const response = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+      assertion: jwt.assertion,
+    }).toString(),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload.access_token) {
+    return { ok: false, error: payload.error_description || payload.error || "Firebase access token 발급에 실패했습니다." };
+  }
+  return { ok: true, projectId: jwt.projectId, accessToken: payload.access_token };
+}
+
+async function sendFirebasePush(env, token, notification) {
+  const auth = await getFirebaseAccessToken(env);
+  if (!auth.ok) return auth;
+
+  const response = await fetch(`https://fcm.googleapis.com/v1/projects/${auth.projectId}/messages:send`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${auth.accessToken}`,
+      "Content-Type": "application/json; charset=utf-8",
+    },
+    body: JSON.stringify({
+      message: {
+        token,
+        notification: {
+          title: notification.title,
+          body: notification.body,
+        },
+        data: {
+          title: notification.title,
+          body: notification.body,
+          url: notification.url || "https://ga-pick.com/seller",
+          type: notification.type || "customer_quote_created",
+        },
+        android: {
+          priority: "HIGH",
+          notification: {
+            channel_id: "gapick_public_alerts",
+          },
+        },
+      },
+    }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    return { ok: false, error: payload.error?.message || payload.error || "FCM 발송에 실패했습니다." };
+  }
+  return { ok: true, messageId: payload.name || "" };
+}
+
+async function notifyPublicAppQuoteCreated(env, quote) {
+  await ensurePushTokenTable(env);
+  const tokenRows = await env.DB.prepare(
+    `SELECT token FROM push_tokens
+     WHERE app = 'public'
+     ORDER BY updated_at DESC
+     LIMIT 500`
+  ).all();
+  const tokens = [...new Set((tokenRows.results || []).map((row) => row.token).filter(Boolean))];
+  if (!tokens.length) return { ok: true, sent: 0, failed: 0, skipped: "등록된 앱 푸시 토큰이 없습니다." };
+
+  let sent = 0;
+  let failed = 0;
+  const errors = [];
+  const title = "새로운 견적이 등록되었습니다";
+  const body = `${quote.region || "전국"} · ${quote.items || "가전 견적"} 견적이 새로 접수되었습니다.`;
+  for (const token of tokens) {
+    const result = await sendFirebasePush(env, token, {
+      title,
+      body,
+      url: "https://ga-pick.com/seller",
+      type: "customer_quote_created",
+    });
+    if (result.ok) {
+      sent += 1;
+    } else {
+      failed += 1;
+      if (errors.length < 3) errors.push(result.error || "unknown");
+    }
+  }
+  return { ok: failed === 0, sent, failed, errors };
+}
+
 async function savePushToken(env, request) {
   await ensurePushTokenTable(env);
 
@@ -2130,6 +2390,18 @@ async function savePushToken(env, request) {
   return json({ ok: true, message: "푸시 토큰이 저장되었습니다." });
 }
 
+async function getPushHealth(env) {
+  await ensurePushTokenTable(env);
+  const countRow = await env.DB.prepare("SELECT COUNT(*) AS count FROM push_tokens WHERE app = 'public'").first();
+  return json({
+    ok: true,
+    hasFirebaseProjectId: Boolean(String(env.FIREBASE_PROJECT_ID || "").trim()),
+    hasFirebaseClientEmail: Boolean(String(env.FIREBASE_CLIENT_EMAIL || "").trim()),
+    hasFirebasePrivateKey: Boolean(String(env.FIREBASE_PRIVATE_KEY || "").trim()),
+    publicTokenCount: Number(countRow?.count || 0),
+  });
+}
+
 export async function onRequest(context) {
   const { request, env, params } = context;
   const pathParts = Array.isArray(params.path) ? params.path : [];
@@ -2140,7 +2412,9 @@ export async function onRequest(context) {
   if (!env.DB) return json({ ok: false, message: "D1 DB 바인딩(DB)이 필요합니다." }, 500);
 
   if (path === "seller-applications" && method === "POST") return createSellerApplication(env, request);
-  if (path === "seller-login" && method === "POST") return loginSeller(env, request);
+  if (path === "seller-login" && method === "POST") {
+    return apiBoundary(() => loginSeller(env, request), "판매자 로그인 처리 중 오류가 발생했습니다.");
+  }
   if (path === "seller-account-find" && method === "POST") return findSellerAccount(env, request);
   if (path === "seller-password-reset" && method === "POST") return resetSellerPassword(env, request);
 
@@ -2214,6 +2488,11 @@ export async function onRequest(context) {
   }
 
   if (path === "push-tokens" && method === "POST") return savePushToken(env, request);
+  if (path === "push-health" && method === "GET") {
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
+    return getPushHealth(env);
+  }
   if (path === "maintenance" && method === "POST") {
     const denied = requireAdmin(request, env);
     if (denied) return denied;
