@@ -6142,7 +6142,7 @@ td strong {
 }
 
 .live-quote-window {
-  min-height: 360px;
+  height: 430px;
   border: 1px solid #dce5ec;
   border-radius: 28px;
   background: #fff;
@@ -6180,7 +6180,7 @@ td strong {
   display: grid;
   gap: 14px;
   padding: 22px;
-  animation: liveQuoteRise 18s linear infinite;
+  animation: liveQuoteRise 32s linear infinite;
 }
 
 .live-quote-track article {
@@ -6241,7 +6241,7 @@ td strong {
   display: flex;
   width: max-content;
   gap: 16px;
-  animation: reviewSlide 34s linear infinite;
+  animation: reviewSlide 46s linear infinite;
 }
 
 .review-marquee-track article {
