@@ -7493,6 +7493,35 @@ html.is-mobile-device .home-ad-slot span:last-child {
   line-height: 1.5;
 }
 
+.quote-wizard .ai-recommendation-group li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 4px 0;
+}
+
+.quote-wizard .ai-recommendation-group li span {
+  min-width: 0;
+  word-break: break-word;
+}
+
+.quote-wizard .ai-recommendation-group li em {
+  flex: 0 0 auto;
+  color: #1f63d8;
+  font-style: normal;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .quote-wizard .ai-recommendation-group li {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 2px;
+  }
+}
+
 .option-modal {
   position: fixed;
   inset: 0;
