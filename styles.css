@@ -6005,8 +6005,8 @@ td strong {
     margin-bottom: 18px;
     font-size: clamp(30px, 8vw, 36px);
     line-height: 1.18;
-    word-break: normal;
-    overflow-wrap: anywhere;
+    word-break: keep-all;
+    overflow-wrap: break-word;
   }
 
   .report-hero-copy > p:not(.eyebrow) {
@@ -6014,8 +6014,8 @@ td strong {
     margin-bottom: 22px;
     font-size: 15px;
     line-height: 1.72;
-    word-break: break-all;
-    overflow-wrap: anywhere;
+    word-break: keep-all;
+    overflow-wrap: break-word;
   }
 
   .report-actions {
@@ -7038,6 +7038,38 @@ html.is-mobile-device .home-ad-slot span:last-child {
   display: none;
 }
 
+html.is-mobile-device body {
+  -webkit-text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
+}
+
+html.is-mobile-device :where(h1, h2, h3, h4, p, a, button, label, li, dt, dd, small, strong, em, span) {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  letter-spacing: 0;
+}
+
+html.is-mobile-device :where(.page-copy, .page-hero, .home-report-hero, .pick-home-hero, .privacy-card, .proof-copy, .home-final-band) :where(h1, h2, h3, p) {
+  text-wrap: balance;
+}
+
+html.is-mobile-device :where(.quote-wizard, .modal-panel, .option-sheet) :where(h2, h3, p) {
+  text-align: left;
+}
+
+html.is-mobile-device :where(.home-final-band, .privacy-card, .proof-card, .home-security-band) :where(h2, p) {
+  text-align: center;
+}
+
+html.is-mobile-device :where(.seller-request-card, .seller-detail, .lookup-bid-card, .without-quote-item, .ai-recommendation-group) {
+  overflow-wrap: break-word;
+}
+
+html.is-mobile-device :where(.model-code, .quote-number, .ai-recommendation-group li, .without-quote-item em) {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 900px) {
   .home-report-hero {
     padding-right: 22px;
@@ -7665,11 +7697,37 @@ html.is-mobile-device .home-ad-slot span:last-child {
   white-space: nowrap;
 }
 
+.quote-wizard .ai-recommendation-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid #bdd3f5;
+  border-radius: 8px;
+  background: #eaf2ff;
+  color: var(--ink);
+  font-weight: 900;
+}
+
+.quote-wizard .ai-recommendation-total strong {
+  color: #1f63d8;
+  font-size: 20px;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
 @media (max-width: 640px) {
   .quote-wizard .ai-recommendation-group li {
     align-items: flex-start;
     flex-direction: column;
     gap: 2px;
+  }
+
+  .quote-wizard .ai-recommendation-total {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
   }
 }
 

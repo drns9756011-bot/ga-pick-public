@@ -444,17 +444,18 @@
   function renderRecommendationPanel() {
     const loading = state.recommending ? "<p>AI가 모델 후보를 정리하고 있습니다.</p>" : "";
     const body = state.recommendationGroups.length
-      ? state.recommendationGroups
-          .map(
-            (group) => `
-              <div class="ai-recommendation-group">
-                <strong>[${escapeHtml(group.product)}]</strong>
-                <span>${escapeHtml(group.optionSummary || "상세 옵션 미입력")}</span>
-                <ul>${group.models.map((model) => `<li>${renderModelWithPrice(model)}</li>`).join("")}</ul>
-              </div>
-            `
-          )
-          .join("")
+      ? `${state.recommendationGroups
+            .map(
+              (group) => `
+                <div class="ai-recommendation-group">
+                  <strong>[${escapeHtml(group.product)}]</strong>
+                  <span>${escapeHtml(group.optionSummary || "상세 옵션 미입력")}</span>
+                  <ul>${group.models.map((model) => `<li>${renderModelWithPrice(model)}</li>`).join("")}</ul>
+                </div>
+              `
+            )
+            .join("")}
+          ${renderRecommendationTotal(state.recommendationGroups)}`
       : "<p>마지막 단계에서 AI 추천 모델이 자동으로 정리됩니다.</p>";
     return `<div class="ai-recommendation-panel"><b>AI 추천 간이 견적서</b>${loading || body}</div>`;
   }
@@ -916,6 +917,7 @@
     const options = state.productOptions[product] || {};
     const normalized = models
       .filter((model) => model && model.modelName)
+      .filter((model) => isAllowedRecommendationModel(product, model))
       .map((model) => ({ ...model, normalPrice: Number(model.normalPrice || 0) }))
       .sort((a, b) => b.normalPrice - a.normalPrice);
     const optionText = Object.values(options)
@@ -980,7 +982,76 @@
     if (product === "의류관리기") matchers.push((model) => /스타일러|의류|SC|S5|S3|DF/i.test(modelSearchText(model)));
 
     const matched = matchers.length ? normalized.filter((model) => matchers.every((matcher) => matcher(model))) : normalized;
-    return matched.length ? matched : normalized;
+    return matched;
+  }
+
+  function isAllowedRecommendationModel(product, model) {
+    const body = modelBody(model);
+    const name = compactModelName(model?.modelName || "");
+    const text = compactModelName(modelSearchText(model));
+    const brand = compactModelName(model?.brand || "");
+
+    if (!body || body.includes("상담")) return false;
+
+    if (brand.includes("삼성") || brand.includes("SAMSUNG")) {
+      return isAllowedSamsungRecommendationModel(product, model);
+    }
+
+    const blockedBodies = new Set([
+      "75QNED9MAKW",
+      "27LX6TEGA",
+      "27LX6TKGA",
+      "27LX6TPGA",
+    ]);
+    if (blockedBodies.has(body) && /\.AKXT7SC$/i.test(name)) return false;
+    if (body === "75QNED9MAKW") return false;
+
+    if (product === "라이프스타일 TV") {
+      return /^(27LX6T|32LX)/.test(body) && !/AKXT7SC$/.test(name);
+    }
+
+    if (product === "냉장고") {
+      const optionText = Object.values(state.productOptions[product] || {})
+        .flatMap((value) => (Array.isArray(value) ? value : [value]))
+        .filter(Boolean)
+        .join(" ");
+      const wantsFitAndMax = /빌트인|핏앤맥스|FIT\s*&?\s*MAX/i.test(optionText);
+      const wantsFreeStanding = /프리스탠딩|용량/i.test(optionText);
+
+      if (wantsFitAndMax) return isFitAndMaxFridgeModel(model);
+      if (wantsFreeStanding && /^D646/.test(body)) return false;
+      if (/^(B18|B182|A202|RT|RB)/.test(body)) return false;
+    }
+
+    if (product === "김치냉장고") {
+      if (!isKimchiFridgeModel(model)) return false;
+      if (/^(Z|K|RQ)/.test(body)) return true;
+      return /김치|GBB/.test(text);
+    }
+
+    return true;
+  }
+
+  function isAllowedSamsungRecommendationModel(product, model) {
+    const body = modelBody(model);
+    const text = compactModelName(modelSearchText(model));
+
+    if (!body || /^KMR/.test(body)) return false;
+
+    if (product === "TV") return /^(KQ|KU|UN|QN|QA)\d{2,3}/.test(body);
+    if (product === "라이프스타일 TV") return /^(KQ\d{2}LS|LSH|SP-L)/.test(body);
+    if (product === "냉장고") return /^(RF|RM|RR|RS|RB)\d{2}/.test(body) || /BESPOKE/.test(text);
+    if (product === "김치냉장고") return /^(RQ|RK)\d{2}/.test(body);
+    if (product === "세탁기/건조기") return /^(WF|DV|WD|WR|WW)\d{2}/.test(body);
+    if (product === "의류관리기") return /^DF\d{2}/.test(body);
+    if (product === "에어컨") return /^(AF|AR|AP|AC)\d{2}/.test(body);
+    if (product === "청소기") return /^(VS|VR|VC)\d{2}/.test(body);
+    if (product === "식기세척기") return /^DW\d{2}/.test(body);
+    if (product === "공기청정기") return /^AX\d{2}/.test(body);
+    if (product === "인덕션/전기레인지") return /^(NZ|NZI|NZP|CTR)\d*/.test(body);
+    if (product === "오븐/전자레인지") return /^(MC|MS|MG|MO|NQ)\d*/.test(body);
+
+    return true;
   }
 
   function modelSearchText(model) {
@@ -1004,7 +1075,7 @@
     const body = modelBody(value);
     const text = compactModelName(modelSearchText(value));
     if (/^(M876|W\d{3}|D\d{3}|B18|B182|A202|T87|T80|RT|RB)/.test(body)) return false;
-    return /^G646/.test(body) || /^M623/.test(body) || /GBB|FITANDMAX|핏앤맥스/.test(text);
+    return /^G646/.test(body) || /^M623/.test(body) || /FITANDMAX|핏앤맥스/.test(text);
   }
 
   function isBuiltInFridgeModel(value) {
@@ -1015,14 +1086,14 @@
     const body = modelBody(value);
     const text = modelSearchText(value);
     if (isFitAndMaxFridgeModel(value)) return false;
-    return /프리스탠딩|스탠드|용량/i.test(text) || /^(M87|M86|W82|T87|T80|D\d{3})/.test(body);
+    return /프리스탠딩|스탠드|용량/i.test(text) || /^(M87|M86|W82|T87|T80)/.test(body);
   }
 
   function isFourDoorFridgeModel(value) {
     const body = modelBody(value);
     const text = compactModelName(modelSearchText(value));
-    if (/^(B18|B182|A202|RT|RB)/.test(body)) return false;
-    return /4도어|노크온|상냉장|매직스페이스/.test(modelSearchText(value)) || /^(G646|M623|M87|M86|W82|T87|RF)\d*/.test(body) || /GBB|BESPOKE/.test(text);
+    if (/^(B18|B182|A202|RT|RB|D\d{3})/.test(body)) return false;
+    return /4도어|노크온|상냉장|매직스페이스/.test(modelSearchText(value)) || /^(G646|M623|M87|M86|W82|T87|RF)\d*/.test(body) || /BESPOKE/.test(text);
   }
 
   function isTwoDoorFridgeModel(value) {
@@ -1100,6 +1171,7 @@
     const premium = isPremiumAiContext();
     return [...candidates]
       .filter((model) => model && model.modelName)
+      .filter((model) => isAllowedRecommendationModel(product, model))
       .sort((a, b) => {
         const aPrice = Number(a.naverLowestPrice || 0) > 100000 ? Number(a.naverLowestPrice) : estimatedOnlinePrice(a);
         const bPrice = Number(b.naverLowestPrice || 0) > 100000 ? Number(b.naverLowestPrice) : estimatedOnlinePrice(b);
@@ -1194,6 +1266,11 @@
       );
       group.models.forEach((model) => lines.push(`- ${displayModelName(model)}${formatModelLowestPrice(model)}`));
     });
+    const total = recommendationTotalPrice(groups);
+    if (total > 0) {
+      lines.push("");
+      lines.push(`네이버 최저가 기준 합계: ${formatWon(total)}`);
+    }
     return lines.join("\n").trim();
   }
 
@@ -1218,6 +1295,31 @@
     return `<span>${escapeHtml(displayModelName(model))}</span><em>${escapeHtml(priceLabel)}</em>`;
   }
 
+  function recommendationModelPrice(model) {
+    const naverPrice = Number(model?.naverLowestPrice || 0);
+    if (naverPrice > 100000) return naverPrice;
+    const estimated = estimatedOnlinePrice(model);
+    return estimated > 100000 ? estimated : 0;
+  }
+
+  function recommendationTotalPrice(groups) {
+    return groups.reduce((sum, group) => {
+      const productTotal = (group.models || []).reduce((modelSum, model) => modelSum + recommendationModelPrice(model), 0);
+      return sum + productTotal;
+    }, 0);
+  }
+
+  function renderRecommendationTotal(groups) {
+    const total = recommendationTotalPrice(groups);
+    if (!total) return "";
+    return `
+      <div class="ai-recommendation-total">
+        <span>네이버 최저가 기준 합계</span>
+        <strong>${escapeHtml(formatWon(total))}</strong>
+      </div>
+    `;
+  }
+
   function fallbackRecommendationText() {
     const lines = ["고객의 상황에 맞춰 AI가 추천한 모델임을 알려드립니다."];
     state.selectedProducts.forEach((product) => {
@@ -1229,12 +1331,7 @@
   }
 
   function applyAutoLowestPrice(groups) {
-    const total = groups.reduce((sum, group) => {
-      const model = group.models?.[0];
-      const naverPrice = Number(model?.naverLowestPrice || 0);
-      const price = naverPrice > 100000 ? naverPrice : estimatedOnlinePrice(model);
-      return sum + (price > 100000 ? price : 0);
-    }, 0);
+    const total = recommendationTotalPrice(groups);
     fields.price.value = total ? String(Math.ceil(total / 10000)) : "0";
   }
 
