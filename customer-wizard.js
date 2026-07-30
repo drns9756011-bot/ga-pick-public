@@ -137,7 +137,7 @@
       { key: "type", title: "종류", type: "single", values: ["초음파식", "가열식", "복합식", "대용량", "모르겠어요"] },
     ],
     "라이프스타일 TV": [
-      { key: "type", title: "형태", type: "single", values: ["이동형 TV", "스탠바이미", "포터블 스크린", "모르겠어요"] },
+      { key: "type", title: "형태", type: "single", values: ["스탠바이미", "모르겠어요"] },
     ],
   };
 
@@ -191,10 +191,7 @@
       "keydown",
       (event) => {
         if (event.key !== "Enter" || event.target?.tagName === "TEXTAREA") return;
-        if (!isFinalVisibleStep()) {
-          event.preventDefault();
-          move(1);
-        }
+        event.preventDefault();
       },
       true
     );
@@ -608,6 +605,19 @@
     modal.addEventListener("click", (event) => {
       if (event.target === modal) close();
     });
+    modal.querySelectorAll(".option-row input").forEach((input) => {
+      input.addEventListener("change", () => {
+        if (input.type === "radio") {
+          modal.querySelectorAll(`input[name="${input.name}"]`).forEach((peer) => {
+            const mark = peer.closest(".option-row")?.querySelector("b");
+            if (mark) mark.textContent = peer.checked ? "✓" : "";
+          });
+          return;
+        }
+        const mark = input.closest(".option-row")?.querySelector("b");
+        if (mark) mark.textContent = input.checked ? "✓" : "";
+      });
+    });
     modal.querySelector(".option-clear").addEventListener("click", () => {
       delete state.productOptions[product];
       clearAiRecommendation();
@@ -844,7 +854,7 @@
 
   async function loadCatalog() {
     if (state.catalog) return state.catalog;
-    const response = await fetch("/assets/pickquote-product-model-map.json", { cache: "force-cache" });
+    const response = await fetch("/assets/pickquote-product-model-map.json", { cache: "no-store" });
     if (!response.ok) throw new Error("catalog load failed");
     state.catalog = await response.json();
     return state.catalog;
@@ -892,60 +902,89 @@
       const selectedSize = Number(options.size.match(/\d+/)?.[0] || 0);
       const isOrAbove = options.size.includes("↑") || options.size.includes("이상");
       if (selectedSize) {
-        matchers.push((name) => {
-          const inches = extractTvInches(name);
+        matchers.push((model) => {
+          const inches = extractTvInches(model.modelName);
           if (!inches) return false;
           return isOrAbove ? inches >= selectedSize : inches === selectedSize;
         });
       }
     }
+
     if (product === "냉장고") {
-      if (options.type?.includes("빌트인")) {
-        matchers.push((name) => /핏앤맥스|핏\s?앤\s?맥스|fit\s?&?\s?max|^M\d{3}|^T\d{3}|^W\d{3}/i.test(name) && !/^(B18|B182|A202|D\d{3})/i.test(name));
-      }
-      if (options.type?.includes("프리스탠딩")) {
-        matchers.push((name) => !/김치|정수기|와인|핏앤맥스|fit\s?&?\s?max/i.test(name));
-      }
-      if (options.door === "4도어") {
-        matchers.push((name) => /4도어|노크온|상냉장|매직스페이스|^M\d{3}|^T\d{3}|^W\d{3}/i.test(name) && !/^(B18|B182|A202|D\d{3})/i.test(name));
-      }
-      if (options.door === "2도어") {
-        matchers.push((name) => /2도어|양문형|일반냉장고|^B\d{3}|^D\d{3}/i.test(name));
-      }
+      if (options.type?.includes("빌트인")) matchers.push((model) => isBuiltInFridgeModel(model));
+      if (options.type?.includes("프리스탠딩")) matchers.push((model) => isFreeStandingFridgeModel(model));
+      if (options.door === "4도어") matchers.push((model) => isFourDoorFridgeModel(model));
+      if (options.door === "2도어") matchers.push((model) => isTwoDoorFridgeModel(model));
     }
+
     if (product === "세탁기/건조기" && options.type) {
-      if (options.type.includes("분리형")) matchers.push((name) => /(F\d{2}|RH|RD|FX|세탁|건조)/i.test(name));
-      if (options.type.includes("복합형")) matchers.push((name) => /콤보|세탁건조|FX|FH/i.test(name) && !/^TR/i.test(name));
-      if (options.type.includes("일체형")) matchers.push((name) => /워시|타워|원바디|W\d{2}|WL|WK|FX|FH/i.test(name));
+      if (options.type.includes("분리형")) matchers.push((model) => /(F\d{2}|RH|RD|세탁|건조)/i.test(modelSearchText(model)) && !/워시타워|원바디|콤보/i.test(modelSearchText(model)));
+      if (options.type.includes("복합형")) matchers.push((model) => /콤보|세탁건조|FX|FH/i.test(modelSearchText(model)) && !/^TR/i.test(modelBody(model)));
+      if (options.type.includes("일체형")) matchers.push((model) => /워시|타워|원바디|W\d{2}|WL|WK/i.test(modelSearchText(model)));
     }
+
     if (product === "청소기" && Array.isArray(options.type) && options.type.length) {
-      matchers.push((name) => options.type.some((type) => name.includes(type.replace("청소기", ""))));
+      matchers.push((model) => options.type.some((type) => modelSearchText(model).includes(type.replace("청소기", ""))));
     }
     if (product === "김치냉장고") {
-      matchers.push((name) => /김치|Z\d{3}/i.test(name));
-      if (options.door === "4도어") matchers.push((name) => /4도어|Z4|Z5/i.test(name));
-      if (options.door === "3도어") matchers.push((name) => /3도어|Z3/i.test(name));
-      if (options.type === "뚜껑식") matchers.push((name) => /뚜껑|K\d{3}|Z1/i.test(name));
+      matchers.push((model) => /김치|Z\d{3}/i.test(modelSearchText(model)));
+      if (options.door === "4도어") matchers.push((model) => /4도어|Z4|Z5/i.test(modelSearchText(model)));
+      if (options.door === "3도어") matchers.push((model) => /3도어|Z3/i.test(modelSearchText(model)));
+      if (options.type === "뚜껑식") matchers.push((model) => /뚜껑|K\d{3}|Z1/i.test(modelSearchText(model)));
     }
     if (product === "에어컨" && options.type) {
-      if (options.type === "천장형") matchers.push((name) => /천장|시스템/i.test(name));
-      if (options.type === "2IN1") matchers.push((name) => /2IN1|2in1|투인원|멀티|FQ.*2/i.test(name));
-      if (options.type === "스탠드") matchers.push((name) => /스탠드|FQ/i.test(name));
-      if (options.type === "벽걸이") matchers.push((name) => /벽걸이|SQ|SW/i.test(name));
+      if (options.type === "천장형") matchers.push((model) => /천장|시스템/i.test(modelSearchText(model)));
+      if (options.type === "2IN1") matchers.push((model) => /2IN1|2in1|투인원|멀티|FQ.*2/i.test(modelSearchText(model)));
+      if (options.type === "스탠드") matchers.push((model) => /스탠드|FQ/i.test(modelSearchText(model)));
+      if (options.type === "벽걸이") matchers.push((model) => /벽걸이|SQ|SW/i.test(modelSearchText(model)));
     }
-    if (product === "식기세척기") matchers.push((name) => /식기|식세|D[FBE]/i.test(name));
-    if (product === "인덕션/전기레인지") matchers.push((name) => /인덕션|전기레인지|하이라이트|BE|CB/i.test(name));
-    if (product === "오븐/전자레인지") matchers.push((name) => /오븐|전자레인지|ML|MW/i.test(name));
-    if (product === "공기청정기") matchers.push((name) => /공기|퓨리|청정|AS/i.test(name));
-    if (product === "의류관리기") matchers.push((name) => /스타일러|의류|SC|S5|S3/i.test(name));
-    if (product === "라이프스타일 TV") matchers.push((name) => /스탠바이미|stanbyme|27LX|32LX|라이프/i.test(name));
+    if (product === "식기세척기") matchers.push((model) => /식기|식세|D[FBE]/i.test(modelSearchText(model)));
+    if (product === "인덕션/전기레인지") matchers.push((model) => /인덕션|전기레인지|하이라이트|BE|CB/i.test(modelSearchText(model)));
+    if (product === "오븐/전자레인지") matchers.push((model) => /오븐|전자레인지|ML|MW/i.test(modelSearchText(model)));
+    if (product === "공기청정기") matchers.push((model) => /공기|퓨리|청정|AS/i.test(modelSearchText(model)));
+    if (product === "의류관리기") matchers.push((model) => /스타일러|의류|SC|S5|S3/i.test(modelSearchText(model)));
+    if (product === "라이프스타일 TV") matchers.push((model) => /스탠바이미|stanbyme|27LX|32LX|라이프/i.test(modelSearchText(model)));
 
-    const matched = matchers.length ? normalized.filter((model) => matchers.every((matcher) => matcher(modelSearchText(model)))) : normalized;
+    const matched = matchers.length ? normalized.filter((model) => matchers.every((matcher) => matcher(model))) : normalized;
     return matched.length ? matched : normalized;
   }
 
   function modelSearchText(model) {
     return [model?.modelName, model?.productGroup, model?.category, model?.title].filter(Boolean).join(" ");
+  }
+
+  function compactModelName(value) {
+    return String(value || "").toUpperCase().replace(/\s+/g, "");
+  }
+
+  function modelBody(value) {
+    const source = typeof value === "object" ? value?.modelName : value;
+    return compactModelName(source).split(".")[0];
+  }
+
+  function isBuiltInFridgeModel(value) {
+    const body = modelBody(value);
+    const text = compactModelName(modelSearchText(value));
+    if (/^(W|B18|B182|A202|D\d{3})/.test(body)) return false;
+    if (/얼음|정수|와인|김치/.test(modelSearchText(value))) return false;
+    return /^G\d{3}/.test(body) || /GBB|핏앤맥스|FIT&?MAX|FIT앤MAX/.test(text);
+  }
+
+  function isFreeStandingFridgeModel(value) {
+    const text = modelSearchText(value);
+    return !isBuiltInFridgeModel(value) && !/김치|와인|핏앤맥스|fit\s?&?\s?max/i.test(text);
+  }
+
+  function isFourDoorFridgeModel(value) {
+    const body = modelBody(value);
+    const text = compactModelName(modelSearchText(value));
+    if (/^(B18|B182|A202|D\d{3})/.test(body)) return false;
+    return /4도어|노크온|상냉장|매직스페이스/.test(modelSearchText(value)) || /^(G|M|T|W)\d{3}/.test(body) || /GBB/.test(text);
+  }
+
+  function isTwoDoorFridgeModel(value) {
+    const body = modelBody(value);
+    return /2도어|양문형|일반냉장고/i.test(modelSearchText(value)) || /^(B18|B182|D\d{3})/.test(body);
   }
 
   function productBudgetWeight(product) {
@@ -1002,8 +1041,9 @@
     const price = estimatedOnlinePrice(model) || Number(model.normalPrice || 0);
     const target = targetPrice || price || 1;
     let score = Math.abs(price - target) / target;
-    if (premium && price < target * 0.55) score += 0.8;
-    if (price > target * 1.5) score += 0.25;
+    if (premium && price < target * 0.72) score += 0.9;
+    if (!premium && price < target * 0.5) score += 0.35;
+    if (price > target * 1.65) score += 0.25;
     return score + modelQualityAdjustment(product, model.modelName);
   }
 
@@ -1017,10 +1057,14 @@
         const target = targetPrice || Math.max(aPrice, bPrice, 1);
         let aScore = Math.abs(aPrice - target) / target;
         let bScore = Math.abs(bPrice - target) / target;
-        if (premium && aPrice < target * 0.55) aScore += 0.85;
-        if (premium && bPrice < target * 0.55) bScore += 0.85;
-        if (aPrice > target * 1.55) aScore += 0.2;
-        if (bPrice > target * 1.55) bScore += 0.2;
+        if (premium && aPrice < target * 0.72) aScore += 0.95;
+        if (premium && bPrice < target * 0.72) bScore += 0.95;
+        if (!premium && aPrice < target * 0.5) aScore += 0.35;
+        if (!premium && bPrice < target * 0.5) bScore += 0.35;
+        if (aPrice > target * 1.65) aScore += 0.2;
+        if (bPrice > target * 1.65) bScore += 0.2;
+        if (a.catalogueHit) aScore -= 0.08;
+        if (b.catalogueHit) bScore -= 0.08;
         return aScore + modelQualityAdjustment(product, a.modelName) - (bScore + modelQualityAdjustment(product, b.modelName));
       })[0];
   }
@@ -1033,8 +1077,11 @@
       if (/QNED70|NANO70/.test(name)) score += 0.22;
     }
     if (product === "냉장고") {
-      if (/W826|W825|M87|T87|오브제|핏앤맥스|FIT/.test(name)) score -= 0.18;
-      if (/B18|B182|A202|^D\d{3}/.test(name)) score += 0.35;
+      const body = modelBody(name);
+      if (/^G646|GBB|핏앤맥스|FIT/.test(name) || /^G\d{3}/.test(body)) score -= 0.45;
+      if (/W826|W825|M87|T87|오브제/.test(name)) score -= 0.08;
+      if (/^W\d{3}/.test(body)) score += 0.25;
+      if (/B18|B182|A202|^D\d{3}/.test(name)) score += 0.48;
     }
     if (product === "세탁기/건조기") {
       if (/FX|FH|W2|WL|WK/.test(name)) score -= 0.18;
