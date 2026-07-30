@@ -198,12 +198,7 @@
       {
         "productGroup": "TV",
         "modelName": "65QNED91BKA.AKRQ",
-        "normalPrice": 2690000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          41,
-          49
-        ]
+        "normalPrice": 2690000
       },
       {
         "productGroup": "TV",
@@ -418,11 +413,7 @@
       {
         "productGroup": "TV",
         "modelName": "75QNED91BKA.AKRQ",
-        "normalPrice": 4090000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          41
-        ]
+        "normalPrice": 4090000
       },
       {
         "productGroup": "TV",
@@ -537,11 +528,7 @@
       {
         "productGroup": "TV",
         "modelName": "85QNED91BKA.AKRQ",
-        "normalPrice": 5390000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          41
-        ]
+        "normalPrice": 5390000
       },
       {
         "productGroup": "TV",
@@ -869,11 +856,7 @@
       {
         "productGroup": "스탠바이미",
         "modelName": "27LX5QKNA.AKR",
-        "normalPrice": 1170000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          47
-        ]
+        "normalPrice": 1170000
       },
       {
         "productGroup": "스탠바이미",
@@ -888,11 +871,7 @@
       {
         "productGroup": "스탠바이미",
         "modelName": "27LX6TPGA.AKR",
-        "normalPrice": 1290000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          46
-        ]
+        "normalPrice": 1290000
       },
       {
         "productGroup": "스탠바이미",
@@ -912,20 +891,12 @@
       {
         "productGroup": "스탠바이미",
         "modelName": "27LX6TPGA.AKXT7SC",
-        "normalPrice": 1569000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          46
-        ]
+        "normalPrice": 1569000
       },
       {
         "productGroup": "스탠바이미",
         "modelName": "32LX6BPGA.AKR",
-        "normalPrice": 1590000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          46
-        ]
+        "normalPrice": 1590000
       }
     ]
   },
@@ -946,11 +917,7 @@
       {
         "productGroup": "냉장고 (일반)",
         "modelName": "B182DS13.AKOR",
-        "normalPrice": 520000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          79
-        ]
+        "normalPrice": 520000
       },
       {
         "productGroup": "냉장고 (일반)",
@@ -960,20 +927,12 @@
       {
         "productGroup": "냉장고 (일반)",
         "modelName": "D265MEE22.AKOR",
-        "normalPrice": 680000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          79
-        ]
+        "normalPrice": 680000
       },
       {
         "productGroup": "냉장고 (일반)",
         "modelName": "A202S.AKOR",
-        "normalPrice": 700000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          79
-        ]
+        "normalPrice": 700000
       },
       {
         "productGroup": "냉장고 (일반)",
@@ -983,56 +942,32 @@
       {
         "productGroup": "냉장고 (일반)",
         "modelName": "B312S31.AKOR",
-        "normalPrice": 800000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          79
-        ]
+        "normalPrice": 800000
       },
       {
         "productGroup": "냉장고 (일반)",
         "modelName": "D312MCK31.AKOR",
-        "normalPrice": 850000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          78
-        ]
+        "normalPrice": 850000
       },
       {
         "productGroup": "냉장고 (일반)",
         "modelName": "D312MCT31.AKOR",
-        "normalPrice": 850000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          78
-        ]
+        "normalPrice": 850000
       },
       {
         "productGroup": "냉장고 (일반)",
         "modelName": "D312MBE31.AKOR",
-        "normalPrice": 900000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          78
-        ]
+        "normalPrice": 900000
       },
       {
         "productGroup": "냉장고 (일반)",
         "modelName": "D315MPS31.AKOR",
-        "normalPrice": 900000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          78
-        ]
+        "normalPrice": 900000
       },
       {
         "productGroup": "냉장고 (일반)",
         "modelName": "B502S53.AKOR",
-        "normalPrice": 980000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          79
-        ]
+        "normalPrice": 980000
       },
       {
         "productGroup": "냉장고 (일반)",
@@ -1042,20 +977,12 @@
       {
         "productGroup": "냉장고 (일반)",
         "modelName": "Q343MHHF33.AKOR",
-        "normalPrice": 1000000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          80
-        ]
+        "normalPrice": 1000000
       },
       {
         "productGroup": "냉장고 (일반)",
         "modelName": "Q343MPSF33.AKOR",
-        "normalPrice": 1050000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          80
-        ]
+        "normalPrice": 1050000
       },
       {
         "productGroup": "냉장고 (일반)",
@@ -1065,11 +992,7 @@
       {
         "productGroup": "냉장고 (일반)",
         "modelName": "D502MEE53.AKOR",
-        "normalPrice": 1080000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          79
-        ]
+        "normalPrice": 1080000
       },
       {
         "productGroup": "냉장고 (일반)",
@@ -1084,21 +1007,12 @@
       {
         "productGroup": "냉장고 (일반)",
         "modelName": "Q343MEEF53.AKOR",
-        "normalPrice": 1150000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          80
-        ]
+        "normalPrice": 1150000
       },
       {
         "productGroup": "냉장고 (일반)",
         "modelName": "D604MEE52.AKOR",
-        "normalPrice": 1290000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          78,
-          79
-        ]
+        "normalPrice": 1290000
       },
       {
         "productGroup": "냉장고 (일반)",
@@ -1113,11 +1027,7 @@
       {
         "productGroup": "냉장고 (일반)",
         "modelName": "Q342GBB153.AKOR",
-        "normalPrice": 1650000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          80
-        ]
+        "normalPrice": 1650000
       },
       {
         "productGroup": "냉장고 (일반)",
@@ -1147,11 +1057,7 @@
       {
         "productGroup": "냉장고 (일반)",
         "modelName": "Q342GPB153S.AKOR",
-        "normalPrice": 1650000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          80
-        ]
+        "normalPrice": 1650000
       },
       {
         "productGroup": "냉장고 (일반)",
@@ -1316,11 +1222,7 @@
       {
         "productGroup": "냉장고 (양문형)",
         "modelName": "S656GBB143.CKOR",
-        "normalPrice": 2550000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          71
-        ]
+        "normalPrice": 2550000
       },
       {
         "productGroup": "냉장고 (상냉장)",
@@ -1410,12 +1312,7 @@
       {
         "productGroup": "냉장고 (상냉장)",
         "modelName": "H876GBB031.CKOR",
-        "normalPrice": 3350000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          63,
-          69
-        ]
+        "normalPrice": 3350000
       },
       {
         "productGroup": "냉장고 (상냉장)",
@@ -1430,12 +1327,7 @@
       {
         "productGroup": "냉장고 (상냉장)",
         "modelName": "H876GBB111.CKOR",
-        "normalPrice": 3400000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          63,
-          69
-        ]
+        "normalPrice": 3400000
       },
       {
         "productGroup": "냉장고 (상냉장)",
@@ -1480,11 +1372,7 @@
       {
         "productGroup": "냉장고 (상냉장)",
         "modelName": "H876GBB141.CKOR",
-        "normalPrice": 3700000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          63
-        ]
+        "normalPrice": 3700000
       },
       {
         "productGroup": "냉장고 (얼음정수기)",
@@ -1549,11 +1437,7 @@
       {
         "productGroup": "냉장고 (상냉장)",
         "modelName": "H876GBB442.CKOR",
-        "normalPrice": 3800000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          63
-        ]
+        "normalPrice": 3800000
       },
       {
         "productGroup": "냉장고 (얼음정수기)",
@@ -1618,20 +1502,12 @@
       {
         "productGroup": "냉장고 (상냉장)",
         "modelName": "G646GBB032.AKOR",
-        "normalPrice": 3950000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          65
-        ]
+        "normalPrice": 3950000
       },
       {
         "productGroup": "냉장고 (상냉장)",
         "modelName": "G646GGA032.AKOR",
-        "normalPrice": 3950000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          65
-        ]
+        "normalPrice": 3950000
       },
       {
         "productGroup": "냉장고 (상냉장)",
@@ -1691,20 +1567,12 @@
       {
         "productGroup": "냉장고 (상냉장)",
         "modelName": "G646GBB031.AKOR",
-        "normalPrice": 4150000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          65
-        ]
+        "normalPrice": 4150000
       },
       {
         "productGroup": "냉장고 (상냉장)",
         "modelName": "G646GQQ031.AKOR",
-        "normalPrice": 4150000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          65
-        ]
+        "normalPrice": 4150000
       },
       {
         "productGroup": "냉장고 (상냉장)",
@@ -1759,11 +1627,7 @@
       {
         "productGroup": "냉장고 (얼음정수기)",
         "modelName": "J826GBB142.CKOR",
-        "normalPrice": 4200000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          62
-        ]
+        "normalPrice": 4200000
       },
       {
         "productGroup": "냉장고 (상냉장)",
@@ -1808,11 +1672,7 @@
       {
         "productGroup": "냉장고 (상냉장)",
         "modelName": "M876GBB131.AKOR",
-        "normalPrice": 4350000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          69
-        ]
+        "normalPrice": 4350000
       },
       {
         "productGroup": "냉장고 (상냉장)",
@@ -1832,20 +1692,12 @@
       {
         "productGroup": "냉장고 (상냉장)",
         "modelName": "G646GBB081.AKOR",
-        "normalPrice": 4450000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          65
-        ]
+        "normalPrice": 4450000
       },
       {
         "productGroup": "냉장고 (상냉장)",
         "modelName": "G646GQQ081.AKOR",
-        "normalPrice": 4450000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          65
-        ]
+        "normalPrice": 4450000
       },
       {
         "productGroup": "냉장고 (상냉장)",
@@ -1985,11 +1837,7 @@
       {
         "productGroup": "냉장고 (상냉장)",
         "modelName": "D646GBB091.CKOR",
-        "normalPrice": 4850000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          65
-        ]
+        "normalPrice": 4850000
       },
       {
         "productGroup": "냉장고 (상냉장)",
@@ -2024,11 +1872,7 @@
       {
         "productGroup": "냉장고 (얼음정수기)",
         "modelName": "W826GBB182.AKOR",
-        "normalPrice": 5550000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          62
-        ]
+        "normalPrice": 5550000
       },
       {
         "productGroup": "냉장고 (얼음정수기)",
@@ -2071,11 +1915,7 @@
       {
         "productGroup": "냉장고 (김치냉장고)",
         "modelName": "Z135MEE123.AKOR",
-        "normalPrice": 770000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          77
-        ]
+        "normalPrice": 770000
       },
       {
         "productGroup": "냉장고 (김치냉장고)",
@@ -2095,11 +1935,7 @@
       {
         "productGroup": "냉장고 (김치냉장고)",
         "modelName": "Z225MEE151.AKOR",
-        "normalPrice": 1410000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          77
-        ]
+        "normalPrice": 1410000
       },
       {
         "productGroup": "냉장고 (김치냉장고)",
@@ -2244,20 +2080,12 @@
       {
         "productGroup": "냉장고 (김치냉장고)",
         "modelName": "Z330MEEF21.AKOR",
-        "normalPrice": 2130000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          75
-        ]
+        "normalPrice": 2130000
       },
       {
         "productGroup": "냉장고 (김치냉장고)",
         "modelName": "Z330MPSF21.AKOR",
-        "normalPrice": 2130000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          75
-        ]
+        "normalPrice": 2130000
       },
       {
         "productGroup": "냉장고 (김치냉장고)",
@@ -2332,11 +2160,7 @@
       {
         "productGroup": "냉장고 (김치냉장고)",
         "modelName": "Z509MEEF33.AKOR",
-        "normalPrice": 2480000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          75
-        ]
+        "normalPrice": 2480000
       },
       {
         "productGroup": "냉장고 (김치냉장고)",
@@ -2441,11 +2265,7 @@
       {
         "productGroup": "냉장고 (김치냉장고)",
         "modelName": "Z490MEEF11.AKOR",
-        "normalPrice": 2830000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          74
-        ]
+        "normalPrice": 2830000
       },
       {
         "productGroup": "냉장고 (김치냉장고)",
@@ -2565,11 +2385,7 @@
       {
         "productGroup": "냉장고 (김치냉장고)",
         "modelName": "Z495GBB212.AKOR",
-        "normalPrice": 3380000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          74
-        ]
+        "normalPrice": 3380000
       },
       {
         "productGroup": "냉장고 (김치냉장고)",
@@ -2647,20 +2463,12 @@
       {
         "productGroup": "세탁기 (미니워시)",
         "modelName": "FX4WC.CKOR",
-        "normalPrice": 500000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          115
-        ]
+        "normalPrice": 500000
       },
       {
         "productGroup": "세탁기 (미니워시)",
         "modelName": "FX4VCQ.CKOR",
-        "normalPrice": 550000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          115
-        ]
+        "normalPrice": 550000
       },
       {
         "productGroup": "세탁기 (통돌이)",
@@ -2670,83 +2478,47 @@
       {
         "productGroup": "세탁기 (미니워시)",
         "modelName": "FX4KCQ.CKOR",
-        "normalPrice": 600000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          115
-        ]
+        "normalPrice": 600000
       },
       {
         "productGroup": "세탁기 (통돌이)",
         "modelName": "T17DX3A.AKOR",
-        "normalPrice": 610000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          119
-        ]
+        "normalPrice": 610000
       },
       {
         "productGroup": "세탁기 (미니워시)",
         "modelName": "FX4EC.CKOR",
-        "normalPrice": 650000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          115
-        ]
+        "normalPrice": 650000
       },
       {
         "productGroup": "세탁기 (미니워시)",
         "modelName": "FX4GC.CKOR",
-        "normalPrice": 650000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          115
-        ]
+        "normalPrice": 650000
       },
       {
         "productGroup": "세탁기 (미니워시)",
         "modelName": "FX4WC.BKOR",
-        "normalPrice": 700000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          115
-        ]
+        "normalPrice": 700000
       },
       {
         "productGroup": "세탁기 (미니워시)",
         "modelName": "FX4VCQ.BKOR",
-        "normalPrice": 750000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          115
-        ]
+        "normalPrice": 750000
       },
       {
         "productGroup": "세탁기 (미니워시)",
         "modelName": "FC4SC.CKOR",
-        "normalPrice": 800000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          108
-        ]
+        "normalPrice": 800000
       },
       {
         "productGroup": "세탁기 (미니워시)",
         "modelName": "FX4KCQ.BKOR",
-        "normalPrice": 800000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          115
-        ]
+        "normalPrice": 800000
       },
       {
         "productGroup": "세탁기 (미니워시)",
         "modelName": "FX4EC.BKOR",
-        "normalPrice": 850000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          115
-        ]
+        "normalPrice": 850000
       },
       {
         "productGroup": "세탁기 (통돌이)",
@@ -2801,29 +2573,17 @@
       {
         "productGroup": "세탁기 (드럼)",
         "modelName": "F17HTP.AKOR1",
-        "normalPrice": 1200000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          113
-        ]
+        "normalPrice": 1200000
       },
       {
         "productGroup": "세탁기 (건조기)",
         "modelName": "RH10VTA.AKOR",
-        "normalPrice": 1240000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          123
-        ]
+        "normalPrice": 1240000
       },
       {
         "productGroup": "세탁기 (드럼)",
         "modelName": "F17HTPR.AKOR1",
-        "normalPrice": 1300000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          113
-        ]
+        "normalPrice": 1300000
       },
       {
         "productGroup": "세탁기 (건조기)",
@@ -2973,11 +2733,7 @@
       {
         "productGroup": "세탁기 (드럼)",
         "modelName": "FX25EF.AKOR",
-        "normalPrice": 2200000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          112
-        ]
+        "normalPrice": 2200000
       },
       {
         "productGroup": "세탁기 (드럼)",
@@ -2987,11 +2743,7 @@
       {
         "productGroup": "세탁기 (드럼)",
         "modelName": "FX25GF.AKOR",
-        "normalPrice": 2200000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          112
-        ]
+        "normalPrice": 2200000
       },
       {
         "productGroup": "세탁기 (드럼)",
@@ -3001,11 +2753,7 @@
       {
         "productGroup": "세탁기 (드럼)",
         "modelName": "FX25VF.AKOR",
-        "normalPrice": 2200000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          112
-        ]
+        "normalPrice": 2200000
       },
       {
         "productGroup": "세탁기 (건조기)",
@@ -3020,11 +2768,7 @@
       {
         "productGroup": "세탁기 (건조기)",
         "modelName": "RD25ES.AKOR",
-        "normalPrice": 2440000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          122
-        ]
+        "normalPrice": 2440000
       },
       {
         "productGroup": "세탁기 (건조기)",
@@ -3034,11 +2778,7 @@
       {
         "productGroup": "세탁기 (건조기)",
         "modelName": "RD25GS.AKOR",
-        "normalPrice": 2440000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          122
-        ]
+        "normalPrice": 2440000
       },
       {
         "productGroup": "세탁기 (건조기)",
@@ -3048,11 +2788,7 @@
       {
         "productGroup": "세탁기 (건조기)",
         "modelName": "RD25VS.AKOR",
-        "normalPrice": 2440000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          122
-        ]
+        "normalPrice": 2440000
       },
       {
         "productGroup": "세탁기 (워시타워)",
@@ -3112,11 +2848,7 @@
       {
         "productGroup": "세탁기 (워시콤보)",
         "modelName": "FH25ES.AKOR",
-        "normalPrice": 4540000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          109
-        ]
+        "normalPrice": 4540000
       },
       {
         "productGroup": "세탁기 (워시콤보)",
@@ -3301,11 +3033,7 @@
       {
         "productGroup": "세탁기 (워시타워)",
         "modelName": "WA2525YMP6G.AKOR",
-        "normalPrice": 5090000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          104
-        ]
+        "normalPrice": 5090000
       },
       {
         "productGroup": "세탁기 (워시콤보)",
@@ -3320,11 +3048,7 @@
       {
         "productGroup": "세탁기 (워시콤보)",
         "modelName": "FC2521SX6C.AKOR",
-        "normalPrice": 5190000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          108
-        ]
+        "normalPrice": 5190000
       },
       {
         "productGroup": "세탁기 (워시콤보)",
@@ -3339,20 +3063,12 @@
       {
         "productGroup": "세탁기 (워시타워)",
         "modelName": "WA2525SSP6G.AKOR",
-        "normalPrice": 5190000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          104
-        ]
+        "normalPrice": 5190000
       },
       {
         "productGroup": "세탁기 (워시콤보)",
         "modelName": "FC2521SX6CX.CKOR",
-        "normalPrice": 5990000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          108
-        ]
+        "normalPrice": 5990000
       }
     ]
   },
@@ -3377,11 +3093,7 @@
       {
         "productGroup": "에어컨 (벽걸이)",
         "modelName": "SQ07GA3WBS.AKOR",
-        "normalPrice": 860000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          162
-        ]
+        "normalPrice": 860000
       },
       {
         "productGroup": "에어컨 (벽걸이)",
@@ -3401,29 +3113,17 @@
       {
         "productGroup": "에어컨 (벽걸이)",
         "modelName": "SQ06GJ1WES.AKOR",
-        "normalPrice": 1130000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          162
-        ]
+        "normalPrice": 1130000
       },
       {
         "productGroup": "에어컨 (벽걸이)",
         "modelName": "SQ07GS7EAS.AKOR",
-        "normalPrice": 1150000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          161
-        ]
+        "normalPrice": 1150000
       },
       {
         "productGroup": "에어컨 (벽걸이)",
         "modelName": "SQ09GJ1WAS.AKOR",
-        "normalPrice": 1160000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          162
-        ]
+        "normalPrice": 1160000
       },
       {
         "productGroup": "에어컨 (벽걸이)",
@@ -3433,20 +3133,12 @@
       {
         "productGroup": "에어컨 (벽걸이)",
         "modelName": "SQ06FS1EAS.AKOR",
-        "normalPrice": 1200000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          161
-        ]
+        "normalPrice": 1200000
       },
       {
         "productGroup": "에어컨 (벽걸이)",
         "modelName": "SQ07GJ3WES.AKOR",
-        "normalPrice": 1250000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          162
-        ]
+        "normalPrice": 1250000
       },
       {
         "productGroup": "에어컨 (벽걸이)",
@@ -3461,20 +3153,12 @@
       {
         "productGroup": "에어컨 (벽걸이)",
         "modelName": "SQ07GS8EAS.AKOR",
-        "normalPrice": 1310000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          161
-        ]
+        "normalPrice": 1310000
       },
       {
         "productGroup": "에어컨 (벽걸이)",
         "modelName": "SQ09GK1WES.AKOR",
-        "normalPrice": 1400000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          162
-        ]
+        "normalPrice": 1400000
       },
       {
         "productGroup": "에어컨 (벽걸이)",
@@ -3489,11 +3173,7 @@
       {
         "productGroup": "에어컨 (벽걸이)",
         "modelName": "SW07GJ1WAS.AKOR",
-        "normalPrice": 1410000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          163
-        ]
+        "normalPrice": 1410000
       },
       {
         "productGroup": "에어컨 (벽걸이)",
@@ -3503,11 +3183,7 @@
       {
         "productGroup": "에어컨 (벽걸이)",
         "modelName": "SQ07FS8EES.AKOR",
-        "normalPrice": 1450000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          161
-        ]
+        "normalPrice": 1450000
       },
       {
         "productGroup": "에어컨 (벽걸이)",
@@ -3517,11 +3193,7 @@
       {
         "productGroup": "에어컨 (벽걸이)",
         "modelName": "SW07FK1WBS.AKOR",
-        "normalPrice": 1460000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          163
-        ]
+        "normalPrice": 1460000
       },
       {
         "productGroup": "에어컨 (벽걸이)",
@@ -3531,11 +3203,7 @@
       {
         "productGroup": "에어컨 (벽걸이)",
         "modelName": "SQ11GK1WES.AKOR",
-        "normalPrice": 1510000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          162
-        ]
+        "normalPrice": 1510000
       },
       {
         "productGroup": "에어컨 (벽걸이)",
@@ -3545,20 +3213,12 @@
       {
         "productGroup": "에어컨 (벽걸이)",
         "modelName": "SW09GK1WAS.AKOR",
-        "normalPrice": 1560000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          163
-        ]
+        "normalPrice": 1560000
       },
       {
         "productGroup": "에어컨 (벽걸이)",
         "modelName": "SQ13GK1WAS.AKOR",
-        "normalPrice": 1580000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          162
-        ]
+        "normalPrice": 1580000
       },
       {
         "productGroup": "에어컨 (벽걸이)",
@@ -3568,21 +3228,12 @@
       {
         "productGroup": "에어컨 (벽걸이)",
         "modelName": "SQ07GS9EES.AKOR",
-        "normalPrice": 1610000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          158,
-          161
-        ]
+        "normalPrice": 1610000
       },
       {
         "productGroup": "에어컨 (벽걸이)",
         "modelName": "SW11GK1WAS.AKOR",
-        "normalPrice": 1700000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          163
-        ]
+        "normalPrice": 1700000
       },
       {
         "productGroup": "에어컨 (벽걸이)",
@@ -3597,11 +3248,7 @@
       {
         "productGroup": "에어컨 (벽걸이)",
         "modelName": "SQ16GK1WAS.AKOR",
-        "normalPrice": 1780000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          162
-        ]
+        "normalPrice": 1780000
       },
       {
         "productGroup": "에어컨 (스탠드)",
@@ -3621,20 +3268,12 @@
       {
         "productGroup": "에어컨 (벽걸이)",
         "modelName": "SW13GK1WAS.AKOR",
-        "normalPrice": 1810000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          163
-        ]
+        "normalPrice": 1810000
       },
       {
         "productGroup": "에어컨 (벽걸이)",
         "modelName": "SW07GK1WES.AKOR",
-        "normalPrice": 1860000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          163
-        ]
+        "normalPrice": 1860000
       },
       {
         "productGroup": "에어컨 (스탠드)",
@@ -3679,11 +3318,7 @@
       {
         "productGroup": "에어컨 (벽걸이)",
         "modelName": "SW09FS1EES.AKOR",
-        "normalPrice": 1960000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          163
-        ]
+        "normalPrice": 1960000
       },
       {
         "productGroup": "에어컨 (스탠드)",
@@ -3768,11 +3403,7 @@
       {
         "productGroup": "에어컨 (벽걸이)",
         "modelName": "SW16FK1WBS.AKOR",
-        "normalPrice": 2160000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          163
-        ]
+        "normalPrice": 2160000
       },
       {
         "productGroup": "에어컨 (스탠드)",
@@ -3972,20 +3603,12 @@
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ20GC2EA1.AKOR",
-        "normalPrice": 2465500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          159
-        ]
+        "normalPrice": 2465500
       },
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ20GC2EA1M.AKOR",
-        "normalPrice": 2465500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          159
-        ]
+        "normalPrice": 2465500
       },
       {
         "productGroup": "에어컨 (2in1)",
@@ -4140,20 +3763,12 @@
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FW16FC1EA1.AKOR",
-        "normalPrice": 2750000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          160
-        ]
+        "normalPrice": 2750000
       },
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FW16FC1EA1M.AKOR",
-        "normalPrice": 2750000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          160
-        ]
+        "normalPrice": 2750000
       },
       {
         "productGroup": "에어컨 (스탠드)",
@@ -4288,38 +3903,22 @@
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ20GC2EA2.AKOR",
-        "normalPrice": 2920000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          159
-        ]
+        "normalPrice": 2920000
       },
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ20GC2EA2M.AKOR",
-        "normalPrice": 2920000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          159
-        ]
+        "normalPrice": 2920000
       },
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ22GU2EA1.AKOR",
-        "normalPrice": 2965500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          159
-        ]
+        "normalPrice": 2965500
       },
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ22GU2EA1M.AKOR",
-        "normalPrice": 2965500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          159
-        ]
+        "normalPrice": 2965500
       },
       {
         "productGroup": "에어컨 (스탠드)",
@@ -4414,11 +4013,7 @@
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FW16FC1EA2M.AKOR",
-        "normalPrice": 3250000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          160
-        ]
+        "normalPrice": 3250000
       },
       {
         "productGroup": "에어컨 (2in1)",
@@ -4483,20 +4078,12 @@
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ18GV5EA1.AKOR",
-        "normalPrice": 3345500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          158
-        ]
+        "normalPrice": 3345500
       },
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ18GV5EA1M.AKOR",
-        "normalPrice": 3345500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          158
-        ]
+        "normalPrice": 3345500
       },
       {
         "productGroup": "에어컨 (스탠드)",
@@ -4541,11 +4128,7 @@
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FW16FC1EA2.AKOR",
-        "normalPrice": 3350000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          160
-        ]
+        "normalPrice": 3350000
       },
       {
         "productGroup": "에어컨 (2in1)",
@@ -4575,56 +4158,32 @@
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ22GU2EA2.AKOR",
-        "normalPrice": 3420000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          159
-        ]
+        "normalPrice": 3420000
       },
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ22GU2EA2M.AKOR",
-        "normalPrice": 3420000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          159
-        ]
+        "normalPrice": 3420000
       },
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ18GV3EE1.AKOR",
-        "normalPrice": 3435500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          158
-        ]
+        "normalPrice": 3435500
       },
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ18GV3EE1M.AKOR",
-        "normalPrice": 3435500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          158
-        ]
+        "normalPrice": 3435500
       },
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ18GV5BA1.AKOR",
-        "normalPrice": 3445500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          158
-        ]
+        "normalPrice": 3445500
       },
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ18GV5BA1M.AKOR",
-        "normalPrice": 3445500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          158
-        ]
+        "normalPrice": 3445500
       },
       {
         "productGroup": "에어컨 (스탠드)",
@@ -4664,20 +4223,12 @@
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FW18EV3EA1.AKOR",
-        "normalPrice": 3450000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          160
-        ]
+        "normalPrice": 3450000
       },
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FW18EV3EA1M.AKOR",
-        "normalPrice": 3450000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          160
-        ]
+        "normalPrice": 3450000
       },
       {
         "productGroup": "에어컨 (스탠드)",
@@ -4692,38 +4243,22 @@
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ22GV3EA1.AKOR",
-        "normalPrice": 3465500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          159
-        ]
+        "normalPrice": 3465500
       },
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ22GV3EA1M.AKOR",
-        "normalPrice": 3465500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          159
-        ]
+        "normalPrice": 3465500
       },
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ18GV6EA1.AKOR",
-        "normalPrice": 3495500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          158
-        ]
+        "normalPrice": 3495500
       },
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ18GV6EA1M.AKOR",
-        "normalPrice": 3495500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          158
-        ]
+        "normalPrice": 3495500
       },
       {
         "productGroup": "에어컨 (스탠드)",
@@ -4758,20 +4293,12 @@
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ18GV6BA1.AKOR",
-        "normalPrice": 3595500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          158
-        ]
+        "normalPrice": 3595500
       },
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ18GV6BA1M.AKOR",
-        "normalPrice": 3595500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          158
-        ]
+        "normalPrice": 3595500
       },
       {
         "productGroup": "에어컨 (스탠드)",
@@ -5026,56 +4553,32 @@
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ18GV3EE2.AKOR",
-        "normalPrice": 3920000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          158
-        ]
+        "normalPrice": 3920000
       },
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ18GV3EE2M.AKOR",
-        "normalPrice": 3920000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          158
-        ]
+        "normalPrice": 3920000
       },
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ22GV3EA2.AKOR",
-        "normalPrice": 3920000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          159
-        ]
+        "normalPrice": 3920000
       },
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ22GV3EA2M.AKOR",
-        "normalPrice": 3920000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          159
-        ]
+        "normalPrice": 3920000
       },
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ18GN5BA1.AKOR",
-        "normalPrice": 3945500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          155
-        ]
+        "normalPrice": 3945500
       },
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ18GN5BA1M.AKOR",
-        "normalPrice": 3945500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          155
-        ]
+        "normalPrice": 3945500
       },
       {
         "productGroup": "에어컨 (스탠드)",
@@ -5090,20 +4593,12 @@
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ18GN5HA1.AKOR",
-        "normalPrice": 3945500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          155
-        ]
+        "normalPrice": 3945500
       },
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ18GN5HA1M.AKOR",
-        "normalPrice": 3945500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          155
-        ]
+        "normalPrice": 3945500
       },
       {
         "productGroup": "에어컨 (스탠드)",
@@ -5148,20 +4643,12 @@
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ18GV5EA2.AKOR",
-        "normalPrice": 3950000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          158
-        ]
+        "normalPrice": 3950000
       },
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ18GV5EA2M.AKOR",
-        "normalPrice": 3950000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          158
-        ]
+        "normalPrice": 3950000
       },
       {
         "productGroup": "에어컨 (2in1)",
@@ -5186,20 +4673,12 @@
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ18GV5BA2.AKOR",
-        "normalPrice": 4050000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          158
-        ]
+        "normalPrice": 4050000
       },
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ18GV5BA2M.AKOR",
-        "normalPrice": 4050000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          158
-        ]
+        "normalPrice": 4050000
       },
       {
         "productGroup": "에어컨 (2in1)",
@@ -5254,20 +4733,12 @@
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ18GV6EA2.AKOR",
-        "normalPrice": 4100000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          158
-        ]
+        "normalPrice": 4100000
       },
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ18GV6EA2M.AKOR",
-        "normalPrice": 4100000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          158
-        ]
+        "normalPrice": 4100000
       },
       {
         "productGroup": "에어컨 (2in1)",
@@ -5282,38 +4753,22 @@
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ18GV6EE1.AKOR",
-        "normalPrice": 4165500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          158
-        ]
+        "normalPrice": 4165500
       },
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ18GV6EE1M.AKOR",
-        "normalPrice": 4165500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          158
-        ]
+        "normalPrice": 4165500
       },
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ22GV6EA1.AKOR",
-        "normalPrice": 4165500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          158
-        ]
+        "normalPrice": 4165500
       },
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ22GV6EA1M.AKOR",
-        "normalPrice": 4165500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          158
-        ]
+        "normalPrice": 4165500
       },
       {
         "productGroup": "에어컨 (스탠드)",
@@ -5328,20 +4783,12 @@
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ18GV6BA2.AKOR",
-        "normalPrice": 4200000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          158
-        ]
+        "normalPrice": 4200000
       },
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ18GV6BA2M.AKOR",
-        "normalPrice": 4200000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          158
-        ]
+        "normalPrice": 4200000
       },
       {
         "productGroup": "에어컨 (2in1)",
@@ -5436,38 +4883,22 @@
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ18GN7BA1.AKOR",
-        "normalPrice": 4345500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          155
-        ]
+        "normalPrice": 4345500
       },
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ18GN7BA1M.AKOR",
-        "normalPrice": 4345500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          155
-        ]
+        "normalPrice": 4345500
       },
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ18GN7HA1.AKOR",
-        "normalPrice": 4345500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          155
-        ]
+        "normalPrice": 4345500
       },
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ18GN7HA1M.AKOR",
-        "normalPrice": 4345500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          155
-        ]
+        "normalPrice": 4345500
       },
       {
         "productGroup": "에어컨 (2in1)",
@@ -5602,20 +5033,12 @@
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ18GN5BA2.AKOR",
-        "normalPrice": 4550000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          155
-        ]
+        "normalPrice": 4550000
       },
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ18GN5BA2M.AKOR",
-        "normalPrice": 4550000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          155
-        ]
+        "normalPrice": 4550000
       },
       {
         "productGroup": "에어컨 (2in1)",
@@ -5630,20 +5053,12 @@
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ18GN5HA2.AKOR",
-        "normalPrice": 4550000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          155
-        ]
+        "normalPrice": 4550000
       },
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ18GN5HA2M.AKOR",
-        "normalPrice": 4550000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          155
-        ]
+        "normalPrice": 4550000
       },
       {
         "productGroup": "에어컨 (2in1)",
@@ -5658,38 +5073,22 @@
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ25FN5BA1.AKOR",
-        "normalPrice": 4615500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          155
-        ]
+        "normalPrice": 4615500
       },
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ25FN5BA1M.AKOR",
-        "normalPrice": 4615500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          155
-        ]
+        "normalPrice": 4615500
       },
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ25FN5HA1.AKOR",
-        "normalPrice": 4615500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          155
-        ]
+        "normalPrice": 4615500
       },
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ25FN5HA1M.AKOR",
-        "normalPrice": 4615500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          155
-        ]
+        "normalPrice": 4615500
       },
       {
         "productGroup": "에어컨 (2in1)",
@@ -5734,56 +5133,32 @@
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ18GN9BA1.AKOR",
-        "normalPrice": 4795500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          155
-        ]
+        "normalPrice": 4795500
       },
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ18GN9BA1M.AKOR",
-        "normalPrice": 4795500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          155
-        ]
+        "normalPrice": 4795500
       },
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ18GN9HA1.AKOR",
-        "normalPrice": 4795500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          155
-        ]
+        "normalPrice": 4795500
       },
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ18GN9HA1M.AKOR",
-        "normalPrice": 4795500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          155
-        ]
+        "normalPrice": 4795500
       },
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ18GN7BK2.AKOR",
-        "normalPrice": 4800000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          155
-        ]
+        "normalPrice": 4800000
       },
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ18GN7BK2M.AKOR",
-        "normalPrice": 4800000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          155
-        ]
+        "normalPrice": 4800000
       },
       {
         "productGroup": "에어컨 (2in1)",
@@ -5798,74 +5173,42 @@
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ18GV6EE2.AKOR",
-        "normalPrice": 4820000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          158
-        ]
+        "normalPrice": 4820000
       },
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ18GV6EE2M.AKOR",
-        "normalPrice": 4820000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          158
-        ]
+        "normalPrice": 4820000
       },
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ22GV6EA2.AKOR",
-        "normalPrice": 4820000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          158
-        ]
+        "normalPrice": 4820000
       },
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ22GV6EA2M.AKOR",
-        "normalPrice": 4820000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          158
-        ]
+        "normalPrice": 4820000
       },
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ18GN7BA2.AKOR",
-        "normalPrice": 5000000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          155
-        ]
+        "normalPrice": 5000000
       },
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ18GN7BA2M.AKOR",
-        "normalPrice": 5000000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          155
-        ]
+        "normalPrice": 5000000
       },
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ18GN7HA2.AKOR",
-        "normalPrice": 5000000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          155
-        ]
+        "normalPrice": 5000000
       },
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ18GN7HA2M.AKOR",
-        "normalPrice": 5000000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          155
-        ]
+        "normalPrice": 5000000
       },
       {
         "productGroup": "에어컨 (스탠드)",
@@ -5890,38 +5233,22 @@
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ25FN5BA2.AKOR",
-        "normalPrice": 5070000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          155
-        ]
+        "normalPrice": 5070000
       },
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ25FN5BA2M.AKOR",
-        "normalPrice": 5070000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          155
-        ]
+        "normalPrice": 5070000
       },
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ25FN5HA2.AKOR",
-        "normalPrice": 5070000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          155
-        ]
+        "normalPrice": 5070000
       },
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ25FN5HA2M.AKOR",
-        "normalPrice": 5070000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          155
-        ]
+        "normalPrice": 5070000
       },
       {
         "productGroup": "에어컨 (2in1)",
@@ -5966,74 +5293,42 @@
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ18GN9BE1.AKOR",
-        "normalPrice": 5315500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          154
-        ]
+        "normalPrice": 5315500
       },
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ18GN9BE1M.AKOR",
-        "normalPrice": 5315500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          154
-        ]
+        "normalPrice": 5315500
       },
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ18GN9HE1.AKOR",
-        "normalPrice": 5315500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          154
-        ]
+        "normalPrice": 5315500
       },
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ18GN9HE1M.AKOR",
-        "normalPrice": 5315500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          154
-        ]
+        "normalPrice": 5315500
       },
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ18GN9BA2.AKOR",
-        "normalPrice": 5450000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          155
-        ]
+        "normalPrice": 5450000
       },
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ18GN9BA2M.AKOR",
-        "normalPrice": 5450000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          155
-        ]
+        "normalPrice": 5450000
       },
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ18GN9HA2.AKOR",
-        "normalPrice": 5450000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          155
-        ]
+        "normalPrice": 5450000
       },
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ18GN9HA2M.AKOR",
-        "normalPrice": 5450000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          155
-        ]
+        "normalPrice": 5450000
       },
       {
         "productGroup": "에어컨 (스탠드)",
@@ -6078,38 +5373,22 @@
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ22GN9BE1.AKOR",
-        "normalPrice": 5815500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          154
-        ]
+        "normalPrice": 5815500
       },
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ22GN9BE1M.AKOR",
-        "normalPrice": 5815500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          154
-        ]
+        "normalPrice": 5815500
       },
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ22GN9HE1.AKOR",
-        "normalPrice": 5815500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          154
-        ]
+        "normalPrice": 5815500
       },
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ22GN9HE1M.AKOR",
-        "normalPrice": 5815500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          154
-        ]
+        "normalPrice": 5815500
       },
       {
         "productGroup": "에어컨 (스탠드)",
@@ -6134,47 +5413,27 @@
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ18GN9BE2.AKOR",
-        "normalPrice": 5970000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          154
-        ]
+        "normalPrice": 5970000
       },
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ18GN9BE2M.AKOR",
-        "normalPrice": 5970000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          154
-        ]
+        "normalPrice": 5970000
       },
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ18GN9HE2.AKOR",
-        "normalPrice": 5970000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          154
-        ]
+        "normalPrice": 5970000
       },
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ18GN9HE2M.AKOR",
-        "normalPrice": 5970000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          154
-        ]
+        "normalPrice": 5970000
       },
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ25GN9BK1.AKOR",
-        "normalPrice": 6015500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          154
-        ]
+        "normalPrice": 6015500
       },
       {
         "productGroup": "에어컨 (스탠드)",
@@ -6204,74 +5463,42 @@
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ25GN9BE1.AKOR",
-        "normalPrice": 6165500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          154
-        ]
+        "normalPrice": 6165500
       },
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ25GN9BE1M.AKOR",
-        "normalPrice": 6165500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          154
-        ]
+        "normalPrice": 6165500
       },
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ25GN9HE1.AKOR",
-        "normalPrice": 6165500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          154
-        ]
+        "normalPrice": 6165500
       },
       {
         "productGroup": "에어컨 (스탠드)",
         "modelName": "FQ25GN9HE1M.AKOR",
-        "normalPrice": 6165500,
-        "catalogueHit": true,
-        "cataloguePages": [
-          154
-        ]
+        "normalPrice": 6165500
       },
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ22GN9BE2.AKOR",
-        "normalPrice": 6470000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          154
-        ]
+        "normalPrice": 6470000
       },
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ22GN9BE2M.AKOR",
-        "normalPrice": 6470000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          154
-        ]
+        "normalPrice": 6470000
       },
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ22GN9HE2.AKOR",
-        "normalPrice": 6470000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          154
-        ]
+        "normalPrice": 6470000
       },
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ22GN9HE2M.AKOR",
-        "normalPrice": 6470000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          154
-        ]
+        "normalPrice": 6470000
       },
       {
         "productGroup": "에어컨 (2in1)",
@@ -6296,56 +5523,32 @@
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ25GN9BK2.AKOR",
-        "normalPrice": 6620000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          154
-        ]
+        "normalPrice": 6620000
       },
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ25GN9BK2M.AKOR",
-        "normalPrice": 6620000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          154
-        ]
+        "normalPrice": 6620000
       },
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ25GN9BE2.AKOR",
-        "normalPrice": 6820000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          154
-        ]
+        "normalPrice": 6820000
       },
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ25GN9BE2M.AKOR",
-        "normalPrice": 6820000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          154
-        ]
+        "normalPrice": 6820000
       },
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ25GN9HE2.AKOR",
-        "normalPrice": 6820000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          154
-        ]
+        "normalPrice": 6820000
       },
       {
         "productGroup": "에어컨 (2in1)",
         "modelName": "FQ25GN9HE2M.AKOR",
-        "normalPrice": 6820000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          154
-        ]
+        "normalPrice": 6820000
       }
     ]
   },
@@ -6398,56 +5601,32 @@
       {
         "productGroup": "전기레인지",
         "modelName": "BEY3GS2E.AKOR",
-        "normalPrice": 1140000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          93
-        ]
+        "normalPrice": 1140000
       },
       {
         "productGroup": "전기레인지",
         "modelName": "BEY3GS2EA.AKOR",
-        "normalPrice": 1240000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          93
-        ]
+        "normalPrice": 1240000
       },
       {
         "productGroup": "전기레인지",
         "modelName": "BEY3GS2EC.AKOR",
-        "normalPrice": 1240000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          93
-        ]
+        "normalPrice": 1240000
       },
       {
         "productGroup": "전기레인지",
         "modelName": "BEY3MSE.AKOR",
-        "normalPrice": 1240000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          93
-        ]
+        "normalPrice": 1240000
       },
       {
         "productGroup": "전기레인지",
         "modelName": "BEY3MSEA.AKOR",
-        "normalPrice": 1340000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          93
-        ]
+        "normalPrice": 1340000
       },
       {
         "productGroup": "전기레인지",
         "modelName": "BEY3MSEC.AKOR",
-        "normalPrice": 1340000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          93
-        ]
+        "normalPrice": 1340000
       },
       {
         "productGroup": "전기레인지",
@@ -6462,74 +5641,42 @@
       {
         "productGroup": "전기레인지",
         "modelName": "BEI3ASB4E.AKOR",
-        "normalPrice": 1590000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          93
-        ]
+        "normalPrice": 1590000
       },
       {
         "productGroup": "전기레인지",
         "modelName": "BEI3ASS4E.AKOR",
-        "normalPrice": 1590000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          92
-        ]
+        "normalPrice": 1590000
       },
       {
         "productGroup": "전기레인지",
         "modelName": "BEI3ASB4EA.AKOR",
-        "normalPrice": 1690000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          93
-        ]
+        "normalPrice": 1690000
       },
       {
         "productGroup": "전기레인지",
         "modelName": "BEI3ASB4EC.AKOR",
-        "normalPrice": 1690000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          93
-        ]
+        "normalPrice": 1690000
       },
       {
         "productGroup": "전기레인지",
         "modelName": "BEI3ASS4EA.AKOR",
-        "normalPrice": 1690000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          92
-        ]
+        "normalPrice": 1690000
       },
       {
         "productGroup": "전기레인지",
         "modelName": "BEI3ASS4EC.AKOR",
-        "normalPrice": 1690000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          92
-        ]
+        "normalPrice": 1690000
       },
       {
         "productGroup": "전기레인지",
         "modelName": "BEI3ANBLE.AKOR",
-        "normalPrice": 1740000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          92
-        ]
+        "normalPrice": 1740000
       },
       {
         "productGroup": "전기레인지",
         "modelName": "BEI3ANHLE.AKOR",
-        "normalPrice": 1740000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          92
-        ]
+        "normalPrice": 1740000
       },
       {
         "productGroup": "전기레인지",
@@ -6539,20 +5686,12 @@
       {
         "productGroup": "전기레인지",
         "modelName": "BEI3ASMLE.AKOR",
-        "normalPrice": 1740000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          93
-        ]
+        "normalPrice": 1740000
       },
       {
         "productGroup": "전기레인지",
         "modelName": "BEI3AMB4E.AKOR",
-        "normalPrice": 1790000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          93
-        ]
+        "normalPrice": 1790000
       },
       {
         "productGroup": "전기레인지",
@@ -6577,38 +5716,22 @@
       {
         "productGroup": "전기레인지",
         "modelName": "BEI3ANBLEA.AKOR",
-        "normalPrice": 1840000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          92
-        ]
+        "normalPrice": 1840000
       },
       {
         "productGroup": "전기레인지",
         "modelName": "BEI3ANBLEC.AKOR",
-        "normalPrice": 1840000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          92
-        ]
+        "normalPrice": 1840000
       },
       {
         "productGroup": "전기레인지",
         "modelName": "BEI3ANHLEA.AKOR",
-        "normalPrice": 1840000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          92
-        ]
+        "normalPrice": 1840000
       },
       {
         "productGroup": "전기레인지",
         "modelName": "BEI3ANHLEC.AKOR",
-        "normalPrice": 1840000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          92
-        ]
+        "normalPrice": 1840000
       },
       {
         "productGroup": "전기레인지",
@@ -6633,38 +5756,22 @@
       {
         "productGroup": "전기레인지",
         "modelName": "BEI3ASMLEA.AKOR",
-        "normalPrice": 1840000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          93
-        ]
+        "normalPrice": 1840000
       },
       {
         "productGroup": "전기레인지",
         "modelName": "BEI3ASMLEC.AKOR",
-        "normalPrice": 1840000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          93
-        ]
+        "normalPrice": 1840000
       },
       {
         "productGroup": "전기레인지",
         "modelName": "BEF3ANBLE.AKOR",
-        "normalPrice": 1890000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          92
-        ]
+        "normalPrice": 1890000
       },
       {
         "productGroup": "전기레인지",
         "modelName": "BEF3ANHLE.AKOR",
-        "normalPrice": 1890000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          92
-        ]
+        "normalPrice": 1890000
       },
       {
         "productGroup": "전기레인지",
@@ -6679,65 +5786,37 @@
       {
         "productGroup": "전기레인지",
         "modelName": "BEF3ASMLE.AKOR",
-        "normalPrice": 1890000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          93
-        ]
+        "normalPrice": 1890000
       },
       {
         "productGroup": "전기레인지",
         "modelName": "BEI3AMB4EA.AKOR",
-        "normalPrice": 1890000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          93
-        ]
+        "normalPrice": 1890000
       },
       {
         "productGroup": "전기레인지",
         "modelName": "BEI3AMB4EC.AKOR",
-        "normalPrice": 1890000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          93
-        ]
+        "normalPrice": 1890000
       },
       {
         "productGroup": "전기레인지",
         "modelName": "BEF3ANBLEA.AKOR",
-        "normalPrice": 1990000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          92
-        ]
+        "normalPrice": 1990000
       },
       {
         "productGroup": "전기레인지",
         "modelName": "BEF3ANBLEC.AKOR",
-        "normalPrice": 1990000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          92
-        ]
+        "normalPrice": 1990000
       },
       {
         "productGroup": "전기레인지",
         "modelName": "BEF3ANHLEA.AKOR",
-        "normalPrice": 1990000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          92
-        ]
+        "normalPrice": 1990000
       },
       {
         "productGroup": "전기레인지",
         "modelName": "BEF3ANHLEC.AKOR",
-        "normalPrice": 1990000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          92
-        ]
+        "normalPrice": 1990000
       },
       {
         "productGroup": "전기레인지",
@@ -6772,20 +5851,12 @@
       {
         "productGroup": "전기레인지",
         "modelName": "BEF3ASMLEA.AKOR",
-        "normalPrice": 1990000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          93
-        ]
+        "normalPrice": 1990000
       },
       {
         "productGroup": "전기레인지",
         "modelName": "BEF3ASMLEC.AKOR",
-        "normalPrice": 1990000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          93
-        ]
+        "normalPrice": 1990000
       }
     ]
   },
@@ -6798,56 +5869,32 @@
       {
         "productGroup": "광파오븐",
         "modelName": "MLJ39ER.CKOR",
-        "normalPrice": 590000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          89
-        ]
+        "normalPrice": 590000
       },
       {
         "productGroup": "광파오븐",
         "modelName": "MLJ39PR.CKOR",
-        "normalPrice": 590000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          89
-        ]
+        "normalPrice": 590000
       },
       {
         "productGroup": "광파오븐",
         "modelName": "MLJ32ERS.CKOR",
-        "normalPrice": 950000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          89
-        ]
+        "normalPrice": 950000
       },
       {
         "productGroup": "광파오븐",
         "modelName": "MLJ32HRS.CKOR",
-        "normalPrice": 950000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          89
-        ]
+        "normalPrice": 950000
       },
       {
         "productGroup": "광파오븐",
         "modelName": "MLJ32MRS.CKOR",
-        "normalPrice": 950000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          89
-        ]
+        "normalPrice": 950000
       },
       {
         "productGroup": "광파오븐",
         "modelName": "MLJ32PRS.CKOR",
-        "normalPrice": 950000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          89
-        ]
+        "normalPrice": 950000
       }
     ]
   },
@@ -6871,11 +5918,7 @@
       {
         "productGroup": "로봇청소기",
         "modelName": "MO972WA.AKOR",
-        "normalPrice": 749000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          146
-        ]
+        "normalPrice": 749000
       },
       {
         "productGroup": "청소기",
@@ -6948,11 +5991,7 @@
       {
         "productGroup": "스타일러",
         "modelName": "S3GHM.BKOR",
-        "normalPrice": 1340000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          126
-        ]
+        "normalPrice": 1340000
       },
       {
         "productGroup": "스타일러",
@@ -6982,11 +6021,7 @@
       {
         "productGroup": "스타일러",
         "modelName": "SC5MSR40S.AKOR",
-        "normalPrice": 1940000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          126
-        ]
+        "normalPrice": 1940000
       },
       {
         "productGroup": "스타일러",
@@ -7039,29 +6074,17 @@
       {
         "productGroup": "식기세척기",
         "modelName": "DUE5STE.AKOR",
-        "normalPrice": 1400000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          86
-        ]
+        "normalPrice": 1400000
       },
       {
         "productGroup": "식기세척기",
         "modelName": "DFE5BGE.AKOR",
-        "normalPrice": 1780000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          86
-        ]
+        "normalPrice": 1780000
       },
       {
         "productGroup": "식기세척기",
         "modelName": "DUE5BGE.AKOR",
-        "normalPrice": 1780000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          86
-        ]
+        "normalPrice": 1780000
       },
       {
         "productGroup": "식기세척기",
@@ -7091,20 +6114,12 @@
       {
         "productGroup": "식기세척기",
         "modelName": "DEE6BGE.AKOR",
-        "normalPrice": 2240000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          86
-        ]
+        "normalPrice": 2240000
       },
       {
         "productGroup": "식기세척기",
         "modelName": "DEE6EWE.AKOR",
-        "normalPrice": 2240000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          86
-        ]
+        "normalPrice": 2240000
       }
     ]
   },
@@ -7118,38 +6133,22 @@
       {
         "productGroup": "정수기",
         "modelName": "WD120MCB.AKOR",
-        "normalPrice": 781000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          97
-        ]
+        "normalPrice": 781000
       },
       {
         "productGroup": "정수기",
         "modelName": "WD120MNB.AKOR",
-        "normalPrice": 781000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          97
-        ]
+        "normalPrice": 781000
       },
       {
         "productGroup": "정수기",
         "modelName": "WD220MCB.AKOR",
-        "normalPrice": 956000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          97
-        ]
+        "normalPrice": 956000
       },
       {
         "productGroup": "정수기",
         "modelName": "WD220MNB.AKOR",
-        "normalPrice": 956000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          97
-        ]
+        "normalPrice": 956000
       },
       {
         "productGroup": "정수기",
@@ -7159,38 +6158,22 @@
       {
         "productGroup": "정수기",
         "modelName": "WS511SH.AKOR",
-        "normalPrice": 1260000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          99
-        ]
+        "normalPrice": 1260000
       },
       {
         "productGroup": "정수기",
         "modelName": "WD323ACB.AKOR",
-        "normalPrice": 1278000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          97
-        ]
+        "normalPrice": 1278000
       },
       {
         "productGroup": "정수기",
         "modelName": "WD323AWB.AKOR",
-        "normalPrice": 1278000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          97
-        ]
+        "normalPrice": 1278000
       },
       {
         "productGroup": "정수기",
         "modelName": "WD520VC.AKOR",
-        "normalPrice": 1278000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          97
-        ]
+        "normalPrice": 1278000
       },
       {
         "productGroup": "정수기",
@@ -7210,20 +6193,12 @@
       {
         "productGroup": "정수기",
         "modelName": "WU823AS.AKOR",
-        "normalPrice": 1442000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          98
-        ]
+        "normalPrice": 1442000
       },
       {
         "productGroup": "정수기",
         "modelName": "WU523ACB.AKOR",
-        "normalPrice": 1471000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          98
-        ]
+        "normalPrice": 1471000
       },
       {
         "productGroup": "정수기",
@@ -7233,56 +6208,32 @@
       {
         "productGroup": "정수기",
         "modelName": "WD523VC.AKOR",
-        "normalPrice": 1513000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          97
-        ]
+        "normalPrice": 1513000
       },
       {
         "productGroup": "정수기",
         "modelName": "WD523VH.AKOR",
-        "normalPrice": 1513000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          97
-        ]
+        "normalPrice": 1513000
       },
       {
         "productGroup": "정수기",
         "modelName": "WD523VM.AKOR",
-        "normalPrice": 1513000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          97
-        ]
+        "normalPrice": 1513000
       },
       {
         "productGroup": "정수기",
         "modelName": "WD523VP.AKOR",
-        "normalPrice": 1513000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          97
-        ]
+        "normalPrice": 1513000
       },
       {
         "productGroup": "정수기",
         "modelName": "WD523VS.AKOR",
-        "normalPrice": 1513000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          97
-        ]
+        "normalPrice": 1513000
       },
       {
         "productGroup": "정수기",
         "modelName": "WU923AS.AKOR",
-        "normalPrice": 1547000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          98
-        ]
+        "normalPrice": 1547000
       },
       {
         "productGroup": "정수기",
@@ -7292,74 +6243,42 @@
       {
         "productGroup": "정수기",
         "modelName": "WU923ABB.AKOR",
-        "normalPrice": 1617000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          98
-        ]
+        "normalPrice": 1617000
       },
       {
         "productGroup": "정수기",
         "modelName": "WU923ACB.AKOR",
-        "normalPrice": 1617000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          98
-        ]
+        "normalPrice": 1617000
       },
       {
         "productGroup": "정수기",
         "modelName": "WU923ANB.AKOR",
-        "normalPrice": 1617000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          98
-        ]
+        "normalPrice": 1617000
       },
       {
         "productGroup": "정수기",
         "modelName": "WU923AWB.AKOR",
-        "normalPrice": 1617000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          98
-        ]
+        "normalPrice": 1617000
       },
       {
         "productGroup": "정수기",
         "modelName": "WD524VC.AKOR1",
-        "normalPrice": 1630000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          96
-        ]
+        "normalPrice": 1630000
       },
       {
         "productGroup": "정수기",
         "modelName": "WD524VH.AKOR1",
-        "normalPrice": 1630000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          96
-        ]
+        "normalPrice": 1630000
       },
       {
         "productGroup": "정수기",
         "modelName": "WD524VS.AKOR1",
-        "normalPrice": 1630000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          96
-        ]
+        "normalPrice": 1630000
       },
       {
         "productGroup": "정수기",
         "modelName": "WS513SH.AKOR",
-        "normalPrice": 1853000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          99
-        ]
+        "normalPrice": 1853000
       },
       {
         "productGroup": "정수기",
@@ -7419,29 +6338,17 @@
       {
         "productGroup": "얼음정수기",
         "modelName": "WD722RE.AKOR",
-        "normalPrice": 2341000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          96
-        ]
+        "normalPrice": 2341000
       },
       {
         "productGroup": "얼음정수기",
         "modelName": "WD722RH.AKOR",
-        "normalPrice": 2341000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          96
-        ]
+        "normalPrice": 2341000
       },
       {
         "productGroup": "얼음정수기",
         "modelName": "WD722RK.AKOR",
-        "normalPrice": 2341000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          96
-        ]
+        "normalPrice": 2341000
       },
       {
         "productGroup": "얼음정수기",
@@ -7479,11 +6386,7 @@
       {
         "productGroup": "공기청정기",
         "modelName": "AS185LGAA.AKOR",
-        "normalPrice": 890000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          174
-        ]
+        "normalPrice": 890000
       },
       {
         "productGroup": "공기청정기",
@@ -7546,20 +6449,12 @@
       {
         "productGroup": "제습기",
         "modelName": "DQ185MEGA.AKOR",
-        "normalPrice": 709000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          180
-        ]
+        "normalPrice": 709000
       },
       {
         "productGroup": "제습기",
         "modelName": "DQ214MWGA.AKOR",
-        "normalPrice": 799000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          180
-        ]
+        "normalPrice": 799000
       },
       {
         "productGroup": "제습기",
@@ -7574,11 +6469,7 @@
       {
         "productGroup": "제습기",
         "modelName": "DQ256MWGA.AKOR",
-        "normalPrice": 899000,
-        "catalogueHit": true,
-        "cataloguePages": [
-          180
-        ]
+        "normalPrice": 899000
       },
       {
         "productGroup": "제습기",
