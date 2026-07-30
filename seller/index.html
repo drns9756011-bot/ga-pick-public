@@ -121,6 +121,10 @@
     <script>
       (() => {
         const cleanPath = (window.location.pathname || "/").replace(/\/+$/, "") || "/";
+        const mobileUserAgent = /Android|iPhone|iPad|iPod|Windows Phone|Mobile|SamsungBrowser|KAKAOTALK|NAVER/i.test(navigator.userAgent || "");
+        const coarsePointer = window.matchMedia?.("(hover: none) and (pointer: coarse)")?.matches || false;
+        const touchCapable = (navigator.maxTouchPoints || 0) > 0;
+        const compactViewport = Math.min(window.innerWidth || 0, screen.width || 0) > 0 && Math.min(window.innerWidth || screen.width, screen.width || window.innerWidth) <= 900;
         const initialViewByPath = {
           "/": "home",
           "/quote": "customer",
@@ -129,6 +133,9 @@
           "/seller/register": "sellerRegister",
         };
         document.documentElement.dataset.initialView = initialViewByPath[cleanPath] || "home";
+        if (mobileUserAgent || (coarsePointer && touchCapable) || (touchCapable && compactViewport)) {
+          document.documentElement.classList.add("is-mobile-device");
+        }
       })();
     </script>
     <style>
@@ -146,10 +153,10 @@
         display: block;
       }
     </style>
-    <link rel="stylesheet" href="/styles.css?v=20260729-ai-wizard-korean-v2" />
-    <script defer src="/app.js?v=20260729-ai-auto-lowest-v1"></script>
-    <script defer src="/customer-wizard.js?v=20260729-ai-wizard-korean-v2"></script>
-    <script defer src="/page-guide.js?v=20260729-dual-ad-relay-v1"></script>
+    <link rel="stylesheet" href="/styles.css?v=20260730-mobile-device-banner-v2" />
+    <script defer src="/app.js?v=20260730-mobile-device-banner-v2"></script>
+    <script defer src="/customer-wizard.js?v=20260730-mobile-device-banner-v2"></script>
+    <script defer src="/page-guide.js?v=20260730-mobile-device-banner-v2"></script>
   </head>
   <body>
     <header class="topbar">
@@ -202,12 +209,24 @@
               <div class="pick-start-cards" aria-label="견적 시작 메뉴">
                 <button class="pick-start-card is-primary" type="button" data-view="customer">
                   <span class="pick-card-tag">나에게 맞는 견적</span>
-                  <span class="pick-card-icon" aria-hidden="true">견</span>
+                  <span class="pick-card-icon quote-icon" aria-hidden="true">
+                    <svg viewBox="0 0 48 48" focusable="false">
+                      <path d="M14 7h15l8 8v26H14z" />
+                      <path d="M29 7v9h8" />
+                      <path d="M19 24h14M19 30h10" />
+                      <path class="icon-accent" d="m20 38 5 4 10-13" />
+                    </svg>
+                  </span>
                   <small>혼수 · 이사 · 입주</small>
                   <strong>가전 견적 받기</strong>
                 </button>
                 <button class="pick-start-card" type="button" data-view="lookup">
-                  <span class="pick-card-icon" aria-hidden="true">확</span>
+                  <span class="pick-card-icon check-icon" aria-hidden="true">
+                    <svg viewBox="0 0 48 48" focusable="false">
+                      <circle cx="24" cy="24" r="17" />
+                      <path class="icon-accent" d="m15 24 6 6 13-14" />
+                    </svg>
+                  </span>
                   <small>받은 제안 확인</small>
                   <strong>내 견적 확인</strong>
                 </button>
@@ -1068,6 +1087,9 @@
     <div class="security-blanket" id="securityBlanket" aria-hidden="true"></div>
   </body>
 </html>
+
+
+
 
 
 

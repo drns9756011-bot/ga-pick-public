@@ -515,9 +515,10 @@ async function saveSellerApplicationToServer(application) {
   });
 }
 
-async function loginSellerToServer(sellerId, password) {
+async function loginSellerToServer(sellerId, password, options = {}) {
   return apiJson("/api/seller-login", {
     method: "POST",
+    showLoading: options.showLoading !== false,
     loadingTitle: "판매자 로그인을 확인 중입니다.",
     loadingText: "승인된 계정 정보를 서버에서 확인하고 있습니다.",
     body: JSON.stringify({ sellerId, password }),
@@ -652,6 +653,29 @@ async function syncReviewsFromServer(options = {}) {
 
   if (!result?.ok || !Array.isArray(result.rows)) return;
   replaceReviews(result.rows);
+}
+
+async function syncSellerDashboardData(options = {}) {
+  const showLoading = options.showLoading === true;
+  if (showLoading) {
+    showServerLoading(
+      options.loadingTitle || "판매자 페이지를 준비 중입니다.",
+      options.loadingText || "고객님 견적과 제안 정보를 한 번에 불러오고 있습니다."
+    );
+  }
+
+  try {
+    await Promise.all([
+      syncCustomerQuotesFromServer({ showLoading: false }),
+      syncBidsFromServer({ showLoading: false }),
+      syncReviewsFromServer({ showLoading: false }),
+    ]);
+    hydrateApprovedSellerAccounts();
+    renderRequests();
+    renderSelectedRequest();
+  } finally {
+    if (showLoading) hideServerLoading(true);
+  }
 }
 
 async function saveReviewToServer(review) {
@@ -981,14 +1005,7 @@ async function refreshCurrentViewFromServer() {
     }
 
     if (view === "seller" && activeSellerId) {
-      await Promise.all([
-        syncCustomerQuotesFromServer({ showLoading: false }),
-        syncBidsFromServer({ showLoading: false }),
-        syncReviewsFromServer({ showLoading: false }),
-      ]);
-      hydrateApprovedSellerAccounts();
-      renderRequests();
-      renderSelectedRequest();
+      await syncSellerDashboardData({ showLoading: false });
       return;
     }
 
@@ -2499,51 +2516,55 @@ sellerLoginForm.addEventListener("submit", async (event) => {
   const formData = new FormData(sellerLoginForm);
   const loginId = formData.get("loginId").trim();
   const loginPassword = formData.get("loginPassword");
-  const loginResult = await loginSellerToServer(loginId, loginPassword);
 
-  if (!loginResult?.ok || !loginResult.row) {
-    setSellerLoginMessage(loginResult?.message || "아이디 또는 비밀번호가 일치하지 않습니다.", "error");
-    return;
-  }
-
-  const account = loginResult.row;
-  sellerAccounts.set(loginId, {
-    channel: account.channel,
-    branch: account.branch,
-    branchRegion: account.branchRegion,
-    manager: account.manager,
-    managerPosition: account.managerPosition,
-    phone: account.phone,
-    cardImage: account.cardImage || "",
-    consent: account.consent,
-  });
-  writeStorageArray(STORAGE_KEYS.approvedSellers, [
-    ...getApprovedSellerRows().filter((seller) => seller.sellerId !== loginId),
-    account,
-  ]);
-
-  activeSellerId = loginId;
-  writeActiveSellerSession(loginId);
-  activeSellerTab = "all";
-  setSellerLoginMessage("");
-  setBidFormMessage("");
-  sellerLoginForm.reset();
-  if (bidForm.elements.branchName) bidForm.elements.branchName.value = account.branch || "";
-  if (bidForm.elements.managerName) bidForm.elements.managerName.value = account.manager || "";
-  if (bidForm.elements.managerPhone) bidForm.elements.managerPhone.value = formatPhoneNumber(account.phone || "");
-  renderRequests();
-  renderSelectedRequest();
-  setView("seller", { replacePath: true });
   try {
-    await Promise.all([
-      syncCustomerQuotesFromServer({ showLoading: false }),
-      syncBidsFromServer({ showLoading: false }),
+    showServerLoading(
+      "판매자 페이지를 준비 중입니다.",
+      "로그인 확인 후 고객님 견적과 제안 정보를 한 번에 불러오고 있습니다."
+    );
+
+    const loginResult = await loginSellerToServer(loginId, loginPassword, { showLoading: false });
+
+    if (!loginResult?.ok || !loginResult.row) {
+      setSellerLoginMessage(loginResult?.message || "아이디 또는 비밀번호가 일치하지 않습니다.", "error");
+      return;
+    }
+
+    const account = loginResult.row;
+    sellerAccounts.set(loginId, {
+      channel: account.channel,
+      branch: account.branch,
+      branchRegion: account.branchRegion,
+      manager: account.manager,
+      managerPosition: account.managerPosition,
+      phone: account.phone,
+      cardImage: account.cardImage || "",
+      consent: account.consent,
+    });
+    writeStorageArray(STORAGE_KEYS.approvedSellers, [
+      ...getApprovedSellerRows().filter((seller) => seller.sellerId !== loginId),
+      account,
     ]);
-    renderRequests();
-    renderSelectedRequest();
+
+    activeSellerId = loginId;
+    writeActiveSellerSession(loginId);
+    activeSellerTab = "all";
+    setSellerLoginMessage("");
+    setBidFormMessage("");
+    sellerLoginForm.reset();
+    if (bidForm.elements.branchName) bidForm.elements.branchName.value = account.branch || "";
+    if (bidForm.elements.managerName) bidForm.elements.managerName.value = account.manager || "";
+    if (bidForm.elements.managerPhone) bidForm.elements.managerPhone.value = formatPhoneNumber(account.phone || "");
+
+    await syncSellerDashboardData({ showLoading: false });
+    setView("seller", { replacePath: true });
   } catch (error) {
-    console.warn("판매자 로그인 후 서버 동기화에 실패했습니다.", error);
-    setBidFormMessage("로그인은 완료되었습니다. 목록을 새로고침하면 최신 견적을 다시 불러옵니다.", "error");
+    activeSellerId = "";
+    writeActiveSellerSession("");
+    console.warn("판매자 로그인 처리에 실패했습니다.", error);
+    setSellerLoginMessage("판매자 페이지 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.", "error");
+  } finally {
+    hideServerLoading(true);
   }
 });
 
@@ -3048,11 +3069,7 @@ async function bootApplication() {
 
     try {
       if (isSellerPath && activeSellerId) {
-        await Promise.all([
-          syncCustomerQuotesFromServer({ showLoading: false }),
-          syncBidsFromServer({ showLoading: false }),
-          syncReviewsFromServer({ showLoading: false }),
-        ]);
+        await syncSellerDashboardData({ showLoading: false });
       }
     } finally {
       if (isSellerPath) {
