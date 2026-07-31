@@ -2,7 +2,7 @@
   "Content-Type": "application/json; charset=utf-8",
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, X-Admin-Token",
+  "Access-Control-Allow-Headers": "Content-Type, X-Admin-Token, X-Lplan-Sync-Token",
   "Cache-Control": "no-store",
 };
 
@@ -19,8 +19,9 @@ const SOLAPI_DEFAULTS = {
   SOLAPI_TEMPLATE_SELLER_REJECTED: "KA01TP260725102900428RYxfTGV9SoG",
 };
 
-const PUBLIC_API_VERSION = "20260729-naver-lowest-exact-product-filter";
+const PUBLIC_API_VERSION = "20260731-lplan-training-sync";
 const NAVER_SHOPPING_CLIENT_ID_DEFAULT = "x1CsXB5ZCYULxcGnclGq";
+const LPLAN_SYNC_TOKEN_DEFAULT = "pickquote-lplan-sync-v1";
 const MASTER_SELLER_ID = "pickgj";
 const MASTER_SELLER_PASSWORD = "qwer1234!!";
 const MASTER_SELLER_PASSWORD_HASH =
@@ -2705,6 +2706,125 @@ async function getPushHealth(env) {
   });
 }
 
+async function ensureLplanTrainingTable(env) {
+  await env.DB.prepare(
+    `CREATE TABLE IF NOT EXISTS lplan_quote_patterns (
+      id TEXT PRIMARY KEY,
+      source_quote_id TEXT DEFAULT '',
+      title TEXT DEFAULT '',
+      source_saved_at TEXT DEFAULT '',
+      synced_at TEXT NOT NULL,
+      branch TEXT DEFAULT '',
+      manager_hash TEXT DEFAULT '',
+      membership_type TEXT DEFAULT '',
+      quote_date TEXT DEFAULT '',
+      delivery_date TEXT DEFAULT '',
+      item_count INTEGER DEFAULT 0,
+      total_reg_price INTEGER DEFAULT 0,
+      total_point INTEGER DEFAULT 0,
+      total_cashback INTEGER DEFAULT 0,
+      combo_key TEXT DEFAULT '',
+      rows_json TEXT NOT NULL
+    )`
+  ).run();
+  await env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_lplan_quote_patterns_synced_at ON lplan_quote_patterns(synced_at)").run();
+  await env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_lplan_quote_patterns_combo_key ON lplan_quote_patterns(combo_key)").run();
+}
+
+function getLplanSyncToken(env) {
+  return String(env.LPLAN_SYNC_TOKEN || LPLAN_SYNC_TOKEN_DEFAULT).trim();
+}
+
+function requireLplanSync(request, env) {
+  const expected = getLplanSyncToken(env);
+  const actual = String(request.headers.get("X-Lplan-Sync-Token") || "").trim();
+  if (!expected || actual !== expected) {
+    return json({ ok: false, message: "엘플랜 동기화 인증이 필요합니다." }, 401);
+  }
+  return null;
+}
+
+function normalizeTrainingRows(rows) {
+  return (Array.isArray(rows) ? rows : [])
+    .map((row) => ({
+      model: String(row?.model || "").trim().toUpperCase(),
+      sub: Boolean(row?.sub),
+      existingBundle: Boolean(row?.existingBundle),
+      wedding: Boolean(row?.wedding),
+      regPrice: Number(row?.regPrice || 0) || 0,
+      point: Number(row?.point || 0) || 0,
+      cashback: Number(row?.cashback || 0) || 0,
+      care: String(row?.care || "").trim(),
+      contract: String(row?.contract || "").trim(),
+      prepay: String(row?.prepay || "").trim(),
+      fixedPrepayAmount: Number(row?.fixedPrepayAmount || 0) || 0,
+      smallBusiness: Boolean(row?.smallBusiness),
+    }))
+    .filter((row) => row.model);
+}
+
+async function saveLplanTrainingQuote(env, request) {
+  const denied = requireLplanSync(request, env);
+  if (denied) return denied;
+
+  await ensureLplanTrainingTable(env);
+  const body = await request.json().catch(() => ({}));
+  const rows = normalizeTrainingRows(body.rows);
+  if (!rows.length) return json({ ok: false, message: "저장할 모델 구성이 없습니다." }, 400);
+
+  const sourceQuoteId = String(body.sourceQuoteId || body.id || "").trim() || createId("lplan-source");
+  const id = `lplan-${sourceQuoteId}`;
+  const now = new Date().toISOString();
+  const totalRegPrice = Number(body.totalRegPrice || rows.reduce((sum, row) => sum + Number(row.regPrice || 0), 0)) || 0;
+  const totalPoint = Number(body.totalPoint || rows.reduce((sum, row) => sum + Number(row.point || 0), 0)) || 0;
+  const totalCashback = Number(body.totalCashback || rows.reduce((sum, row) => sum + Number(row.cashback || 0), 0)) || 0;
+  const comboKey = rows.map((row) => row.model).sort().join("|");
+
+  await env.DB.prepare(
+    `INSERT OR REPLACE INTO lplan_quote_patterns
+      (id, source_quote_id, title, source_saved_at, synced_at, branch, manager_hash, membership_type,
+       quote_date, delivery_date, item_count, total_reg_price, total_point, total_cashback, combo_key, rows_json)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  )
+    .bind(
+      id,
+      sourceQuoteId,
+      String(body.title || "").trim().slice(0, 120),
+      String(body.savedAt || body.sourceSavedAt || "").trim(),
+      now,
+      String(body.branch || "").trim().slice(0, 80),
+      String(body.managerHash || "").trim().slice(0, 96),
+      String(body.membershipType || "").trim().slice(0, 40),
+      String(body.quoteDate || "").trim().slice(0, 40),
+      String(body.deliveryDate || "").trim().slice(0, 40),
+      rows.length,
+      totalRegPrice,
+      totalPoint,
+      totalCashback,
+      comboKey,
+      JSON.stringify(rows)
+    )
+    .run();
+
+  return json({ ok: true, id, savedRows: rows.length, syncedAt: now });
+}
+
+async function getLplanTrainingQuotes(env, request) {
+  const denied = requireAdmin(request, env);
+  if (denied) return denied;
+
+  await ensureLplanTrainingTable(env);
+  const rows = await env.DB.prepare(
+    `SELECT id, source_quote_id, title, source_saved_at, synced_at, branch, manager_hash,
+            membership_type, item_count, total_reg_price, total_point, total_cashback, combo_key
+       FROM lplan_quote_patterns
+       ORDER BY synced_at DESC
+       LIMIT 50`
+  ).all();
+
+  return json({ ok: true, version: PUBLIC_API_VERSION, rows: rows.results || [] });
+}
+
 export async function onRequest(context) {
   const { request, env, params } = context;
   const pathParts = Array.isArray(params.path) ? params.path : [];
@@ -2745,6 +2865,8 @@ export async function onRequest(context) {
 
   if (path === "customer-quotes" && method === "GET") return getCustomerQuotes(env, request);
   if (path === "customer-quotes" && method === "POST") return createCustomerQuote(env, request);
+  if (path === "lplan-training-quotes" && method === "POST") return saveLplanTrainingQuote(env, request);
+  if (path === "lplan-training-quotes" && method === "GET") return getLplanTrainingQuotes(env, request);
   if (path === "bids" && method === "GET") return getBids(env, request);
   if (path === "bids" && method === "POST") return upsertBid(env, request);
   if (path === "reviews" && method === "GET") return getReviews(env, request);

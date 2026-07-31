@@ -180,3 +180,25 @@ CREATE TABLE IF NOT EXISTS push_tokens (
 CREATE INDEX IF NOT EXISTS idx_push_tokens_role ON push_tokens(role);
 CREATE INDEX IF NOT EXISTS idx_push_tokens_updated_at ON push_tokens(updated_at);
 
+CREATE TABLE IF NOT EXISTS lplan_quote_patterns (
+  id TEXT PRIMARY KEY,
+  source_quote_id TEXT DEFAULT '',
+  title TEXT DEFAULT '',
+  source_saved_at TEXT DEFAULT '',
+  synced_at TEXT NOT NULL,
+  branch TEXT DEFAULT '',
+  manager_hash TEXT DEFAULT '',
+  membership_type TEXT DEFAULT '',
+  quote_date TEXT DEFAULT '',
+  delivery_date TEXT DEFAULT '',
+  item_count INTEGER DEFAULT 0,
+  total_reg_price INTEGER DEFAULT 0,
+  total_point INTEGER DEFAULT 0,
+  total_cashback INTEGER DEFAULT 0,
+  combo_key TEXT DEFAULT '',
+  rows_json TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_lplan_quote_patterns_synced_at ON lplan_quote_patterns(synced_at);
+CREATE INDEX IF NOT EXISTS idx_lplan_quote_patterns_combo_key ON lplan_quote_patterns(combo_key);
+
