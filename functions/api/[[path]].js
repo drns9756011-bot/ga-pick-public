@@ -1766,6 +1766,83 @@ async function getApprovedSellers(env) {
   return json({ ok: true, rows: result.results.map(normalizeApprovedSeller) });
 }
 
+async function updateApprovedSeller(env, request, id) {
+  await ensureSellerColumns(env);
+  const body = await request.json();
+  const existing = await env.DB.prepare("SELECT * FROM approved_sellers WHERE id = ?").bind(id).first();
+  if (!existing) return json({ ok: false, message: "승인 판매자를 찾을 수 없습니다." }, 404);
+
+  const updates = [];
+  const values = [];
+
+  if (Object.prototype.hasOwnProperty.call(body, "password")) {
+    const nextPassword = String(body.password || "").trim();
+    if (nextPassword.length < 4) {
+      return json({ ok: false, message: "새 비밀번호는 4자 이상으로 입력해주세요." }, 400);
+    }
+    updates.push("password = ?");
+    values.push(await hashPassword(nextPassword));
+  }
+
+  if (Object.prototype.hasOwnProperty.call(body, "managerPosition")) {
+    updates.push("manager_position = ?");
+    values.push(String(body.managerPosition || "").trim());
+  }
+
+  if (Object.prototype.hasOwnProperty.call(body, "channel")) {
+    updates.push("channel = ?");
+    values.push(String(body.channel || "").trim());
+  }
+
+  if (Object.prototype.hasOwnProperty.call(body, "branch")) {
+    updates.push("branch = ?");
+    values.push(String(body.branch || "").trim());
+  }
+
+  if (Object.prototype.hasOwnProperty.call(body, "branchRegion")) {
+    updates.push("branch_region = ?");
+    values.push(String(body.branchRegion || "").trim());
+  }
+
+  if (Object.prototype.hasOwnProperty.call(body, "manager")) {
+    updates.push("manager = ?");
+    values.push(String(body.manager || "").trim());
+  }
+
+  if (Object.prototype.hasOwnProperty.call(body, "phone")) {
+    const nextPhone = normalizePhone(body.phone || "");
+    if (!nextPhone) return json({ ok: false, message: "판매자 연락처를 입력해주세요." }, 400);
+    updates.push("phone = ?");
+    values.push(nextPhone);
+  }
+
+  if (Object.prototype.hasOwnProperty.call(body, "memo")) {
+    updates.push("memo = ?");
+    values.push(String(body.memo || "").trim());
+  }
+
+  if (!updates.length) {
+    return json({ ok: false, message: "변경할 정보가 없습니다." }, 400);
+  }
+
+  values.push(id);
+  await env.DB.prepare(`UPDATE approved_sellers SET ${updates.join(", ")} WHERE id = ?`).bind(...values).run();
+  const row = normalizeApprovedSeller(
+    await env.DB.prepare("SELECT * FROM approved_sellers WHERE id = ?").bind(id).first()
+  );
+
+  return json({ ok: true, row });
+}
+
+async function deleteApprovedSeller(env, id) {
+  await ensureSellerColumns(env);
+  const existing = await env.DB.prepare("SELECT id FROM approved_sellers WHERE id = ?").bind(id).first();
+  if (!existing) return json({ ok: false, message: "승인 판매자를 찾을 수 없습니다." }, 404);
+
+  await env.DB.prepare("DELETE FROM approved_sellers WHERE id = ?").bind(id).run();
+  return json({ ok: true, id });
+}
+
 async function getQuoteImages(env, quoteId, includeFull = true) {
   const now = new Date().toISOString();
   const sql = includeFull
@@ -2916,6 +2993,16 @@ export async function onRequest(context) {
   }
 
   if (path === "approved-sellers" && method === "GET") return getApprovedSellers(env);
+  if (path.startsWith("approved-sellers/") && method === "PATCH") {
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
+    return updateApprovedSeller(env, request, decodeURIComponent(pathParts.slice(1).join("/")));
+  }
+  if (path.startsWith("approved-sellers/") && method === "DELETE") {
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
+    return deleteApprovedSeller(env, decodeURIComponent(pathParts.slice(1).join("/")));
+  }
 
   if (path === "customer-quotes" && method === "GET") return getCustomerQuotes(env, request);
   if (path === "customer-quotes" && method === "POST") return createCustomerQuote(env, request);
