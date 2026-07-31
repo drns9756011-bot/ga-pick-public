@@ -68,6 +68,12 @@ function requireAdmin(request, env) {
   return null;
 }
 
+function hasValidAdminToken(request, env) {
+  const expected = getAdminToken(env);
+  const actual = String(request.headers.get("X-Admin-Token") || "").trim();
+  return Boolean(expected && actual && actual === expected);
+}
+
 function createId(prefix) {
   return `${prefix}-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
 }
@@ -713,6 +719,7 @@ function normalizeCustomerQuote(row, images = []) {
   if (!row) return null;
   const fullImages = images.filter((image) => image.image_type !== "thumbnail");
   const displayImages = fullImages.length ? fullImages : row.thumbnail_image ? [{ url: row.thumbnail_image }] : [];
+  const bids = Array.isArray(row.bids) ? row.bids : [];
   return {
     id: row.id,
     quoteNumber: row.quote_number,
@@ -743,6 +750,8 @@ function normalizeCustomerQuote(row, images = []) {
     consent: parseJson(row.consent_json, {}),
     image: displayImages[0]?.url || row.thumbnail_image || "",
     images: displayImages.map((image) => image.url),
+    bidCount: Number(row.bid_count || bids.length || 0),
+    bids,
   };
 }
 
@@ -1865,6 +1874,7 @@ async function getCustomerQuotes(env, request) {
   const quoteNumber = String(url.searchParams.get("quoteNumber") || "").trim();
   const scope = String(url.searchParams.get("scope") || "seller");
   const now = new Date().toISOString();
+  const isAdminView = hasValidAdminToken(request, env);
 
   let rows = [];
   if (scope === "lookup" && customer && phone) {
@@ -1897,9 +1907,10 @@ async function getCustomerQuotes(env, request) {
 
   const normalized = [];
   for (const row of rows) {
-    const includeFull = scope === "lookup" || (row.full_images_expires_at && row.full_images_expires_at >= now);
+    const includeFull = isAdminView || scope === "lookup" || (row.full_images_expires_at && row.full_images_expires_at >= now);
     const images = await getQuoteImages(env, row.id, includeFull);
-    const quote = normalizeCustomerQuote(row, images);
+    const bids = isAdminView ? await getBidsForQuote(env, row.id) : [];
+    const quote = normalizeCustomerQuote({ ...row, bid_count: bids.length, bids }, images);
     normalized.push(scope === "lookup" ? hideSellerOnlyQuoteFields(quote) : quote);
   }
 
