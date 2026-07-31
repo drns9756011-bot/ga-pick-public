@@ -573,10 +573,10 @@
   function choiceCard(item, name, currentValue) {
     const checked = currentValue === item.value;
     return `
-      <label class="wizard-choice-card ${checked ? "is-selected" : ""}">
+      <label class="wizard-choice-card ${checked ? "is-selected" : ""} ${item.badge ? "has-badge" : ""}">
         <input type="radio" name="${name}" value="${escapeHtml(item.value)}" ${checked ? "checked" : ""} data-choice-name="${name}" />
         <span class="wizard-radio" aria-hidden="true">${checked ? "✓" : ""}</span>
-        <span>
+        <span class="wizard-choice-copy">
           <strong>${escapeHtml(item.title)}</strong>
           <small>${escapeHtml(item.text || "")}</small>
         </span>

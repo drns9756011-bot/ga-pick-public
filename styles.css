@@ -4467,9 +4467,11 @@ select {
 .wizard-choice-card strong {
   display: block;
   color: var(--ink);
-  font-size: 20px;
+  font-size: clamp(18px, 2.1vw, 20px);
   font-weight: 950;
   line-height: 1.25;
+  word-break: keep-all;
+  overflow-wrap: normal;
 }
 
 .wizard-choice-card small {
@@ -4762,10 +4764,17 @@ select {
   grid-template-columns: auto minmax(0, 1fr) auto;
 }
 
+.quote-wizard .wizard-choice-copy {
+  display: block;
+  min-width: 0;
+}
+
 .quote-wizard .wizard-choice-card strong {
-  font-size: 21px;
+  font-size: clamp(20px, 2vw, 21px);
   line-height: 1.25;
+  white-space: nowrap;
   word-break: keep-all;
+  overflow-wrap: normal;
 }
 
 .quote-wizard .wizard-choice-card small {
@@ -7400,16 +7409,28 @@ html.is-mobile-device :where(.model-code, .quote-number, .ai-recommendation-grou
 
   .quote-wizard .wizard-choice-card {
     min-height: 94px;
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-columns: 32px minmax(0, 1fr);
     padding: 18px 16px;
+    column-gap: 18px;
+    row-gap: 8px;
   }
 
   .quote-wizard .wizard-choice-card strong {
-    font-size: 19px;
+    font-size: clamp(24px, 6vw, 30px);
+    line-height: 1.18;
+    white-space: nowrap;
   }
 
   .quote-wizard .wizard-choice-card small {
-    font-size: 13px;
+    font-size: clamp(16px, 4vw, 20px);
+    line-height: 1.45;
+  }
+
+  .quote-wizard .wizard-choice-card em {
+    grid-column: 2;
+    justify-self: start;
+    margin-top: 2px;
+    font-size: clamp(13px, 3.5vw, 15px);
   }
 
   .quote-wizard .wizard-product-card:not(.selected-option-card) {
