@@ -46,6 +46,19 @@
     recommending: false,
   };
 
+  async function fetchWithTimeout(path, options = {}, timeoutMs = 16000) {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      return await fetch(path, {
+        ...options,
+        signal: controller.signal,
+      });
+    } finally {
+      window.clearTimeout(timeout);
+    }
+  }
+
   const quoteTypes = [
     {
       value: "with_quote",
@@ -863,7 +876,7 @@
   async function loadCatalogByBrand(brand) {
     if (state.catalogs[brand]) return state.catalogs[brand];
     const path = brand === "삼성전자" ? "/assets/samsung-catalog-product-model-map.json" : "/assets/pickquote-product-model-map.json";
-    const response = await fetch(path, { cache: "no-store" });
+    const response = await fetchWithTimeout(path, { cache: "no-store" }, 12000);
     if (!response.ok) throw new Error("catalog load failed");
     state.catalogs[brand] = await response.json();
     return state.catalogs[brand];
@@ -896,7 +909,7 @@
       const targetPrice = budgetWon
         ? Math.round((budgetWon * productBudgetWeight(product)) / totalWeight)
         : defaultTargetPrice(product, candidates);
-      const shortlist = rankModelCandidates(product, candidates, targetPrice).slice(0, 14);
+      const shortlist = rankModelCandidates(product, candidates, targetPrice).slice(0, 5);
       const enriched = [];
       for (const model of shortlist) {
         const lowest = await fetchLowestPrice(model.modelName);
@@ -1246,7 +1259,7 @@
 
   async function fetchLowestPrice(modelName) {
     try {
-      const response = await fetch(`/api/naver-shopping-lowest?query=${encodeURIComponent(modelName)}`, { cache: "no-store" });
+      const response = await fetchWithTimeout(`/api/naver-shopping-lowest?query=${encodeURIComponent(modelName)}`, { cache: "no-store" }, 9000);
       if (!response.ok) return 0;
       const data = await response.json();
       if (!data.ok || data.confidence !== "exact-model-filtered") return 0;

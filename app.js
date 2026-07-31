@@ -116,6 +116,7 @@ const fallbackHomeReviewHTML = homeReviewGrid?.innerHTML || "";
 
 let securityBlanketTimer;
 let serverLoadingCount = 0;
+let serverLoadingSafetyTimer = 0;
 
 function formatPrice(value) {
   return `${money.format(Number(value || 0))}원`;
@@ -392,11 +393,20 @@ function showServerLoading(title = "로딩중입니다.", text = "서버와 연�
   if (serverLoadingTitle) serverLoadingTitle.textContent = title;
   if (serverLoadingText) serverLoadingText.textContent = text;
   if (serverLoadingModal) serverLoadingModal.hidden = false;
+  window.clearTimeout(serverLoadingSafetyTimer);
+  serverLoadingSafetyTimer = window.setTimeout(() => {
+    serverLoadingCount = 0;
+    if (serverLoadingTitle) serverLoadingTitle.textContent = "요청 시간이 길어지고 있습니다.";
+    if (serverLoadingText) serverLoadingText.textContent = "네트워크 상태를 확인한 뒤 다시 시도해주세요.";
+    if (serverLoadingModal) serverLoadingModal.hidden = true;
+  }, 22000);
 }
 
 function hideServerLoading(force = false) {
   serverLoadingCount = force ? 0 : Math.max(0, serverLoadingCount - 1);
   if (serverLoadingCount === 0 && serverLoadingModal) {
+    window.clearTimeout(serverLoadingSafetyTimer);
+    serverLoadingSafetyTimer = 0;
     serverLoadingModal.hidden = true;
   }
 }
@@ -459,7 +469,9 @@ function canUseApiServer() {
 
 async function apiJson(path, options = {}) {
   if (!canUseApiServer()) return null;
-  const { loadingTitle, loadingText, showLoading = true, ...fetchOptions } = options;
+  const { loadingTitle, loadingText, showLoading = true, timeoutMs = 18000, ...fetchOptions } = options;
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
 
   if (showLoading) {
     showServerLoading(loadingTitle || "로딩중입니다.", loadingText || "서버와 연결하고 있습니다. 잠시만 기다려주세요.");
@@ -471,6 +483,7 @@ async function apiJson(path, options = {}) {
         "Content-Type": "application/json",
         ...(fetchOptions.headers || {}),
       },
+      signal: controller.signal,
       ...fetchOptions,
     });
     const payload = response.status === 204 ? null : await response.json().catch(() => null);
@@ -486,9 +499,10 @@ async function apiJson(path, options = {}) {
     console.warn("API 요청에 실패했습니다.", error);
     return {
       ok: false,
-      message: "서버와 연결하지 못했습니다. 배포 상태 또는 네트워크를 확인해주세요.",
+      message: error?.name === "AbortError" ? "서버 응답이 지연되고 있습니다. 잠시 후 다시 시도해주세요." : "서버와 연결하지 못했습니다. 배포 상태 또는 네트워크를 확인해주세요.",
     };
   } finally {
+    window.clearTimeout(timeout);
     if (showLoading) hideServerLoading();
   }
 }
