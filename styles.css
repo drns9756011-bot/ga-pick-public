@@ -1745,15 +1745,28 @@ h3 {
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
-    padding: 22px 14px 58px;
+    padding: 22px 0 58px;
+    overflow-x: hidden;
   }
 
-  .pick-hero-banner {
+  .pick-home-hero {
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
+    justify-items: center;
+    padding-right: 14px;
+    padding-left: 14px;
+  }
+
+  .pick-hero-banner {
+    position: relative;
+    left: 50%;
+    width: min(100%, calc(100vw - 28px));
+    max-width: calc(100vw - 28px);
+    box-sizing: border-box;
     margin-right: auto;
     margin-left: auto;
+    transform: translateX(-50%);
     min-height: 0;
     padding: 26px 20px 28px;
     border-radius: 26px;
@@ -7169,6 +7182,13 @@ html.is-mobile-device :where(.model-code, .quote-number, .ai-recommendation-grou
     box-sizing: border-box;
     -webkit-transform: translateZ(0);
     transform: translateZ(0);
+  }
+
+  @media (max-width: 560px) {
+    html.is-mobile-device .pick-hero-banner {
+      -webkit-transform: translateX(-50%) translateZ(0);
+      transform: translateX(-50%) translateZ(0);
+    }
   }
 
   html.is-mobile-device .pick-hero-banner > div:first-child,
