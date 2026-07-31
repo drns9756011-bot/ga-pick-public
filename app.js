@@ -1345,25 +1345,43 @@ function isSaleCompletedForBid(request, bid) {
   return Boolean(request.saleCompletedAt && String(request.saleCompletedBidId || "") === String(bid?.id || ""));
 }
 
-function getFilteredSellerRequests() {
-  let filteredRequests;
-
+function getSellerTabRequests() {
   if (activeSellerTab === "proposed") {
-    filteredRequests = requests.filter(
+    return requests.filter(
       (request) => !isQuoteClosed(request) && getActiveSellerBid(request) && !isActiveSellerSelectedRequest(request)
     );
-  } else if (activeSellerTab === "selected") {
-    filteredRequests = requests.filter((request) => isActiveSellerSelectedRequest(request));
-  } else if (activeSellerTab === "closed") {
-    filteredRequests = requests.filter((request) => isQuoteClosed(request));
-  } else {
-    filteredRequests = requests.filter((request) => !isQuoteClosed(request));
   }
 
+  if (activeSellerTab === "selected") {
+    return requests.filter((request) => isActiveSellerSelectedRequest(request));
+  }
+
+  if (activeSellerTab === "closed") {
+    return requests.filter((request) => isQuoteClosed(request));
+  }
+
+  return requests.filter((request) => !isQuoteClosed(request));
+}
+
+function getAvailableSellerBrands(baseRequests = getSellerTabRequests()) {
+  return Array.from(new Set(baseRequests.map((request) => getSellerBrandValue(request)).filter(Boolean)));
+}
+
+function getFilteredSellerRequests() {
+  const tabRequests = getSellerTabRequests();
   const normalizedBrandFilter = normalizeSellerBrandFilter(activeSellerBrandFilter);
-  activeSellerBrandFilter = normalizedBrandFilter;
-  if (normalizedBrandFilter !== "all") {
-    filteredRequests = filteredRequests.filter((request) => getSellerBrandValue(request) === normalizedBrandFilter);
+
+  activeSellerBrandFilter = getAvailableSellerBrands(tabRequests).includes(normalizedBrandFilter)
+    ? normalizedBrandFilter
+    : "all";
+
+  let filteredRequests = activeSellerBrandFilter === "all"
+    ? tabRequests
+    : tabRequests.filter((request) => getSellerBrandValue(request) === activeSellerBrandFilter);
+
+  const availableRegions = Array.from(new Set(filteredRequests.map((request) => normalizeSellerRegionCategory(request.region)).filter(Boolean)));
+  if (activeSellerRegionFilter !== "all" && !availableRegions.includes(activeSellerRegionFilter)) {
+    activeSellerRegionFilter = "all";
   }
 
   if (activeSellerRegionFilter !== "all") {
@@ -1374,11 +1392,10 @@ function getFilteredSellerRequests() {
 }
 
 function getSellerRequestsForDynamicRegion() {
-  const savedRegionFilter = activeSellerRegionFilter;
-  activeSellerRegionFilter = "all";
-  const filteredRequests = getFilteredSellerRequests();
-  activeSellerRegionFilter = savedRegionFilter;
-  return filteredRequests;
+  const tabRequests = getSellerTabRequests();
+  const normalizedBrandFilter = normalizeSellerBrandFilter(activeSellerBrandFilter);
+  const brandFilter = getAvailableSellerBrands(tabRequests).includes(normalizedBrandFilter) ? normalizedBrandFilter : "all";
+  return brandFilter === "all" ? tabRequests : tabRequests.filter((request) => getSellerBrandValue(request) === brandFilter);
 }
 
 function getAvailableSellerRegions() {
