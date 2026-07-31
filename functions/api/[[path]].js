@@ -2851,23 +2851,63 @@ function requireLplanSync(request, env) {
   return null;
 }
 
+function pickFirstText(...values) {
+  for (const value of values) {
+    const text = String(value ?? "").trim();
+    if (text) return text;
+  }
+  return "";
+}
+
+function pickLplanRows(body) {
+  if (Array.isArray(body?.rows)) return body.rows;
+  if (Array.isArray(body?.data?.rows)) return body.data.rows;
+  if (Array.isArray(body?.quote?.rows)) return body.quote.rows;
+  if (Array.isArray(body?.items)) return body.items;
+  return [];
+}
+
 function normalizeTrainingRows(rows) {
   return (Array.isArray(rows) ? rows : [])
-    .map((row) => ({
-      model: String(row?.model || "").trim().toUpperCase(),
-      sub: Boolean(row?.sub),
-      existingBundle: Boolean(row?.existingBundle),
-      wedding: Boolean(row?.wedding),
-      regPrice: Number(row?.regPrice || 0) || 0,
-      point: Number(row?.point || 0) || 0,
-      cashback: Number(row?.cashback || 0) || 0,
-      care: String(row?.care || "").trim(),
-      contract: String(row?.contract || "").trim(),
-      prepay: String(row?.prepay || "").trim(),
-      fixedPrepayAmount: Number(row?.fixedPrepayAmount || 0) || 0,
-      smallBusiness: Boolean(row?.smallBusiness),
-    }))
+    .map((row) => {
+      const model = pickFirstText(row?.model, row?.modelName, row?.model_name, row?.code, row?.sku, row?.productModel).toUpperCase();
+      return {
+        model,
+        product: pickFirstText(row?.product, row?.category, row?.item, row?.name),
+        sub: Boolean(row?.sub),
+        existingBundle: Boolean(row?.existingBundle),
+        wedding: Boolean(row?.wedding),
+        regPrice: Number(row?.regPrice ?? row?.regularPrice ?? row?.price ?? row?.normalPrice ?? 0) || 0,
+        point: Number(row?.point || 0) || 0,
+        cashback: Number(row?.cashback || 0) || 0,
+        care: pickFirstText(row?.care),
+        contract: pickFirstText(row?.contract),
+        prepay: pickFirstText(row?.prepay),
+        fixedPrepayAmount: Number(row?.fixedPrepayAmount || 0) || 0,
+        smallBusiness: Boolean(row?.smallBusiness),
+      };
+    })
     .filter((row) => row.model);
+}
+
+function normalizeLplanTrainingQuote(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    sourceQuoteId: row.source_quote_id || "",
+    title: row.title || "",
+    sourceSavedAt: row.source_saved_at || "",
+    syncedAt: row.synced_at || "",
+    branch: row.branch || "",
+    managerHash: row.manager_hash || "",
+    membershipType: row.membership_type || "",
+    itemCount: Number(row.item_count || 0),
+    totalRegPrice: Number(row.total_reg_price || 0),
+    totalPoint: Number(row.total_point || 0),
+    totalCashback: Number(row.total_cashback || 0),
+    comboKey: row.combo_key || "",
+    rows: parseJson(row.rows_json, []),
+  };
 }
 
 async function saveLplanTrainingQuote(env, request) {
@@ -2876,7 +2916,7 @@ async function saveLplanTrainingQuote(env, request) {
 
   await ensureLplanTrainingTable(env);
   const body = await request.json().catch(() => ({}));
-  const rows = normalizeTrainingRows(body.rows);
+  const rows = normalizeTrainingRows(pickLplanRows(body));
   if (!rows.length) return json({ ok: false, message: "저장할 모델 구성이 없습니다." }, 400);
 
   const sourceQuoteId = String(body.sourceQuoteId || body.id || "").trim() || createId("lplan-source");
@@ -2896,14 +2936,14 @@ async function saveLplanTrainingQuote(env, request) {
     .bind(
       id,
       sourceQuoteId,
-      String(body.title || "").trim().slice(0, 120),
-      String(body.savedAt || body.sourceSavedAt || "").trim(),
+      pickFirstText(body.title, body.data?.title, body.quote?.title).slice(0, 120),
+      pickFirstText(body.savedAt, body.sourceSavedAt, body.data?.savedAt, body.quote?.savedAt),
       now,
-      String(body.branch || "").trim().slice(0, 80),
-      String(body.managerHash || "").trim().slice(0, 96),
-      String(body.membershipType || "").trim().slice(0, 40),
-      String(body.quoteDate || "").trim().slice(0, 40),
-      String(body.deliveryDate || "").trim().slice(0, 40),
+      pickFirstText(body.branch, body.data?.basic?.branch, body.basic?.branch).slice(0, 80),
+      pickFirstText(body.managerHash).slice(0, 96),
+      pickFirstText(body.membershipType, body.data?.membershipType).slice(0, 40),
+      pickFirstText(body.quoteDate, body.data?.basic?.quoteDate, body.basic?.quoteDate).slice(0, 40),
+      pickFirstText(body.deliveryDate, body.data?.basic?.deliveryDate, body.basic?.deliveryDate).slice(0, 40),
       rows.length,
       totalRegPrice,
       totalPoint,
@@ -2934,7 +2974,7 @@ async function getLplanTrainingQuotes(env, request) {
   ).all();
   const rows = await env.DB.prepare(
     `SELECT id, source_quote_id, title, source_saved_at, synced_at, branch, manager_hash,
-            membership_type, item_count, total_reg_price, total_point, total_cashback, combo_key
+            membership_type, item_count, total_reg_price, total_point, total_cashback, combo_key, rows_json
        FROM lplan_quote_patterns
        ORDER BY synced_at DESC
        LIMIT 50`
@@ -2952,7 +2992,7 @@ async function getLplanTrainingQuotes(env, request) {
         latestSyncedAt: row.latest_synced_at || "",
       })),
     },
-    rows: rows.results || [],
+    rows: (rows.results || []).map(normalizeLplanTrainingQuote),
   });
 }
 
