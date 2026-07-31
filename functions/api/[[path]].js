@@ -2844,6 +2844,17 @@ async function getLplanTrainingQuotes(env, request) {
   if (denied) return denied;
 
   await ensureLplanTrainingTable(env);
+  const summary = await env.DB.prepare(
+    `SELECT COUNT(*) AS total, MAX(synced_at) AS latest_synced_at
+       FROM lplan_quote_patterns`
+  ).first();
+  const branchRows = await env.DB.prepare(
+    `SELECT COALESCE(NULLIF(branch, ''), '지점 미기록') AS branch, COUNT(*) AS count, MAX(synced_at) AS latest_synced_at
+       FROM lplan_quote_patterns
+       GROUP BY COALESCE(NULLIF(branch, ''), '지점 미기록')
+       ORDER BY count DESC, latest_synced_at DESC
+       LIMIT 20`
+  ).all();
   const rows = await env.DB.prepare(
     `SELECT id, source_quote_id, title, source_saved_at, synced_at, branch, manager_hash,
             membership_type, item_count, total_reg_price, total_point, total_cashback, combo_key
@@ -2852,7 +2863,20 @@ async function getLplanTrainingQuotes(env, request) {
        LIMIT 50`
   ).all();
 
-  return json({ ok: true, version: PUBLIC_API_VERSION, rows: rows.results || [] });
+  return json({
+    ok: true,
+    version: PUBLIC_API_VERSION,
+    summary: {
+      total: Number(summary?.total || 0),
+      latestSyncedAt: summary?.latest_synced_at || "",
+      branches: (branchRows.results || []).map((row) => ({
+        branch: row.branch || "지점 미기록",
+        count: Number(row.count || 0),
+        latestSyncedAt: row.latest_synced_at || "",
+      })),
+    },
+    rows: rows.results || [],
+  });
 }
 
 export async function onRequest(context) {
