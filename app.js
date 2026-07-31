@@ -277,6 +277,32 @@ function escapeHTML(value) {
     .replace(/'/g, "&#39;");
 }
 
+function formatSellerRequestMemoHtml(value) {
+  const memo = String(value || "추가 요청사항 없음").trim();
+  if (!memo) return "추가 요청사항 없음";
+
+  const formatted = memo
+    .replace(/\s+(\[AI 추천 간이 견적서\])/g, "\n\n$1")
+    .replace(/\s+(\[(?:TV|라이프스타일 TV|냉장고|김치냉장고|세탁기\/건조기|의류관리기|에어컨|청소기|식기세척기|공기청정기|오븐\/전자레인지|인덕션|정수기)\])/g, "\n$1")
+    .replace(/\s+(- \[(?:LG전자|삼성전자)\])/g, "\n  $1")
+    .replace(/\s+(네이버 최저가 기준 합계:)/g, "\n\n$1")
+    .replace(/\s+(\[추가 요청사항\])/g, "\n\n$1")
+    .replace(/\s+(구매 목적:)/g, "\n구매 목적:")
+    .replace(/\s+(가족 구성:)/g, "\n가족 구성:")
+    .replace(/\s+(예산:)/g, "\n예산:")
+    .replace(/\s+(중요 조건:)/g, "\n중요 조건:")
+    .replace(/\s+(추가 상황:)/g, "\n추가 상황:")
+    .replace(/기준가\s+([0-9,]+원)/g, "네이버 최저가 기준 $1")
+    .replace(/네이버 최저가 기준\s+([0-9,]+원)/g, (match, priceText) => {
+      const price = Number(String(priceText).replace(/[^0-9]/g, ""));
+      return price >= 300000 ? match : "일반 구매가 확인 필요";
+    })
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+  return escapeHTML(formatted);
+}
+
 function maskPhone(value) {
   const digits = normalizePhone(value);
   if (digits.length < 8) return "연락처 비공개";
@@ -2993,7 +3019,7 @@ function renderSelectedRequest() {
   const safeQuoteType = escapeHTML(getQuoteTypeLabel(request));
   const safeInstallDate = escapeHTML(request.installDate || "미입력");
   const safeQuoteNumber = escapeHTML(request.quoteNumber || "번호 없음");
-  const safeMemo = escapeHTML(request.memo || "추가 요청사항 없음");
+  const safeMemo = formatSellerRequestMemoHtml(request.memo);
   const safeRemaining = escapeHTML(getQuoteRemainingLabel(request));
   const expired = isQuoteExpired(request);
   const activeSellerBid = getActiveSellerBid(request);

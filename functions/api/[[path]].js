@@ -267,6 +267,35 @@ function isAccessoryShoppingItem(item) {
   return blockedWords.some((word) => text.includes(normalizeSearchText(word)));
 }
 
+function isSubscriptionShoppingItem(item) {
+  const text = normalizeSearchText(`${item.title} ${item.mallName} ${item.category3} ${item.category4}`);
+  const blockedWords = [
+    "구독",
+    "렌탈",
+    "렌트",
+    "월납",
+    "월납입",
+    "월요금",
+    "월렌탈",
+    "케어솔루션",
+    "방문관리",
+    "약정",
+    "36개월",
+    "48개월",
+    "60개월",
+    "72개월",
+  ];
+  return blockedWords.some((word) => text.includes(normalizeSearchText(word)));
+}
+
+function isGeneralPurchaseShoppingItem(item) {
+  const price = Number(item?.lprice || 0);
+  if (price < 300000) return false;
+  if (isAccessoryShoppingItem(item)) return false;
+  if (isSubscriptionShoppingItem(item)) return false;
+  return true;
+}
+
 function isLikelySameModel(item, query) {
   const titleText = normalizeSearchText(item.title);
   const tokens = getModelSearchTokens(query);
@@ -336,7 +365,7 @@ async function getNaverShoppingLowest(env, request) {
     .filter((item) => item.lprice > 0)
     .sort((a, b) => a.lprice - b.lprice);
 
-  const items = rawItems.filter((item) => isLikelySameModel(item, query) && !isAccessoryShoppingItem(item));
+  const items = rawItems.filter((item) => isLikelySameModel(item, query) && isGeneralPurchaseShoppingItem(item));
 
   return json({
     ok: true,
@@ -348,6 +377,7 @@ async function getNaverShoppingLowest(env, request) {
     rawResultCount: rawItems.length,
     filteredResultCount: items.length,
     ignoredResultCount: rawItems.length - items.length,
+    pricePolicy: "general-purchase-only-min-300000-no-subscription",
     items,
   });
 }

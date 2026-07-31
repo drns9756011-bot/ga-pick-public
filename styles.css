@@ -2821,6 +2821,8 @@ select {
   margin: 0;
   color: #2f3d49;
   font-weight: 700;
+  line-height: 1.75;
+  white-space: pre-line;
 }
 
 .without-quote-items {

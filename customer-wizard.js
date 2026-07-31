@@ -430,7 +430,7 @@
     const showAiNotice = shouldUseAiRecommendation();
     return `
       <h3>${showUpload ? "견적서 이미지와 설치 정보를 확인해주세요." : "설치 정보와 요청사항을 확인해주세요."}</h3>
-      <p>${showAiNotice ? "AI가 고객님 상황에 맞는 추천 모델과 네이버 최저가 기준가를 함께 정리합니다." : "판매자가 확인할 설치 일정과 요청사항을 입력해주세요."}</p>
+      <p>${showAiNotice ? "AI가 고객님 상황에 맞는 추천 모델과 네이버 최저가 일반 구매가를 함께 정리합니다." : "판매자가 확인할 설치 일정과 요청사항을 입력해주세요."}</p>
       ${showUpload ? renderUploadBox() : ""}
       ${showAiNotice ? renderRecommendationPanel() : ""}
       <div class="wizard-field-grid">
@@ -1186,8 +1186,10 @@
       .filter((model) => model && model.modelName)
       .filter((model) => isAllowedRecommendationModel(product, model))
       .sort((a, b) => {
-        const aPrice = Number(a.naverLowestPrice || 0) > 100000 ? Number(a.naverLowestPrice) : estimatedOnlinePrice(a);
-        const bPrice = Number(b.naverLowestPrice || 0) > 100000 ? Number(b.naverLowestPrice) : estimatedOnlinePrice(b);
+        const aNaverPrice = Number(a.naverLowestPrice || 0);
+        const bNaverPrice = Number(b.naverLowestPrice || 0);
+        const aPrice = aNaverPrice >= 300000 ? aNaverPrice : estimatedOnlinePrice(a);
+        const bPrice = bNaverPrice >= 300000 ? bNaverPrice : estimatedOnlinePrice(b);
         const target = targetPrice || Math.max(aPrice, bPrice, 1);
         let aScore = Math.abs(aPrice - target) / target;
         let bScore = Math.abs(bPrice - target) / target;
@@ -1275,7 +1277,7 @@
       lines.push("");
       lines.push(
         `[${group.product}]${group.optionSummary ? ` ${group.optionSummary}` : ""}` +
-          (group.models?.[0]?.naverLowestPrice ? ` / 기준가 ${formatWon(group.models[0].naverLowestPrice)}` : "")
+          (Number(group.models?.[0]?.naverLowestPrice || 0) >= 300000 ? ` / 네이버 최저가 ${formatWon(group.models[0].naverLowestPrice)}` : "")
       );
       group.models.forEach((model) => lines.push(`- ${displayModelName(model)}${formatModelLowestPrice(model)}`));
     });
@@ -1299,20 +1301,20 @@
 
   function formatModelLowestPrice(model) {
     const price = Number(model?.naverLowestPrice || 0);
-    return price > 100000 ? ` (네이버 최저가 ${formatWon(price)})` : "";
+    return price >= 300000 ? ` (네이버 최저가 ${formatWon(price)})` : "";
   }
 
   function renderModelWithPrice(model) {
     const price = Number(model?.naverLowestPrice || 0);
-    const priceLabel = price > 100000 ? `네이버 최저가 ${formatWon(price)}` : "네이버 최저가 확인 중";
+    const priceLabel = price >= 300000 ? `네이버 최저가 ${formatWon(price)}` : "일반 구매가 확인 중";
     return `<span>${escapeHtml(displayModelName(model))}</span><em>${escapeHtml(priceLabel)}</em>`;
   }
 
   function recommendationModelPrice(model) {
     const naverPrice = Number(model?.naverLowestPrice || 0);
-    if (naverPrice > 100000) return naverPrice;
+    if (naverPrice >= 300000) return naverPrice;
     const estimated = estimatedOnlinePrice(model);
-    return estimated > 100000 ? estimated : 0;
+    return estimated >= 300000 ? estimated : 0;
   }
 
   function recommendationTotalPrice(groups) {
