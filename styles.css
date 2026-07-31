@@ -1742,12 +1742,20 @@ h3 {
 
 @media (max-width: 560px) {
   .pick-home-shell {
-    padding: 22px 16px 58px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 22px 14px 58px;
   }
 
   .pick-hero-banner {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    margin-right: auto;
+    margin-left: auto;
     min-height: 0;
-    padding: 24px 20px;
+    padding: 26px 20px 28px;
     border-radius: 26px;
   }
 
@@ -1767,10 +1775,19 @@ h3 {
   }
 
   .pick-hero-banner h1 {
-    font-size: 38px;
+    font-size: clamp(38px, 11.2vw, 46px);
+    line-height: 1.08;
+  }
+
+  .pick-hero-banner p {
+    font-size: clamp(18px, 5vw, 21px);
+    line-height: 1.55;
   }
 
   .pick-price-demo {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
     padding: 14px;
     border-radius: 22px;
   }
@@ -1781,11 +1798,12 @@ h3 {
   }
 
   .pick-price-demo strong {
-    font-size: 20px;
+    font-size: clamp(19px, 5.3vw, 24px);
+    white-space: nowrap;
   }
 
   .pick-price-demo div:nth-child(2) strong {
-    font-size: 28px;
+    font-size: clamp(28px, 8.4vw, 36px);
   }
 
   .pick-start-card {
@@ -7126,6 +7144,42 @@ html.is-mobile-device :where(.model-code, .quote-number, .ai-recommendation-grou
 
   html.is-mobile-device :where(.home-report-hero h1, .page-hero h1, .report-hero-copy h1, .home-final-band h2) {
     text-wrap: normal;
+  }
+
+  html.is-mobile-device .pick-home-shell {
+    width: 100%;
+    max-width: 100%;
+    margin-right: auto;
+    margin-left: auto;
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
+
+  html.is-mobile-device .pick-home-hero {
+    width: 100%;
+    max-width: 100%;
+    justify-items: center;
+  }
+
+  html.is-mobile-device .pick-hero-banner {
+    width: 100%;
+    max-width: 100%;
+    margin-right: auto;
+    margin-left: auto;
+    box-sizing: border-box;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+
+  html.is-mobile-device .pick-hero-banner > div:first-child,
+  html.is-mobile-device .pick-price-demo {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  html.is-mobile-device .pick-price-demo div {
+    grid-template-columns: minmax(86px, auto) minmax(0, 1fr);
   }
 
   html.is-mobile-device :where(.modal-panel, .option-sheet, .server-loading-dialog) {
