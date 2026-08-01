@@ -101,58 +101,199 @@
     { value: "공기청정기", title: "공기청정기", icon: "공", thumb: "purifier" },
   ];
 
-  const optionSchema = {
-    TV: [
-      { key: "size", title: "화면 크기", type: "single", values: ["43인치", "55인치", "65인치", "75인치", "85인치", "85인치 ↑"] },
-    ],
-    냉장고: [
-      { key: "type", title: "설치 형태", type: "single", values: ["빌트인(핏앤맥스)", "프리스탠딩(용량이 큼)", "모르겠어요"] },
-      { key: "door", title: "도어 수", type: "single", values: ["1도어", "2도어", "4도어", "모르겠어요"] },
-    ],
-    "세탁기/건조기": [
-      { key: "type", title: "설치 형태", type: "single", values: ["분리형(병렬/직렬/분리 설치 가능)", "복합형(콤보)", "일체형(원바디, 워시타워)", "모르겠어요"] },
-    ],
-    청소기: [
-      { key: "type", title: "종류", type: "multi", values: ["무선청소기", "로봇청소기", "유선청소기"] },
-    ],
-    김치냉장고: [
-      { key: "type", title: "형태", type: "single", values: ["뚜껑식", "스탠드", "모르겠어요"] },
-      { key: "door", title: "스탠드 도어", type: "single", values: ["4도어", "3도어", "1도어", "모르겠어요"] },
-    ],
-    에어컨: [
-      { key: "type", title: "종류", type: "single", values: ["스탠드", "벽걸이", "2IN1", "천장형", "모르겠어요"] },
-      { key: "area", title: "냉방 면적", type: "single", values: ["18평", "24평", "34평", "40평형 이상", "모르겠어요"] },
-      { key: "rooms", title: "천장형 실 수", type: "single", values: ["3실", "4실", "5실", "6실", "모르겠어요"] },
-    ],
-    식기세척기: [
-      { key: "install", title: "설치 형태", type: "single", values: ["빌트인", "카운터탑", "프리스탠딩", "모르겠어요"] },
-    ],
-    "인덕션/전기레인지": [
-      { key: "install", title: "설치 형태", type: "single", values: ["빌트인 O", "빌트인 X", "모르겠어요"] },
-      { key: "burner", title: "화구 수", type: "single", values: ["2구", "3구", "4구", "모르겠어요"] },
-    ],
-    정수기: [
-      { key: "type", title: "종류", type: "single", values: ["냉온정수기", "얼음정수기", "냉정수기", "직수형", "모르겠어요"] },
-    ],
-    의류관리기: [
-      { key: "size", title: "용량", type: "single", values: ["3벌", "5벌", "대용량", "모르겠어요"] },
-    ],
-    "오븐/전자레인지": [
-      { key: "type", title: "종류", type: "multi", values: ["오븐", "전자레인지"] },
-    ],
-    공기청정기: [
-      { key: "area", title: "사용 면적", type: "single", values: ["10평 이하", "10평대", "20평대", "30평대 이상", "모르겠어요"] },
-    ],
-    제습기: [
-      { key: "capacity", title: "용량", type: "single", values: ["10L 이하", "10L대", "20L 이상", "모르겠어요"] },
-    ],
-    가습기: [
-      { key: "type", title: "종류", type: "single", values: ["초음파식", "가열식", "복합식", "대용량", "모르겠어요"] },
-    ],
-    "라이프스타일 TV": [
-      { key: "type", title: "형태", type: "single", values: ["스탠바이미", "모르겠어요"] },
-    ],
+  const unknownOption = "잘모르겠어요";
+  const brandOptionSchema = {
+    "LG전자": {
+      "TV": [
+        single("series", "제품군", ["1 QNED", "2 OLED", "3 MRGB"]),
+        singleBy("size", "인치", "series", {
+          "1 QNED": ["32인치", "43인치", "55인치", "65인치", "75인치", "85인치", "100인치"],
+          "2 OLED": ["42인치", "48인치", "55인치", "65인치", "77인치", "83인치", "98인치"],
+          "3 MRGB": ["55인치", "65인치", "75인치", "85인치", "100인치"],
+        }),
+      ],
+      "라이프스타일 TV": [
+        single("type", "제품군", ["1 스탠바이미", "2 스탠바이미 GO"]),
+        singleBy("size", "인치", "type", {
+          "1 스탠바이미": ["27인치", "32인치"],
+          "2 스탠바이미 GO": ["27인치"],
+        }),
+      ],
+      "냉장고": [
+        single("type", "타입", ["1 프리스탠딩", "2 핏앤맥스", "3 오브제", "4 얼음정수기"]),
+        singleBy("detail", "도어/용량", "type", {
+          "1 프리스탠딩": ["4도어", "2도어", "양문형", "잘모르겠어요"],
+          "2 핏앤맥스": ["4도어", "잘모르겠어요"],
+          "3 오브제": ["4도어", "2도어"],
+          "4 얼음정수기": ["4도어"],
+        }),
+      ],
+      "김치냉장고": [
+        single("type", "타입", ["1 뚜껑식", "2 스탠드", "3 1도어"]),
+        singleBy("detail", "도어/용량", "type", {
+          "1 뚜껑식": ["1도어", "2도어"],
+          "2 스탠드": ["스탠드 3도어", "스탠드 4도어", "오브제 3도어", "오브제 4도어"],
+          "3 1도어": ["1도어"],
+        }),
+      ],
+      "세탁기/건조기": [
+        single("type", "구성", ["1 분리형", "2 콤보", "3 일체형(원바디/워시타워)", "4 세탁기만", "5 건조기만"]),
+        singleBy("detail", "세부 옵션", "type", {
+          "1 분리형": ["병렬설치", "직렬설치", "분리설치 가능"],
+          "2 콤보": ["콤보형", "AI"],
+          "3 일체형(원바디/워시타워)": ["원바디", "워시타워"],
+          "4 세탁기만": ["통돌이", "드럼"],
+          "5 건조기만": ["17KG", "19KG", "21KG", "25KG"],
+        }),
+      ],
+      "의류관리기": [
+        single("size", "용량", ["1 3벌", "2 5벌"]),
+        single("finish", "색상", ["밝은색", "어두운색"]),
+        singleBy("steam", "스팀", "size", {
+          "1 3벌": ["스타일러"],
+          "2 5벌": ["오브제", "스타일러"],
+        }),
+      ],
+      "에어컨": [
+        single("type", "종류", ["1 2IN1", "2 스탠드", "3 벽걸이", "4 천장형"]),
+        singleBy("area", "냉방 면적", "type", {
+          "1 2IN1": ["18평", "24평", "34평", "40평형 이상"],
+          "2 스탠드": ["18평", "24평", "34평", "40평형 이상"],
+          "3 벽걸이": ["6평", "7평", "9평", "11평", "13평", "16평"],
+        }),
+        singleBy("rooms", "천장형 실수", "type", {
+          "4 천장형": ["3실", "4실", "5실", "6실"],
+        }),
+      ],
+      "청소기": [
+        multi("type", "종류", ["1 무선청소기", "2 로봇청소기", "3 유선청소기"]),
+        multiBy("detail", "세부 옵션", "type", {
+          "1 무선청소기": ["스팀", "물걸레", "올인원타워"],
+          "2 로봇청소기": ["로보킹", "올인원"],
+          "3 유선청소기": [],
+        }),
+      ],
+      "식기세척기": [
+        single("install", "설치 형태", ["1 빌트인", "2 프리스탠딩", "3 카운터탑"]),
+        singleBy("kickplate", "걸레받이", "install", {
+          "1 빌트인": ["10CM", "15CM", "잘모르겠어요"],
+        }),
+      ],
+      "공기청정기": [
+        single("type", "타입", ["1 1단", "2 2단"]),
+        singleBy("area", "사용 면적", "type", {
+          "1 1단": ["18평대", "20평대"],
+          "2 2단": ["28평대", "35평대"],
+        }),
+      ],
+    },
+    "삼성전자": {
+      "TV": [
+        single("series", "제품군", ["1 NEO QLED", "2 OLED", "3 MRGB"]),
+        singleBy("size", "인치", "series", {
+          "1 NEO QLED": ["43인치", "50인치", "55인치", "65인치", "75인치", "85인치", "100인치"],
+          "2 OLED": ["42인치", "48인치", "55인치", "65인치", "77인치", "83인치"],
+          "3 MRGB": ["65인치", "75인치", "85인치", "100인치", "115인치"],
+        }),
+      ],
+      "라이프스타일 TV": [
+        single("type", "제품군", ["1 더 세리프", "2 더 프레임", "3 더 세로"]),
+        singleBy("size", "인치", "type", {
+          "1 더 세리프": ["43인치", "55인치", "65인치"],
+          "2 더 프레임": ["43인치", "50인치", "55인치", "65인치", "75인치", "85인치"],
+          "3 더 세로": ["43인치"],
+        }),
+      ],
+      "냉장고": [
+        single("type", "타입", ["1 프리스탠딩", "2 키친핏", "3 비스포크", "4 1도어"]),
+        singleBy("detail", "도어/용량", "type", {
+          "1 프리스탠딩": ["4도어", "2도어"],
+          "2 키친핏": ["4도어", "잘모르겠어요"],
+          "3 비스포크": ["4도어", "2도어", "1도어"],
+          "4 1도어": ["냉장", "냉동", "김치"],
+        }),
+      ],
+      "김치냉장고": [
+        single("type", "타입", ["1 뚜껑식", "2 스탠드", "3 1도어"]),
+        singleBy("detail", "도어/용량", "type", {
+          "1 뚜껑식": ["1도어", "2도어"],
+          "2 스탠드": ["3도어", "4도어", "비스포크 3도어", "비스포크 4도어"],
+          "3 1도어": ["1도어"],
+        }),
+      ],
+      "세탁기/건조기": [
+        single("type", "구성", ["1 분리형", "2 콤보", "3 일체형(원바디/워시타워)", "4 세탁기만", "5 건조기만"]),
+        singleBy("detail", "세부 옵션", "type", {
+          "1 분리형": ["병렬설치", "직렬설치", "분리설치 가능"],
+          "2 콤보": ["25KG / 20KG", "25KG / 22KG"],
+          "3 일체형(원바디/워시타워)": ["AI 콤보 25KG / 22KG", "25KG / 20KG"],
+          "4 세탁기만": ["AI버블 25KG", "25KG"],
+          "5 건조기만": ["19KG", "21KG", "23KG", "25KG"],
+        }),
+      ],
+      "의류관리기": [
+        single("size", "용량", ["1 9벌 + 3벌", "2 9벌 + 2벌"]),
+        single("finish", "색상", ["밝은색", "어두운색"]),
+        singleBy("crease", "바지 관리", "size", {
+          "1 9벌 + 3벌": ["바지관리 O", "바지관리 X"],
+          "2 9벌 + 2벌": ["바지관리 O", "바지관리 X"],
+        }),
+      ],
+      "에어컨": [
+        single("type", "종류", ["1 2IN1", "2 스탠드", "3 벽걸이", "4 천장형"]),
+        singleBy("area", "냉방 면적", "type", {
+          "1 2IN1": ["18평", "24평", "34평", "40평형 이상"],
+          "2 스탠드": ["18평", "24평", "34평", "40평형 이상"],
+          "3 벽걸이": ["6평", "7평", "9평", "11평", "13평", "16평"],
+        }),
+        singleBy("rooms", "천장형 실수", "type", {
+          "4 천장형": ["3실", "4실", "5실", "6실"],
+        }),
+      ],
+      "청소기": [
+        multi("type", "종류", ["1 무선청소기", "2 로봇청소기", "3 유선청소기"]),
+        multiBy("detail", "세부 옵션", "type", {
+          "1 무선청소기": ["비스포크 제트", "AI", "스팀"],
+          "2 로봇청소기": ["제트봇", "올인원"],
+          "3 유선청소기": [],
+        }),
+      ],
+      "식기세척기": [
+        single("install", "설치 형태", ["1 빌트인", "2 프리스탠딩"]),
+        singleBy("kickplate", "걸레받이", "install", {
+          "1 빌트인": ["10CM", "15CM", "잘모르겠어요"],
+        }),
+      ],
+      "공기청정기": [
+        single("type", "타입", ["1 큐브", "2 블루스카이"]),
+        singleBy("area", "사용 면적", "type", {
+          "1 큐브": ["10평대", "24평대", "30평대"],
+          "2 블루스카이": ["10평대", "18평대"],
+        }),
+      ],
+    },
   };
+
+  function single(key, title, values) {
+    return { key, title, type: "single", values };
+  }
+
+  function multi(key, title, values) {
+    return { key, title, type: "multi", values };
+  }
+
+  function singleBy(key, title, parent, valuesByParent) {
+    return { key, title, type: "single", parent, valuesByParent };
+  }
+
+  function multiBy(key, title, parent, valuesByParent) {
+    return { key, title, type: "multi", parent, valuesByParent };
+  }
+
+  function optionSchemaFor(product) {
+    const brand = fields.brand.value === "삼성전자" ? "삼성전자" : "LG전자";
+    return brandOptionSchema[brand]?.[product] || brandOptionSchema["LG전자"]?.[product] || [];
+  }
 
   const aiSituations = ["혼수/웨딩", "신축 입주", "이사", "교체", "사업장/B2B"];
   const familyOptions = ["1인", "2인", "3~4인", "5인 이상", "아이 있음", "반려동물 있음"];
@@ -591,19 +732,17 @@
   }
 
   function openOptionModal(product) {
-    const schema = optionSchema[product] || [];
-    const draft = { ...(state.productOptions[product] || {}) };
+    const schema = optionSchemaFor(product);
+    const draft = normalizeOptionDraft(state.productOptions[product] || {});
     const modal = document.createElement("div");
     modal.className = "option-modal is-open";
     modal.innerHTML = `
       <div class="option-sheet" role="dialog" aria-modal="true" aria-label="${escapeHtml(product)} 옵션 선택">
         <button type="button" class="option-close" aria-label="닫기">×</button>
         <h3>${escapeHtml(product)}</h3>
-        <div class="option-section-wrap">
-          ${schema.map((section) => renderOptionSection(product, section, draft)).join("")}
-        </div>
+        <div class="option-section-wrap"></div>
         <div class="option-actions">
-          <button type="button" class="secondary-btn option-clear">옵션 초기화</button>
+          <button type="button" class="secondary-btn option-clear">선택 초기화</button>
           <button type="button" class="primary-btn option-save">확인</button>
         </div>
       </div>
@@ -611,26 +750,37 @@
     document.body.append(modal);
     document.body.classList.add("modal-open");
 
+    const wrap = modal.querySelector(".option-section-wrap");
     const close = () => {
       modal.remove();
       document.body.classList.remove("modal-open");
     };
+    const rerender = () => {
+      pruneOptionDraft(schema, draft);
+      const visibleSections = schema
+        .map((section) => renderOptionSection(product, section, draft))
+        .filter(Boolean)
+        .join("");
+      wrap.innerHTML = visibleSections || `<p class="option-empty">선택할 수 있는 옵션이 없습니다.</p>`;
+      wrap.querySelectorAll(".option-row input").forEach((input) => {
+        input.addEventListener("change", () => {
+          const key = input.dataset.optionKey;
+          const section = schema.find((item) => item.key === key);
+          if (!section) return;
+          if (section.type === "multi") {
+            draft[key] = [...wrap.querySelectorAll(`[data-option-key="${cssEscape(key)}"]:checked`)].map((item) => item.value);
+          } else {
+            draft[key] = input.value;
+          }
+          clearAiRecommendation();
+          rerender();
+        });
+      });
+    };
+
     modal.querySelector(".option-close").addEventListener("click", close);
     modal.addEventListener("click", (event) => {
       if (event.target === modal) close();
-    });
-    modal.querySelectorAll(".option-row input").forEach((input) => {
-      input.addEventListener("change", () => {
-        if (input.type === "radio") {
-          modal.querySelectorAll(`input[name="${input.name}"]`).forEach((peer) => {
-            const mark = peer.closest(".option-row")?.querySelector("b");
-            if (mark) mark.textContent = peer.checked ? "✓" : "";
-          });
-          return;
-        }
-        const mark = input.closest(".option-row")?.querySelector("b");
-        if (mark) mark.textContent = input.checked ? "✓" : "";
-      });
     });
     modal.querySelector(".option-clear").addEventListener("click", () => {
       delete state.productOptions[product];
@@ -640,31 +790,94 @@
       render();
     });
     modal.querySelector(".option-save").addEventListener("click", () => {
-      const next = {};
-      schema.forEach((section) => {
-        const checked = [...modal.querySelectorAll(`[name="option-${section.key}"]:checked`)].map((input) => input.value);
-        next[section.key] = section.type === "multi" ? checked : checked[0] || "";
-      });
-      state.productOptions[product] = next;
+      pruneOptionDraft(schema, draft);
+      state.productOptions[product] = cleanOptionDraft(schema, draft);
       clearAiRecommendation();
       syncAllFields();
       close();
       render();
     });
+    rerender();
+  }
+
+  function normalizeOptionDraft(source) {
+    const draft = {};
+    Object.entries(source || {}).forEach(([key, value]) => {
+      draft[key] = Array.isArray(value) ? [...value] : value;
+    });
+    return draft;
+  }
+
+  function sectionValues(section, draft) {
+    if (Array.isArray(section.values)) return section.values;
+    if (!section.parent || !section.valuesByParent) return [];
+    const parentValue = draft[section.parent];
+    const parents = Array.isArray(parentValue) ? parentValue : [parentValue].filter(Boolean);
+    const values = parents.flatMap((item) => section.valuesByParent[item] || []);
+    return [...new Set(values)];
+  }
+
+  function pruneOptionDraft(schema, draft) {
+    let changed = true;
+    while (changed) {
+      changed = false;
+      schema.forEach((section) => {
+        const values = sectionValues(section, draft);
+        if (!values.length && section.parent) {
+          if (draft[section.key]) {
+            delete draft[section.key];
+            changed = true;
+          }
+          return;
+        }
+        if (section.type === "multi") {
+          const current = Array.isArray(draft[section.key]) ? draft[section.key] : [];
+          const next = current.filter((item) => values.includes(item));
+          if (next.length !== current.length) {
+            draft[section.key] = next;
+            changed = true;
+          }
+          return;
+        }
+        if (draft[section.key] && !values.includes(draft[section.key])) {
+          delete draft[section.key];
+          changed = true;
+        }
+      });
+    }
+  }
+
+  function cleanOptionDraft(schema, draft) {
+    const next = {};
+    schema.forEach((section) => {
+      const values = sectionValues(section, draft);
+      if (!values.length) return;
+      if (section.type === "multi") {
+        const selected = Array.isArray(draft[section.key]) ? draft[section.key].filter((item) => values.includes(item)) : [];
+        if (selected.length) next[section.key] = selected;
+        return;
+      }
+      if (draft[section.key] && values.includes(draft[section.key])) next[section.key] = draft[section.key];
+    });
+    return next;
   }
 
   function renderOptionSection(product, section, draft) {
-    const values = Array.isArray(draft[section.key]) ? draft[section.key] : [draft[section.key]].filter(Boolean);
+    const sectionValuesList = sectionValues(section, draft);
+    if (!sectionValuesList.length) return "";
+    const selectedValues = Array.isArray(draft[section.key]) ? draft[section.key] : [draft[section.key]].filter(Boolean);
+    const inputType = section.type === "multi" ? "checkbox" : "radio";
+    const inputName = `option-${product}-${section.key}`;
     return `
       <section class="option-section">
         <h4>${escapeHtml(section.title)}</h4>
-        ${section.values
+        ${sectionValuesList
           .map((value) => {
-            const checked = values.includes(value);
+            const checked = selectedValues.includes(value);
             return `
               <label class="option-row">
                 <span>${escapeHtml(value)}</span>
-                <input type="${section.type === "multi" ? "checkbox" : "radio"}" name="option-${section.key}" value="${escapeHtml(value)}" ${checked ? "checked" : ""} />
+                <input type="${inputType}" data-option-key="${escapeHtml(section.key)}" name="${escapeHtml(inputName)}" value="${escapeHtml(value)}" ${checked ? "checked" : ""} />
                 <b aria-hidden="true">${checked ? "✓" : ""}</b>
               </label>
             `;
@@ -674,7 +887,13 @@
     `;
   }
 
-  function validateQuoteType() {
+  function cssEscape(value) {
+    if (window.CSS?.escape) return window.CSS.escape(value);
+    return String(value).replace(/[^a-zA-Z0-9_-]/g, "\\$&");
+  }
+
+  
+function validateQuoteType() {
     if (fields.quoteType.value) return true;
     setMessage("견적서 유무를 선택해주세요.");
     return false;
@@ -801,16 +1020,22 @@
   }
 
   function productOptionSummary(product) {
+    const schema = optionSchemaFor(product);
     const options = state.productOptions[product] || {};
     const parts = [];
-    Object.values(options).forEach((value) => {
-      if (Array.isArray(value)) parts.push(...value.filter(Boolean));
-      else if (value) parts.push(value);
+    schema.forEach((section) => {
+      const values = sectionValues(section, options);
+      if (!values.length) return;
+      const selected = Array.isArray(options[section.key]) ? options[section.key] : [options[section.key]].filter(Boolean);
+      selected.forEach((item) => {
+        if (item && item !== unknownOption && values.includes(item)) parts.push(item);
+      });
     });
-    return parts.filter((item) => item !== "모르겠어요").join(" · ");
+    return [...new Set(parts)].join(" · ");
   }
 
-  function buildAiSummary() {
+  
+function buildAiSummary() {
     if (!shouldUseAiRecommendation()) return "";
     const lines = [
       "고객의 상황에 맞춰 AI가 추천한 모델임을 알려드립니다.",
@@ -956,37 +1181,39 @@
     }
 
     if (product === "냉장고") {
-      const wantsFitAndMax = /빌트인|핏앤맥스|FIT\s*&?\s*MAX/i.test(optionText);
+      const wantsFitAndMax = /핏앤맥스|빌트인|FIT\s*&?\s*MAX/i.test(optionText);
       const wantsFreeStanding = /프리스탠딩|용량/i.test(optionText);
+      const wantsIceWater = /얼음정수기/i.test(optionText);
       if (wantsFitAndMax) matchers.push((model) => isFitAndMaxFridgeModel(model));
+      else if (wantsIceWater) matchers.push((model) => /^W\d{3}/.test(modelBody(model)) || /얼음정수기/i.test(modelSearchText(model)));
       else if (wantsFreeStanding) matchers.push((model) => isFreeStandingFridgeModel(model));
-      if (options.door === "4도어") matchers.push((model) => isFourDoorFridgeModel(model));
-      if (options.door === "2도어") matchers.push((model) => isTwoDoorFridgeModel(model));
+      if (/4도어/.test(optionText)) matchers.push((model) => isFourDoorFridgeModel(model));
+      if (/2도어|양문형/.test(optionText)) matchers.push((model) => isTwoDoorFridgeModel(model));
     }
 
     if (product === "김치냉장고") {
       matchers.push((model) => isKimchiFridgeModel(model));
-      if (options.type === "뚜껑식") matchers.push((model) => /뚜껑|K\d{3}|Z1/i.test(modelSearchText(model)));
-      if (options.type === "스탠드") matchers.push((model) => /스탠드|Z\d{3}|RQ/i.test(modelSearchText(model)));
-      if (options.door === "4도어") matchers.push((model) => /4도어|Z4|Z5|RQ5/i.test(modelSearchText(model)));
-      if (options.door === "3도어") matchers.push((model) => /3도어|Z3|RQ3/i.test(modelSearchText(model)));
-      if (options.door === "1도어") matchers.push((model) => /1도어|Z1|K\d{3}/i.test(modelSearchText(model)));
+      if (/뚜껑식/.test(optionText)) matchers.push((model) => /뚜껑|K\d{3}|Z1/i.test(modelSearchText(model)));
+      if (/스탠드|오브제/.test(optionText)) matchers.push((model) => /스탠드|Z\d{3}|RQ/i.test(modelSearchText(model)));
+      if (/4도어/.test(optionText)) matchers.push((model) => /4도어|Z4|Z5|RQ5/i.test(modelSearchText(model)));
+      if (/3도어/.test(optionText)) matchers.push((model) => /3도어|Z3|RQ3/i.test(modelSearchText(model)));
+      if (/1도어/.test(optionText)) matchers.push((model) => /1도어|Z1|K\d{3}/i.test(modelSearchText(model)));
     }
 
-    if (product === "세탁기/건조기" && options.type) {
-      if (options.type.includes("분리형")) matchers.push((model) => /(F\d{2}|RH|RD|세탁|건조)/i.test(modelSearchText(model)) && !/워시타워|원바디|콤보/i.test(modelSearchText(model)));
-      if (options.type.includes("복합형")) matchers.push((model) => /콤보|세탁건조|FX|FH/i.test(modelSearchText(model)) && !/^TR/i.test(modelBody(model)));
-      if (options.type.includes("일체형")) matchers.push((model) => /워시타워|원바디|W\d{2}|WL|WK/i.test(modelSearchText(model)));
+    if (product === "세탁기/건조기" && optionText) {
+      if (/분리형/.test(optionText)) matchers.push((model) => /(F\d{2}|RH|RD|세탁|건조)/i.test(modelSearchText(model)) && !/워시타워|원바디|콤보/i.test(modelSearchText(model)));
+      if (/콤보/.test(optionText)) matchers.push((model) => /콤보|세탁건조|FX|FH/i.test(modelSearchText(model)) && !/^TR/i.test(modelBody(model)));
+      if (/일체형|원바디|워시타워/.test(optionText)) matchers.push((model) => /워시타워|원바디|W\d{2}|WL|WK/i.test(modelSearchText(model)));
     }
 
     if (product === "청소기" && Array.isArray(options.type) && options.type.length) {
       matchers.push((model) => options.type.some((type) => modelSearchText(model).includes(type.replace("청소기", ""))));
     }
-    if (product === "에어컨" && options.type) {
-      if (options.type === "천장형") matchers.push((model) => /천장|시스템/i.test(modelSearchText(model)));
-      if (options.type === "2IN1") matchers.push((model) => /2IN1|2in1|투인원|멀티|FQ.*2/i.test(modelSearchText(model)));
-      if (options.type === "스탠드") matchers.push((model) => /스탠드|FQ/i.test(modelSearchText(model)));
-      if (options.type === "벽걸이") matchers.push((model) => /벽걸이|SQ|SW/i.test(modelSearchText(model)));
+    if (product === "에어컨" && optionText) {
+      if (/천장형/.test(optionText)) matchers.push((model) => /천장|시스템/i.test(modelSearchText(model)));
+      if (/2IN1/.test(optionText)) matchers.push((model) => /2IN1|2in1|투인원|멀티|FQ.*2/i.test(modelSearchText(model)));
+      if (/스탠드/.test(optionText)) matchers.push((model) => /스탠드|FQ/i.test(modelSearchText(model)));
+      if (/벽걸이/.test(optionText)) matchers.push((model) => /벽걸이|SQ|SW/i.test(modelSearchText(model)));
     }
     if (product === "식기세척기") matchers.push((model) => /식기|식세|D[FBE]/i.test(modelSearchText(model)));
     if (product === "인덕션/전기레인지") matchers.push((model) => /인덕션|전기레인지|하이라이트|BE|CB/i.test(modelSearchText(model)));

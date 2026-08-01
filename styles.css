@@ -7967,7 +7967,8 @@ html.is-mobile-device :where(.model-code, .quote-number, .ai-recommendation-grou
 
 @media (max-width: 720px) {
   .quote-wizard .wizard-step h3 {
-    font-size: 28px;
+    font-size: clamp(28px, 8.4vw, 40px);
+    line-height: 1.12;
   }
 
   .quote-wizard .wizard-choice-grid,
@@ -7979,22 +7980,64 @@ html.is-mobile-device :where(.model-code, .quote-number, .ai-recommendation-grou
 
   .quote-wizard .wizard-choice-card,
   .quote-wizard .wizard-product-card {
-    min-height: 82px;
+    min-height: 88px;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 12px;
   }
 
   .quote-wizard .wizard-actions {
     grid-template-columns: 0.42fr 1fr;
+    position: sticky;
+    bottom: calc(92px + env(safe-area-inset-bottom));
+    z-index: 8;
+    padding-top: 10px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.72), #fff 44%);
   }
 
   .option-modal {
-    align-items: end;
-    padding: 0 0 calc(84px + env(safe-area-inset-bottom));
+    place-items: center;
+    padding: max(14px, env(safe-area-inset-top)) 14px calc(108px + env(safe-area-inset-bottom));
   }
 
   .option-sheet {
     width: 100%;
-    max-height: calc(100vh - 104px - env(safe-area-inset-bottom));
-    border-radius: 8px 8px 0 0;
+    max-height: calc(100vh - 132px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    max-height: calc(100svh - 132px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    padding: 22px 18px 18px;
+    border-radius: 14px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .option-actions {
+    position: sticky;
+    bottom: 0;
+    padding-top: 10px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.72), #fff 42%);
+  }
+
+  .option-row {
+    min-height: 52px;
+    grid-template-columns: minmax(0, 1fr) 24px 20px;
+  }
+
+  .option-row span {
+    min-width: 0;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
+
+  .quote-wizard .wizard-choice-card strong,
+  .quote-wizard .wizard-product-card strong,
+  .quote-wizard .wizard-option-row strong {
+    font-size: clamp(18px, 5.3vw, 24px);
+    line-height: 1.18;
+  }
+
+  .quote-wizard .wizard-choice-card span,
+  .quote-wizard .wizard-product-card span,
+  .quote-wizard .wizard-option-row span {
+    font-size: clamp(13px, 3.7vw, 16px);
+    line-height: 1.45;
   }
 }
 
