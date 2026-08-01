@@ -1098,7 +1098,7 @@ function parseJson(value, fallback) {
 function dataUrlInfo(dataUrl) {
   const match = String(dataUrl || "").match(/^data:([^;]+);base64,(.+)$/);
   if (!match) return null;
-  const contentType = match[1];
+  const contentType = String(match[1] || "").toLowerCase();
   const base64 = match[2];
   const ext = {
     "image/jpeg": "jpg",
@@ -1106,6 +1106,9 @@ function dataUrlInfo(dataUrl) {
     "image/png": "png",
     "image/webp": "webp",
     "image/gif": "gif",
+    "image/heic": "heic",
+    "image/heif": "heif",
+    "application/pdf": "pdf",
   }[contentType] || "bin";
   return { contentType, base64, ext };
 }
@@ -1775,6 +1778,30 @@ async function getApprovedSellers(env) {
   return json({ ok: true, rows: result.results.map(normalizeApprovedSeller) });
 }
 
+async function syncBidsForApprovedSeller(env, seller) {
+  if (!seller) return;
+  const sellerId = seller.sellerId || seller.seller_id || seller.id || "";
+  if (!sellerId) return;
+  const sellerLabel = [seller.channel || "", seller.branch || ""].filter(Boolean).join(" ").trim();
+  await env.DB.prepare(
+    `UPDATE bids
+     SET seller = ?, channel = ?, branch = ?, manager = ?, manager_position = ?, phone = ?, card_image = ?, updated_at = ?
+     WHERE seller_id = ?`
+  )
+    .bind(
+      sellerLabel,
+      seller.channel || "",
+      seller.branch || "",
+      seller.manager || "",
+      seller.managerPosition || seller.manager_position || "",
+      seller.phone || "",
+      seller.cardImage || seller.card_image || "",
+      new Date().toISOString(),
+      sellerId
+    )
+    .run();
+}
+
 async function updateApprovedSeller(env, request, id) {
   await ensureSellerColumns(env);
   const body = await request.json();
@@ -1839,6 +1866,7 @@ async function updateApprovedSeller(env, request, id) {
   const row = normalizeApprovedSeller(
     await env.DB.prepare("SELECT * FROM approved_sellers WHERE id = ?").bind(id).first()
   );
+  await syncBidsForApprovedSeller(env, row);
 
   return json({ ok: true, row });
 }
@@ -1863,6 +1891,128 @@ async function getQuoteImages(env, quoteId, includeFull = true) {
        ORDER BY sort_order ASC`;
   const result = await env.DB.prepare(sql).bind(quoteId, now).all();
   return result.results || [];
+}
+
+async function ensureDeletedQuoteLogTable(env) {
+  await env.DB.prepare(
+    `CREATE TABLE IF NOT EXISTS deleted_quote_logs (
+      id TEXT PRIMARY KEY,
+      quote_id TEXT DEFAULT '',
+      quote_number TEXT DEFAULT '',
+      customer TEXT DEFAULT '',
+      phone TEXT DEFAULT '',
+      reason TEXT DEFAULT '',
+      deleted_at TEXT NOT NULL
+    )`
+  ).run();
+}
+
+function normalizeDeletedQuoteLog(row) {
+  return {
+    id: row.id,
+    quoteId: row.quote_id || "",
+    quoteNumber: row.quote_number || "",
+    customer: row.customer || "",
+    phone: row.phone || "",
+    reason: row.reason || "",
+    deletedAt: row.deleted_at || "",
+  };
+}
+
+async function getDeletedQuoteLogs(env) {
+  await ensureDeletedQuoteLogTable(env);
+  const result = await env.DB.prepare(
+    "SELECT * FROM deleted_quote_logs ORDER BY deleted_at DESC LIMIT 300"
+  ).all();
+  return json({ ok: true, rows: (result.results || []).map(normalizeDeletedQuoteLog) });
+}
+
+async function updateCustomerQuote(env, request, id) {
+  await ensureCustomerQuoteColumns(env);
+  const body = await request.json();
+  const existing = await env.DB.prepare("SELECT * FROM customer_quotes WHERE id = ?").bind(id).first();
+  if (!existing) return json({ ok: false, message: "고객 견적을 찾을 수 없습니다." }, 404);
+
+  const updates = [];
+  const values = [];
+  const setText = (bodyKey, column) => {
+    if (Object.prototype.hasOwnProperty.call(body, bodyKey)) {
+      updates.push(`${column} = ?`);
+      values.push(String(body[bodyKey] || "").trim());
+    }
+  };
+
+  setText("customer", "customer");
+  if (Object.prototype.hasOwnProperty.call(body, "phone")) {
+    const phone = normalizePhone(body.phone || "");
+    if (!phone) return json({ ok: false, message: "고객 연락처를 입력해주세요." }, 400);
+    updates.push("phone = ?");
+    values.push(phone);
+  }
+  setText("items", "items");
+  setText("quoteType", "quote_type");
+  setText("purchasePurpose", "purchase_purpose");
+  if (Object.prototype.hasOwnProperty.call(body, "desiredBrand")) {
+    updates.push("desired_brand = ?");
+    values.push(normalizeQuoteBrand(body.desiredBrand || ""));
+  }
+  if (Object.prototype.hasOwnProperty.call(body, "price")) {
+    updates.push("price = ?");
+    values.push(Number(body.price || 0));
+  }
+  setText("region", "region");
+  setText("installDate", "install_date");
+  setText("memo", "memo");
+  setText("status", "status");
+  setText("selectedBidId", "selected_bid_id");
+  setText("contactReleaseScope", "contact_release_scope");
+
+  if (!updates.length) return json({ ok: false, message: "변경할 정보가 없습니다." }, 400);
+
+  values.push(id);
+  await env.DB.prepare(`UPDATE customer_quotes SET ${updates.join(", ")} WHERE id = ?`).bind(...values).run();
+
+  const row = await env.DB.prepare("SELECT * FROM customer_quotes WHERE id = ?").bind(id).first();
+  const images = await getQuoteImages(env, id, true);
+  const bids = await getBidsForQuote(env, id);
+  return json({ ok: true, row: normalizeCustomerQuote({ ...row, bid_count: bids.length, bids }, images) });
+}
+
+async function deleteCustomerQuote(env, request, id) {
+  await ensureCustomerQuoteColumns(env);
+  await ensureDeletedQuoteLogTable(env);
+  const body = await request.json().catch(() => ({}));
+  const reason = String(body.reason || "").trim();
+  if (!reason) return json({ ok: false, message: "삭제 사유를 입력해주세요." }, 400);
+
+  const quote = await env.DB.prepare("SELECT * FROM customer_quotes WHERE id = ?").bind(id).first();
+  if (!quote) return json({ ok: false, message: "고객 견적을 찾을 수 없습니다." }, 404);
+
+  const images = await env.DB.prepare("SELECT object_key FROM quote_images WHERE quote_id = ?").bind(id).all();
+  for (const image of images.results || []) {
+    await deleteR2Object(env, image.object_key);
+  }
+
+  await env.DB.prepare("DELETE FROM quote_images WHERE quote_id = ?").bind(id).run();
+  await env.DB.prepare("DELETE FROM bids WHERE quote_id = ?").bind(id).run();
+  await env.DB.prepare("DELETE FROM reviews WHERE quote_id = ?").bind(id).run().catch(() => {});
+  await env.DB.prepare("DELETE FROM customer_quotes WHERE id = ?").bind(id).run();
+  await env.DB.prepare(
+    `INSERT INTO deleted_quote_logs (id, quote_id, quote_number, customer, phone, reason, deleted_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`
+  )
+    .bind(
+      createId("deleted-quote"),
+      id,
+      quote.quote_number || "",
+      quote.customer || "",
+      quote.phone || "",
+      reason,
+      new Date().toISOString()
+    )
+    .run();
+
+  return json({ ok: true, id });
 }
 
 async function getCustomerQuotes(env, request) {
@@ -1980,12 +2130,14 @@ async function createCustomerQuote(env, request) {
     )
     .run();
 
-  await env.DB.prepare(
-    `INSERT INTO quote_images (id, quote_id, object_key, url, image_type, sort_order, expires_at, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-  )
-    .bind(createId("qimg"), id, thumbnailKey, thumbnailUrl, "thumbnail", 0, personalExpiresAt, createdAt)
-    .run();
+  if (thumbnailKey || thumbnailUrl) {
+    await env.DB.prepare(
+      `INSERT INTO quote_images (id, quote_id, object_key, url, image_type, sort_order, expires_at, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+    )
+      .bind(createId("qimg"), id, thumbnailKey, thumbnailUrl, "thumbnail", 0, personalExpiresAt, createdAt)
+      .run();
+  }
 
   for (let index = 0; index < images.length; index += 1) {
     const saved = await saveDataUrlToR2(env, images[index], "quote-originals", `${id}-${index + 1}`);
@@ -3055,6 +3207,21 @@ export async function onRequest(context) {
     return deleteApprovedSeller(env, decodeURIComponent(pathParts.slice(1).join("/")));
   }
 
+  if (path === "deleted-quote-logs" && method === "GET") {
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
+    return getDeletedQuoteLogs(env);
+  }
+  if (path.startsWith("customer-quotes/") && method === "PATCH") {
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
+    return updateCustomerQuote(env, request, decodeURIComponent(pathParts.slice(1).join("/")));
+  }
+  if (path.startsWith("customer-quotes/") && method === "DELETE") {
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
+    return deleteCustomerQuote(env, request, decodeURIComponent(pathParts.slice(1).join("/")));
+  }
   if (path === "customer-quotes" && method === "GET") return getCustomerQuotes(env, request);
   if (path === "customer-quotes" && method === "POST") return createCustomerQuote(env, request);
   if (path === "lplan-training-quotes" && method === "POST") return saveLplanTrainingQuote(env, request);

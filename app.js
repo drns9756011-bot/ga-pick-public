@@ -268,6 +268,21 @@ function createLightweightImage(dataUrl, maxWidth = 720, quality = 0.72) {
   });
 }
 
+function readFileAsDataUrl(file) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.addEventListener("load", () => resolve(reader.result || ""));
+    reader.addEventListener("error", () => resolve(""));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function createBrowserSafeUploadImage(file) {
+  const dataUrl = await readFileAsDataUrl(file);
+  if (!dataUrl || !String(file?.type || "").startsWith("image/")) return dataUrl;
+  return createLightweightImage(dataUrl, 1800, 0.86);
+}
+
 function escapeHTML(value) {
   return String(value ?? "")
     .replace(/&/g, "&amp;")
@@ -2212,15 +2227,7 @@ quoteImage.addEventListener("change", async (event) => {
     return;
   }
 
-  uploadedImages = await Promise.all(
-    files.map((file) => {
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.addEventListener("load", () => resolve(reader.result));
-        reader.readAsDataURL(file);
-      });
-    })
-  );
+  uploadedImages = (await Promise.all(files.map(createBrowserSafeUploadImage))).filter(Boolean);
 
   imagePreview.innerHTML = `
     <div class="quote-image-grid image-count-${uploadedImages.length}">
@@ -2235,16 +2242,14 @@ quoteImage.addEventListener("change", async (event) => {
   );
 });
 
-businessCardInput.addEventListener("change", (event) => {
+businessCardInput.addEventListener("change", async (event) => {
   const file = event.target.files[0];
   if (!file) return;
 
-  const reader = new FileReader();
-  reader.addEventListener("load", () => {
-    businessCardImage = reader.result;
-    businessCardPreview.innerHTML = `<img src="${businessCardImage}" alt="첨부한 지점 명함 미리보기" />`;
-  });
-  reader.readAsDataURL(file);
+  businessCardImage = await createBrowserSafeUploadImage(file);
+  businessCardPreview.innerHTML = businessCardImage
+    ? `<img src="${businessCardImage}" alt="첨부한 지점 명함 미리보기" />`
+    : "<span>이미지를 불러오지 못했습니다. JPG 또는 PNG 파일로 다시 선택해주세요.</span>";
 });
 
 sellerImage.addEventListener("click", (event) => {

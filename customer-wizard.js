@@ -1,4 +1,4 @@
-(() => {
+﻿(() => {
   const form = document.querySelector("#requestForm");
   if (!form) return;
 
@@ -1453,7 +1453,7 @@
         const product = button.dataset.product;
         if (state.selectedProducts.includes(product)) {
           state.selectedProducts = state.selectedProducts.filter((item) => item !== product);
-          delete state.productOptions[product];
+          deleteOptionState(product);
         } else {
           state.selectedProducts.push(product);
         }
@@ -1535,8 +1535,9 @@
   }
 
   function openOptionModal(product) {
+    const productKey = normalizeProductKey(product);
     const schema = optionSchemaFor(product);
-    const draft = normalizeOptionDraft(state.productOptions[product] || {});
+    const draft = normalizeOptionDraft(optionStateFor(product));
     const modal = document.createElement("div");
     modal.className = "option-modal is-open";
     modal.innerHTML = `
@@ -1587,7 +1588,7 @@
       if (event.target === modal) close();
     });
     modal.querySelector(".option-clear").addEventListener("click", () => {
-      delete state.productOptions[product];
+      deleteOptionState(product);
       clearAiRecommendation();
       syncAllFields();
       close();
@@ -1595,7 +1596,7 @@
     });
     modal.querySelector(".option-save").addEventListener("click", () => {
       pruneOptionDraft(schema, draft);
-      state.productOptions[product] = cleanOptionDraft(schema, draft);
+      writeOptionState(product, cleanOptionDraft(schema, draft));
       clearAiRecommendation();
       syncAllFields();
       close();
@@ -1619,9 +1620,65 @@
     return "LG\uc804\uc790";
   }
 
+  function normalizeProductKey(product) {
+    const raw = String(product || "").trim().replace(/\s+/g, " ");
+    const compact = raw.replace(/\s+/g, "").replace(/\+/g, "/");
+    if (!compact) return raw;
+    if (/^TV$/i.test(compact) || compact.includes("티비")) return "TV";
+    if (compact.includes("\ub77c\uc774\ud504\uc2a4\ud0c0\uc77c")) return "\ub77c\uc774\ud504\uc2a4\ud0c0\uc77c TV";
+    if (compact.includes("\uae40\uce58\ub0c9\uc7a5\uace0")) return "\uae40\uce58\ub0c9\uc7a5\uace0";
+    if (compact.includes("\ub0c9\uc7a5\uace0")) return "\ub0c9\uc7a5\uace0";
+    if (compact.includes("\uc138\ud0c1") || compact.includes("\uac74\uc870")) return "\uc138\ud0c1\uae30/\uac74\uc870\uae30";
+    if (compact.includes("\uc758\ub958")) return "\uc758\ub958\uad00\ub9ac\uae30";
+    if (compact.includes("\uc5d0\uc5b4\ucee8")) return "\uc5d0\uc5b4\ucee8";
+    if (compact.includes("\uccad\uc18c\uae30")) return "\uccad\uc18c\uae30";
+    if (compact.includes("\uc2dd\uae30\uc138\ucc99")) return "\uc2dd\uae30\uc138\ucc99\uae30";
+    if (compact.includes("\uacf5\uae30\uccad\uc815")) return "\uacf5\uae30\uccad\uc815\uae30";
+    if (compact.includes("\uc815\uc218\uae30")) return "\uc815\uc218\uae30";
+    if (compact.includes("\uc778\ub355\uc158") || compact.includes("\uc804\uae30\ub808\uc778\uc9c0")) return "\uc778\ub355\uc158/\uc804\uae30\ub808\uc778\uc9c0";
+    if (compact.includes("\uc624\ube10") || compact.includes("\uc804\uc790\ub808\uc778\uc9c0")) return "\uc624\ube10 / \uc804\uc790\ub808\uc778\uc9c0";
+    return raw;
+  }
+
+  function optionLookupAliases(product) {
+    const productKey = normalizeProductKey(product);
+    const manualAliases = {
+      "라이프스타일 TV": ["라이프스타일TV"],
+      "세탁기/건조기": ["세탁기+건조기", "세탁기 / 건조기", "세탁기건조기"],
+      "인덕션/전기레인지": ["인덕션", "전기레인지", "인덕션 / 전기레인지"],
+      "오븐 / 전자레인지": ["오븐/전자레인지", "오븐", "전자레인지"],
+    };
+    return [...new Set([
+      productKey,
+      product,
+      productKey.replace(/\s*\/\s*/g, "/"),
+      productKey.replace(/\//g, " / "),
+      ...(manualAliases[productKey] || []),
+    ].filter(Boolean))];
+  }
+
+  function optionStateFor(product) {
+    return optionLookupAliases(product).reduce((found, key) => found || state.productOptions[key], null) || {};
+  }
+
+  function writeOptionState(product, value) {
+    deleteOptionState(product);
+    state.productOptions[normalizeProductKey(product)] = value;
+  }
+
+  function deleteOptionState(product) {
+    optionLookupAliases(product).forEach((key) => {
+      delete state.productOptions[key];
+    });
+  }
+
   function optionSchemaFor(product) {
     const brandKey = selectedBrandKey();
-    const schema = brandOptionSchema[brandKey]?.[product] || brandOptionSchema["LG\uc804\uc790"]?.[product] || [];
+    let schema = [];
+    for (const key of optionLookupAliases(product)) {
+      schema = brandOptionSchema[brandKey]?.[key] || brandOptionSchema["LG\uc804\uc790"]?.[key] || [];
+      if (schema.length) break;
+    }
     if (schema.length) return schema.map(cloneOptionSection);
     return [
       {
@@ -1890,8 +1947,9 @@ function validateQuoteType() {
   }
 
   function productOptionSummary(product) {
+    const productKey = normalizeProductKey(product);
     const schema = optionSchemaFor(product);
-    const options = state.productOptions[product] || {};
+    const options = optionStateFor(productKey);
     const parts = [];
     schema.forEach((section) => {
       const values = sectionValues(section, options);
@@ -1999,7 +2057,8 @@ function buildAiSummary() {
     const budgetWon = parseBudgetWon(state.aiContext.budgetRange);
     const groups = [];
     for (const product of selectedProducts) {
-      const models = Array.isArray(catalog?.[product]?.models) ? catalog[product].models : [];
+      const productKey = normalizeProductKey(product);
+      const models = Array.isArray(catalog?.[productKey]?.models) ? catalog[productKey].models : [];
       const candidates = filterModelsByProductOptions(product, models);
       const targetPrice = budgetWon
         ? Math.round((budgetWon * productBudgetWeight(product)) / totalWeight)
@@ -2022,10 +2081,11 @@ function buildAiSummary() {
   }
 
   function filterModelsByProductOptions(product, models) {
-    const options = state.productOptions[product] || {};
+    const productKey = normalizeProductKey(product);
+    const options = optionStateFor(productKey);
     const normalized = models
       .filter((model) => model && model.modelName)
-      .filter((model) => isAllowedRecommendationModel(product, model))
+      .filter((model) => isAllowedRecommendationModel(productKey, model))
       .map((model) => ({ ...model, normalPrice: Number(model.normalPrice || 0) }))
       .sort((a, b) => b.normalPrice - a.normalPrice);
     const optionText = Object.values(options)
@@ -2034,7 +2094,7 @@ function buildAiSummary() {
       .join(" ");
     const matchers = [];
 
-    if (product === "TV" && options.size) {
+    if (productKey === "TV" && options.size) {
       const selectedSize = Number(String(options.size).match(/\d+/)?.[0] || 0);
       const isOrAbove = /↑|이상|\+/.test(String(options.size));
       if (selectedSize) {
@@ -2046,11 +2106,11 @@ function buildAiSummary() {
       }
     }
 
-    if (product === "라이프스타일 TV") {
+    if (productKey === "라이프스타일 TV") {
       matchers.push((model) => /스탠바이미|STANBYME|27LX|32LX|라이프/i.test(modelSearchText(model)));
     }
 
-    if (product === "냉장고") {
+    if (productKey === "냉장고") {
       const wantsFitAndMax = /핏앤맥스|빌트인|FIT\s*&?\s*MAX/i.test(optionText);
       const wantsFreeStanding = /프리스탠딩|용량/i.test(optionText);
       const wantsIceWater = /얼음정수기/i.test(optionText);
@@ -2061,7 +2121,7 @@ function buildAiSummary() {
       if (/2도어|양문형/.test(optionText)) matchers.push((model) => isTwoDoorFridgeModel(model));
     }
 
-    if (product === "김치냉장고") {
+    if (productKey === "김치냉장고") {
       matchers.push((model) => isKimchiFridgeModel(model));
       if (/뚜껑식/.test(optionText)) matchers.push((model) => /뚜껑|K\d{3}|Z1/i.test(modelSearchText(model)));
       if (/스탠드|오브제/.test(optionText)) matchers.push((model) => /스탠드|Z\d{3}|RQ/i.test(modelSearchText(model)));
@@ -2070,32 +2130,33 @@ function buildAiSummary() {
       if (/1도어/.test(optionText)) matchers.push((model) => /1도어|Z1|K\d{3}/i.test(modelSearchText(model)));
     }
 
-    if (product === "세탁기/건조기" && optionText) {
+    if (productKey === "세탁기/건조기" && optionText) {
       if (/분리형/.test(optionText)) matchers.push((model) => /(F\d{2}|RH|RD|세탁|건조)/i.test(modelSearchText(model)) && !/워시타워|원바디|콤보/i.test(modelSearchText(model)));
       if (/콤보/.test(optionText)) matchers.push((model) => /콤보|세탁건조|FX|FH/i.test(modelSearchText(model)) && !/^TR/i.test(modelBody(model)));
       if (/일체형|원바디|워시타워/.test(optionText)) matchers.push((model) => /워시타워|원바디|W\d{2}|WL|WK/i.test(modelSearchText(model)));
     }
 
-    if (product === "청소기" && Array.isArray(options.type) && options.type.length) {
+    if (productKey === "청소기" && Array.isArray(options.type) && options.type.length) {
       matchers.push((model) => options.type.some((type) => modelSearchText(model).includes(type.replace("청소기", ""))));
     }
-    if (product === "에어컨" && optionText) {
+    if (productKey === "에어컨" && optionText) {
       if (/천장형/.test(optionText)) matchers.push((model) => /천장|시스템/i.test(modelSearchText(model)));
       if (/2IN1/.test(optionText)) matchers.push((model) => /2IN1|2in1|투인원|멀티|FQ.*2/i.test(modelSearchText(model)));
       if (/스탠드/.test(optionText)) matchers.push((model) => /스탠드|FQ/i.test(modelSearchText(model)));
       if (/벽걸이/.test(optionText)) matchers.push((model) => /벽걸이|SQ|SW/i.test(modelSearchText(model)));
     }
-    if (product === "식기세척기") matchers.push((model) => /식기|식세|D[FBE]/i.test(modelSearchText(model)));
-    if (product === "인덕션/전기레인지") matchers.push((model) => /인덕션|전기레인지|하이라이트|BE|CB/i.test(modelSearchText(model)));
-    if (product === "오븐/전자레인지") matchers.push((model) => /오븐|전자레인지|ML|MW/i.test(modelSearchText(model)));
-    if (product === "공기청정기") matchers.push((model) => /공기|퓨리|청정|AS/i.test(modelSearchText(model)));
-    if (product === "의류관리기") matchers.push((model) => /스타일러|의류|SC|S5|S3|DF/i.test(modelSearchText(model)));
+    if (productKey === "식기세척기") matchers.push((model) => /식기|식세|D[FBE]/i.test(modelSearchText(model)));
+    if (productKey === "인덕션/전기레인지") matchers.push((model) => /인덕션|전기레인지|하이라이트|BE|CB/i.test(modelSearchText(model)));
+    if (productKey === "오븐 / 전자레인지" || productKey === "오븐/전자레인지") matchers.push((model) => /오븐|전자레인지|ML|MW/i.test(modelSearchText(model)));
+    if (productKey === "공기청정기") matchers.push((model) => /공기|퓨리|청정|AS/i.test(modelSearchText(model)));
+    if (productKey === "의류관리기") matchers.push((model) => /스타일러|의류|SC|S5|S3|DF/i.test(modelSearchText(model)));
 
     const matched = matchers.length ? normalized.filter((model) => matchers.every((matcher) => matcher(model))) : normalized;
     return matched;
   }
 
   function isAllowedRecommendationModel(product, model) {
+    const productKey = normalizeProductKey(product);
     const body = modelBody(model);
     const name = compactModelName(model?.modelName || "");
     const text = compactModelName(modelSearchText(model));
@@ -2116,12 +2177,12 @@ function buildAiSummary() {
     if (blockedBodies.has(body) && /\.AKXT7SC$/i.test(name)) return false;
     if (body === "75QNED9MAKW") return false;
 
-    if (product === "라이프스타일 TV") {
+    if (productKey === "라이프스타일 TV") {
       return /^(27LX6T|32LX)/.test(body) && !/AKXT7SC$/.test(name);
     }
 
-    if (product === "냉장고") {
-      const optionText = Object.values(state.productOptions[product] || {})
+    if (productKey === "냉장고") {
+      const optionText = Object.values(optionStateFor(productKey))
         .flatMap((value) => (Array.isArray(value) ? value : [value]))
         .filter(Boolean)
         .join(" ");
@@ -2133,7 +2194,7 @@ function buildAiSummary() {
       if (/^(B18|B182|A202|RT|RB)/.test(body)) return false;
     }
 
-    if (product === "김치냉장고") {
+    if (productKey === "김치냉장고") {
       if (!isKimchiFridgeModel(model)) return false;
       if (/^(Z|K|RQ)/.test(body)) return true;
       return /김치|GBB/.test(text);
@@ -2143,23 +2204,24 @@ function buildAiSummary() {
   }
 
   function isAllowedSamsungRecommendationModel(product, model) {
+    const productKey = normalizeProductKey(product);
     const body = modelBody(model);
     const text = compactModelName(modelSearchText(model));
 
     if (!body || /^KMR/.test(body)) return false;
 
-    if (product === "TV") return /^(KQ|KU|UN|QN|QA)\d{2,3}/.test(body);
-    if (product === "라이프스타일 TV") return /^(KQ\d{2}LS|LSH|SP-L)/.test(body);
-    if (product === "냉장고") return /^(RF|RM|RR|RS|RB)\d{2}/.test(body) || /BESPOKE/.test(text);
-    if (product === "김치냉장고") return /^(RQ|RK)\d{2}/.test(body);
-    if (product === "세탁기/건조기") return /^(WF|DV|WD|WR|WW)\d{2}/.test(body);
-    if (product === "의류관리기") return /^DF\d{2}/.test(body);
-    if (product === "에어컨") return /^(AF|AR|AP|AC)\d{2}/.test(body);
-    if (product === "청소기") return /^(VS|VR|VC)\d{2}/.test(body);
-    if (product === "식기세척기") return /^DW\d{2}/.test(body);
-    if (product === "공기청정기") return /^AX\d{2}/.test(body);
-    if (product === "인덕션/전기레인지") return /^(NZ|NZI|NZP|CTR)\d*/.test(body);
-    if (product === "오븐/전자레인지") return /^(MC|MS|MG|MO|NQ)\d*/.test(body);
+    if (productKey === "TV") return /^(KQ|KU|UN|QN|QA)\d{2,3}/.test(body);
+    if (productKey === "라이프스타일 TV") return /^(KQ\d{2}LS|LSH|SP-L)/.test(body);
+    if (productKey === "냉장고") return /^(RF|RM|RR|RS|RB)\d{2}/.test(body) || /BESPOKE/.test(text);
+    if (productKey === "김치냉장고") return /^(RQ|RK)\d{2}/.test(body);
+    if (productKey === "세탁기/건조기") return /^(WF|DV|WD|WR|WW)\d{2}/.test(body);
+    if (productKey === "의류관리기") return /^DF\d{2}/.test(body);
+    if (productKey === "에어컨") return /^(AF|AR|AP|AC)\d{2}/.test(body);
+    if (productKey === "청소기") return /^(VS|VR|VC)\d{2}/.test(body);
+    if (productKey === "식기세척기") return /^DW\d{2}/.test(body);
+    if (productKey === "공기청정기") return /^AX\d{2}/.test(body);
+    if (productKey === "인덕션/전기레인지") return /^(NZ|NZI|NZP|CTR)\d*/.test(body);
+    if (productKey === "오븐 / 전자레인지" || productKey === "오븐/전자레인지") return /^(MC|MS|MG|MO|NQ)\d*/.test(body);
 
     return true;
   }
@@ -2303,37 +2365,38 @@ function buildAiSummary() {
   }
 
   function modelQualityAdjustment(product, model) {
+    const productKey = normalizeProductKey(product);
     const name = String(typeof model === "object" ? model?.modelName : model || "").toUpperCase();
     const text = compactModelName(modelSearchText(typeof model === "object" ? model : { modelName: name }));
     const body = modelBody(model);
     const brand = typeof model === "object" ? model?.brand || "" : "";
     let score = 0;
-    if (product === "TV") {
+    if (productKey === "TV") {
       if (/OLED|QNED9|QNED8/.test(name)) score -= 0.22;
       if (/^(KQ|QN).*9|OLED|NEO/.test(name) || /NEO QLED|OLED/.test(text)) score -= 0.18;
       if (/QNED70|NANO70/.test(name)) score += 0.3;
       if (/^KU/.test(name)) score += 0.22;
     }
-    if (product === "냉장고") {
+    if (productKey === "냉장고") {
       if (isGbbPreferredModel(model)) score -= 0.85;
       if (/^G646|^M623/.test(body)) score -= 0.7;
       if (/^M876|^W\d{3}|^D\d{3}|^T87|^T80/.test(body)) score += 0.55;
       if (/B18|B182|A202|^RT|^RB/.test(name)) score += 0.65;
     }
-    if (product === "세탁기/건조기") {
+    if (productKey === "세탁기/건조기") {
       if (/FX|FH|W2|WL|WK/.test(name)) score -= 0.18;
       if (/WD|WR|BESPOKE|콤보/.test(text)) score -= 0.16;
       if (/TR16|RH9|단품/.test(name)) score += 0.4;
     }
-    if (product === "김치냉장고") {
+    if (productKey === "김치냉장고") {
       if (isGbbPreferredModel(model)) score -= 0.85;
       if (/^Z|^K|^RQ/.test(body)) score -= 0.2;
       if (/BROWN|WHITE|SILVER/i.test(text)) score += 0.18;
     }
-    if (product === "청소기" && /B95|B94|A9/.test(name)) score -= 0.12;
-    if (product === "청소기" && /^VS/.test(name)) score -= 0.1;
-    if (product === "의류관리기" && /SC5|S5/.test(name)) score -= 0.12;
-    if (product === "의류관리기" && /^DF/.test(name)) score -= 0.12;
+    if (productKey === "청소기" && /B95|B94|A9/.test(name)) score -= 0.12;
+    if (productKey === "청소기" && /^VS/.test(name)) score -= 0.1;
+    if (productKey === "의류관리기" && /SC5|S5/.test(name)) score -= 0.12;
+    if (productKey === "의류관리기" && /^DF/.test(name)) score -= 0.12;
     if (brand === "삼성전자" && fields.brand.value === "삼성전자") score -= 0.03;
     return score;
   }
@@ -2485,3 +2548,4 @@ function buildAiSummary() {
       .replace(/'/g, "&#39;");
   }
 })();
+
