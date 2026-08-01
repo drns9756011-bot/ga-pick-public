@@ -1742,31 +1742,42 @@ h3 {
 
 @media (max-width: 560px) {
   .pick-home-shell {
-    width: 100%;
-    max-width: 100%;
+    display: block;
+    width: min(100%, 480px);
+    max-width: calc(100% - 28px);
+    margin: 0;
     box-sizing: border-box;
-    padding: 22px 0 58px;
+    margin-inline: auto;
+    padding: 22px 0 calc(118px + env(safe-area-inset-bottom));
     overflow-x: hidden;
   }
 
   .pick-home-hero {
+    display: block;
     width: 100%;
     max-width: 100%;
+    margin: 0 auto;
+    padding: 0;
     box-sizing: border-box;
-    justify-items: center;
-    padding-right: 14px;
-    padding-left: 14px;
+    overflow: visible;
   }
 
   .pick-hero-banner {
-    position: relative;
-    left: 50%;
-    width: min(100%, calc(100vw - 28px));
-    max-width: calc(100vw - 28px);
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
     box-sizing: border-box;
-    margin-right: auto;
-    margin-left: auto;
-    transform: translateX(-50%);
+    margin: 0 auto;
+    right: auto;
+    left: auto;
+    position: relative;
+    -webkit-transform: none;
+    transform: none;
+    overflow: hidden;
+    align-items: stretch;
+    justify-items: stretch;
     min-height: 0;
     padding: 26px 20px 28px;
     border-radius: 26px;
@@ -7160,35 +7171,42 @@ html.is-mobile-device :where(.model-code, .quote-number, .ai-recommendation-grou
   }
 
   html.is-mobile-device .pick-home-shell {
-    width: 100%;
-    max-width: 100%;
-    margin-right: auto;
-    margin-left: auto;
+    display: block;
+    width: min(100%, 480px);
+    max-width: calc(100% - 28px);
+    margin: 0 auto;
+    padding-right: 0;
+    padding-left: 0;
     box-sizing: border-box;
     overflow-x: hidden;
   }
 
   html.is-mobile-device .pick-home-hero {
+    display: block;
     width: 100%;
     max-width: 100%;
-    justify-items: center;
+    margin: 0 auto;
+    padding: 0;
+    box-sizing: border-box;
+    overflow: visible;
   }
 
   html.is-mobile-device .pick-hero-banner {
+    display: grid;
+    grid-template-columns: 1fr;
     width: 100%;
     max-width: 100%;
-    margin-right: auto;
-    margin-left: auto;
+    min-width: 0;
+    margin: 0 auto;
+    right: auto;
+    left: auto;
+    position: relative;
     box-sizing: border-box;
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
-  }
-
-  @media (max-width: 560px) {
-    html.is-mobile-device .pick-hero-banner {
-      -webkit-transform: translateX(-50%) translateZ(0);
-      transform: translateX(-50%) translateZ(0);
-    }
+    overflow: hidden;
+    align-items: stretch;
+    justify-items: stretch;
+    -webkit-transform: none;
+    transform: none;
   }
 
   html.is-mobile-device .pick-hero-banner > div:first-child,

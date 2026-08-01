@@ -89,211 +89,1014 @@
   ];
 
   const productOptions = [
-    { value: "TV", title: "TV", icon: "TV", thumb: "tv" },
-    { value: "라이프스타일 TV", title: "라이프스타일TV", icon: "LS", thumb: "lifestyle" },
-    { value: "냉장고", title: "냉장고", icon: "냉", thumb: "fridge" },
-    { value: "김치냉장고", title: "김치냉장고", icon: "김", thumb: "kimchi" },
-    { value: "세탁기/건조기", title: "세탁기+건조기", icon: "세", thumb: "washer" },
-    { value: "의류관리기", title: "의류 관리기", icon: "의", thumb: "styler" },
-    { value: "에어컨", title: "에어컨", icon: "에", thumb: "aircon" },
-    { value: "청소기", title: "청소기", icon: "청", thumb: "vacuum" },
-    { value: "식기세척기", title: "식기세척기", icon: "식", thumb: "dishwasher" },
-    { value: "공기청정기", title: "공기청정기", icon: "공", thumb: "purifier" },
-  ];
+    {
+        "value": "TV",
+        "title": "TV",
+        "icon": "TV",
+        "thumb": "tv"
+    },
+    {
+        "value": "\ub77c\uc774\ud504\uc2a4\ud0c0\uc77c TV",
+        "title": "\ub77c\uc774\ud504\uc2a4\ud0c0\uc77c TV",
+        "icon": "LS",
+        "thumb": "lifestyle"
+    },
+    {
+        "value": "\ub0c9\uc7a5\uace0",
+        "title": "\ub0c9\uc7a5\uace0",
+        "icon": "\ub0c9",
+        "thumb": "fridge"
+    },
+    {
+        "value": "\uae40\uce58\ub0c9\uc7a5\uace0",
+        "title": "\uae40\uce58\ub0c9\uc7a5\uace0",
+        "icon": "\uae40",
+        "thumb": "kimchi"
+    },
+    {
+        "value": "\uc138\ud0c1\uae30/\uac74\uc870\uae30",
+        "title": "\uc138\ud0c1\uae30+\uac74\uc870\uae30",
+        "icon": "\uc138",
+        "thumb": "washer"
+    },
+    {
+        "value": "\uc758\ub958\uad00\ub9ac\uae30",
+        "title": "\uc758\ub958 \uad00\ub9ac\uae30",
+        "icon": "\uc758",
+        "thumb": "styler"
+    },
+    {
+        "value": "\uc5d0\uc5b4\ucee8",
+        "title": "\uc5d0\uc5b4\ucee8",
+        "icon": "\uc5d0",
+        "thumb": "aircon"
+    },
+    {
+        "value": "\uccad\uc18c\uae30",
+        "title": "\uccad\uc18c\uae30",
+        "icon": "\uccad",
+        "thumb": "vacuum"
+    },
+    {
+        "value": "\uc2dd\uae30\uc138\ucc99\uae30",
+        "title": "\uc2dd\uae30\uc138\ucc99\uae30",
+        "icon": "\uc2dd",
+        "thumb": "dishwasher"
+    },
+    {
+        "value": "\uc778\ub355\uc158",
+        "title": "\uc778\ub355\uc158",
+        "icon": "\uc778",
+        "thumb": "induction"
+    },
+    {
+        "value": "\uc624\ube10 / \uc804\uc790\ub808\uc778\uc9c0",
+        "title": "\uc624\ube10 / \uc804\uc790\ub808\uc778\uc9c0",
+        "icon": "\uc624",
+        "thumb": "oven"
+    },
+    {
+        "value": "\uc815\uc218\uae30",
+        "title": "\uc815\uc218\uae30",
+        "icon": "\uc815",
+        "thumb": "water"
+    },
+    {
+        "value": "\uacf5\uae30\uccad\uc815\uae30",
+        "title": "\uacf5\uae30\uccad\uc815\uae30",
+        "icon": "\uacf5",
+        "thumb": "purifier"
+    }
+];
 
-  const unknownOption = "잘모르겠어요";
+  const unknownOption = "\uc0c1\uc138 \uc635\uc158 \ubbf8\uc785\ub825";
   const brandOptionSchema = {
-    "LG전자": {
-      "TV": [
-        single("series", "제품군", ["1 QNED", "2 OLED", "3 MRGB"]),
-        singleBy("size", "인치", "series", {
-          "1 QNED": ["32인치", "43인치", "55인치", "65인치", "75인치", "85인치", "100인치"],
-          "2 OLED": ["42인치", "48인치", "55인치", "65인치", "77인치", "83인치", "98인치"],
-          "3 MRGB": ["55인치", "65인치", "75인치", "85인치", "100인치"],
-        }),
-      ],
-      "라이프스타일 TV": [
-        single("type", "제품군", ["1 스탠바이미", "2 스탠바이미 GO"]),
-        singleBy("size", "인치", "type", {
-          "1 스탠바이미": ["27인치", "32인치"],
-          "2 스탠바이미 GO": ["27인치"],
-        }),
-      ],
-      "냉장고": [
-        single("type", "타입", ["1 프리스탠딩", "2 핏앤맥스", "3 오브제", "4 얼음정수기"]),
-        singleBy("detail", "도어/용량", "type", {
-          "1 프리스탠딩": ["4도어", "2도어", "양문형", "잘모르겠어요"],
-          "2 핏앤맥스": ["4도어", "잘모르겠어요"],
-          "3 오브제": ["4도어", "2도어"],
-          "4 얼음정수기": ["4도어"],
-        }),
-      ],
-      "김치냉장고": [
-        single("type", "타입", ["1 뚜껑식", "2 스탠드", "3 1도어"]),
-        singleBy("detail", "도어/용량", "type", {
-          "1 뚜껑식": ["1도어", "2도어"],
-          "2 스탠드": ["스탠드 3도어", "스탠드 4도어", "오브제 3도어", "오브제 4도어"],
-          "3 1도어": ["1도어"],
-        }),
-      ],
-      "세탁기/건조기": [
-        single("type", "구성", ["1 분리형", "2 콤보", "3 일체형(원바디/워시타워)", "4 세탁기만", "5 건조기만"]),
-        singleBy("detail", "세부 옵션", "type", {
-          "1 분리형": ["병렬설치", "직렬설치", "분리설치 가능"],
-          "2 콤보": ["콤보형", "AI"],
-          "3 일체형(원바디/워시타워)": ["원바디", "워시타워"],
-          "4 세탁기만": ["통돌이", "드럼"],
-          "5 건조기만": ["17KG", "19KG", "21KG", "25KG"],
-        }),
-      ],
-      "의류관리기": [
-        single("size", "용량", ["1 3벌", "2 5벌"]),
-        single("finish", "색상", ["밝은색", "어두운색"]),
-        singleBy("steam", "스팀", "size", {
-          "1 3벌": ["스타일러"],
-          "2 5벌": ["오브제", "스타일러"],
-        }),
-      ],
-      "에어컨": [
-        single("type", "종류", ["1 2IN1", "2 스탠드", "3 벽걸이", "4 천장형"]),
-        singleBy("area", "냉방 면적", "type", {
-          "1 2IN1": ["18평", "24평", "34평", "40평형 이상"],
-          "2 스탠드": ["18평", "24평", "34평", "40평형 이상"],
-          "3 벽걸이": ["6평", "7평", "9평", "11평", "13평", "16평"],
-        }),
-        singleBy("rooms", "천장형 실수", "type", {
-          "4 천장형": ["3실", "4실", "5실", "6실"],
-        }),
-      ],
-      "청소기": [
-        multi("type", "종류", ["1 무선청소기", "2 로봇청소기", "3 유선청소기"]),
-        multiBy("detail", "세부 옵션", "type", {
-          "1 무선청소기": ["스팀", "물걸레", "올인원타워"],
-          "2 로봇청소기": ["로보킹", "올인원"],
-          "3 유선청소기": [],
-        }),
-      ],
-      "식기세척기": [
-        single("install", "설치 형태", ["1 빌트인", "2 프리스탠딩", "3 카운터탑"]),
-        singleBy("kickplate", "걸레받이", "install", {
-          "1 빌트인": ["10CM", "15CM", "잘모르겠어요"],
-        }),
-      ],
-      "공기청정기": [
-        single("type", "타입", ["1 1단", "2 2단"]),
-        singleBy("area", "사용 면적", "type", {
-          "1 1단": ["18평대", "20평대"],
-          "2 2단": ["28평대", "35평대"],
-        }),
-      ],
+    "LG\uc804\uc790": {
+        "TV": [
+            {
+                "mode": "single",
+                "key": "type",
+                "label": "\uc720\ud615",
+                "options": [
+                    "QNED",
+                    "OLED",
+                    "MRGB"
+                ]
+            },
+            {
+                "mode": "singleBy",
+                "key": "size",
+                "label": "\uc778\uce58",
+                "dependsOn": "type",
+                "optionsByValue": {
+                    "QNED": [
+                        "32\uc778\uce58",
+                        "43\uc778\uce58",
+                        "55\uc778\uce58",
+                        "65\uc778\uce58",
+                        "75\uc778\uce58",
+                        "85\uc778\uce58",
+                        "100\uc778\uce58"
+                    ],
+                    "OLED": [
+                        "42\uc778\uce58",
+                        "48\uc778\uce58",
+                        "55\uc778\uce58",
+                        "65\uc778\uce58",
+                        "77\uc778\uce58",
+                        "83\uc778\uce58",
+                        "98\uc778\uce58"
+                    ],
+                    "MRGB": [
+                        "32\uc778\uce58",
+                        "43\uc778\uce58",
+                        "55\uc778\uce58",
+                        "65\uc778\uce58",
+                        "75\uc778\uce58",
+                        "85\uc778\uce58",
+                        "100\uc778\uce58"
+                    ]
+                }
+            }
+        ],
+        "\ub77c\uc774\ud504\uc2a4\ud0c0\uc77c TV": [
+            {
+                "mode": "single",
+                "key": "type",
+                "label": "\uc720\ud615",
+                "options": [
+                    "\uc2a4\ud0e0\ubc14\uc774\ubbf8",
+                    "\uc2a4\ud0e0\ubc14\uc774\ubbf8 GO"
+                ]
+            },
+            {
+                "mode": "singleBy",
+                "key": "size",
+                "label": "\uc778\uce58",
+                "dependsOn": "type",
+                "optionsByValue": {
+                    "\uc2a4\ud0e0\ubc14\uc774\ubbf8": [
+                        "27\uc778\uce58"
+                    ],
+                    "\uc2a4\ud0e0\ubc14\uc774\ubbf8 GO": [
+                        "27\uc778\uce58"
+                    ]
+                }
+            }
+        ],
+        "\ub0c9\uc7a5\uace0": [
+            {
+                "mode": "single",
+                "key": "type",
+                "label": "\uc720\ud615",
+                "options": [
+                    "\uc0c1\ub0c9\uc7a5",
+                    "\ud54f\uc564\ub9e5\uc2a4",
+                    "\uc591\ubb38\ud615",
+                    "\ucee8\ubc84\ud130\ube14"
+                ]
+            },
+            {
+                "mode": "singleBy",
+                "key": "detail",
+                "label": "\uad6c\ubd84",
+                "dependsOn": "type",
+                "optionsByValue": {
+                    "\uc0c1\ub0c9\uc7a5": [
+                        "\uc5bc\uc74c\uc815\uc218\uae30 \ub0c9\uc7a5\uace0"
+                    ],
+                    "\ud54f\uc564\ub9e5\uc2a4": [
+                        "\ub178\ud06c\uc628",
+                        "\uc77c\ubc18"
+                    ],
+                    "\uc591\ubb38\ud615": [
+                        "2\ub3c4\uc5b4"
+                    ],
+                    "\ucee8\ubc84\ud130\ube14": [
+                        "1\ub3c4\uc5b4"
+                    ]
+                }
+            }
+        ],
+        "\uae40\uce58\ub0c9\uc7a5\uace0": [
+            {
+                "mode": "single",
+                "key": "type",
+                "label": "\uc720\ud615",
+                "options": [
+                    "\ub69c\uaed1\uc2dd",
+                    "\uc2a4\ud0e0\ub4dc",
+                    "\ucee8\ubc84\ud130\ube14"
+                ]
+            },
+            {
+                "mode": "singleBy",
+                "key": "detail",
+                "label": "\uad6c\ubd84",
+                "dependsOn": "type",
+                "optionsByValue": {
+                    "\ub69c\uaed1\uc2dd": [
+                        "1\ub3c4\uc5b4",
+                        "2\ub3c4\uc5b4"
+                    ],
+                    "\uc2a4\ud0e0\ub4dc": [
+                        "\ud54f\uc564\ub9e5\uc2a4 3\ub3c4\uc5b4",
+                        "\ud54f\uc564\ub9e5\uc2a4 4\ub3c4\uc5b4",
+                        "\uc77c\ubc18 3\ub3c4\uc5b4",
+                        "\uc77c\ubc18 4\ub3c4\uc5b4"
+                    ],
+                    "\ucee8\ubc84\ud130\ube14": [
+                        "1\ub3c4\uc5b4"
+                    ]
+                }
+            }
+        ],
+        "\uc138\ud0c1\uae30/\uac74\uc870\uae30": [
+            {
+                "mode": "single",
+                "key": "type",
+                "label": "\uc720\ud615",
+                "options": [
+                    "\uc6cc\uc2dc\ud0c0\uc6cc",
+                    "\ucf64\ubcf4",
+                    "\ubd84\ub9ac\ud615(\uc138\ud0c1\uae30/\uac74\uc870\uae30)"
+                ]
+            },
+            {
+                "mode": "singleBy",
+                "key": "detail",
+                "label": "\uad6c\ubd84",
+                "dependsOn": "type",
+                "optionsByValue": {
+                    "\uc6cc\uc2dc\ud0c0\uc6cc": [
+                        "\uc635\uc158\ud615",
+                        "AI"
+                    ],
+                    "\ucf64\ubcf4": [
+                        "AI"
+                    ],
+                    "\ubd84\ub9ac\ud615": [
+                        "\ubcd1\ub82c\uc124\uce58",
+                        "\uc9c1\ub82c\uc124\uce58",
+                        "\ubd84\ub9ac\uc124\uce58"
+                    ]
+                }
+            }
+        ],
+        "\uc758\ub958\uad00\ub9ac\uae30": [
+            {
+                "mode": "single",
+                "key": "type",
+                "label": "\uc720\ud615",
+                "options": [
+                    "\uc2a4\ud0c0\uc77c\ub7ec",
+                    "\uc0c1\uc138 \uc635\uc158 \ubbf8\uc785\ub825"
+                ]
+            }
+        ],
+        "\uc5d0\uc5b4\ucee8": [
+            {
+                "mode": "single",
+                "key": "type",
+                "label": "\uc885\ub958",
+                "options": [
+                    "2IN1",
+                    "\uc2a4\ud0e0\ub4dc",
+                    "\ubcbd\uac78\uc774",
+                    "\ucc9c\uc7a5\ud615",
+                    "\uc0c1\uc138 \uc635\uc158 \ubbf8\uc785\ub825"
+                ]
+            },
+            {
+                "mode": "singleBy",
+                "key": "size",
+                "label": "\ub0c9\ubc29\uba74\uc801",
+                "dependsOn": "type",
+                "optionsByValue": {
+                    "2IN1": [
+                        "18\ud3c9",
+                        "24\ud3c9",
+                        "34\ud3c9",
+                        "40\ud3c9\ud615 \uc774\uc0c1"
+                    ],
+                    "\uc2a4\ud0e0\ub4dc": [
+                        "18\ud3c9",
+                        "24\ud3c9",
+                        "34\ud3c9",
+                        "40\ud3c9\ud615 \uc774\uc0c1"
+                    ],
+                    "\ubcbd\uac78\uc774": [
+                        "6\ud3c9",
+                        "7\ud3c9",
+                        "9\ud3c9",
+                        "11\ud3c9"
+                    ],
+                    "\ucc9c\uc7a5\ud615": [
+                        "3\uc2e4",
+                        "4\uc2e4",
+                        "5\uc2e4",
+                        "6\uc2e4"
+                    ],
+                    "\uc0c1\uc138 \uc635\uc158 \ubbf8\uc785\ub825": [
+                        "\uc0c1\uc138 \uc635\uc158 \ubbf8\uc785\ub825"
+                    ]
+                }
+            }
+        ],
+        "\uccad\uc18c\uae30": [
+            {
+                "mode": "multi",
+                "key": "type",
+                "label": "\uc720\ud615",
+                "options": [
+                    "\ubb34\uc120\uccad\uc18c\uae30",
+                    "\ub85c\ubd07\uccad\uc18c\uae30",
+                    "\uc720\uc120\uccad\uc18c\uae30"
+                ]
+            }
+        ],
+        "\uc2dd\uae30\uc138\ucc99\uae30": [
+            {
+                "mode": "single",
+                "key": "type",
+                "label": "\uc124\uce58\ud615\ud0dc",
+                "options": [
+                    "\ube5d\ud2b8\uc778",
+                    "\uce74\uc6b4\ud130\ud0d1",
+                    "\ud504\ub9ac\uc2a4\ud0e0\ub529"
+                ]
+            }
+        ],
+        "\uc778\ub355\uc158": [
+            {
+                "mode": "single",
+                "key": "type",
+                "label": "\uc124\uce58\ud615\ud0dc",
+                "options": [
+                    "\ube4c\ud2b8\uc778 O",
+                    "\ube4c\ud2b8\uc778 X"
+                ]
+            },
+            {
+                "mode": "single",
+                "key": "burner",
+                "label": "\ud654\uad6c\uc218",
+                "options": [
+                    "2\uad6c",
+                    "3\uad6c",
+                    "4\uad6c"
+                ]
+            }
+        ],
+        "\uc624\ube10 / \uc804\uc790\ub808\uc778\uc9c0": [
+            {
+                "mode": "multi",
+                "key": "type",
+                "label": "\uc720\ud615",
+                "options": [
+                    "\ubcf5\ud569\uc624\ube10",
+                    "\uc804\uc790\ub808\uc778\uc9c0"
+                ]
+            }
+        ],
+        "\uc815\uc218\uae30": [
+            {
+                "mode": "single",
+                "key": "type",
+                "label": "\uc720\ud615",
+                "options": [
+                    "\uc5bc\uc74c\uc815\uc218\uae30",
+                    "\ub0c9\uc628\uc815\uc218\uae30",
+                    "\ub0c9\uc815\uc218\uae30",
+                    "\uc628\uc815\uc218\uae30"
+                ]
+            }
+        ],
+        "\uacf5\uae30\uccad\uc815\uae30": [
+            {
+                "mode": "single",
+                "key": "size",
+                "label": "\uc0ac\uc6a9\uba74\uc801",
+                "options": [
+                    "10\ud3c9 \uc774\ud558",
+                    "10\ud3c9\ub300",
+                    "20\ud3c9\ub300",
+                    "30\ud3c9\ub300 \uc774\uc0c1"
+                ]
+            }
+        ]
     },
-    "삼성전자": {
-      "TV": [
-        single("series", "제품군", ["1 NEO QLED", "2 OLED", "3 MRGB"]),
-        singleBy("size", "인치", "series", {
-          "1 NEO QLED": ["43인치", "50인치", "55인치", "65인치", "75인치", "85인치", "100인치"],
-          "2 OLED": ["42인치", "48인치", "55인치", "65인치", "77인치", "83인치"],
-          "3 MRGB": ["65인치", "75인치", "85인치", "100인치", "115인치"],
-        }),
-      ],
-      "라이프스타일 TV": [
-        single("type", "제품군", ["1 더 세리프", "2 더 프레임", "3 더 세로"]),
-        singleBy("size", "인치", "type", {
-          "1 더 세리프": ["43인치", "55인치", "65인치"],
-          "2 더 프레임": ["43인치", "50인치", "55인치", "65인치", "75인치", "85인치"],
-          "3 더 세로": ["43인치"],
-        }),
-      ],
-      "냉장고": [
-        single("type", "타입", ["1 프리스탠딩", "2 키친핏", "3 비스포크", "4 1도어"]),
-        singleBy("detail", "도어/용량", "type", {
-          "1 프리스탠딩": ["4도어", "2도어"],
-          "2 키친핏": ["4도어", "잘모르겠어요"],
-          "3 비스포크": ["4도어", "2도어", "1도어"],
-          "4 1도어": ["냉장", "냉동", "김치"],
-        }),
-      ],
-      "김치냉장고": [
-        single("type", "타입", ["1 뚜껑식", "2 스탠드", "3 1도어"]),
-        singleBy("detail", "도어/용량", "type", {
-          "1 뚜껑식": ["1도어", "2도어"],
-          "2 스탠드": ["3도어", "4도어", "비스포크 3도어", "비스포크 4도어"],
-          "3 1도어": ["1도어"],
-        }),
-      ],
-      "세탁기/건조기": [
-        single("type", "구성", ["1 분리형", "2 콤보", "3 일체형(원바디/워시타워)", "4 세탁기만", "5 건조기만"]),
-        singleBy("detail", "세부 옵션", "type", {
-          "1 분리형": ["병렬설치", "직렬설치", "분리설치 가능"],
-          "2 콤보": ["25KG / 20KG", "25KG / 22KG"],
-          "3 일체형(원바디/워시타워)": ["AI 콤보 25KG / 22KG", "25KG / 20KG"],
-          "4 세탁기만": ["AI버블 25KG", "25KG"],
-          "5 건조기만": ["19KG", "21KG", "23KG", "25KG"],
-        }),
-      ],
-      "의류관리기": [
-        single("size", "용량", ["1 9벌 + 3벌", "2 9벌 + 2벌"]),
-        single("finish", "색상", ["밝은색", "어두운색"]),
-        singleBy("crease", "바지 관리", "size", {
-          "1 9벌 + 3벌": ["바지관리 O", "바지관리 X"],
-          "2 9벌 + 2벌": ["바지관리 O", "바지관리 X"],
-        }),
-      ],
-      "에어컨": [
-        single("type", "종류", ["1 2IN1", "2 스탠드", "3 벽걸이", "4 천장형"]),
-        singleBy("area", "냉방 면적", "type", {
-          "1 2IN1": ["18평", "24평", "34평", "40평형 이상"],
-          "2 스탠드": ["18평", "24평", "34평", "40평형 이상"],
-          "3 벽걸이": ["6평", "7평", "9평", "11평", "13평", "16평"],
-        }),
-        singleBy("rooms", "천장형 실수", "type", {
-          "4 천장형": ["3실", "4실", "5실", "6실"],
-        }),
-      ],
-      "청소기": [
-        multi("type", "종류", ["1 무선청소기", "2 로봇청소기", "3 유선청소기"]),
-        multiBy("detail", "세부 옵션", "type", {
-          "1 무선청소기": ["비스포크 제트", "AI", "스팀"],
-          "2 로봇청소기": ["제트봇", "올인원"],
-          "3 유선청소기": [],
-        }),
-      ],
-      "식기세척기": [
-        single("install", "설치 형태", ["1 빌트인", "2 프리스탠딩"]),
-        singleBy("kickplate", "걸레받이", "install", {
-          "1 빌트인": ["10CM", "15CM", "잘모르겠어요"],
-        }),
-      ],
-      "공기청정기": [
-        single("type", "타입", ["1 큐브", "2 블루스카이"]),
-        singleBy("area", "사용 면적", "type", {
-          "1 큐브": ["10평대", "24평대", "30평대"],
-          "2 블루스카이": ["10평대", "18평대"],
-        }),
-      ],
+    "\uc0bc\uc131\uc804\uc790": {
+        "TV": [
+            {
+                "mode": "single",
+                "key": "type",
+                "label": "\uc720\ud615",
+                "options": [
+                    "NEO QLED",
+                    "OLED",
+                    "MRGB"
+                ]
+            },
+            {
+                "mode": "single",
+                "key": "install",
+                "label": "\uc124\uce58\ud615\ud0dc",
+                "options": [
+                    "\ubcbd\uac78\uc774",
+                    "\uc2a4\ud0e0\ub4dc"
+                ]
+            },
+            {
+                "mode": "single",
+                "key": "size",
+                "label": "\uc778\uce58",
+                "options": [
+                    "43\uc778\uce58",
+                    "50\uc778\uce58",
+                    "55\uc778\uce58",
+                    "65\uc778\uce58",
+                    "75\uc778\uce58",
+                    "85\uc778\uce58",
+                    "100\uc778\uce58"
+                ]
+            }
+        ],
+        "\ub77c\uc774\ud504\uc2a4\ud0c0\uc77c TV": [
+            {
+                "mode": "single",
+                "key": "type",
+                "label": "\uc720\ud615",
+                "options": [
+                    "\ub354 \ubb34\ube59\uc2a4\ud0c0\uc77c"
+                ]
+            },
+            {
+                "mode": "single",
+                "key": "size",
+                "label": "\uc778\uce58",
+                "options": [
+                    "27\uc778\uce58"
+                ]
+            }
+        ],
+        "\ub0c9\uc7a5\uace0": [
+            {
+                "mode": "single",
+                "key": "type",
+                "label": "\uc720\ud615",
+                "options": [
+                    "\uc0c1\ub0c9\uc7a5",
+                    "\ud0a4\uce5c\ud54f \ub9e5\uc2a4",
+                    "\uc591\ubb38\ud615",
+                    "1\ub3c4\uc5b4"
+                ]
+            },
+            {
+                "mode": "singleBy",
+                "key": "detail",
+                "label": "\uad6c\ubd84",
+                "dependsOn": "type",
+                "optionsByValue": {
+                    "\uc0c1\ub0c9\uc7a5": [
+                        "\ud328\ubc00\ub9ac\ud5c8\ube0c",
+                        "\ud558\uc774\ube0c\ub9ac\ub4dc"
+                    ],
+                    "\ud0a4\uce5c\ud54f \ub9e5\uc2a4": [
+                        "\ud558\uc774\ube0c\ub9ac\ub4dc"
+                    ],
+                    "\uc591\ubb38\ud615": [
+                        "2\ub3c4\uc5b4"
+                    ],
+                    "1\ub3c4\uc5b4": [
+                        "1\ub3c4\uc5b4"
+                    ]
+                }
+            }
+        ],
+        "\uae40\uce58\ub0c9\uc7a5\uace0": [
+            {
+                "mode": "single",
+                "key": "type",
+                "label": "\uc720\ud615",
+                "options": [
+                    "\ub69c\uaed1\uc2dd",
+                    "\uc2a4\ud0e0\ub4dc",
+                    "1\ub3c4\uc5b4"
+                ]
+            },
+            {
+                "mode": "singleBy",
+                "key": "detail",
+                "label": "\uad6c\ubd84",
+                "dependsOn": "type",
+                "optionsByValue": {
+                    "\ub69c\uaed1\uc2dd": [
+                        "1\ub3c4\uc5b4",
+                        "2\ub3c4\uc5b4"
+                    ],
+                    "\uc2a4\ud0e0\ub4dc": [
+                        "\ud0a4\uce5c\ud54f 3\ub3c4\uc5b4",
+                        "\ud0a4\uce5c\ud54f 4\ub3c4\uc5b4",
+                        "\uc77c\ubc18 3\ub3c4\uc5b4",
+                        "\uc77c\ubc18 4\ub3c4\uc5b4"
+                    ],
+                    "1\ub3c4\uc5b4": [
+                        "1\ub3c4\uc5b4"
+                    ]
+                }
+            }
+        ],
+        "\uc138\ud0c1\uae30/\uac74\uc870\uae30": [
+            {
+                "mode": "single",
+                "key": "type",
+                "label": "\uc720\ud615",
+                "options": [
+                    "\uc6d0\ubc14\ub514",
+                    "\ucf64\ubcf4",
+                    "\ubd84\ub9ac\ud615(\uc138\ud0c1\uae30/\uac74\uc870\uae30)"
+                ]
+            },
+            {
+                "mode": "singleBy",
+                "key": "detail",
+                "label": "\uad6c\ubd84",
+                "dependsOn": "type",
+                "optionsByValue": {
+                    "\uc6d0\ubc14\ub514": [
+                        "\uc778\ud53c\ub2c8\ud2b8",
+                        "AI"
+                    ],
+                    "\ucf64\ubcf4": [
+                        "AI"
+                    ],
+                    "\ubd84\ub9ac\ud615": [
+                        "25KG / 20KG",
+                        "25KG / 22KG"
+                    ]
+                }
+            }
+        ],
+        "\uc758\ub958\uad00\ub9ac\uae30": [
+            {
+                "mode": "single",
+                "key": "type",
+                "label": "\uc720\ud615",
+                "options": [
+                    "\uc5d0\uc5b4\ub4dc\ub808\uc11c",
+                    "\uc0c1\uc138 \uc635\uc158 \ubbf8\uc785\ub825"
+                ]
+            }
+        ],
+        "\uc5d0\uc5b4\ucee8": [
+            {
+                "mode": "single",
+                "key": "type",
+                "label": "\uc885\ub958",
+                "options": [
+                    "2IN1",
+                    "\uc2a4\ud0e0\ub4dc",
+                    "\ubcbd\uac78\uc774",
+                    "\ucc9c\uc7a5\ud615",
+                    "\uc0c1\uc138 \uc635\uc158 \ubbf8\uc785\ub825"
+                ]
+            },
+            {
+                "mode": "singleBy",
+                "key": "size",
+                "label": "\ub0c9\ubc29\uba74\uc801",
+                "dependsOn": "type",
+                "optionsByValue": {
+                    "2IN1": [
+                        "18\ud3c9",
+                        "24\ud3c9",
+                        "34\ud3c9",
+                        "40\ud3c9\ud615 \uc774\uc0c1"
+                    ],
+                    "\uc2a4\ud0e0\ub4dc": [
+                        "18\ud3c9",
+                        "24\ud3c9",
+                        "34\ud3c9",
+                        "40\ud3c9\ud615 \uc774\uc0c1"
+                    ],
+                    "\ubcbd\uac78\uc774": [
+                        "6\ud3c9",
+                        "7\ud3c9",
+                        "9\ud3c9",
+                        "11\ud3c9"
+                    ],
+                    "\ucc9c\uc7a5\ud615": [
+                        "3\uc2e4",
+                        "4\uc2e4",
+                        "5\uc2e4",
+                        "6\uc2e4"
+                    ],
+                    "\uc0c1\uc138 \uc635\uc158 \ubbf8\uc785\ub825": [
+                        "\uc0c1\uc138 \uc635\uc158 \ubbf8\uc785\ub825"
+                    ]
+                }
+            }
+        ],
+        "\uccad\uc18c\uae30": [
+            {
+                "mode": "multi",
+                "key": "type",
+                "label": "\uc720\ud615",
+                "options": [
+                    "\ubb34\uc120\uccad\uc18c\uae30",
+                    "\ub85c\ubd07\uccad\uc18c\uae30",
+                    "\uc720\uc120\uccad\uc18c\uae30"
+                ]
+            }
+        ],
+        "\uc2dd\uae30\uc138\ucc99\uae30": [
+            {
+                "mode": "single",
+                "key": "type",
+                "label": "\uc124\uce58\ud615\ud0dc",
+                "options": [
+                    "\ube4c\ud2b8\uc778",
+                    "\uce74\uc6b4\ud130\ud0d1",
+                    "\ud504\ub9ac\uc2a4\ud0e0\ub529"
+                ]
+            }
+        ],
+        "\uc778\ub355\uc158": [
+            {
+                "mode": "single",
+                "key": "type",
+                "label": "\uc124\uce58\ud615\ud0dc",
+                "options": [
+                    "\ube4c\ud2b8\uc778 O",
+                    "\ube4c\ud2b8\uc778 X"
+                ]
+            },
+            {
+                "mode": "single",
+                "key": "burner",
+                "label": "\ud654\uad6c\uc218",
+                "options": [
+                    "2\uad6c",
+                    "3\uad6c",
+                    "4\uad6c"
+                ]
+            }
+        ],
+        "\uc624\ube10 / \uc804\uc790\ub808\uc778\uc9c0": [
+            {
+                "mode": "multi",
+                "key": "type",
+                "label": "\uc720\ud615",
+                "options": [
+                    "\uc624\ube10",
+                    "\uc804\uc790\ub808\uc778\uc9c0"
+                ]
+            }
+        ],
+        "\uc815\uc218\uae30": [
+            {
+                "mode": "single",
+                "key": "type",
+                "label": "\uc720\ud615",
+                "options": [
+                    "\uc5bc\uc74c\uc815\uc218\uae30",
+                    "\ub0c9\uc628\uc815\uc218\uae30",
+                    "\ub0c9\uc815\uc218\uae30",
+                    "\uc628\uc815\uc218\uae30"
+                ]
+            }
+        ],
+        "\uacf5\uae30\uccad\uc815\uae30": [
+            {
+                "mode": "single",
+                "key": "size",
+                "label": "\uc0ac\uc6a9\uba74\uc801",
+                "options": [
+                    "10\ud3c9 \uc774\ud558",
+                    "10\ud3c9\ub300",
+                    "20\ud3c9\ub300",
+                    "30\ud3c9\ub300 \uc774\uc0c1"
+                ]
+            }
+        ]
     },
-  };
-
-  function single(key, title, values) {
-    return { key, title, type: "single", values };
-  }
-
-  function multi(key, title, values) {
-    return { key, title, type: "multi", values };
-  }
-
-  function singleBy(key, title, parent, valuesByParent) {
-    return { key, title, type: "single", parent, valuesByParent };
-  }
-
-  function multiBy(key, title, parent, valuesByParent) {
-    return { key, title, type: "multi", parent, valuesByParent };
-  }
-
-  function optionSchemaFor(product) {
-    const brand = fields.brand.value === "삼성전자" ? "삼성전자" : "LG전자";
-    return brandOptionSchema[brand]?.[product] || brandOptionSchema["LG전자"]?.[product] || [];
-  }
+    "\ube44\uad50\uacac\uc801": {
+        "TV": [
+            {
+                "mode": "single",
+                "key": "type",
+                "label": "\uc720\ud615",
+                "options": [
+                    "QNED",
+                    "OLED",
+                    "MRGB"
+                ]
+            },
+            {
+                "mode": "singleBy",
+                "key": "size",
+                "label": "\uc778\uce58",
+                "dependsOn": "type",
+                "optionsByValue": {
+                    "QNED": [
+                        "32\uc778\uce58",
+                        "43\uc778\uce58",
+                        "55\uc778\uce58",
+                        "65\uc778\uce58",
+                        "75\uc778\uce58",
+                        "85\uc778\uce58",
+                        "100\uc778\uce58"
+                    ],
+                    "OLED": [
+                        "42\uc778\uce58",
+                        "48\uc778\uce58",
+                        "55\uc778\uce58",
+                        "65\uc778\uce58",
+                        "77\uc778\uce58",
+                        "83\uc778\uce58",
+                        "98\uc778\uce58"
+                    ],
+                    "MRGB": [
+                        "32\uc778\uce58",
+                        "43\uc778\uce58",
+                        "55\uc778\uce58",
+                        "65\uc778\uce58",
+                        "75\uc778\uce58",
+                        "85\uc778\uce58",
+                        "100\uc778\uce58"
+                    ]
+                }
+            }
+        ],
+        "\ub77c\uc774\ud504\uc2a4\ud0c0\uc77c TV": [
+            {
+                "mode": "single",
+                "key": "type",
+                "label": "\uc720\ud615",
+                "options": [
+                    "\uc2a4\ud0e0\ubc14\uc774\ubbf8",
+                    "\uc2a4\ud0e0\ubc14\uc774\ubbf8 GO"
+                ]
+            },
+            {
+                "mode": "singleBy",
+                "key": "size",
+                "label": "\uc778\uce58",
+                "dependsOn": "type",
+                "optionsByValue": {
+                    "\uc2a4\ud0e0\ubc14\uc774\ubbf8": [
+                        "27\uc778\uce58"
+                    ],
+                    "\uc2a4\ud0e0\ubc14\uc774\ubbf8 GO": [
+                        "27\uc778\uce58"
+                    ]
+                }
+            }
+        ],
+        "\ub0c9\uc7a5\uace0": [
+            {
+                "mode": "single",
+                "key": "type",
+                "label": "\uc720\ud615",
+                "options": [
+                    "\uc0c1\ub0c9\uc7a5",
+                    "\ud54f\uc564\ub9e5\uc2a4",
+                    "\uc591\ubb38\ud615",
+                    "\ucee8\ubc84\ud130\ube14"
+                ]
+            },
+            {
+                "mode": "singleBy",
+                "key": "detail",
+                "label": "\uad6c\ubd84",
+                "dependsOn": "type",
+                "optionsByValue": {
+                    "\uc0c1\ub0c9\uc7a5": [
+                        "\uc5bc\uc74c\uc815\uc218\uae30 \ub0c9\uc7a5\uace0"
+                    ],
+                    "\ud54f\uc564\ub9e5\uc2a4": [
+                        "\ub178\ud06c\uc628",
+                        "\uc77c\ubc18"
+                    ],
+                    "\uc591\ubb38\ud615": [
+                        "2\ub3c4\uc5b4"
+                    ],
+                    "\ucee8\ubc84\ud130\ube14": [
+                        "1\ub3c4\uc5b4"
+                    ]
+                }
+            }
+        ],
+        "\uae40\uce58\ub0c9\uc7a5\uace0": [
+            {
+                "mode": "single",
+                "key": "type",
+                "label": "\uc720\ud615",
+                "options": [
+                    "\ub69c\uaed1\uc2dd",
+                    "\uc2a4\ud0e0\ub4dc",
+                    "\ucee8\ubc84\ud130\ube14"
+                ]
+            },
+            {
+                "mode": "singleBy",
+                "key": "detail",
+                "label": "\uad6c\ubd84",
+                "dependsOn": "type",
+                "optionsByValue": {
+                    "\ub69c\uaed1\uc2dd": [
+                        "1\ub3c4\uc5b4",
+                        "2\ub3c4\uc5b4"
+                    ],
+                    "\uc2a4\ud0e0\ub4dc": [
+                        "\ud54f\uc564\ub9e5\uc2a4 3\ub3c4\uc5b4",
+                        "\ud54f\uc564\ub9e5\uc2a4 4\ub3c4\uc5b4",
+                        "\uc77c\ubc18 3\ub3c4\uc5b4",
+                        "\uc77c\ubc18 4\ub3c4\uc5b4"
+                    ],
+                    "\ucee8\ubc84\ud130\ube14": [
+                        "1\ub3c4\uc5b4"
+                    ]
+                }
+            }
+        ],
+        "\uc138\ud0c1\uae30/\uac74\uc870\uae30": [
+            {
+                "mode": "single",
+                "key": "type",
+                "label": "\uc720\ud615",
+                "options": [
+                    "\uc6cc\uc2dc\ud0c0\uc6cc",
+                    "\ucf64\ubcf4",
+                    "\ubd84\ub9ac\ud615(\uc138\ud0c1\uae30/\uac74\uc870\uae30)"
+                ]
+            },
+            {
+                "mode": "singleBy",
+                "key": "detail",
+                "label": "\uad6c\ubd84",
+                "dependsOn": "type",
+                "optionsByValue": {
+                    "\uc6cc\uc2dc\ud0c0\uc6cc": [
+                        "\uc635\uc158\ud615",
+                        "AI"
+                    ],
+                    "\ucf64\ubcf4": [
+                        "AI"
+                    ],
+                    "\ubd84\ub9ac\ud615": [
+                        "\ubcd1\ub82c\uc124\uce58",
+                        "\uc9c1\ub82c\uc124\uce58",
+                        "\ubd84\ub9ac\uc124\uce58"
+                    ]
+                }
+            }
+        ],
+        "\uc758\ub958\uad00\ub9ac\uae30": [
+            {
+                "mode": "single",
+                "key": "type",
+                "label": "\uc720\ud615",
+                "options": [
+                    "\uc2a4\ud0c0\uc77c\ub7ec",
+                    "\uc0c1\uc138 \uc635\uc158 \ubbf8\uc785\ub825"
+                ]
+            }
+        ],
+        "\uc5d0\uc5b4\ucee8": [
+            {
+                "mode": "single",
+                "key": "type",
+                "label": "\uc885\ub958",
+                "options": [
+                    "2IN1",
+                    "\uc2a4\ud0e0\ub4dc",
+                    "\ubcbd\uac78\uc774",
+                    "\ucc9c\uc7a5\ud615",
+                    "\uc0c1\uc138 \uc635\uc158 \ubbf8\uc785\ub825"
+                ]
+            },
+            {
+                "mode": "singleBy",
+                "key": "size",
+                "label": "\ub0c9\ubc29\uba74\uc801",
+                "dependsOn": "type",
+                "optionsByValue": {
+                    "2IN1": [
+                        "18\ud3c9",
+                        "24\ud3c9",
+                        "34\ud3c9",
+                        "40\ud3c9\ud615 \uc774\uc0c1"
+                    ],
+                    "\uc2a4\ud0e0\ub4dc": [
+                        "18\ud3c9",
+                        "24\ud3c9",
+                        "34\ud3c9",
+                        "40\ud3c9\ud615 \uc774\uc0c1"
+                    ],
+                    "\ubcbd\uac78\uc774": [
+                        "6\ud3c9",
+                        "7\ud3c9",
+                        "9\ud3c9",
+                        "11\ud3c9"
+                    ],
+                    "\ucc9c\uc7a5\ud615": [
+                        "3\uc2e4",
+                        "4\uc2e4",
+                        "5\uc2e4",
+                        "6\uc2e4"
+                    ],
+                    "\uc0c1\uc138 \uc635\uc158 \ubbf8\uc785\ub825": [
+                        "\uc0c1\uc138 \uc635\uc158 \ubbf8\uc785\ub825"
+                    ]
+                }
+            }
+        ],
+        "\uccad\uc18c\uae30": [
+            {
+                "mode": "multi",
+                "key": "type",
+                "label": "\uc720\ud615",
+                "options": [
+                    "\ubb34\uc120\uccad\uc18c\uae30",
+                    "\ub85c\ubd07\uccad\uc18c\uae30",
+                    "\uc720\uc120\uccad\uc18c\uae30"
+                ]
+            }
+        ],
+        "\uc2dd\uae30\uc138\ucc99\uae30": [
+            {
+                "mode": "single",
+                "key": "type",
+                "label": "\uc124\uce58\ud615\ud0dc",
+                "options": [
+                    "\ube5d\ud2b8\uc778",
+                    "\uce74\uc6b4\ud130\ud0d1",
+                    "\ud504\ub9ac\uc2a4\ud0e0\ub529"
+                ]
+            }
+        ],
+        "\uc778\ub355\uc158": [
+            {
+                "mode": "single",
+                "key": "type",
+                "label": "\uc124\uce58\ud615\ud0dc",
+                "options": [
+                    "\ube4c\ud2b8\uc778 O",
+                    "\ube4c\ud2b8\uc778 X"
+                ]
+            },
+            {
+                "mode": "single",
+                "key": "burner",
+                "label": "\ud654\uad6c\uc218",
+                "options": [
+                    "2\uad6c",
+                    "3\uad6c",
+                    "4\uad6c"
+                ]
+            }
+        ],
+        "\uc624\ube10 / \uc804\uc790\ub808\uc778\uc9c0": [
+            {
+                "mode": "multi",
+                "key": "type",
+                "label": "\uc720\ud615",
+                "options": [
+                    "\ubcf5\ud569\uc624\ube10",
+                    "\uc804\uc790\ub808\uc778\uc9c0"
+                ]
+            }
+        ],
+        "\uc815\uc218\uae30": [
+            {
+                "mode": "single",
+                "key": "type",
+                "label": "\uc720\ud615",
+                "options": [
+                    "\uc5bc\uc74c\uc815\uc218\uae30",
+                    "\ub0c9\uc628\uc815\uc218\uae30",
+                    "\ub0c9\uc815\uc218\uae30",
+                    "\uc628\uc815\uc218\uae30"
+                ]
+            }
+        ],
+        "\uacf5\uae30\uccad\uc815\uae30": [
+            {
+                "mode": "single",
+                "key": "size",
+                "label": "\uc0ac\uc6a9\uba74\uc801",
+                "options": [
+                    "10\ud3c9 \uc774\ud558",
+                    "10\ud3c9\ub300",
+                    "20\ud3c9\ub300",
+                    "30\ud3c9\ub300 \uc774\uc0c1"
+                ]
+            }
+        ]
+    }
+};
 
   const aiSituations = ["혼수/웨딩", "신축 입주", "이사", "교체", "사업장/B2B"];
   const familyOptions = ["1인", "2인", "3~4인", "5인 이상", "아이 있음", "반려동물 있음"];
@@ -767,11 +1570,12 @@
           const key = input.dataset.optionKey;
           const section = schema.find((item) => item.key === key);
           if (!section) return;
-          if (section.type === "multi") {
+          if (isMultiOption(section)) {
             draft[key] = [...wrap.querySelectorAll(`[data-option-key="${cssEscape(key)}"]:checked`)].map((item) => item.value);
           } else {
             draft[key] = input.value;
           }
+          clearDependentOptionValues(schema, draft, key);
           clearAiRecommendation();
           rerender();
         });
@@ -808,13 +1612,78 @@
     return draft;
   }
 
+  function selectedBrandKey() {
+    const raw = String(fields.brand.value || "");
+    if (raw.includes("\uc0bc\uc131")) return "\uc0bc\uc131\uc804\uc790";
+    if (raw.includes("\ube44\uad50")) return "\ube44\uad50\uacac\uc801";
+    return "LG\uc804\uc790";
+  }
+
+  function optionSchemaFor(product) {
+    const brandKey = selectedBrandKey();
+    const schema = brandOptionSchema[brandKey]?.[product] || brandOptionSchema["LG\uc804\uc790"]?.[product] || [];
+    if (schema.length) return schema.map(cloneOptionSection);
+    return [
+      {
+        mode: "single",
+        key: "detail",
+        label: "\uc0c1\uc138 \uc635\uc158",
+        options: [unknownOption]
+      }
+    ];
+  }
+
+  function cloneOptionSection(section) {
+    const cloned = { ...section };
+    if (Array.isArray(section.options)) cloned.options = [...section.options];
+    if (Array.isArray(section.values)) cloned.values = [...section.values];
+    const sourceByValue = section.optionsByValue || section.valuesByParent;
+    if (sourceByValue) {
+      cloned.optionsByValue = {};
+      Object.entries(sourceByValue).forEach(([key, values]) => {
+        cloned.optionsByValue[key] = Array.isArray(values) ? [...values] : [];
+      });
+    }
+    return cloned;
+  }
+
+  function isMultiOption(section) {
+    return section.mode === "multi" || section.mode === "multiBy" || section.type === "multi";
+  }
+
+  function optionParentKey(section) {
+    return section.dependsOn || section.parent || "";
+  }
+
+  function optionSectionLabel(section) {
+    return section.label || section.title || "";
+  }
+
   function sectionValues(section, draft) {
-    if (Array.isArray(section.values)) return section.values;
-    if (!section.parent || !section.valuesByParent) return [];
-    const parentValue = draft[section.parent];
+    if (Array.isArray(section.options)) return [...new Set(section.options)];
+    if (Array.isArray(section.values)) return [...new Set(section.values)];
+    const parentKey = optionParentKey(section);
+    const valuesByParent = section.optionsByValue || section.valuesByParent;
+    if (!parentKey || !valuesByParent) return [];
+    const parentValue = draft[parentKey];
     const parents = Array.isArray(parentValue) ? parentValue : [parentValue].filter(Boolean);
-    const values = parents.flatMap((item) => section.valuesByParent[item] || []);
+    const values = parents.flatMap((item) => valuesByParent[item] || []);
     return [...new Set(values)];
+  }
+
+  function clearDependentOptionValues(schema, draft, changedKey) {
+    const changedKeys = new Set([changedKey]);
+    let changed = true;
+    while (changed) {
+      changed = false;
+      schema.forEach((section) => {
+        const parentKey = optionParentKey(section);
+        if (!parentKey || !changedKeys.has(parentKey) || !Object.prototype.hasOwnProperty.call(draft, section.key)) return;
+        delete draft[section.key];
+        changedKeys.add(section.key);
+        changed = true;
+      });
+    }
   }
 
   function pruneOptionDraft(schema, draft) {
@@ -823,18 +1692,19 @@
       changed = false;
       schema.forEach((section) => {
         const values = sectionValues(section, draft);
-        if (!values.length && section.parent) {
-          if (draft[section.key]) {
+        if (!values.length && optionParentKey(section)) {
+          if (Object.prototype.hasOwnProperty.call(draft, section.key)) {
             delete draft[section.key];
             changed = true;
           }
           return;
         }
-        if (section.type === "multi") {
+        if (isMultiOption(section)) {
           const current = Array.isArray(draft[section.key]) ? draft[section.key] : [];
           const next = current.filter((item) => values.includes(item));
           if (next.length !== current.length) {
-            draft[section.key] = next;
+            if (next.length) draft[section.key] = next;
+            else delete draft[section.key];
             changed = true;
           }
           return;
@@ -852,7 +1722,7 @@
     schema.forEach((section) => {
       const values = sectionValues(section, draft);
       if (!values.length) return;
-      if (section.type === "multi") {
+      if (isMultiOption(section)) {
         const selected = Array.isArray(draft[section.key]) ? draft[section.key].filter((item) => values.includes(item)) : [];
         if (selected.length) next[section.key] = selected;
         return;
@@ -866,11 +1736,11 @@
     const sectionValuesList = sectionValues(section, draft);
     if (!sectionValuesList.length) return "";
     const selectedValues = Array.isArray(draft[section.key]) ? draft[section.key] : [draft[section.key]].filter(Boolean);
-    const inputType = section.type === "multi" ? "checkbox" : "radio";
+    const inputType = isMultiOption(section) ? "checkbox" : "radio";
     const inputName = `option-${product}-${section.key}`;
     return `
       <section class="option-section">
-        <h4>${escapeHtml(section.title)}</h4>
+        <h4>${escapeHtml(optionSectionLabel(section))}</h4>
         ${sectionValuesList
           .map((value) => {
             const checked = selectedValues.includes(value);
