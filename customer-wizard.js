@@ -89,1014 +89,299 @@
   ];
 
   const productOptions = [
-    {
-        "value": "TV",
-        "title": "TV",
-        "icon": "TV",
-        "thumb": "tv"
-    },
-    {
-        "value": "\ub77c\uc774\ud504\uc2a4\ud0c0\uc77c TV",
-        "title": "\ub77c\uc774\ud504\uc2a4\ud0c0\uc77c TV",
-        "icon": "LS",
-        "thumb": "lifestyle"
-    },
-    {
-        "value": "\ub0c9\uc7a5\uace0",
-        "title": "\ub0c9\uc7a5\uace0",
-        "icon": "\ub0c9",
-        "thumb": "fridge"
-    },
-    {
-        "value": "\uae40\uce58\ub0c9\uc7a5\uace0",
-        "title": "\uae40\uce58\ub0c9\uc7a5\uace0",
-        "icon": "\uae40",
-        "thumb": "kimchi"
-    },
-    {
-        "value": "\uc138\ud0c1\uae30/\uac74\uc870\uae30",
-        "title": "\uc138\ud0c1\uae30+\uac74\uc870\uae30",
-        "icon": "\uc138",
-        "thumb": "washer"
-    },
-    {
-        "value": "\uc758\ub958\uad00\ub9ac\uae30",
-        "title": "\uc758\ub958 \uad00\ub9ac\uae30",
-        "icon": "\uc758",
-        "thumb": "styler"
-    },
-    {
-        "value": "\uc5d0\uc5b4\ucee8",
-        "title": "\uc5d0\uc5b4\ucee8",
-        "icon": "\uc5d0",
-        "thumb": "aircon"
-    },
-    {
-        "value": "\uccad\uc18c\uae30",
-        "title": "\uccad\uc18c\uae30",
-        "icon": "\uccad",
-        "thumb": "vacuum"
-    },
-    {
-        "value": "\uc2dd\uae30\uc138\ucc99\uae30",
-        "title": "\uc2dd\uae30\uc138\ucc99\uae30",
-        "icon": "\uc2dd",
-        "thumb": "dishwasher"
-    },
-    {
-        "value": "\uc778\ub355\uc158",
-        "title": "\uc778\ub355\uc158",
-        "icon": "\uc778",
-        "thumb": "induction"
-    },
-    {
-        "value": "\uc624\ube10 / \uc804\uc790\ub808\uc778\uc9c0",
-        "title": "\uc624\ube10 / \uc804\uc790\ub808\uc778\uc9c0",
-        "icon": "\uc624",
-        "thumb": "oven"
-    },
-    {
-        "value": "\uc815\uc218\uae30",
-        "title": "\uc815\uc218\uae30",
-        "icon": "\uc815",
-        "thumb": "water"
-    },
-    {
-        "value": "\uacf5\uae30\uccad\uc815\uae30",
-        "title": "\uacf5\uae30\uccad\uc815\uae30",
-        "icon": "\uacf5",
-        "thumb": "purifier"
-    }
-];
+    { value: "TV", title: "TV", icon: "TV", thumb: "tv" },
+    { value: "라이프스타일 TV", title: "라이프스타일 TV", icon: "LS", thumb: "lifestyle" },
+    { value: "냉장고", title: "냉장고", icon: "냉", thumb: "fridge" },
+    { value: "김치냉장고", title: "김치냉장고", icon: "김", thumb: "kimchi" },
+    { value: "세탁기/건조기", title: "세탁기 / 건조기", icon: "세", thumb: "washer" },
+    { value: "의류관리기", title: "의류관리기", icon: "의", thumb: "styler" },
+    { value: "에어컨", title: "에어컨", icon: "에", thumb: "aircon" },
+    { value: "청소기", title: "청소기", icon: "청", thumb: "vacuum" },
+    { value: "식기세척기", title: "식기세척기", icon: "식", thumb: "dishwasher" },
+    { value: "인덕션/전기레인지", title: "인덕션", icon: "인", thumb: "induction" },
+    { value: "오븐 / 전자레인지", title: "오븐 / 전자레인지", icon: "오", thumb: "oven" },
+    { value: "공기청정기", title: "공기청정기", icon: "공", thumb: "purifier" },
+    { value: "정수기", title: "정수기", icon: "정", thumb: "water" },
+  ];
 
-  const unknownOption = "\uc0c1\uc138 \uc635\uc158 \ubbf8\uc785\ub825";
+  const unknownOption = "상세 옵션 미입력";
+  const brandProductTitles = {
+    "LG전자": {
+      "라이프스타일 TV": "스탠바이미",
+      "세탁기/건조기": "세탁기 / 건조기",
+      "의류관리기": "스타일러",
+      "인덕션/전기레인지": "인덕션",
+    },
+    "삼성전자": {
+      "라이프스타일 TV": "더 무빙스타일",
+      "세탁기/건조기": "세탁기 / 건조기",
+      "의류관리기": "에어드레서",
+      "인덕션/전기레인지": "인덕션",
+    },
+  };
+
   const brandOptionSchema = {
-    "LG\uc804\uc790": {
-        "TV": [
-            {
-                "mode": "single",
-                "key": "type",
-                "label": "\uc720\ud615",
-                "options": [
-                    "QNED",
-                    "OLED",
-                    "MRGB"
-                ]
-            },
-            {
-                "mode": "singleBy",
-                "key": "size",
-                "label": "\uc778\uce58",
-                "dependsOn": "type",
-                "optionsByValue": {
-                    "QNED": [
-                        "32\uc778\uce58",
-                        "43\uc778\uce58",
-                        "55\uc778\uce58",
-                        "65\uc778\uce58",
-                        "75\uc778\uce58",
-                        "85\uc778\uce58",
-                        "100\uc778\uce58"
-                    ],
-                    "OLED": [
-                        "42\uc778\uce58",
-                        "48\uc778\uce58",
-                        "55\uc778\uce58",
-                        "65\uc778\uce58",
-                        "77\uc778\uce58",
-                        "83\uc778\uce58",
-                        "98\uc778\uce58"
-                    ],
-                    "MRGB": [
-                        "32\uc778\uce58",
-                        "43\uc778\uce58",
-                        "55\uc778\uce58",
-                        "65\uc778\uce58",
-                        "75\uc778\uce58",
-                        "85\uc778\uce58",
-                        "100\uc778\uce58"
-                    ]
-                }
-            }
-        ],
-        "\ub77c\uc774\ud504\uc2a4\ud0c0\uc77c TV": [
-            {
-                "mode": "single",
-                "key": "type",
-                "label": "\uc720\ud615",
-                "options": [
-                    "\uc2a4\ud0e0\ubc14\uc774\ubbf8",
-                    "\uc2a4\ud0e0\ubc14\uc774\ubbf8 GO"
-                ]
-            },
-            {
-                "mode": "singleBy",
-                "key": "size",
-                "label": "\uc778\uce58",
-                "dependsOn": "type",
-                "optionsByValue": {
-                    "\uc2a4\ud0e0\ubc14\uc774\ubbf8": [
-                        "27\uc778\uce58"
-                    ],
-                    "\uc2a4\ud0e0\ubc14\uc774\ubbf8 GO": [
-                        "27\uc778\uce58"
-                    ]
-                }
-            }
-        ],
-        "\ub0c9\uc7a5\uace0": [
-            {
-                "mode": "single",
-                "key": "type",
-                "label": "\uc720\ud615",
-                "options": [
-                    "\uc0c1\ub0c9\uc7a5",
-                    "\ud54f\uc564\ub9e5\uc2a4",
-                    "\uc591\ubb38\ud615",
-                    "\ucee8\ubc84\ud130\ube14"
-                ]
-            },
-            {
-                "mode": "singleBy",
-                "key": "detail",
-                "label": "\uad6c\ubd84",
-                "dependsOn": "type",
-                "optionsByValue": {
-                    "\uc0c1\ub0c9\uc7a5": [
-                        "\uc5bc\uc74c\uc815\uc218\uae30 \ub0c9\uc7a5\uace0"
-                    ],
-                    "\ud54f\uc564\ub9e5\uc2a4": [
-                        "\ub178\ud06c\uc628",
-                        "\uc77c\ubc18"
-                    ],
-                    "\uc591\ubb38\ud615": [
-                        "2\ub3c4\uc5b4"
-                    ],
-                    "\ucee8\ubc84\ud130\ube14": [
-                        "1\ub3c4\uc5b4"
-                    ]
-                }
-            }
-        ],
-        "\uae40\uce58\ub0c9\uc7a5\uace0": [
-            {
-                "mode": "single",
-                "key": "type",
-                "label": "\uc720\ud615",
-                "options": [
-                    "\ub69c\uaed1\uc2dd",
-                    "\uc2a4\ud0e0\ub4dc",
-                    "\ucee8\ubc84\ud130\ube14"
-                ]
-            },
-            {
-                "mode": "singleBy",
-                "key": "detail",
-                "label": "\uad6c\ubd84",
-                "dependsOn": "type",
-                "optionsByValue": {
-                    "\ub69c\uaed1\uc2dd": [
-                        "1\ub3c4\uc5b4",
-                        "2\ub3c4\uc5b4"
-                    ],
-                    "\uc2a4\ud0e0\ub4dc": [
-                        "\ud54f\uc564\ub9e5\uc2a4 3\ub3c4\uc5b4",
-                        "\ud54f\uc564\ub9e5\uc2a4 4\ub3c4\uc5b4",
-                        "\uc77c\ubc18 3\ub3c4\uc5b4",
-                        "\uc77c\ubc18 4\ub3c4\uc5b4"
-                    ],
-                    "\ucee8\ubc84\ud130\ube14": [
-                        "1\ub3c4\uc5b4"
-                    ]
-                }
-            }
-        ],
-        "\uc138\ud0c1\uae30/\uac74\uc870\uae30": [
-            {
-                "mode": "single",
-                "key": "type",
-                "label": "\uc720\ud615",
-                "options": [
-                    "\uc6cc\uc2dc\ud0c0\uc6cc",
-                    "\ucf64\ubcf4",
-                    "\ubd84\ub9ac\ud615(\uc138\ud0c1\uae30/\uac74\uc870\uae30)"
-                ]
-            },
-            {
-                "mode": "singleBy",
-                "key": "detail",
-                "label": "\uad6c\ubd84",
-                "dependsOn": "type",
-                "optionsByValue": {
-                    "\uc6cc\uc2dc\ud0c0\uc6cc": [
-                        "\uc635\uc158\ud615",
-                        "AI"
-                    ],
-                    "\ucf64\ubcf4": [
-                        "AI"
-                    ],
-                    "\ubd84\ub9ac\ud615": [
-                        "\ubcd1\ub82c\uc124\uce58",
-                        "\uc9c1\ub82c\uc124\uce58",
-                        "\ubd84\ub9ac\uc124\uce58"
-                    ]
-                }
-            }
-        ],
-        "\uc758\ub958\uad00\ub9ac\uae30": [
-            {
-                "mode": "single",
-                "key": "type",
-                "label": "\uc720\ud615",
-                "options": [
-                    "\uc2a4\ud0c0\uc77c\ub7ec",
-                    "\uc0c1\uc138 \uc635\uc158 \ubbf8\uc785\ub825"
-                ]
-            }
-        ],
-        "\uc5d0\uc5b4\ucee8": [
-            {
-                "mode": "single",
-                "key": "type",
-                "label": "\uc885\ub958",
-                "options": [
-                    "2IN1",
-                    "\uc2a4\ud0e0\ub4dc",
-                    "\ubcbd\uac78\uc774",
-                    "\ucc9c\uc7a5\ud615",
-                    "\uc0c1\uc138 \uc635\uc158 \ubbf8\uc785\ub825"
-                ]
-            },
-            {
-                "mode": "singleBy",
-                "key": "size",
-                "label": "\ub0c9\ubc29\uba74\uc801",
-                "dependsOn": "type",
-                "optionsByValue": {
-                    "2IN1": [
-                        "18\ud3c9",
-                        "24\ud3c9",
-                        "34\ud3c9",
-                        "40\ud3c9\ud615 \uc774\uc0c1"
-                    ],
-                    "\uc2a4\ud0e0\ub4dc": [
-                        "18\ud3c9",
-                        "24\ud3c9",
-                        "34\ud3c9",
-                        "40\ud3c9\ud615 \uc774\uc0c1"
-                    ],
-                    "\ubcbd\uac78\uc774": [
-                        "6\ud3c9",
-                        "7\ud3c9",
-                        "9\ud3c9",
-                        "11\ud3c9"
-                    ],
-                    "\ucc9c\uc7a5\ud615": [
-                        "3\uc2e4",
-                        "4\uc2e4",
-                        "5\uc2e4",
-                        "6\uc2e4"
-                    ],
-                    "\uc0c1\uc138 \uc635\uc158 \ubbf8\uc785\ub825": [
-                        "\uc0c1\uc138 \uc635\uc158 \ubbf8\uc785\ub825"
-                    ]
-                }
-            }
-        ],
-        "\uccad\uc18c\uae30": [
-            {
-                "mode": "multi",
-                "key": "type",
-                "label": "\uc720\ud615",
-                "options": [
-                    "\ubb34\uc120\uccad\uc18c\uae30",
-                    "\ub85c\ubd07\uccad\uc18c\uae30",
-                    "\uc720\uc120\uccad\uc18c\uae30"
-                ]
-            }
-        ],
-        "\uc2dd\uae30\uc138\ucc99\uae30": [
-            {
-                "mode": "single",
-                "key": "type",
-                "label": "\uc124\uce58\ud615\ud0dc",
-                "options": [
-                    "\ube5d\ud2b8\uc778",
-                    "\uce74\uc6b4\ud130\ud0d1",
-                    "\ud504\ub9ac\uc2a4\ud0e0\ub529"
-                ]
-            }
-        ],
-        "\uc778\ub355\uc158": [
-            {
-                "mode": "single",
-                "key": "type",
-                "label": "\uc124\uce58\ud615\ud0dc",
-                "options": [
-                    "\ube4c\ud2b8\uc778 O",
-                    "\ube4c\ud2b8\uc778 X"
-                ]
-            },
-            {
-                "mode": "single",
-                "key": "burner",
-                "label": "\ud654\uad6c\uc218",
-                "options": [
-                    "2\uad6c",
-                    "3\uad6c",
-                    "4\uad6c"
-                ]
-            }
-        ],
-        "\uc624\ube10 / \uc804\uc790\ub808\uc778\uc9c0": [
-            {
-                "mode": "multi",
-                "key": "type",
-                "label": "\uc720\ud615",
-                "options": [
-                    "\ubcf5\ud569\uc624\ube10",
-                    "\uc804\uc790\ub808\uc778\uc9c0"
-                ]
-            }
-        ],
-        "\uc815\uc218\uae30": [
-            {
-                "mode": "single",
-                "key": "type",
-                "label": "\uc720\ud615",
-                "options": [
-                    "\uc5bc\uc74c\uc815\uc218\uae30",
-                    "\ub0c9\uc628\uc815\uc218\uae30",
-                    "\ub0c9\uc815\uc218\uae30",
-                    "\uc628\uc815\uc218\uae30"
-                ]
-            }
-        ],
-        "\uacf5\uae30\uccad\uc815\uae30": [
-            {
-                "mode": "single",
-                "key": "size",
-                "label": "\uc0ac\uc6a9\uba74\uc801",
-                "options": [
-                    "10\ud3c9 \uc774\ud558",
-                    "10\ud3c9\ub300",
-                    "20\ud3c9\ub300",
-                    "30\ud3c9\ub300 \uc774\uc0c1"
-                ]
-            }
-        ]
+    "LG전자": {
+      "TV": [
+        { mode: "single", key: "type", label: "유형", options: ["QNED", "OLED", "MRGB"] },
+        {
+          mode: "singleBy",
+          key: "size",
+          label: "인치",
+          dependsOn: "type",
+          optionsByValue: {
+            "QNED": ["32인치", "43인치", "55인치", "65인치", "75인치", "85인치", "100인치"],
+            "OLED": ["42인치", "48인치", "55인치", "65인치", "77인치", "83인치", "98인치"],
+            "MRGB": ["55인치", "65인치", "75인치", "85인치", "100인치"],
+          },
+        },
+      ],
+      "스탠바이미": [
+        { mode: "single", key: "type", label: "유형", options: ["스탠바이미", "스탠바이미 GO"] },
+        {
+          mode: "singleBy",
+          key: "size",
+          label: "인치",
+          dependsOn: "type",
+          optionsByValue: { "스탠바이미": ["27인치", "32인치"], "스탠바이미 GO": ["27인치"] },
+        },
+      ],
+      "냉장고": [
+        { mode: "single", key: "type", label: "유형", options: ["상냉장", "핏앤맥스", "양문형", "컨버터블"] },
+        {
+          mode: "singleBy",
+          key: "detail",
+          label: "구분",
+          dependsOn: "type",
+          optionsByValue: {
+            "상냉장": ["얼음정수기 냉장고", "얼음 냉장고", "노크온", "일반"],
+            "핏앤맥스": ["노크온", "일반"],
+            "양문형": ["얼음정수기 냉장고", "일반"],
+          },
+        },
+      ],
+      "김치냉장고": [
+        { mode: "single", key: "type", label: "유형", options: ["뚜껑식", "스탠드", "컨버터블"] },
+        {
+          mode: "singleBy",
+          key: "detail",
+          label: "구분",
+          dependsOn: "type",
+          optionsByValue: {
+            "뚜껑식": ["1도어", "2도어"],
+            "스탠드": ["핏앤맥스 3도어", "핏앤맥스 4도어", "일반 3도어", "일반 4도어"],
+          },
+        },
+      ],
+      "세탁기 / 건조기": [
+        { mode: "single", key: "type", label: "유형", options: ["워시타워", "콤보", "분리형(세탁기/건조기)", "드럼세탁기", "일반세탁기"] },
+        {
+          mode: "singleBy",
+          key: "detail",
+          label: "구분",
+          labelByValue: { "콤보": "유형" },
+          dependsOn: "type",
+          optionsByValue: {
+            "워시타워": ["옵션형", "AI"],
+            "콤보": ["미니워시 포함", "미포함"],
+            "분리형(세탁기/건조기)": ["오브제", "일반"],
+            "드럼세탁기": ["오브제", "일반"],
+            "일반세탁기": ["17KG", "19KG", "21KG", "25KG"],
+          },
+        },
+      ],
+      "스타일러": [
+        { mode: "single", key: "capacity", label: "유형", options: ["3벌", "5벌"] },
+        { mode: "single", key: "finish", label: "유형", options: ["미러", "일반"] },
+        {
+          mode: "singleBy",
+          key: "steamer",
+          label: "유형",
+          dependsOn: "capacity",
+          optionsByValue: { "5벌": ["스티머 O", "스티머 X"] },
+        },
+      ],
+      "에어컨": [
+        { mode: "single", key: "type", label: "구분", options: ["2IN1", "스탠드", "벽걸이", "천장형"] },
+        {
+          mode: "singleBy",
+          key: "area",
+          label: "평형",
+          dependsOn: "type",
+          optionsByValue: {
+            "2IN1": ["18평형", "22평형", "25평형"],
+            "스탠드": ["18평형", "22평형", "25평형"],
+            "벽걸이": ["6평형", "7평형", "9평형", "11평형", "13평형", "16평형"],
+          },
+        },
+        { mode: "singleBy", key: "quantity", label: "수량", dependsOn: "type", optionsByValue: { "천장형": ["2", "3", "4", "5", "6"] } },
+      ],
+      "청소기": [
+        { mode: "single", key: "type", label: "구분", options: ["무선 청소기", "로봇 청소기", "유선 청소기"] },
+        {
+          mode: "singleBy",
+          key: "detail",
+          label: "구분",
+          dependsOn: "type",
+          optionsByValue: {
+            "무선 청소기": ["기본형", "먼지흡입", "프리이미엄"],
+            "로봇 청소기": ["프리스탠딩", "직배수형"],
+          },
+        },
+      ],
+      "식기세척기": [
+        { mode: "single", key: "type", label: "구분", options: ["빝트인", "프리스탠드", "카운터탑"] },
+        { mode: "singleBy", key: "toeKick", label: "걸레받이", dependsOn: "type", optionsByValue: { "빝트인": ["10CM", "15CM", "잘모르겠어요"] } },
+      ],
+      "인덕션": [
+        { mode: "single", key: "install", label: "구분", options: ["빌트인", "프리스탠딩"] },
+        { mode: "single", key: "heatType", label: "구분", options: ["인덕션", "하이브리드"] },
+        { mode: "singleBy", key: "height", label: "구분", dependsOn: "install", optionsByValue: { "프리스탠딩": ["3cm", "8cm", "15cm", "잘모르겠어요"] } },
+      ],
+      "오븐 / 전자레인지": [
+        { mode: "single", key: "type", label: "구분", options: ["복합오븐", "전자레인지"] },
+      ],
+      "공기청정기": [
+        { mode: "single", key: "type", label: "구분", options: ["1단", "2단"] },
+        { mode: "singleBy", key: "area", label: "평수", dependsOn: "type", optionsByValue: { "1단": ["20평형", "18평형"], "2단": ["35평형", "28평형"] } },
+      ],
+      "정수기": [
+        { mode: "single", key: "install", label: "구분", options: ["빌트인", "스탠드"] },
+        {
+          mode: "singleBy",
+          key: "function",
+          label: "구분",
+          dependsOn: "install",
+          optionsByValue: { "빌트인": ["냉,온,정수", "냉,정수"], "스탠드": ["얼음정수기", "냉,온,정수", "냉,정수"] },
+        },
+      ],
     },
-    "\uc0bc\uc131\uc804\uc790": {
-        "TV": [
-            {
-                "mode": "single",
-                "key": "type",
-                "label": "\uc720\ud615",
-                "options": [
-                    "NEO QLED",
-                    "OLED",
-                    "MRGB"
-                ]
-            },
-            {
-                "mode": "single",
-                "key": "install",
-                "label": "\uc124\uce58\ud615\ud0dc",
-                "options": [
-                    "\ubcbd\uac78\uc774",
-                    "\uc2a4\ud0e0\ub4dc"
-                ]
-            },
-            {
-                "mode": "single",
-                "key": "size",
-                "label": "\uc778\uce58",
-                "options": [
-                    "43\uc778\uce58",
-                    "50\uc778\uce58",
-                    "55\uc778\uce58",
-                    "65\uc778\uce58",
-                    "75\uc778\uce58",
-                    "85\uc778\uce58",
-                    "100\uc778\uce58"
-                ]
-            }
-        ],
-        "\ub77c\uc774\ud504\uc2a4\ud0c0\uc77c TV": [
-            {
-                "mode": "single",
-                "key": "type",
-                "label": "\uc720\ud615",
-                "options": [
-                    "\ub354 \ubb34\ube59\uc2a4\ud0c0\uc77c"
-                ]
-            },
-            {
-                "mode": "single",
-                "key": "size",
-                "label": "\uc778\uce58",
-                "options": [
-                    "27\uc778\uce58"
-                ]
-            }
-        ],
-        "\ub0c9\uc7a5\uace0": [
-            {
-                "mode": "single",
-                "key": "type",
-                "label": "\uc720\ud615",
-                "options": [
-                    "\uc0c1\ub0c9\uc7a5",
-                    "\ud0a4\uce5c\ud54f \ub9e5\uc2a4",
-                    "\uc591\ubb38\ud615",
-                    "1\ub3c4\uc5b4"
-                ]
-            },
-            {
-                "mode": "singleBy",
-                "key": "detail",
-                "label": "\uad6c\ubd84",
-                "dependsOn": "type",
-                "optionsByValue": {
-                    "\uc0c1\ub0c9\uc7a5": [
-                        "\ud328\ubc00\ub9ac\ud5c8\ube0c",
-                        "\ud558\uc774\ube0c\ub9ac\ub4dc"
-                    ],
-                    "\ud0a4\uce5c\ud54f \ub9e5\uc2a4": [
-                        "\ud558\uc774\ube0c\ub9ac\ub4dc"
-                    ],
-                    "\uc591\ubb38\ud615": [
-                        "2\ub3c4\uc5b4"
-                    ],
-                    "1\ub3c4\uc5b4": [
-                        "1\ub3c4\uc5b4"
-                    ]
-                }
-            }
-        ],
-        "\uae40\uce58\ub0c9\uc7a5\uace0": [
-            {
-                "mode": "single",
-                "key": "type",
-                "label": "\uc720\ud615",
-                "options": [
-                    "\ub69c\uaed1\uc2dd",
-                    "\uc2a4\ud0e0\ub4dc",
-                    "1\ub3c4\uc5b4"
-                ]
-            },
-            {
-                "mode": "singleBy",
-                "key": "detail",
-                "label": "\uad6c\ubd84",
-                "dependsOn": "type",
-                "optionsByValue": {
-                    "\ub69c\uaed1\uc2dd": [
-                        "1\ub3c4\uc5b4",
-                        "2\ub3c4\uc5b4"
-                    ],
-                    "\uc2a4\ud0e0\ub4dc": [
-                        "\ud0a4\uce5c\ud54f 3\ub3c4\uc5b4",
-                        "\ud0a4\uce5c\ud54f 4\ub3c4\uc5b4",
-                        "\uc77c\ubc18 3\ub3c4\uc5b4",
-                        "\uc77c\ubc18 4\ub3c4\uc5b4"
-                    ],
-                    "1\ub3c4\uc5b4": [
-                        "1\ub3c4\uc5b4"
-                    ]
-                }
-            }
-        ],
-        "\uc138\ud0c1\uae30/\uac74\uc870\uae30": [
-            {
-                "mode": "single",
-                "key": "type",
-                "label": "\uc720\ud615",
-                "options": [
-                    "\uc6d0\ubc14\ub514",
-                    "\ucf64\ubcf4",
-                    "\ubd84\ub9ac\ud615(\uc138\ud0c1\uae30/\uac74\uc870\uae30)"
-                ]
-            },
-            {
-                "mode": "singleBy",
-                "key": "detail",
-                "label": "\uad6c\ubd84",
-                "dependsOn": "type",
-                "optionsByValue": {
-                    "\uc6d0\ubc14\ub514": [
-                        "\uc778\ud53c\ub2c8\ud2b8",
-                        "AI"
-                    ],
-                    "\ucf64\ubcf4": [
-                        "AI"
-                    ],
-                    "\ubd84\ub9ac\ud615": [
-                        "25KG / 20KG",
-                        "25KG / 22KG"
-                    ]
-                }
-            }
-        ],
-        "\uc758\ub958\uad00\ub9ac\uae30": [
-            {
-                "mode": "single",
-                "key": "type",
-                "label": "\uc720\ud615",
-                "options": [
-                    "\uc5d0\uc5b4\ub4dc\ub808\uc11c",
-                    "\uc0c1\uc138 \uc635\uc158 \ubbf8\uc785\ub825"
-                ]
-            }
-        ],
-        "\uc5d0\uc5b4\ucee8": [
-            {
-                "mode": "single",
-                "key": "type",
-                "label": "\uc885\ub958",
-                "options": [
-                    "2IN1",
-                    "\uc2a4\ud0e0\ub4dc",
-                    "\ubcbd\uac78\uc774",
-                    "\ucc9c\uc7a5\ud615",
-                    "\uc0c1\uc138 \uc635\uc158 \ubbf8\uc785\ub825"
-                ]
-            },
-            {
-                "mode": "singleBy",
-                "key": "size",
-                "label": "\ub0c9\ubc29\uba74\uc801",
-                "dependsOn": "type",
-                "optionsByValue": {
-                    "2IN1": [
-                        "18\ud3c9",
-                        "24\ud3c9",
-                        "34\ud3c9",
-                        "40\ud3c9\ud615 \uc774\uc0c1"
-                    ],
-                    "\uc2a4\ud0e0\ub4dc": [
-                        "18\ud3c9",
-                        "24\ud3c9",
-                        "34\ud3c9",
-                        "40\ud3c9\ud615 \uc774\uc0c1"
-                    ],
-                    "\ubcbd\uac78\uc774": [
-                        "6\ud3c9",
-                        "7\ud3c9",
-                        "9\ud3c9",
-                        "11\ud3c9"
-                    ],
-                    "\ucc9c\uc7a5\ud615": [
-                        "3\uc2e4",
-                        "4\uc2e4",
-                        "5\uc2e4",
-                        "6\uc2e4"
-                    ],
-                    "\uc0c1\uc138 \uc635\uc158 \ubbf8\uc785\ub825": [
-                        "\uc0c1\uc138 \uc635\uc158 \ubbf8\uc785\ub825"
-                    ]
-                }
-            }
-        ],
-        "\uccad\uc18c\uae30": [
-            {
-                "mode": "multi",
-                "key": "type",
-                "label": "\uc720\ud615",
-                "options": [
-                    "\ubb34\uc120\uccad\uc18c\uae30",
-                    "\ub85c\ubd07\uccad\uc18c\uae30",
-                    "\uc720\uc120\uccad\uc18c\uae30"
-                ]
-            }
-        ],
-        "\uc2dd\uae30\uc138\ucc99\uae30": [
-            {
-                "mode": "single",
-                "key": "type",
-                "label": "\uc124\uce58\ud615\ud0dc",
-                "options": [
-                    "\ube4c\ud2b8\uc778",
-                    "\uce74\uc6b4\ud130\ud0d1",
-                    "\ud504\ub9ac\uc2a4\ud0e0\ub529"
-                ]
-            }
-        ],
-        "\uc778\ub355\uc158": [
-            {
-                "mode": "single",
-                "key": "type",
-                "label": "\uc124\uce58\ud615\ud0dc",
-                "options": [
-                    "\ube4c\ud2b8\uc778 O",
-                    "\ube4c\ud2b8\uc778 X"
-                ]
-            },
-            {
-                "mode": "single",
-                "key": "burner",
-                "label": "\ud654\uad6c\uc218",
-                "options": [
-                    "2\uad6c",
-                    "3\uad6c",
-                    "4\uad6c"
-                ]
-            }
-        ],
-        "\uc624\ube10 / \uc804\uc790\ub808\uc778\uc9c0": [
-            {
-                "mode": "multi",
-                "key": "type",
-                "label": "\uc720\ud615",
-                "options": [
-                    "\uc624\ube10",
-                    "\uc804\uc790\ub808\uc778\uc9c0"
-                ]
-            }
-        ],
-        "\uc815\uc218\uae30": [
-            {
-                "mode": "single",
-                "key": "type",
-                "label": "\uc720\ud615",
-                "options": [
-                    "\uc5bc\uc74c\uc815\uc218\uae30",
-                    "\ub0c9\uc628\uc815\uc218\uae30",
-                    "\ub0c9\uc815\uc218\uae30",
-                    "\uc628\uc815\uc218\uae30"
-                ]
-            }
-        ],
-        "\uacf5\uae30\uccad\uc815\uae30": [
-            {
-                "mode": "single",
-                "key": "size",
-                "label": "\uc0ac\uc6a9\uba74\uc801",
-                "options": [
-                    "10\ud3c9 \uc774\ud558",
-                    "10\ud3c9\ub300",
-                    "20\ud3c9\ub300",
-                    "30\ud3c9\ub300 \uc774\uc0c1"
-                ]
-            }
-        ]
+    "삼성전자": {
+      "TV": [
+        { mode: "single", key: "type", label: "유형", options: ["NEO QLED", "OLED", "MRGB"] },
+        { mode: "single", key: "install", label: "구분", options: ["벽걸이", "스탠드"] },
+        {
+          mode: "singleBy",
+          key: "size",
+          label: "인치",
+          dependsOn: "type",
+          optionsByValue: {
+            "NEO QLED": ["43인치", "50인치", "55인치", "65인치", "75인치", "85인치", "100인치"],
+            "OLED": ["42인치", "48인치", "55인치", "65인치", "77인치", "83인치"],
+            "MRGB": ["65인치", "75인치", "85인치", "100인치", "115인치"],
+          },
+        },
+      ],
+      "더 무빙스타일": [
+        { mode: "single", key: "size", label: "구분", options: ["27인치"] },
+      ],
+      "냉장고": [
+        { mode: "single", key: "type", label: "유형", options: ["상냉장", "키친핏 맥스", "양문형", "1도어"] },
+        {
+          mode: "singleBy",
+          key: "detail",
+          label: "구분",
+          dependsOn: "type",
+          optionsByValue: {
+            "상냉장": ["패밀리허브", "하이브리드"],
+            "키친핏 맥스": ["하이브리드"],
+            "양문형": ["정수기 냉장고", "일반"],
+            "1도어": ["인피니티", "일반"],
+          },
+        },
+      ],
+      "김치냉장고": [
+        { mode: "single", key: "type", label: "유형", options: ["뚜껑식", "스탠드", "1도어"] },
+        {
+          mode: "singleBy",
+          key: "detail",
+          label: "구분",
+          dependsOn: "type",
+          optionsByValue: {
+            "뚜껑식": ["1도어", "2도어"],
+            "스탠드": ["키친핏 3도어", "키친핏 4도어", "일반 3도어", "일반 4도어"],
+          },
+        },
+      ],
+      "세탁기 / 건조기": [
+        { mode: "single", key: "type", label: "유형", options: ["원바디", "콤보", "분리형(세탁기/건조기)", "드럼세탁기", "일반세탁기"] },
+        {
+          mode: "singleBy",
+          key: "detail",
+          label: "구분",
+          labelByValue: { "콤보": "유형" },
+          dependsOn: "type",
+          optionsByValue: {
+            "원바디": ["인피니트", "AI"],
+            "콤보": ["25KG / 20KG", "25KG / 22KG"],
+            "분리형(세탁기/건조기)": ["AI 맞춤 25KG / 22KG", "25KG / 20KG"],
+            "드럼세탁기": ["AI맞춤 25KG", "25KG"],
+            "일반세탁기": ["19KG", "21KG", "23KG", "25KG"],
+          },
+        },
+      ],
+      "에어드레서": [
+        { mode: "single", key: "capacity", label: "유형", options: ["9벌 + 3벌", "9벌 + 2벌"] },
+        { mode: "single", key: "finish", label: "유형", options: ["미러", "일반"] },
+        { mode: "singleBy", key: "crease", label: "유형", dependsOn: "capacity", optionsByValue: { "9벌 + 2벌": ["주름집중 O", "주름집중 X"] } },
+      ],
+      "에어컨": [
+        { mode: "single", key: "type", label: "구분", options: ["2IN1(무풍)", "2IN1(일반)", "스탠드", "벽걸이", "천장형"] },
+        {
+          mode: "singleBy",
+          key: "area",
+          label: "평형",
+          dependsOn: "type",
+          optionsByValue: {
+            "2IN1(무풍)": ["17평형", "19평형", "20평형", "22평형", "25평형"],
+            "2IN1(일반)": ["17평형", "19평형", "20평형", "22평형", "25평형"],
+            "스탠드": ["17평형", "19평형", "20평형", "22평형", "25평형"],
+            "벽걸이": ["6평형", "7평형", "9평형", "11평형", "13평형", "16평형"],
+          },
+        },
+        { mode: "singleBy", key: "quantity", label: "수량", dependsOn: "type", optionsByValue: { "천장형": ["2", "3", "4", "5", "6"] } },
+      ],
+      "청소기": [
+        { mode: "single", key: "type", label: "구분", options: ["무선 청소기", "로봇 청소기", "유선 청소기"] },
+        {
+          mode: "singleBy",
+          key: "detail",
+          label: "구분",
+          dependsOn: "type",
+          optionsByValue: {
+            "무선 청소기": ["제트 400W", "제트 Lite 280W", "제트 핏 180W"],
+            "로봇 청소기": ["일반", "자동급배수"],
+          },
+        },
+      ],
+      "식기세척기": [
+        { mode: "single", key: "type", label: "구분", options: ["빝트인", "카운터탑"] },
+        { mode: "singleBy", key: "toeKick", label: "걸레받이", dependsOn: "type", optionsByValue: { "빝트인": ["10CM", "15CM", "잘모르겠어요"] } },
+      ],
+      "인덕션": [
+        { mode: "single", key: "install", label: "구분", options: ["빌트인", "프리스탠딩"] },
+        { mode: "single", key: "heatType", label: "구분", options: ["인덕션", "인피니트"] },
+        { mode: "singleBy", key: "height", label: "구분", dependsOn: "install", optionsByValue: { "프리스탠딩": ["3cm", "8cm", "15cm", "잘모르겠어요"] } },
+      ],
+      "오븐 / 전자레인지": [
+        { mode: "single", key: "type", label: "구분", options: ["복합오븐", "전자레인지"] },
+      ],
+      "공기청정기": [
+        { mode: "single", key: "type", label: "구분", options: ["인피니트", "블루스카이"] },
+        { mode: "singleBy", key: "area", label: "평수", dependsOn: "type", optionsByValue: { "인피니트": ["10평형", "24평형", "30평형"], "블루스카이": ["10평형", "18평형"] } },
+      ],
+      "정수기": [
+        { mode: "single", key: "install", label: "구분", options: ["빌트인", "스탠드"] },
+        {
+          mode: "singleBy",
+          key: "function",
+          label: "구분",
+          dependsOn: "install",
+          optionsByValue: { "빌트인": ["냉,온,정수", "냉,정수", "정수"], "스탠드": ["얼음정수기", "냉,온,정수"] },
+        },
+      ],
     },
-    "\ube44\uad50\uacac\uc801": {
-        "TV": [
-            {
-                "mode": "single",
-                "key": "type",
-                "label": "\uc720\ud615",
-                "options": [
-                    "QNED",
-                    "OLED",
-                    "MRGB"
-                ]
-            },
-            {
-                "mode": "singleBy",
-                "key": "size",
-                "label": "\uc778\uce58",
-                "dependsOn": "type",
-                "optionsByValue": {
-                    "QNED": [
-                        "32\uc778\uce58",
-                        "43\uc778\uce58",
-                        "55\uc778\uce58",
-                        "65\uc778\uce58",
-                        "75\uc778\uce58",
-                        "85\uc778\uce58",
-                        "100\uc778\uce58"
-                    ],
-                    "OLED": [
-                        "42\uc778\uce58",
-                        "48\uc778\uce58",
-                        "55\uc778\uce58",
-                        "65\uc778\uce58",
-                        "77\uc778\uce58",
-                        "83\uc778\uce58",
-                        "98\uc778\uce58"
-                    ],
-                    "MRGB": [
-                        "32\uc778\uce58",
-                        "43\uc778\uce58",
-                        "55\uc778\uce58",
-                        "65\uc778\uce58",
-                        "75\uc778\uce58",
-                        "85\uc778\uce58",
-                        "100\uc778\uce58"
-                    ]
-                }
-            }
-        ],
-        "\ub77c\uc774\ud504\uc2a4\ud0c0\uc77c TV": [
-            {
-                "mode": "single",
-                "key": "type",
-                "label": "\uc720\ud615",
-                "options": [
-                    "\uc2a4\ud0e0\ubc14\uc774\ubbf8",
-                    "\uc2a4\ud0e0\ubc14\uc774\ubbf8 GO"
-                ]
-            },
-            {
-                "mode": "singleBy",
-                "key": "size",
-                "label": "\uc778\uce58",
-                "dependsOn": "type",
-                "optionsByValue": {
-                    "\uc2a4\ud0e0\ubc14\uc774\ubbf8": [
-                        "27\uc778\uce58"
-                    ],
-                    "\uc2a4\ud0e0\ubc14\uc774\ubbf8 GO": [
-                        "27\uc778\uce58"
-                    ]
-                }
-            }
-        ],
-        "\ub0c9\uc7a5\uace0": [
-            {
-                "mode": "single",
-                "key": "type",
-                "label": "\uc720\ud615",
-                "options": [
-                    "\uc0c1\ub0c9\uc7a5",
-                    "\ud54f\uc564\ub9e5\uc2a4",
-                    "\uc591\ubb38\ud615",
-                    "\ucee8\ubc84\ud130\ube14"
-                ]
-            },
-            {
-                "mode": "singleBy",
-                "key": "detail",
-                "label": "\uad6c\ubd84",
-                "dependsOn": "type",
-                "optionsByValue": {
-                    "\uc0c1\ub0c9\uc7a5": [
-                        "\uc5bc\uc74c\uc815\uc218\uae30 \ub0c9\uc7a5\uace0"
-                    ],
-                    "\ud54f\uc564\ub9e5\uc2a4": [
-                        "\ub178\ud06c\uc628",
-                        "\uc77c\ubc18"
-                    ],
-                    "\uc591\ubb38\ud615": [
-                        "2\ub3c4\uc5b4"
-                    ],
-                    "\ucee8\ubc84\ud130\ube14": [
-                        "1\ub3c4\uc5b4"
-                    ]
-                }
-            }
-        ],
-        "\uae40\uce58\ub0c9\uc7a5\uace0": [
-            {
-                "mode": "single",
-                "key": "type",
-                "label": "\uc720\ud615",
-                "options": [
-                    "\ub69c\uaed1\uc2dd",
-                    "\uc2a4\ud0e0\ub4dc",
-                    "\ucee8\ubc84\ud130\ube14"
-                ]
-            },
-            {
-                "mode": "singleBy",
-                "key": "detail",
-                "label": "\uad6c\ubd84",
-                "dependsOn": "type",
-                "optionsByValue": {
-                    "\ub69c\uaed1\uc2dd": [
-                        "1\ub3c4\uc5b4",
-                        "2\ub3c4\uc5b4"
-                    ],
-                    "\uc2a4\ud0e0\ub4dc": [
-                        "\ud54f\uc564\ub9e5\uc2a4 3\ub3c4\uc5b4",
-                        "\ud54f\uc564\ub9e5\uc2a4 4\ub3c4\uc5b4",
-                        "\uc77c\ubc18 3\ub3c4\uc5b4",
-                        "\uc77c\ubc18 4\ub3c4\uc5b4"
-                    ],
-                    "\ucee8\ubc84\ud130\ube14": [
-                        "1\ub3c4\uc5b4"
-                    ]
-                }
-            }
-        ],
-        "\uc138\ud0c1\uae30/\uac74\uc870\uae30": [
-            {
-                "mode": "single",
-                "key": "type",
-                "label": "\uc720\ud615",
-                "options": [
-                    "\uc6cc\uc2dc\ud0c0\uc6cc",
-                    "\ucf64\ubcf4",
-                    "\ubd84\ub9ac\ud615(\uc138\ud0c1\uae30/\uac74\uc870\uae30)"
-                ]
-            },
-            {
-                "mode": "singleBy",
-                "key": "detail",
-                "label": "\uad6c\ubd84",
-                "dependsOn": "type",
-                "optionsByValue": {
-                    "\uc6cc\uc2dc\ud0c0\uc6cc": [
-                        "\uc635\uc158\ud615",
-                        "AI"
-                    ],
-                    "\ucf64\ubcf4": [
-                        "AI"
-                    ],
-                    "\ubd84\ub9ac\ud615": [
-                        "\ubcd1\ub82c\uc124\uce58",
-                        "\uc9c1\ub82c\uc124\uce58",
-                        "\ubd84\ub9ac\uc124\uce58"
-                    ]
-                }
-            }
-        ],
-        "\uc758\ub958\uad00\ub9ac\uae30": [
-            {
-                "mode": "single",
-                "key": "type",
-                "label": "\uc720\ud615",
-                "options": [
-                    "\uc2a4\ud0c0\uc77c\ub7ec",
-                    "\uc0c1\uc138 \uc635\uc158 \ubbf8\uc785\ub825"
-                ]
-            }
-        ],
-        "\uc5d0\uc5b4\ucee8": [
-            {
-                "mode": "single",
-                "key": "type",
-                "label": "\uc885\ub958",
-                "options": [
-                    "2IN1",
-                    "\uc2a4\ud0e0\ub4dc",
-                    "\ubcbd\uac78\uc774",
-                    "\ucc9c\uc7a5\ud615",
-                    "\uc0c1\uc138 \uc635\uc158 \ubbf8\uc785\ub825"
-                ]
-            },
-            {
-                "mode": "singleBy",
-                "key": "size",
-                "label": "\ub0c9\ubc29\uba74\uc801",
-                "dependsOn": "type",
-                "optionsByValue": {
-                    "2IN1": [
-                        "18\ud3c9",
-                        "24\ud3c9",
-                        "34\ud3c9",
-                        "40\ud3c9\ud615 \uc774\uc0c1"
-                    ],
-                    "\uc2a4\ud0e0\ub4dc": [
-                        "18\ud3c9",
-                        "24\ud3c9",
-                        "34\ud3c9",
-                        "40\ud3c9\ud615 \uc774\uc0c1"
-                    ],
-                    "\ubcbd\uac78\uc774": [
-                        "6\ud3c9",
-                        "7\ud3c9",
-                        "9\ud3c9",
-                        "11\ud3c9"
-                    ],
-                    "\ucc9c\uc7a5\ud615": [
-                        "3\uc2e4",
-                        "4\uc2e4",
-                        "5\uc2e4",
-                        "6\uc2e4"
-                    ],
-                    "\uc0c1\uc138 \uc635\uc158 \ubbf8\uc785\ub825": [
-                        "\uc0c1\uc138 \uc635\uc158 \ubbf8\uc785\ub825"
-                    ]
-                }
-            }
-        ],
-        "\uccad\uc18c\uae30": [
-            {
-                "mode": "multi",
-                "key": "type",
-                "label": "\uc720\ud615",
-                "options": [
-                    "\ubb34\uc120\uccad\uc18c\uae30",
-                    "\ub85c\ubd07\uccad\uc18c\uae30",
-                    "\uc720\uc120\uccad\uc18c\uae30"
-                ]
-            }
-        ],
-        "\uc2dd\uae30\uc138\ucc99\uae30": [
-            {
-                "mode": "single",
-                "key": "type",
-                "label": "\uc124\uce58\ud615\ud0dc",
-                "options": [
-                    "\ube5d\ud2b8\uc778",
-                    "\uce74\uc6b4\ud130\ud0d1",
-                    "\ud504\ub9ac\uc2a4\ud0e0\ub529"
-                ]
-            }
-        ],
-        "\uc778\ub355\uc158": [
-            {
-                "mode": "single",
-                "key": "type",
-                "label": "\uc124\uce58\ud615\ud0dc",
-                "options": [
-                    "\ube4c\ud2b8\uc778 O",
-                    "\ube4c\ud2b8\uc778 X"
-                ]
-            },
-            {
-                "mode": "single",
-                "key": "burner",
-                "label": "\ud654\uad6c\uc218",
-                "options": [
-                    "2\uad6c",
-                    "3\uad6c",
-                    "4\uad6c"
-                ]
-            }
-        ],
-        "\uc624\ube10 / \uc804\uc790\ub808\uc778\uc9c0": [
-            {
-                "mode": "multi",
-                "key": "type",
-                "label": "\uc720\ud615",
-                "options": [
-                    "\ubcf5\ud569\uc624\ube10",
-                    "\uc804\uc790\ub808\uc778\uc9c0"
-                ]
-            }
-        ],
-        "\uc815\uc218\uae30": [
-            {
-                "mode": "single",
-                "key": "type",
-                "label": "\uc720\ud615",
-                "options": [
-                    "\uc5bc\uc74c\uc815\uc218\uae30",
-                    "\ub0c9\uc628\uc815\uc218\uae30",
-                    "\ub0c9\uc815\uc218\uae30",
-                    "\uc628\uc815\uc218\uae30"
-                ]
-            }
-        ],
-        "\uacf5\uae30\uccad\uc815\uae30": [
-            {
-                "mode": "single",
-                "key": "size",
-                "label": "\uc0ac\uc6a9\uba74\uc801",
-                "options": [
-                    "10\ud3c9 \uc774\ud558",
-                    "10\ud3c9\ub300",
-                    "20\ud3c9\ub300",
-                    "30\ud3c9\ub300 \uc774\uc0c1"
-                ]
-            }
-        ]
-    }
-};
+  };
 
   const aiSituations = ["혼수/웨딩", "신축 입주", "이사", "교체", "사업장/B2B"];
   const familyOptions = ["1인", "2인", "3~4인", "5인 이상", "아이 있음", "반려동물 있음"];
@@ -1308,7 +593,7 @@
               <button type="button" class="wizard-product-card ${checked ? "is-selected" : ""}" data-product="${escapeHtml(product.value)}">
                 <span class="wizard-checkbox" aria-hidden="true">${checked ? "✓" : ""}</span>
                 <span class="product-thumb product-thumb-${escapeHtml(product.thumb)}" aria-hidden="true"><span>${escapeHtml(product.icon)}</span></span>
-                <strong>${escapeHtml(product.title)}</strong>
+                <strong>${escapeHtml(productDisplayTitle(product.value))}</strong>
               </button>
             `;
           })
@@ -1320,7 +605,7 @@
   function renderOptions() {
     return `
       <h3>선택한 품목의 옵션을 확인해주세요.</h3>
-      <p>옵션을 모르시면 해당 품목은 옵션 미선택 상태로 접수할 수 있습니다.</p>
+      <p>선택한 각 품목의 옵션을 엑셀 기준 순서대로 모두 선택해주세요.</p>
       <div class="wizard-option-list">
         ${state.selectedProducts
           .map((product) => {
@@ -1328,7 +613,7 @@
             return `
               <div class="wizard-option-row">
                 <div>
-                  <strong>${escapeHtml(product)}</strong>
+                  <strong>${escapeHtml(productDisplayTitle(product, optionStateFor(product)))}</strong>
                   <span>${escapeHtml(summary || "옵션 미선택")}</span>
                 </div>
                 <button type="button" class="secondary-btn wizard-open-option" data-product="${escapeHtml(product)}">옵션 선택</button>
@@ -1405,7 +690,7 @@
             .map(
               (group) => `
                 <div class="ai-recommendation-group">
-                  <strong>[${escapeHtml(group.product)}]</strong>
+                  <strong>[${escapeHtml(group.displayProduct || group.product)}]</strong>
                   <span>${escapeHtml(group.optionSummary || "상세 옵션 미입력")}</span>
                   <ul>${group.models.map((model) => `<li>${renderModelWithPrice(model)}</li>`).join("")}</ul>
                 </div>
@@ -1431,6 +716,7 @@
         if (input.name === "wizardPurposeProxy") fields.purpose.value = input.value;
         if (input.name === "wizardBrandProxy") {
           fields.brand.value = input.value;
+          state.productOptions = {};
           clearAiRecommendation();
         }
         syncAllFields();
@@ -1535,16 +821,15 @@
   }
 
   function openOptionModal(product) {
-    const productKey = normalizeProductKey(product);
-    const schema = optionSchemaFor(product);
     const draft = normalizeOptionDraft(optionStateFor(product));
     const modal = document.createElement("div");
     modal.className = "option-modal is-open";
     modal.innerHTML = `
-      <div class="option-sheet" role="dialog" aria-modal="true" aria-label="${escapeHtml(product)} 옵션 선택">
+      <div class="option-sheet" role="dialog" aria-modal="true" aria-label="${escapeHtml(normalizeProductKey(product))} 옵션 선택">
         <button type="button" class="option-close" aria-label="닫기">×</button>
-        <h3>${escapeHtml(product)}</h3>
+        <h3></h3>
         <div class="option-section-wrap"></div>
+        <p class="option-validation" role="alert" hidden></p>
         <div class="option-actions">
           <button type="button" class="secondary-btn option-clear">선택 초기화</button>
           <button type="button" class="primary-btn option-save">확인</button>
@@ -1555,12 +840,18 @@
     document.body.classList.add("modal-open");
 
     const wrap = modal.querySelector(".option-section-wrap");
+    const title = modal.querySelector("h3");
+    const validation = modal.querySelector(".option-validation");
     const close = () => {
       modal.remove();
       document.body.classList.remove("modal-open");
     };
     const rerender = () => {
+      const schema = optionSchemaFor(product, draft);
       pruneOptionDraft(schema, draft);
+      title.textContent = productDisplayTitle(product, draft);
+      validation.hidden = true;
+      validation.textContent = "";
       const visibleSections = schema
         .map((section) => renderOptionSection(product, section, draft))
         .filter(Boolean)
@@ -1575,6 +866,11 @@
             draft[key] = [...wrap.querySelectorAll(`[data-option-key="${cssEscape(key)}"]:checked`)].map((item) => item.value);
           } else {
             draft[key] = input.value;
+          }
+          if (key === "optionBrand") {
+            Object.keys(draft).forEach((draftKey) => {
+              if (draftKey !== "optionBrand") delete draft[draftKey];
+            });
           }
           clearDependentOptionValues(schema, draft, key);
           clearAiRecommendation();
@@ -1595,7 +891,18 @@
       render();
     });
     modal.querySelector(".option-save").addEventListener("click", () => {
+      const schema = optionSchemaFor(product, draft);
       pruneOptionDraft(schema, draft);
+      const missingSection = firstMissingOptionSection(schema, draft);
+      if (missingSection) {
+        validation.textContent = `${optionSectionLabel(missingSection, draft)} 항목을 선택해주세요.`;
+        validation.hidden = false;
+        modal.querySelector(`[data-option-key="${cssEscape(missingSection.key)}"]`)?.closest(".option-section")?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+        return;
+      }
       writeOptionState(product, cleanOptionDraft(schema, draft));
       clearAiRecommendation();
       syncAllFields();
@@ -1625,11 +932,11 @@
     const compact = raw.replace(/\s+/g, "").replace(/\+/g, "/");
     if (!compact) return raw;
     if (/^TV$/i.test(compact) || compact.includes("티비")) return "TV";
-    if (compact.includes("\ub77c\uc774\ud504\uc2a4\ud0c0\uc77c")) return "\ub77c\uc774\ud504\uc2a4\ud0c0\uc77c TV";
+    if (compact.includes("\ub77c\uc774\ud504\uc2a4\ud0c0\uc77c") || compact.includes("\uc2a4\ud0e0\ubc14\uc774\ubbf8") || compact.includes("\ubb34\ube59\uc2a4\ud0c0\uc77c")) return "\ub77c\uc774\ud504\uc2a4\ud0c0\uc77c TV";
     if (compact.includes("\uae40\uce58\ub0c9\uc7a5\uace0")) return "\uae40\uce58\ub0c9\uc7a5\uace0";
     if (compact.includes("\ub0c9\uc7a5\uace0")) return "\ub0c9\uc7a5\uace0";
     if (compact.includes("\uc138\ud0c1") || compact.includes("\uac74\uc870")) return "\uc138\ud0c1\uae30/\uac74\uc870\uae30";
-    if (compact.includes("\uc758\ub958")) return "\uc758\ub958\uad00\ub9ac\uae30";
+    if (compact.includes("\uc758\ub958") || compact.includes("\uc2a4\ud0c0\uc77c\ub7ec") || compact.includes("\uc5d0\uc5b4\ub4dc\ub808\uc11c")) return "\uc758\ub958\uad00\ub9ac\uae30";
     if (compact.includes("\uc5d0\uc5b4\ucee8")) return "\uc5d0\uc5b4\ucee8";
     if (compact.includes("\uccad\uc18c\uae30")) return "\uccad\uc18c\uae30";
     if (compact.includes("\uc2dd\uae30\uc138\ucc99")) return "\uc2dd\uae30\uc138\ucc99\uae30";
@@ -1643,8 +950,9 @@
   function optionLookupAliases(product) {
     const productKey = normalizeProductKey(product);
     const manualAliases = {
-      "라이프스타일 TV": ["라이프스타일TV"],
+      "라이프스타일 TV": ["라이프스타일TV", "스탠바이미", "더 무빙스타일"],
       "세탁기/건조기": ["세탁기+건조기", "세탁기 / 건조기", "세탁기건조기"],
+      "의류관리기": ["스타일러", "에어드레서"],
       "인덕션/전기레인지": ["인덕션", "전기레인지", "인덕션 / 전기레인지"],
       "오븐 / 전자레인지": ["오븐/전자레인지", "오븐", "전자레인지"],
     };
@@ -1672,22 +980,58 @@
     });
   }
 
-  function optionSchemaFor(product) {
-    const brandKey = selectedBrandKey();
-    let schema = [];
-    for (const key of optionLookupAliases(product)) {
-      schema = brandOptionSchema[brandKey]?.[key] || brandOptionSchema["LG\uc804\uc790"]?.[key] || [];
-      if (schema.length) break;
-    }
-    if (schema.length) return schema.map(cloneOptionSection);
-    return [
-      {
-        mode: "single",
-        key: "detail",
-        label: "\uc0c1\uc138 \uc635\uc158",
-        options: [unknownOption]
+  function schemaProductTitleForBrand(product, brand) {
+    const productKey = normalizeProductKey(product);
+    const titles = {
+      "LG전자": {
+        "라이프스타일 TV": "스탠바이미",
+        "세탁기/건조기": "세탁기 / 건조기",
+        "의류관리기": "스타일러",
+        "인덕션/전기레인지": "인덕션",
+      },
+      "삼성전자": {
+        "라이프스타일 TV": "더 무빙스타일",
+        "세탁기/건조기": "세탁기 / 건조기",
+        "의류관리기": "에어드레서",
+        "인덕션/전기레인지": "인덕션",
+      },
+    };
+    return titles[brand]?.[productKey] || productKey;
+  }
+
+  function optionBrandFor(source) {
+    const optionBrand = String(source?.optionBrand || "").trim();
+    if (optionBrand === "LG전자" || optionBrand === "삼성전자") return optionBrand;
+    const selected = selectedBrandKey();
+    return selected === "비교견적" ? "" : selected;
+  }
+
+  function productDisplayTitle(product, source) {
+    const brand = optionBrandFor(source || optionStateFor(product));
+    if (!brand) return normalizeProductKey(product);
+    return schemaProductTitleForBrand(product, brand);
+  }
+
+  function schemaForBrand(product, brand) {
+    if (!brandOptionSchema[brand]) return [];
+    const exactTitle = schemaProductTitleForBrand(product, brand);
+    return (brandOptionSchema[brand][exactTitle] || []).map(cloneOptionSection);
+  }
+
+  function optionSchemaFor(product, source) {
+    const brand = optionBrandFor(source || optionStateFor(product));
+    if (selectedBrandKey() === "비교견적") {
+      if (!brand) {
+        return [{ mode: "single", key: "optionBrand", label: "옵션 기준", options: ["LG전자", "삼성전자"] }];
       }
-    ];
+      return [
+        { mode: "single", key: "optionBrand", label: "옵션 기준", options: ["LG전자", "삼성전자"] },
+        ...schemaForBrand(product, brand),
+      ];
+    }
+    const schema = schemaForBrand(product, brand);
+    if (schema.length) return schema;
+    return [{ mode: "single", key: "detail", label: "상세 옵션", options: [unknownOption] }];
   }
 
   function cloneOptionSection(section) {
@@ -1701,6 +1045,7 @@
         cloned.optionsByValue[key] = Array.isArray(values) ? [...values] : [];
       });
     }
+    if (section.labelByValue) cloned.labelByValue = { ...section.labelByValue };
     return cloned;
   }
 
@@ -1712,8 +1057,9 @@
     return section.dependsOn || section.parent || "";
   }
 
-  function optionSectionLabel(section) {
-    return section.label || section.title || "";
+  function optionSectionLabel(section, draft) {
+    const parentValue = draft?.[optionParentKey(section)];
+    return section.labelByValue?.[parentValue] || section.label || section.title || "";
   }
 
   function sectionValues(section, draft) {
@@ -1789,6 +1135,25 @@
     return next;
   }
 
+  function firstMissingOptionSection(schema, draft) {
+    return schema.find((section) => {
+      const values = sectionValues(section, draft);
+      if (!values.length) return false;
+      if (isMultiOption(section)) {
+        const selected = Array.isArray(draft[section.key]) ? draft[section.key] : [];
+        return !selected.some((value) => values.includes(value));
+      }
+      return !values.includes(draft[section.key]);
+    });
+  }
+
+  function productOptionsAreComplete(product) {
+    const options = normalizeOptionDraft(optionStateFor(product));
+    const schema = optionSchemaFor(product, options);
+    pruneOptionDraft(schema, options);
+    return !firstMissingOptionSection(schema, options);
+  }
+
   function renderOptionSection(product, section, draft) {
     const sectionValuesList = sectionValues(section, draft);
     if (!sectionValuesList.length) return "";
@@ -1797,7 +1162,7 @@
     const inputName = `option-${product}-${section.key}`;
     return `
       <section class="option-section">
-        <h4>${escapeHtml(optionSectionLabel(section))}</h4>
+        <h4>${escapeHtml(optionSectionLabel(section, draft))}</h4>
         ${sectionValuesList
           .map((value) => {
             const checked = selectedValues.includes(value);
@@ -1857,6 +1222,11 @@ function validateQuoteType() {
   }
 
   function validateOptions() {
+    const incompleteProduct = state.selectedProducts.find((product) => !productOptionsAreComplete(product));
+    if (incompleteProduct) {
+      setMessage(`${productDisplayTitle(incompleteProduct, optionStateFor(incompleteProduct))} 옵션을 모두 선택해주세요.`);
+      return false;
+    }
     return true;
   }
 
@@ -1941,19 +1311,19 @@ function validateQuoteType() {
     return state.selectedProducts
       .map((product) => {
         const summary = productOptionSummary(product);
-        return summary ? `${product} (${summary})` : product;
+        const title = productDisplayTitle(product, optionStateFor(product));
+        return summary ? `${title} (${summary})` : title;
       })
       .join(", ");
   }
 
   function productOptionSummary(product) {
-    const productKey = normalizeProductKey(product);
-    const schema = optionSchemaFor(product);
-    const options = optionStateFor(productKey);
+    const options = optionStateFor(product);
+    const schema = optionSchemaFor(product, options);
     const parts = [];
     schema.forEach((section) => {
       const values = sectionValues(section, options);
-      if (!values.length) return;
+      if (!values.length || section.key === "optionBrand") return;
       const selected = Array.isArray(options[section.key]) ? options[section.key] : [options[section.key]].filter(Boolean);
       selected.forEach((item) => {
         if (item && item !== unknownOption && values.includes(item)) parts.push(item);
@@ -2058,8 +1428,11 @@ function buildAiSummary() {
     const groups = [];
     for (const product of selectedProducts) {
       const productKey = normalizeProductKey(product);
+      const optionSource = optionStateFor(productKey);
+      const optionBrand = optionBrandFor(optionSource);
       const models = Array.isArray(catalog?.[productKey]?.models) ? catalog[productKey].models : [];
-      const candidates = filterModelsByProductOptions(product, models);
+      const brandModels = optionBrand ? models.filter((model) => modelMatchesOptionBrand(model, optionBrand)) : models;
+      const candidates = filterModelsByProductOptions(product, brandModels);
       const targetPrice = budgetWon
         ? Math.round((budgetWon * productBudgetWeight(product)) / totalWeight)
         : defaultTargetPrice(product, candidates);
@@ -2072,6 +1445,7 @@ function buildAiSummary() {
       const chosen = chooseRecommendedModel(product, enriched.length ? enriched : shortlist, targetPrice);
       groups.push({
         product,
+        displayProduct: productDisplayTitle(product, optionSource),
         optionSummary: productOptionSummary(product),
         targetPrice,
         models: chosen ? [chosen] : [{ modelName: "판매자 상담 후 모델 확정", normalPrice: 0, naverLowestPrice: 0 }],
@@ -2082,7 +1456,7 @@ function buildAiSummary() {
 
   function filterModelsByProductOptions(product, models) {
     const productKey = normalizeProductKey(product);
-    const options = optionStateFor(productKey);
+    const options = recommendationOptionState(productKey);
     const normalized = models
       .filter((model) => model && model.modelName)
       .filter((model) => isAllowedRecommendationModel(productKey, model))
@@ -2136,8 +1510,19 @@ function buildAiSummary() {
       if (/일체형|원바디|워시타워/.test(optionText)) matchers.push((model) => /워시타워|원바디|W\d{2}|WL|WK/i.test(modelSearchText(model)));
     }
 
-    if (productKey === "청소기" && Array.isArray(options.type) && options.type.length) {
-      matchers.push((model) => options.type.some((type) => modelSearchText(model).includes(type.replace("청소기", ""))));
+    if (productKey === "청소기" && options.type) {
+      const selectedTypes = Array.isArray(options.type) ? options.type : [options.type];
+      matchers.push((model) =>
+        selectedTypes.some((type) => {
+          const selectedType = String(type || "");
+          const text = modelSearchText(model);
+          const body = modelBody(model);
+          if (/로봇/.test(selectedType)) return /로봇|ROBOT/i.test(text) || /^(R9|VR)/i.test(body);
+          if (/무선/.test(selectedType)) return /무선|코드제로|제트/i.test(text) || /^(A9|AU|VS)/i.test(body);
+          if (/유선/.test(selectedType)) return /유선/i.test(text) || /^VC/i.test(body);
+          return text.replace(/\s+/g, "").includes(selectedType.replace(/\s*청소기/g, "").replace(/\s+/g, ""));
+        })
+      );
     }
     if (productKey === "에어컨" && optionText) {
       if (/천장형/.test(optionText)) matchers.push((model) => /천장|시스템/i.test(modelSearchText(model)));
@@ -2182,7 +1567,7 @@ function buildAiSummary() {
     }
 
     if (productKey === "냉장고") {
-      const optionText = Object.values(optionStateFor(productKey))
+      const optionText = Object.values(recommendationOptionState(productKey))
         .flatMap((value) => (Array.isArray(value) ? value : [value]))
         .filter(Boolean)
         .join(" ");
@@ -2228,6 +1613,19 @@ function buildAiSummary() {
 
   function modelSearchText(model) {
     return [model?.modelName, model?.productGroup, model?.category, model?.title].filter(Boolean).join(" ");
+  }
+
+  function recommendationOptionState(product) {
+    const source = optionStateFor(product);
+    return Object.fromEntries(Object.entries(source).filter(([key]) => key !== "optionBrand"));
+  }
+
+  function modelMatchesOptionBrand(model, brand) {
+    const modelBrand = compactModelName(model?.brand || "");
+    if (!modelBrand) return true;
+    if (brand === "삼성전자") return modelBrand.includes("삼성") || modelBrand.includes("SAMSUNG");
+    if (brand === "LG전자") return modelBrand.includes("LG");
+    return true;
   }
 
   function compactModelName(value) {
@@ -2436,7 +1834,7 @@ function buildAiSummary() {
     groups.forEach((group) => {
       lines.push("");
       lines.push(
-        `[${group.product}]${group.optionSummary ? ` ${group.optionSummary}` : ""}` +
+        `[${group.displayProduct || group.product}]${group.optionSummary ? ` ${group.optionSummary}` : ""}` +
           (Number(group.models?.[0]?.naverLowestPrice || 0) >= 300000 ? ` / 네이버 최저가 ${formatWon(group.models[0].naverLowestPrice)}` : "")
       );
       group.models.forEach((model) => lines.push(`- ${displayModelName(model)}${formatModelLowestPrice(model)}`));
