@@ -2344,6 +2344,7 @@ requestForm.addEventListener("submit", (event) => {
   const hasQuoteImage = quoteType === "with_quote";
   const selectedItems = String(formData.get("items") || "").trim();
   const desiredBrand = normalizeQuoteBrand(formData.get("desiredBrand"));
+  const recommendationMode = String(formData.get("recommendationMode") || "").trim();
   const enteredPrice = parseManwon(formData.get("price"));
   if (!hasQuoteImage && quoteImage) {
     quoteImage.required = false;
@@ -2379,6 +2380,11 @@ requestForm.addEventListener("submit", (event) => {
 
   if (!hasQuoteImage && desiredBrand === "비교견적" && enteredPrice <= 0) {
     setRequestFormMessage("비교견적 예산을 만원 단위로 입력해주세요.", "error");
+    return;
+  }
+
+  if (!hasQuoteImage && recommendationMode === "manual" && enteredPrice <= 0) {
+    setRequestFormMessage("희망 견적 금액을 만원 단위로 입력해주세요.", "error");
     return;
   }
 

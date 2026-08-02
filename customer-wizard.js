@@ -13,6 +13,7 @@
     purchasePriority: field("purchasePriority"),
     aiRequestSummary: field("aiRequestSummary"),
     aiModelRecommendations: ensureHiddenField("aiModelRecommendations"),
+    recommendationMode: ensureHiddenField("recommendationMode"),
     image: field("quoteImage"),
     customer: field("customer"),
     phone: field("phone"),
@@ -44,6 +45,7 @@
     catalogs: {},
     recommendationGroups: [],
     recommending: false,
+    recommendationMode: "",
   };
 
   async function fetchWithTimeout(path, options = {}, timeoutMs = 16000) {
@@ -506,7 +508,9 @@
     { key: "brand", render: renderBrand, validate: validateBrand },
     { key: "products", render: renderProducts, validate: validateProducts, show: isWithoutQuote },
     { key: "options", render: renderOptions, validate: validateOptions, show: isWithoutQuote },
+    { key: "recommendationMode", render: renderRecommendationMode, validate: validateRecommendationMode, show: shouldChooseRecommendationMode },
     { key: "ai", render: renderAiContext, validate: validateAiContext, show: shouldUseAiRecommendation },
+    { key: "manualBudget", render: renderManualBudget, validate: validateManualBudget, show: isManualWithoutQuote },
     { key: "comparisonBudget", render: renderComparisonBudget, validate: validateComparisonBudget, show: isComparisonWithoutQuote },
     { key: "quoteInfo", render: renderQuoteInfo, validate: validateQuoteInfo },
   ];
@@ -770,6 +774,49 @@
     `;
   }
 
+  function renderRecommendationMode() {
+    const modes = [
+      {
+        value: "ai",
+        title: "AI 추천 견적 받기",
+        text: "선택한 품목, 옵션, 상황과 예산을 기준으로 실제 카탈로그의 후보 모델을 정리합니다.",
+        badge: "모델 추천",
+      },
+      {
+        value: "manual",
+        title: "AI 추천 없이 직접 진행",
+        text: "희망 견적 금액과 요청사항을 직접 입력해 판매자 제안을 받습니다.",
+        badge: "직접 입력",
+      },
+    ];
+    return `
+      <h3>견적 요청 방식을 선택해주세요.</h3>
+      <p>견적서가 없어도 AI 추천을 사용하지 않고 직접 금액을 입력할 수 있습니다.</p>
+      <div class="wizard-choice-grid wizard-choice-grid-two">
+        ${modes.map((item) => choiceCard(item, "wizardRecommendationModeProxy", state.recommendationMode)).join("")}
+      </div>
+    `;
+  }
+
+  function renderManualBudget() {
+    const amount = directAmountDigits();
+    return `
+      <h3>희망 견적 금액을 입력해주세요.</h3>
+      <p>AI 모델 추천 없이 선택한 품목과 옵션, 입력한 금액을 기준으로 판매자 제안을 받습니다.</p>
+      <label class="wizard-wide-label">희망 견적 금액(만원)
+        <input
+          type="text"
+          inputmode="numeric"
+          autocomplete="off"
+          data-manual-budget
+          value="${escapeHtml(amount ? Number(amount).toLocaleString("ko-KR") : "")}"
+          placeholder="예: 1,500"
+        />
+        <small>${amount ? `${Number(amount).toLocaleString("ko-KR")}만원, 약 ${(Number(amount) * 10000).toLocaleString("ko-KR")}원` : "만원 단위로 입력해주세요. 예: 1,500 입력 시 15,000,000원"}</small>
+      </label>
+    `;
+  }
+
   function renderComparisonBudget() {
     const budget = Number(comparisonBudgetDigits()) > 0 ? comparisonBudgetDigits() : "";
     return `
@@ -857,6 +904,8 @@
       input.addEventListener("change", () => {
         if (input.name === "wizardQuoteTypeProxy") {
           fields.quoteType.value = input.value;
+          state.recommendationMode = "";
+          fields.price.value = "0";
           if (input.value === "with_quote") {
             state.selectedProducts = [];
             state.productOptions = {};
@@ -867,12 +916,18 @@
         if (input.name === "wizardBrandProxy") {
           const previousBrand = selectedBrandKey();
           fields.brand.value = input.value;
+          state.recommendationMode = "";
           state.productOptions = {};
+          if (isWithoutQuote()) fields.price.value = "0";
           if (previousBrand === "비교견적" || input.value === "비교견적") {
             state.aiContext.budgetStatus = "";
             state.aiContext.budgetRange = "";
-            if (isWithoutQuote()) fields.price.value = "0";
           }
+          clearAiRecommendation();
+        }
+        if (input.name === "wizardRecommendationModeProxy") {
+          state.recommendationMode = input.value;
+          fields.price.value = "0";
           clearAiRecommendation();
         }
         syncAllFields();
@@ -953,6 +1008,19 @@
         help.textContent = digits
           ? `${Number(digits).toLocaleString("ko-KR")}만원, 약 ${(Number(digits) * 10000).toLocaleString("ko-KR")}원`
           : "판매자가 예산 안에서 조건을 제안할 수 있도록 만원 단위로 입력해주세요.";
+      }
+    });
+
+    root.querySelector("[data-manual-budget]")?.addEventListener("input", (event) => {
+      const digits = onlyDigits(event.target.value).slice(0, 8);
+      fields.price.value = digits || "0";
+      event.target.value = digits ? Number(digits).toLocaleString("ko-KR") : "";
+      syncAllFields();
+      const help = event.target.parentElement?.querySelector("small");
+      if (help) {
+        help.textContent = digits
+          ? `${Number(digits).toLocaleString("ko-KR")}만원, 약 ${(Number(digits) * 10000).toLocaleString("ko-KR")}원`
+          : "만원 단위로 입력해주세요. 예: 1,500 입력 시 15,000,000원";
       }
     });
 
@@ -1421,6 +1489,19 @@ function validateQuoteType() {
     return true;
   }
 
+  function validateRecommendationMode() {
+    if (!shouldChooseRecommendationMode() || ["ai", "manual"].includes(state.recommendationMode)) return true;
+    setMessage("AI 추천 사용 여부를 선택해주세요.");
+    return false;
+  }
+
+  function validateManualBudget() {
+    const amount = Number(directAmountDigits());
+    if (Number.isFinite(amount) && amount > 0) return true;
+    setMessage("희망 견적 금액을 만원 단위로 입력해주세요.");
+    return false;
+  }
+
   function validateComparisonBudget() {
     const budget = Number(comparisonBudgetDigits());
     if (!Number.isFinite(budget) || budget <= 0) {
@@ -1442,6 +1523,10 @@ function validateQuoteType() {
     }
     if (isWithQuote() && Number(onlyDigits(fields.price.value)) <= 0) {
       setMessage("기존 견적 금액을 만원 단위로 입력해주세요.");
+      return false;
+    }
+    if (isManualWithoutQuote() && Number(directAmountDigits()) <= 0) {
+      setMessage("희망 견적 금액을 만원 단위로 입력해주세요.");
       return false;
     }
     if (isWithQuote() && (!fields.image.files || !fields.image.files.length)) {
@@ -1472,17 +1557,33 @@ function validateQuoteType() {
     return isWithoutQuote() && selectedBrandKey() === "비교견적";
   }
 
+  function isSingleBrandWithoutQuote() {
+    return isWithoutQuote() && ["LG전자", "삼성전자"].includes(selectedBrandKey());
+  }
+
+  function shouldChooseRecommendationMode() {
+    return isSingleBrandWithoutQuote();
+  }
+
+  function isManualWithoutQuote() {
+    return isSingleBrandWithoutQuote() && state.recommendationMode === "manual";
+  }
+
+  function directAmountDigits() {
+    return onlyDigits(fields.price.value);
+  }
+
   function comparisonBudgetDigits() {
     return onlyDigits(state.aiContext.budgetRange || fields.price.value);
   }
 
   function shouldUseAiRecommendation() {
-    return isWithoutQuote() && ["LG전자", "삼성전자"].includes(selectedBrandKey());
+    return isSingleBrandWithoutQuote() && state.recommendationMode === "ai";
   }
 
   function updateNativeRequirement() {
     if (fields.image) fields.image.required = isWithQuote();
-    if (fields.price) fields.price.required = isWithQuote() || isComparisonWithoutQuote();
+    if (fields.price) fields.price.required = isWithQuote() || isComparisonWithoutQuote() || isManualWithoutQuote();
   }
 
   function syncAllFields() {
@@ -1493,12 +1594,19 @@ function validateQuoteType() {
     fields.budgetRange.value = state.aiContext.budgetRange;
     fields.purchasePriority.value = state.aiContext.priorities.join(", ");
     fields.aiRequestSummary.value = buildAiSummary();
+    fields.recommendationMode.value = state.recommendationMode;
     if (!shouldUseAiRecommendation()) fields.aiModelRecommendations.value = "";
     if (isComparisonWithoutQuote()) {
       const budget = comparisonBudgetDigits();
       fields.budgetStatus.value = "예산 확정";
       fields.budgetRange.value = budget;
       fields.price.value = budget || "0";
+    }
+    if (isManualWithoutQuote()) {
+      const amount = directAmountDigits();
+      fields.budgetStatus.value = "직접 금액 입력";
+      fields.budgetRange.value = amount;
+      fields.price.value = amount || "0";
     }
     if (isWithQuote()) {
       fields.items.value = "견적서 첨부";
@@ -1549,7 +1657,6 @@ function buildAiSummary() {
   function clearAiRecommendation() {
     state.recommendationGroups = [];
     fields.aiModelRecommendations.value = "";
-    if (isWithoutQuote() && !isComparisonWithoutQuote()) fields.price.value = "0";
   }
 
   async function runAiRecommendation() {
