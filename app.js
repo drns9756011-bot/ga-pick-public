@@ -1201,6 +1201,10 @@ function getQuoteTypeLabel(request) {
   return request?.quoteType === "without_quote" ? "견적서 없음" : "견적서 있음";
 }
 
+function getRequestPriceLabel(request) {
+  return isWithoutQuoteRequest(request) ? "희망 견적" : "기존 견적";
+}
+
 function isWithoutQuoteRequest(request) {
   return request?.quoteType === "without_quote";
 }
@@ -1330,7 +1334,7 @@ function renderHomeFeeds() {
           const priceText = lowestBidPrice
             ? `최저 제안 ${formatPrice(lowestBidPrice)}`
             : request.price
-              ? `기존 견적 ${formatPrice(request.price)}`
+              ? `${getRequestPriceLabel(request)} ${formatPrice(request.price)}`
               : getQuoteTypeLabel(request);
           return `
             <article>
@@ -1642,7 +1646,7 @@ function renderBidCards(request) {
               <span>후기 ${reviews.length}개 보기</span>
             </button>
             <p class="bid-price">${formatPrice(bid.price)}</p>
-            <p class="original-price-line">내가 올린 견적 ${formatPrice(request.price)}</p>
+            <p class="original-price-line">${getRequestPriceLabel(request)} ${formatPrice(request.price)}</p>
             <p class="bid-benefits">${safeBenefits}</p>
             <div class="bid-tags">
               <span>${index === 0 ? "최저가" : "비교견적"}</span>
@@ -1665,6 +1669,7 @@ function renderBidCards(request) {
 
 function resetCustomerForm() {
   requestForm.reset();
+  requestForm.dispatchEvent(new CustomEvent("pickquote:wizard-reset"));
   uploadedImages = [];
   imagePreview.innerHTML = "<span>이미지 미리보기</span>";
   previewTitle.textContent = "견적 요청서가 여기에 표시됩니다.";
@@ -2016,7 +2021,7 @@ function renderLookupResults(matches, label = "내 견적") {
               <div><dt>연락처</dt><dd>${safePhone}</dd></div>
               <div><dt>견적서</dt><dd>${safeQuoteType}</dd></div>
               <div><dt>구매 목적</dt><dd>${safePurchasePurpose}</dd></div>
-              <div><dt>기존 견적</dt><dd>${formatPrice(request.price)}</dd></div>
+              <div><dt>${getRequestPriceLabel(request)}</dt><dd>${formatPrice(request.price)}</dd></div>
               <div><dt>설치 지역</dt><dd>${safeRegion}</dd></div>
               <div><dt>설치 예정일</dt><dd>${safeInstallDate}</dd></div>
               <div><dt>남은 시간</dt><dd class="${expired ? "deadline-expired" : "deadline-live"}">${safeRemaining}</dd></div>
@@ -2999,7 +3004,7 @@ function renderRequests() {
       ${
         isClosedTab
           ? `<span>1위 금액 ${lowestBid ? formatPrice(lowestBid.price) : "제안 없음"}</span>`
-          : `<span>기존 견적 ${formatPrice(request.price)}</span>`
+          : `<span>${getRequestPriceLabel(request)} ${formatPrice(request.price)}</span>`
       }
       ${!isClosedTab && sellerBid ? `<span>내 제안 ${formatPrice(sellerBid.price)}</span>` : ""}
       ${isClosedTab ? `<span class="request-badge done">종료</span>` : ""}
@@ -3079,7 +3084,7 @@ function renderSelectedRequest() {
       ${
         isClosedTab
           ? `<div><span>1위 금액</span><strong>${lowestBid ? formatPrice(lowestBid.price) : "제안 없음"}</strong></div>`
-          : `<div><span>기존 견적</span><strong>${formatPrice(request.price)}</strong></div>`
+          : `<div><span>${getRequestPriceLabel(request)}</span><strong>${formatPrice(request.price)}</strong></div>`
       }
       <div><span>견적 가능 시간</span><strong class="${expired ? "deadline-expired" : "deadline-live"}">${safeRemaining}</strong></div>
       ${repeatNotice ? `<div><span>재등록 안내</span><strong>${escapeHTML(repeatNotice)}</strong></div>` : ""}

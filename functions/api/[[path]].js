@@ -19,7 +19,7 @@ const SOLAPI_DEFAULTS = {
   SOLAPI_TEMPLATE_SELLER_REJECTED: "KA01TP260725102900428RYxfTGV9SoG",
 };
 
-const PUBLIC_API_VERSION = "20260731-lplan-training-sync";
+const PUBLIC_API_VERSION = "20260802-ai-recommendation-production";
 const NAVER_SHOPPING_CLIENT_ID_DEFAULT = "x1CsXB5ZCYULxcGnclGq";
 const LPLAN_SYNC_TOKEN_DEFAULT = "pickquote-lplan-sync-v1";
 const MASTER_SELLER_ID = "pickgj";
@@ -308,6 +308,50 @@ function isLikelySameModel(item, query) {
   return tokens.some((token) => titleText.includes(token));
 }
 
+function normalizeNaverShoppingItem(item) {
+  return {
+    title: stripHtmlTags(item?.title),
+    link: item?.link || "",
+    image: item?.image || "",
+    mallName: item?.mallName || "",
+    productId: item?.productId || "",
+    productType: item?.productType || "",
+    maker: item?.maker || "",
+    brand: item?.brand || "",
+    category1: item?.category1 || "",
+    category2: item?.category2 || "",
+    category3: item?.category3 || "",
+    category4: item?.category4 || "",
+    lprice: Number(item?.lprice || 0),
+    hprice: Number(item?.hprice || 0),
+  };
+}
+
+async function requestNaverShoppingItems(config, query, display) {
+  const apiUrl = new URL("https://openapi.naver.com/v1/search/shop.json");
+  apiUrl.searchParams.set("query", query);
+  apiUrl.searchParams.set("display", String(display));
+  apiUrl.searchParams.set("start", "1");
+  apiUrl.searchParams.set("sort", "asc");
+
+  const response = await fetch(apiUrl.toString(), {
+    method: "GET",
+    headers: {
+      "X-Naver-Client-Id": config.clientId,
+      "X-Naver-Client-Secret": config.clientSecret,
+    },
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(payload.errorMessage || "네이버 쇼핑 최저가 조회에 실패했습니다.");
+    error.status = response.status;
+    error.errorCode = payload.errorCode || "";
+    throw error;
+  }
+
+  return (payload.items || []).map(normalizeNaverShoppingItem).filter((item) => item.lprice > 0);
+}
+
 async function getNaverShoppingLowest(env, request) {
   const config = getNaverShoppingConfig(env);
   if (!config.clientId || !config.clientSecret) {
@@ -327,62 +371,53 @@ async function getNaverShoppingLowest(env, request) {
   const display = Math.min(Math.max(Number(url.searchParams.get("display") || 10), 1), 30);
   if (!query) return json({ ok: false, message: "검색할 모델명을 입력해주세요." }, 400);
 
-  const apiUrl = new URL("https://openapi.naver.com/v1/search/shop.json");
-  apiUrl.searchParams.set("query", query);
-  apiUrl.searchParams.set("display", String(display));
-  apiUrl.searchParams.set("start", "1");
-  apiUrl.searchParams.set("sort", "asc");
+  const modelBodyQuery = String(query.split(".")[0] || query).trim();
+  const searchQueries = [];
+  const rawItems = [];
+  try {
+    searchQueries.push(query);
+    rawItems.push(...await requestNaverShoppingItems(config, query, display));
 
-  const response = await fetch(apiUrl.toString(), {
-    method: "GET",
-    headers: {
-      "X-Naver-Client-Id": config.clientId,
-      "X-Naver-Client-Secret": config.clientSecret,
-    },
-  });
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok) {
+    const firstMatches = rawItems.filter(
+      (item) => isLikelySameModel(item, query) && isGeneralPurchaseShoppingItem(item)
+    );
+    if (!firstMatches.length && modelBodyQuery && modelBodyQuery !== query) {
+      searchQueries.push(modelBodyQuery);
+      rawItems.push(...await requestNaverShoppingItems(config, modelBodyQuery, display));
+    }
+  } catch (error) {
+    const status = Number(error?.status || 502);
     return json({
       ok: false,
       configured: true,
-      status: response.status,
-      message: payload.errorMessage || "네이버 쇼핑 최저가 조회에 실패했습니다.",
-      errorCode: payload.errorCode || "",
-    }, response.status);
+      status,
+      message: error?.message || "네이버 쇼핑 최저가 조회에 실패했습니다.",
+      errorCode: error?.errorCode || "",
+    }, status);
   }
 
-  const rawItems = (payload.items || [])
-    .map((item) => ({
-      title: stripHtmlTags(item.title),
-      link: item.link || "",
-      image: item.image || "",
-      mallName: item.mallName || "",
-      productId: item.productId || "",
-      productType: item.productType || "",
-      maker: item.maker || "",
-      brand: item.brand || "",
-      category1: item.category1 || "",
-      category2: item.category2 || "",
-      category3: item.category3 || "",
-      category4: item.category4 || "",
-      lprice: Number(item.lprice || 0),
-      hprice: Number(item.hprice || 0),
-    }))
-    .filter((item) => item.lprice > 0)
-    .sort((a, b) => a.lprice - b.lprice);
-
-  const items = rawItems.filter((item) => isLikelySameModel(item, query) && isGeneralPurchaseShoppingItem(item));
+  const uniqueItems = new Map();
+  rawItems.forEach((item) => {
+    const key = item.productId || item.link || `${item.title}-${item.lprice}`;
+    const previous = uniqueItems.get(key);
+    if (!previous || item.lprice < previous.lprice) uniqueItems.set(key, item);
+  });
+  const dedupedItems = [...uniqueItems.values()].sort((a, b) => a.lprice - b.lprice);
+  const items = dedupedItems.filter(
+    (item) => isLikelySameModel(item, query) && isGeneralPurchaseShoppingItem(item)
+  );
 
   return json({
     ok: true,
     configured: true,
     query,
+    searchQueries,
     confidence: items.length ? "exact-model-filtered" : "no-exact-model-price",
     lowestPrice: items[0]?.lprice || 0,
     lowestItem: items[0] || null,
-    rawResultCount: rawItems.length,
+    rawResultCount: dedupedItems.length,
     filteredResultCount: items.length,
-    ignoredResultCount: rawItems.length - items.length,
+    ignoredResultCount: dedupedItems.length - items.length,
     pricePolicy: "general-purchase-only-min-300000-no-subscription",
     items,
   });
@@ -3159,6 +3194,47 @@ async function getLplanTrainingQuotes(env, request) {
   });
 }
 
+async function getLplanModelLearning(env) {
+  await ensureLplanTrainingTable(env);
+  const summary = await env.DB.prepare(
+    `SELECT COUNT(*) AS total, MAX(synced_at) AS latest_synced_at
+       FROM lplan_quote_patterns`
+  ).first();
+  const rows = await env.DB.prepare(
+    `SELECT rows_json
+       FROM lplan_quote_patterns
+       ORDER BY synced_at DESC
+       LIMIT 1000`
+  ).all();
+
+  const modelCounts = {};
+  for (const row of rows.results || []) {
+    const quoteModels = new Set();
+    const parsedRows = parseJson(row.rows_json, []);
+    const quoteRows = Array.isArray(parsedRows)
+      ? parsedRows
+      : Array.isArray(parsedRows?.rows)
+        ? parsedRows.rows
+        : [];
+    for (const item of quoteRows) {
+      const model = String(item?.model || item?.modelName || "")
+        .trim()
+        .toUpperCase()
+        .replace(/\s+/g, "");
+      if (model) quoteModels.add(model);
+    }
+    for (const model of quoteModels) modelCounts[model] = Number(modelCounts[model] || 0) + 1;
+  }
+
+  return json({
+    ok: true,
+    version: PUBLIC_API_VERSION,
+    totalQuotes: Number(summary?.total || 0),
+    latestSyncedAt: summary?.latest_synced_at || "",
+    modelCounts,
+  });
+}
+
 export async function onRequest(context) {
   const { request, env, params } = context;
   const pathParts = Array.isArray(params.path) ? params.path : [];
@@ -3226,6 +3302,7 @@ export async function onRequest(context) {
   if (path === "customer-quotes" && method === "POST") return createCustomerQuote(env, request);
   if (path === "lplan-training-quotes" && method === "POST") return saveLplanTrainingQuote(env, request);
   if (path === "lplan-training-quotes" && method === "GET") return getLplanTrainingQuotes(env, request);
+  if (path === "lplan-model-learning" && method === "GET") return getLplanModelLearning(env);
   if (path === "bids" && method === "GET") return getBids(env, request);
   if (path === "bids" && method === "POST") return upsertBid(env, request);
   if (path === "reviews" && method === "GET") return getReviews(env, request);

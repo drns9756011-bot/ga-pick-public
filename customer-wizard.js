@@ -43,6 +43,8 @@
       note: "",
     },
     catalogs: {},
+    lowestPriceCache: new Map(),
+    modelLearning: null,
     recommendationGroups: [],
     recommending: false,
     recommendationMode: "",
@@ -525,9 +527,33 @@
     form._wizardSubmitAllowed = false;
 
     bindNativeFields();
+    form.addEventListener("pickquote:wizard-reset", resetWizardState);
     hideNativeFields();
     render();
     syncAllFields();
+  }
+
+  function resetWizardState() {
+    state.stepIndex = 0;
+    state.selectedProducts = [];
+    state.productOptions = {};
+    state.aiContext = {
+      situation: "",
+      family: [],
+      budgetStatus: "",
+      budgetRange: "",
+      priorities: [],
+      note: "",
+    };
+    state.recommendationGroups = [];
+    state.recommending = false;
+    state.recommendationMode = "";
+    form._wizardSubmitAllowed = false;
+    fields.aiModelRecommendations.value = "";
+    fields.recommendationMode.value = "";
+    fields.price.value = "0";
+    syncAllFields();
+    render();
   }
 
   function ensureHiddenField(name) {
@@ -946,6 +972,12 @@
           const digits = onlyDigits(input.value).slice(0, 8);
           target.value = digits;
           input.value = digits ? Number(digits).toLocaleString("ko-KR") : "";
+          const help = input.parentElement?.querySelector("small");
+          if (help) {
+            help.textContent = digits
+              ? `${Number(digits).toLocaleString("ko-KR")}만원, 약 ${(Number(digits) * 10000).toLocaleString("ko-KR")}원`
+              : "만원 단위로 입력해주세요. 예: 1,500 입력 시 15,000,000원";
+          }
         } else {
           target.value = input.value;
         }
@@ -1719,12 +1751,25 @@ function buildAiSummary() {
     return loadCatalogByBrand(brand);
   }
 
+  async function loadModelLearning() {
+    if (state.modelLearning) return state.modelLearning;
+    try {
+      const response = await fetchWithTimeout("/api/lplan-model-learning", { cache: "no-store" }, 9000);
+      const data = response.ok ? await response.json() : null;
+      state.modelLearning = data?.ok && data.modelCounts ? data.modelCounts : {};
+    } catch {
+      state.modelLearning = {};
+    }
+    return state.modelLearning;
+  }
+
   async function buildAiModelRecommendations() {
-    const catalog = await loadCatalog();
+    const [catalog] = await Promise.all([loadCatalog(), loadModelLearning()]);
     const selectedProducts = state.selectedProducts.filter(Boolean);
     const totalWeight = selectedProducts.reduce((sum, product) => sum + productBudgetWeight(product), 0) || 1;
     const budgetWon = parseBudgetWon(state.aiContext.budgetRange);
     const groups = [];
+
     for (const product of selectedProducts) {
       const productKey = normalizeProductKey(product);
       const optionSource = optionStateFor(productKey);
@@ -1735,19 +1780,30 @@ function buildAiSummary() {
       const targetPrice = budgetWon
         ? Math.round((budgetWon * productBudgetWeight(product)) / totalWeight)
         : defaultTargetPrice(product, candidates);
+
       const shortlist = rankModelCandidates(product, candidates, targetPrice).slice(0, 5);
-      const enriched = [];
-      for (const model of shortlist) {
-        const lowest = await fetchLowestPrice(model.modelName);
-        enriched.push({ ...model, naverLowestPrice: lowest || 0 });
-      }
-      const chosen = chooseRecommendedModel(product, enriched.length ? enriched : shortlist, targetPrice);
+      const enriched = await Promise.all(
+        shortlist.map(async (model) => ({
+          ...model,
+          naverLowestPrice: (await fetchLowestPrice(model.modelName)) || 0,
+        }))
+      );
+
+      const chosen = chooseRecommendedModel(product, enriched, targetPrice);
+      const catalogModelNames = new Set(models.map((model) => compactModelName(model?.modelName || "")).filter(Boolean));
+      const verifiedChosen =
+        chosen &&
+        catalogModelNames.has(compactModelName(chosen.modelName || "")) &&
+        candidates.some((candidate) => compactModelName(candidate.modelName) === compactModelName(chosen.modelName))
+          ? chosen
+          : null;
+
       groups.push({
         product,
         displayProduct: productDisplayTitle(product, optionSource),
         optionSummary: productOptionSummary(product),
         targetPrice,
-        models: chosen ? [chosen] : [{ modelName: "판매자 상담 후 모델 확정", normalPrice: 0, naverLowestPrice: 0 }],
+        models: verifiedChosen ? [verifiedChosen] : [{ modelName: "판매자 상담 후 모델 확정", normalPrice: 0, naverLowestPrice: 0 }],
       });
     }
     return groups;
@@ -1767,20 +1823,49 @@ function buildAiSummary() {
       .join(" ");
     const matchers = [];
 
-    if (productKey === "TV" && options.size) {
-      const selectedSize = Number(String(options.size).match(/\d+/)?.[0] || 0);
-      const isOrAbove = /↑|이상|\+/.test(String(options.size));
-      if (selectedSize) {
+    if (productKey === "TV") {
+      if (options.type) {
+        const selectedType = compactModelName(options.type);
         matchers.push((model) => {
-          const inches = extractTvInches(model.modelName);
-          if (!inches) return false;
-          return isOrAbove ? inches >= selectedSize : inches === selectedSize;
+          const body = modelBody(model);
+          const text = compactModelName(modelSearchText(model));
+          if (selectedType === "OLED") return /OLED/.test(body) || /OLED/.test(text);
+          if (selectedType === "QNED") return /QNED/.test(body) || /QNED/.test(text);
+          if (selectedType === "NEOQLED") return /^(KQ|QN)/.test(body) || /NEOQLED/.test(text);
+          if (selectedType === "MRGB") return /MRGB|MICRORGB/.test(text) || /^(M|KQ).*RGB/.test(body);
+          return text.includes(selectedType);
         });
+      }
+
+      if (options.size) {
+        const selectedSize = Number(String(options.size).match(/\d+/)?.[0] || 0);
+        const isOrAbove = /↑|이상|\+/.test(String(options.size));
+        if (selectedSize) {
+          matchers.push((model) => {
+            const inches = extractTvInches(model.modelName);
+            if (!inches) return false;
+            return isOrAbove ? inches >= selectedSize : inches === selectedSize;
+          });
+        }
       }
     }
 
     if (productKey === "라이프스타일 TV") {
-      matchers.push((model) => /스탠바이미|STANBYME|27LX|32LX|라이프/i.test(modelSearchText(model)));
+      matchers.push((model) => /스탠바이미|STANBYME|27ART|27LX|32LX|THEMOVINGSTYLE|LSH|SP-L/i.test(modelSearchText(model)));
+      if (options.type) {
+        const selectedType = compactModelName(options.type);
+        matchers.push((model) => {
+          const body = modelBody(model);
+          const text = compactModelName(modelSearchText(model));
+          if (/GO/.test(selectedType)) return /27LX5|STANBYMEGO|GO/.test(text);
+          if (/스탠바이미/.test(String(options.type))) return !/27LX5|STANBYMEGO/.test(text);
+          return true;
+        });
+      }
+      if (options.size) {
+        const selectedSize = Number(String(options.size).match(/\d+/)?.[0] || 0);
+        if (selectedSize) matchers.push((model) => extractLifestyleTvInches(model.modelName) === selectedSize);
+      }
     }
 
     if (productKey === "냉장고") {
@@ -1816,8 +1901,11 @@ function buildAiSummary() {
           const selectedType = String(type || "");
           const text = modelSearchText(model);
           const body = modelBody(model);
-          if (/로봇/.test(selectedType)) return /로봇|ROBOT/i.test(text) || /^(R9|VR)/i.test(body);
-          if (/무선/.test(selectedType)) return /무선|코드제로|제트/i.test(text) || /^(A9|AU|VS)/i.test(body);
+          if (/로봇/.test(selectedType)) return /로봇청소기|ROBOT/i.test(text) || /^(MO|B9|R9|VR)/i.test(body);
+          if (/무선/.test(selectedType)) {
+            const isRobot = /로봇청소기|ROBOT/i.test(text) || /^(MO|B9|R9|VR)/i.test(body);
+            return !isRobot && (/무선|코드제로|제트/i.test(text) || /^(AS|A7|AI9|A9|AU|VS)/i.test(body));
+          }
           if (/유선/.test(selectedType)) return /유선/i.test(text) || /^VC/i.test(body);
           return text.replace(/\s+/g, "").includes(selectedType.replace(/\s*청소기/g, "").replace(/\s+/g, ""));
         })
@@ -1835,7 +1923,15 @@ function buildAiSummary() {
     if (productKey === "공기청정기") matchers.push((model) => /공기|퓨리|청정|AS/i.test(modelSearchText(model)));
     if (productKey === "의류관리기") matchers.push((model) => /스타일러|의류|SC|S5|S3|DF/i.test(modelSearchText(model)));
 
-    const matched = matchers.length ? normalized.filter((model) => matchers.every((matcher) => matcher(model))) : normalized;
+    const matched = matchers.length
+      ? normalized.filter((model) => matchers.every((matcher) => matcher(model)))
+      : normalized;
+
+    if (selectedBrandKey() === "LG전자" && ["냉장고", "김치냉장고"].includes(productKey)) {
+      const gbbModels = matched.filter((model) => isGbbPreferredModel(model));
+      if (gbbModels.length) return gbbModels;
+    }
+
     return matched;
   }
 
@@ -1852,17 +1948,8 @@ function buildAiSummary() {
       return isAllowedSamsungRecommendationModel(product, model);
     }
 
-    const blockedBodies = new Set([
-      "75QNED9MAKW",
-      "27LX6TEGA",
-      "27LX6TKGA",
-      "27LX6TPGA",
-    ]);
-    if (blockedBodies.has(body) && /\.AKXT7SC$/i.test(name)) return false;
-    if (body === "75QNED9MAKW") return false;
-
     if (productKey === "라이프스타일 TV") {
-      return /^(27LX6T|32LX)/.test(body) && !/AKXT7SC$/.test(name);
+      return /^(27ART|27LX|32LX|LSH|SP-L)/.test(body) || /STANBYME|스탠바이미|THEMOVINGSTYLE/.test(text);
     }
 
     if (productKey === "냉장고") {
@@ -1882,6 +1969,10 @@ function buildAiSummary() {
       if (!isKimchiFridgeModel(model)) return false;
       if (/^(Z|K|RQ)/.test(body)) return true;
       return /김치|GBB/.test(text);
+    }
+
+    if (productKey === "청소기") {
+      return /청소기/.test(text) && /^(AS|A7|AI9|MO|B9|A9|AU|R9|VS|VR|VC)/.test(body);
     }
 
     return true;
@@ -2005,9 +2096,12 @@ function buildAiSummary() {
   }
 
   function defaultTargetPrice(product, candidates) {
-    const prices = candidates.map((model) => Number(model.normalPrice || 0)).filter(Boolean).sort((a, b) => a - b);
+    const prices = candidates
+      .map((model) => estimatedOnlinePrice(model))
+      .filter((price) => price >= 300000)
+      .sort((a, b) => a - b);
     if (!prices.length) return productBudgetWeight(product) * 1800000;
-    const indexRatio = isPremiumAiContext() ? 0.72 : 0.58;
+    const indexRatio = isPremiumAiContext() ? 0.72 : 0.56;
     return prices[Math.min(prices.length - 1, Math.floor(prices.length * indexRatio))];
   }
 
@@ -2018,7 +2112,8 @@ function buildAiSummary() {
 
   function estimatedOnlinePrice(model) {
     const normalPrice = Number(model?.normalPrice || 0);
-    return normalPrice ? Math.round(normalPrice * 0.62) : 0;
+    if (normalPrice < 300000) return 0;
+    return Math.round(normalPrice * 0.62);
   }
 
   function rankModelCandidates(product, candidates, targetPrice) {
@@ -2038,9 +2133,11 @@ function buildAiSummary() {
 
   function chooseRecommendedModel(product, candidates, targetPrice) {
     const premium = isPremiumAiContext();
-    return [...candidates]
+    const allowed = [...candidates]
       .filter((model) => model && model.modelName)
-      .filter((model) => isAllowedRecommendationModel(product, model))
+      .filter((model) => isAllowedRecommendationModel(product, model));
+    const priced = allowed.filter((model) => Number(model.naverLowestPrice || 0) >= 300000);
+    return (priced.length ? priced : allowed)
       .sort((a, b) => {
         const aNaverPrice = Number(a.naverLowestPrice || 0);
         const bNaverPrice = Number(b.naverLowestPrice || 0);
@@ -2068,6 +2165,8 @@ function buildAiSummary() {
     const body = modelBody(model);
     const brand = typeof model === "object" ? model?.brand || "" : "";
     let score = 0;
+    const learnedCount = modelLearningCount(model);
+    if (learnedCount > 0) score -= Math.min(0.3, Math.log2(learnedCount + 1) * 0.06);
     if (productKey === "TV") {
       if (/OLED|QNED9|QNED8/.test(name)) score -= 0.22;
       if (/^(KQ|QN).*9|OLED|NEO/.test(name) || /NEO QLED|OLED/.test(text)) score -= 0.18;
@@ -2098,6 +2197,18 @@ function buildAiSummary() {
     return score;
   }
 
+  function modelLearningCount(model) {
+    const counts = state.modelLearning || {};
+    const fullName = compactModelName(typeof model === "object" ? model?.modelName : model);
+    const body = modelBody(model);
+    const exactCount = Number(counts[fullName] || 0);
+    if (!body) return exactCount;
+    const bodyCount = Object.entries(counts).reduce((sum, [name, value]) => {
+      return String(name).split(".")[0] === body ? sum + Number(value || 0) : sum;
+    }, 0);
+    return Math.max(exactCount, bodyCount);
+  }
+
   function extractTvInches(modelName) {
     const name = String(modelName || "").toUpperCase().replace(/\s+/g, "");
     const patterns = [
@@ -2116,16 +2227,36 @@ function buildAiSummary() {
     return 0;
   }
 
+  function extractLifestyleTvInches(modelName) {
+    const name = compactModelName(modelName);
+    const match = name.match(/^(27|32)(?:ART|LX|LSH|SP-L)/);
+    if (match) return Number(match[1]);
+    return extractTvInches(name);
+  }
+
   async function fetchLowestPrice(modelName) {
-    try {
-      const response = await fetchWithTimeout(`/api/naver-shopping-lowest?query=${encodeURIComponent(modelName)}`, { cache: "no-store" }, 9000);
-      if (!response.ok) return 0;
-      const data = await response.json();
-      if (!data.ok || data.confidence !== "exact-model-filtered") return 0;
-      return Number(data.lowestPrice || 0);
-    } catch {
-      return 0;
-    }
+    const cacheKey = compactModelName(modelName);
+    if (!cacheKey) return 0;
+    if (state.lowestPriceCache.has(cacheKey)) return state.lowestPriceCache.get(cacheKey);
+
+    const request = (async () => {
+      try {
+        const response = await fetchWithTimeout(
+          `/api/naver-shopping-lowest?query=${encodeURIComponent(modelName)}&display=30`,
+          { cache: "no-store" },
+          12000
+        );
+        if (!response.ok) return 0;
+        const data = await response.json();
+        if (!data.ok || data.confidence !== "exact-model-filtered") return 0;
+        return Number(data.lowestPrice || 0);
+      } catch {
+        return 0;
+      }
+    })();
+
+    state.lowestPriceCache.set(cacheKey, request);
+    return request;
   }
 
   function recommendationsToText(groups) {
@@ -2133,8 +2264,7 @@ function buildAiSummary() {
     groups.forEach((group) => {
       lines.push("");
       lines.push(
-        `[${group.displayProduct || group.product}]${group.optionSummary ? ` ${group.optionSummary}` : ""}` +
-          (Number(group.models?.[0]?.naverLowestPrice || 0) >= 300000 ? ` / 네이버 최저가 ${formatWon(group.models[0].naverLowestPrice)}` : "")
+        `[${group.displayProduct || group.product}]${group.optionSummary ? ` ${group.optionSummary}` : ""}`
       );
       group.models.forEach((model) => lines.push(`- ${displayModelName(model)}${formatModelLowestPrice(model)}`));
     });
@@ -2168,9 +2298,7 @@ function buildAiSummary() {
 
   function recommendationModelPrice(model) {
     const naverPrice = Number(model?.naverLowestPrice || 0);
-    if (naverPrice >= 300000) return naverPrice;
-    const estimated = estimatedOnlinePrice(model);
-    return estimated >= 300000 ? estimated : 0;
+    return naverPrice >= 300000 ? naverPrice : 0;
   }
 
   function recommendationTotalPrice(groups) {
