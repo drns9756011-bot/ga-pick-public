@@ -1741,37 +1741,41 @@ h3 {
 }
 
 @media (max-width: 560px) {
+  .pick-app-home {
+    width: 100%;
+    overflow-x: hidden;
+  }
+
   .pick-home-shell {
     display: block;
-    width: min(100%, 480px);
-    max-width: calc(100% - 28px);
-    margin: 0;
+    width: calc(100% - 28px);
+    max-width: 480px;
+    margin-right: auto;
+    margin-left: auto;
     box-sizing: border-box;
-    margin-inline: auto;
     padding: 22px 0 calc(118px + env(safe-area-inset-bottom));
-    overflow-x: hidden;
   }
 
   .pick-home-hero {
     display: block;
     width: 100%;
-    max-width: 100%;
-    margin: 0 auto;
+    min-width: 0;
+    max-width: none;
+    margin-right: auto;
+    margin-left: auto;
     padding: 0;
     box-sizing: border-box;
-    overflow: visible;
   }
 
   .pick-hero-banner {
     display: grid;
     grid-template-columns: 1fr;
     width: 100%;
-    max-width: 100%;
     min-width: 0;
+    max-width: none;
     box-sizing: border-box;
-    margin: 0 auto;
-    right: auto;
-    left: auto;
+    margin-right: auto;
+    margin-left: auto;
     position: relative;
     -webkit-transform: none;
     transform: none;
@@ -1781,6 +1785,13 @@ h3 {
     min-height: 0;
     padding: 26px 20px 28px;
     border-radius: 26px;
+  }
+
+  .pick-hero-banner > div {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    box-sizing: border-box;
   }
 
   .home-ad-slot {
@@ -1810,24 +1821,39 @@ h3 {
 
   .pick-price-demo {
     width: 100%;
-    max-width: 100%;
+    min-width: 0;
+    max-width: none;
     box-sizing: border-box;
     padding: 14px;
     border-radius: 22px;
   }
 
   .pick-price-demo div {
+    display: grid;
+    grid-template-columns: minmax(82px, auto) minmax(0, 1fr);
+    gap: 8px;
     min-height: 66px;
-    padding: 14px;
+    min-width: 0;
+    padding: 12px;
+  }
+
+  .pick-price-demo span {
+    min-width: 0;
+    font-size: clamp(13px, 3.8vw, 16px);
   }
 
   .pick-price-demo strong {
-    font-size: clamp(19px, 5.3vw, 24px);
+    display: block;
+    width: 100%;
+    min-width: 0;
+    font-size: clamp(17px, 4.7vw, 23px);
+    line-height: 1.1;
+    text-align: right;
     white-space: nowrap;
   }
 
   .pick-price-demo div:nth-child(2) strong {
-    font-size: clamp(28px, 8.4vw, 36px);
+    font-size: clamp(23px, 6.8vw, 30px);
   }
 
   .pick-start-card {
@@ -7168,56 +7194,6 @@ html.is-mobile-device :where(.model-code, .quote-number, .ai-recommendation-grou
 
   html.is-mobile-device :where(.home-report-hero h1, .page-hero h1, .report-hero-copy h1, .home-final-band h2) {
     text-wrap: normal;
-  }
-
-  html.is-mobile-device .pick-home-shell {
-    display: block;
-    width: min(100%, 480px);
-    max-width: calc(100% - 28px);
-    margin: 0 auto;
-    padding-right: 0;
-    padding-left: 0;
-    box-sizing: border-box;
-    overflow-x: hidden;
-  }
-
-  html.is-mobile-device .pick-home-hero {
-    display: block;
-    width: 100%;
-    max-width: 100%;
-    margin: 0 auto;
-    padding: 0;
-    box-sizing: border-box;
-    overflow: visible;
-  }
-
-  html.is-mobile-device .pick-hero-banner {
-    display: grid;
-    grid-template-columns: 1fr;
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    margin: 0 auto;
-    right: auto;
-    left: auto;
-    position: relative;
-    box-sizing: border-box;
-    overflow: hidden;
-    align-items: stretch;
-    justify-items: stretch;
-    -webkit-transform: none;
-    transform: none;
-  }
-
-  html.is-mobile-device .pick-hero-banner > div:first-child,
-  html.is-mobile-device .pick-price-demo {
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-  }
-
-  html.is-mobile-device .pick-price-demo div {
-    grid-template-columns: minmax(86px, auto) minmax(0, 1fr);
   }
 
   html.is-mobile-device :where(.modal-panel, .option-sheet, .server-loading-dialog) {
