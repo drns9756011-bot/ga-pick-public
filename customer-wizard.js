@@ -69,7 +69,7 @@
     {
       value: "without_quote",
       title: "견적서가 없어요",
-      text: "품목과 상황을 선택하면 AI가 브랜드별 후보 모델로 간이 견적서를 정리합니다.",
+      text: "품목과 옵션을 선택해 비교 요청합니다. LG·삼성 단일 브랜드는 AI 모델 추천을 지원합니다.",
       badge: "",
     },
   ];
@@ -381,6 +381,118 @@
         },
       ],
     },
+    "비교견적": {
+      "TV": [
+        { mode: "single", key: "type", label: "유형", options: ["기본형", "프리미엄", "기본형 플러스"] },
+        { mode: "single", key: "install", label: "구분", options: ["벽걸이", "스탠드"] },
+        {
+          mode: "singleBy",
+          key: "size",
+          label: "인치",
+          dependsOn: "type",
+          optionsByValue: {
+            "기본형": ["40인치", "50인치", "55인치", "65인치", "75인치", "85인치", "100인치"],
+            "프리미엄": ["42인치", "48인치", "55인치", "65인치", "77인치", "83인치"],
+            "기본형 플러스": ["65인치", "75인치", "85인치", "100인치", "115인치"],
+          },
+        },
+      ],
+      "라이프스타일 TV": [
+        { mode: "single", key: "type", label: "유형", options: ["기본형", "포터블"] },
+        {
+          mode: "singleBy",
+          key: "size",
+          label: "인치",
+          dependsOn: "type",
+          optionsByValue: { "기본형": ["27인치", "32인치"], "포터블": ["27인치"] },
+        },
+      ],
+      "냉장고": [
+        { mode: "single", key: "type", label: "유형", options: ["상냉장", "빌트인", "양문형", "1도어"] },
+      ],
+      "김치냉장고": [
+        { mode: "single", key: "type", label: "유형", options: ["뚜껑식", "스탠드", "1도어"] },
+        {
+          mode: "singleBy",
+          key: "detail",
+          label: "구분",
+          dependsOn: "type",
+          optionsByValue: {
+            "뚜껑식": ["1도어", "2도어"],
+            "스탠드": ["빌트인 3도어", "빌트인 4도어", "일반 3도어", "일반 4도어"],
+          },
+        },
+      ],
+      "세탁기 / 건조기": [
+        { mode: "single", key: "type", label: "유형", options: ["일체형(워시타워,원바디)", "복합형(콤보)", "분리형(세탁기/건조기)", "드럼세탁기", "일반세탁기"] },
+      ],
+      "의류관리기": [
+        { mode: "single", key: "capacity", label: "유형", options: ["3벌", "5벌"] },
+        { mode: "single", key: "finish", label: "유형", options: ["미러", "일반"] },
+      ],
+      "에어컨": [
+        { mode: "single", key: "type", label: "구분", options: ["2IN1", "스탠드", "벽걸이", "천장형"] },
+        {
+          mode: "singleBy",
+          key: "area",
+          label: "평형",
+          dependsOn: "type",
+          optionsByValue: {
+            "2IN1": ["17평형", "18평형", "22평형", "25평형"],
+            "스탠드": ["17평형", "18평형", "22평형", "25평형"],
+            "벽걸이": ["6평형", "7평형", "9평형", "11평형", "13평형", "16평형"],
+          },
+        },
+        { mode: "singleBy", key: "quantity", label: "수량", dependsOn: "type", optionsByValue: { "천장형": ["2", "3", "4", "5", "6"] } },
+      ],
+      "청소기": [
+        { mode: "single", key: "type", label: "구분", options: ["무선 청소기", "로봇 청소기", "유선 청소기"] },
+        {
+          mode: "singleBy",
+          key: "detail",
+          label: "구분",
+          dependsOn: "type",
+          optionsByValue: { "로봇 청소기": ["일반", "자동급배수"] },
+        },
+      ],
+      "식기세척기": [
+        { mode: "single", key: "type", label: "구분", options: ["빝트인", "카운터탑"] },
+        {
+          mode: "singleBy",
+          key: "toeKick",
+          label: "걸레받이",
+          dependsOn: "type",
+          optionsByValue: {
+            "빝트인": ["10CM", "15CM", "잘모르겠어요"],
+            "카운터탑": ["3cm", "8cm", "15cm", "잘모르겠어요"],
+          },
+        },
+      ],
+      "인덕션": [
+        { mode: "single", key: "install", label: "구분", options: ["빌트인", "프리스탠딩"] },
+        { mode: "single", key: "heatType", label: "구분", options: ["인덕션", "하이브리드"] },
+        { mode: "singleBy", key: "height", label: "구분", dependsOn: "install", optionsByValue: { "프리스탠딩": ["3cm", "8cm", "15cm", "잘모르겠어요"] } },
+      ],
+      "오븐 / 전자레인지": [
+        { mode: "single", key: "type", label: "구분", options: ["복합오븐", "전자레인지"] },
+      ],
+      "공기청정기": [
+        { mode: "single", key: "area", label: "구분", options: ["10평형", "18평형", "20평형", "24평형", "30평형", "35평형"] },
+      ],
+      "정수기": [
+        { mode: "single", key: "install", label: "구분", options: ["빌트인", "스탠드"] },
+        {
+          mode: "singleBy",
+          key: "function",
+          label: "구분",
+          dependsOn: "install",
+          optionsByValue: {
+            "빌트인": ["냉,온,정수", "냉,정수", "정수"],
+            "스탠드": ["얼음정수기", "냉,온,정수"],
+          },
+        },
+      ],
+    },
   };
 
   const aiSituations = ["혼수/웨딩", "신축 입주", "이사", "교체", "사업장/B2B"];
@@ -395,6 +507,7 @@
     { key: "products", render: renderProducts, validate: validateProducts, show: isWithoutQuote },
     { key: "options", render: renderOptions, validate: validateOptions, show: isWithoutQuote },
     { key: "ai", render: renderAiContext, validate: validateAiContext, show: shouldUseAiRecommendation },
+    { key: "comparisonBudget", render: renderComparisonBudget, validate: validateComparisonBudget, show: isComparisonWithoutQuote },
     { key: "quoteInfo", render: renderQuoteInfo, validate: validateQuoteInfo },
   ];
 
@@ -574,9 +687,12 @@
   }
 
   function renderBrand() {
+    const description = isWithQuote()
+      ? "견적서에 적힌 브랜드 기준으로 선택해주세요."
+      : "LG전자와 삼성전자는 AI 후보 모델을 정리하고, 비교견적은 AI 추천 없이 선택한 옵션과 예산으로 판매자 제안을 받습니다.";
     return `
       <h3>브랜드를 선택해주세요.</h3>
-      <p>견적서가 없는 경우에도 LG전자, 삼성전자, 비교견적 모두 카탈로그 후보 모델 기준으로 AI가 간이 견적서를 정리합니다.</p>
+      <p>${description}</p>
       <div class="wizard-choice-grid wizard-choice-grid-three">${brandOptions.map((item) => choiceCard(item, "wizardBrandProxy", fields.brand.value)).join("")}</div>
     `;
   }
@@ -628,7 +744,7 @@
   function renderAiContext() {
     return `
       <h3>AI 추천에 필요한 상황을 알려주세요.</h3>
-      <p>선택한 브랜드와 품목에 맞춰 후보 모델을 정리합니다. 비교견적은 LG전자와 삼성전자 후보를 함께 검토합니다.</p>
+      <p>선택한 브랜드와 품목에 맞춰 후보 모델을 정리합니다.</p>
       <div class="wizard-choice-block">
         <h4>구매 목적</h4>
         <div class="wizard-chip-grid">${aiSituations.map((item) => chip(item, "ai-situation", state.aiContext.situation === item)).join("")}</div>
@@ -654,6 +770,25 @@
     `;
   }
 
+  function renderComparisonBudget() {
+    const budget = Number(comparisonBudgetDigits()) > 0 ? comparisonBudgetDigits() : "";
+    return `
+      <h3>비교견적 예산을 입력해주세요.</h3>
+      <p>AI 추천 없이 선택한 품목과 옵션을 기준으로 여러 판매자의 제안을 비교합니다.</p>
+      <label class="wizard-wide-label">예산(만원)
+        <input
+          type="text"
+          inputmode="numeric"
+          autocomplete="off"
+          data-comparison-budget
+          value="${escapeHtml(budget ? Number(budget).toLocaleString("ko-KR") : "")}"
+          placeholder="예: 1,500"
+        />
+        <small>${budget ? `${Number(budget).toLocaleString("ko-KR")}만원, 약 ${(Number(budget) * 10000).toLocaleString("ko-KR")}원` : "판매자가 예산 안에서 조건을 제안할 수 있도록 만원 단위로 입력해주세요."}</small>
+      </label>
+    `;
+  }
+
   function renderQuoteInfo() {
     const showUpload = isWithQuote();
     const showAiNotice = shouldUseAiRecommendation();
@@ -662,6 +797,21 @@
       <p>${showAiNotice ? "AI가 고객님 상황에 맞는 추천 모델과 네이버 최저가 일반 구매가를 함께 정리합니다." : "판매자가 확인할 설치 일정과 요청사항을 입력해주세요."}</p>
       ${showUpload ? renderUploadBox() : ""}
       ${showAiNotice ? renderRecommendationPanel() : ""}
+      ${
+        showUpload
+          ? `<label class="wizard-wide-label">기존 견적 금액(만원)
+              <input
+                type="text"
+                inputmode="numeric"
+                autocomplete="off"
+                data-wizard-field="price"
+                value="${escapeHtml(onlyDigits(fields.price.value) ? Number(onlyDigits(fields.price.value)).toLocaleString("ko-KR") : "")}"
+                placeholder="예: 1,500"
+              />
+              <small>1,500 입력 시 15,000,000원으로 등록됩니다.</small>
+            </label>`
+          : ""
+      }
       <div class="wizard-field-grid">
         <label>설치 지역<input type="text" data-wizard-field="region" value="${escapeHtml(fields.region.value)}" placeholder="서울 송파구" /></label>
         <label>설치 예정일<input type="text" data-wizard-field="installDate" value="${escapeHtml(fields.installDate.value)}" placeholder="예: 8월 말, 2026년 8월 15일" /></label>
@@ -715,8 +865,14 @@
         }
         if (input.name === "wizardPurposeProxy") fields.purpose.value = input.value;
         if (input.name === "wizardBrandProxy") {
+          const previousBrand = selectedBrandKey();
           fields.brand.value = input.value;
           state.productOptions = {};
+          if (previousBrand === "비교견적" || input.value === "비교견적") {
+            state.aiContext.budgetStatus = "";
+            state.aiContext.budgetRange = "";
+            if (isWithoutQuote()) fields.price.value = "0";
+          }
           clearAiRecommendation();
         }
         syncAllFields();
@@ -728,8 +884,16 @@
       input.addEventListener("input", () => {
         const target = field(input.dataset.wizardField);
         if (!target) return;
-        target.value = input.dataset.wizardField === "phone" ? formatPhoneInput(input.value) : input.value;
-        if (input.dataset.wizardField === "phone") input.value = target.value;
+        if (input.dataset.wizardField === "phone") {
+          target.value = formatPhoneInput(input.value);
+          input.value = target.value;
+        } else if (input.dataset.wizardField === "price") {
+          const digits = onlyDigits(input.value).slice(0, 8);
+          target.value = digits;
+          input.value = digits ? Number(digits).toLocaleString("ko-KR") : "";
+        } else {
+          target.value = input.value;
+        }
         updatePreview();
       });
     });
@@ -776,6 +940,20 @@
     root.querySelector("[data-ai-budget-range]")?.addEventListener("input", (event) => {
       state.aiContext.budgetRange = event.target.value;
       syncAllFields();
+    });
+
+    root.querySelector("[data-comparison-budget]")?.addEventListener("input", (event) => {
+      const digits = onlyDigits(event.target.value).slice(0, 8);
+      state.aiContext.budgetStatus = "예산 확정";
+      state.aiContext.budgetRange = digits;
+      event.target.value = digits ? Number(digits).toLocaleString("ko-KR") : "";
+      syncAllFields();
+      const help = event.target.parentElement?.querySelector("small");
+      if (help) {
+        help.textContent = digits
+          ? `${Number(digits).toLocaleString("ko-KR")}만원, 약 ${(Number(digits) * 10000).toLocaleString("ko-KR")}원`
+          : "판매자가 예산 안에서 조건을 제안할 수 있도록 만원 단위로 입력해주세요.";
+      }
     });
 
     root.querySelectorAll("[data-ai-priority]").forEach((button) => {
@@ -995,15 +1173,20 @@
         "의류관리기": "에어드레서",
         "인덕션/전기레인지": "인덕션",
       },
+      "비교견적": {
+        "세탁기/건조기": "세탁기 / 건조기",
+        "인덕션/전기레인지": "인덕션",
+      },
     };
     return titles[brand]?.[productKey] || productKey;
   }
 
   function optionBrandFor(source) {
+    const selected = selectedBrandKey();
+    if (selected === "비교견적") return selected;
     const optionBrand = String(source?.optionBrand || "").trim();
     if (optionBrand === "LG전자" || optionBrand === "삼성전자") return optionBrand;
-    const selected = selectedBrandKey();
-    return selected === "비교견적" ? "" : selected;
+    return selected;
   }
 
   function productDisplayTitle(product, source) {
@@ -1020,15 +1203,6 @@
 
   function optionSchemaFor(product, source) {
     const brand = optionBrandFor(source || optionStateFor(product));
-    if (selectedBrandKey() === "비교견적") {
-      if (!brand) {
-        return [{ mode: "single", key: "optionBrand", label: "옵션 기준", options: ["LG전자", "삼성전자"] }];
-      }
-      return [
-        { mode: "single", key: "optionBrand", label: "옵션 기준", options: ["LG전자", "삼성전자"] },
-        ...schemaForBrand(product, brand),
-      ];
-    }
     const schema = schemaForBrand(product, brand);
     if (schema.length) return schema;
     return [{ mode: "single", key: "detail", label: "상세 옵션", options: [unknownOption] }];
@@ -1247,6 +1421,15 @@ function validateQuoteType() {
     return true;
   }
 
+  function validateComparisonBudget() {
+    const budget = Number(comparisonBudgetDigits());
+    if (!Number.isFinite(budget) || budget <= 0) {
+      setMessage("비교견적 예산을 만원 단위로 입력해주세요.");
+      return false;
+    }
+    return true;
+  }
+
   function validateQuoteInfo() {
     if (state.recommending) {
       setMessage("AI가 추천 모델을 찾고 있습니다. 잠시만 기다려주세요.");
@@ -1255,6 +1438,10 @@ function validateQuoteType() {
     if (shouldUseAiRecommendation() && !state.recommendationGroups.length) {
       setMessage("AI 추천 모델이 아직 정리되지 않았습니다. 잠시 후 다시 시도해주세요.");
       runAiRecommendation();
+      return false;
+    }
+    if (isWithQuote() && Number(onlyDigits(fields.price.value)) <= 0) {
+      setMessage("기존 견적 금액을 만원 단위로 입력해주세요.");
       return false;
     }
     if (isWithQuote() && (!fields.image.files || !fields.image.files.length)) {
@@ -1281,13 +1468,21 @@ function validateQuoteType() {
     return fields.quoteType.value === "without_quote";
   }
 
+  function isComparisonWithoutQuote() {
+    return isWithoutQuote() && selectedBrandKey() === "비교견적";
+  }
+
+  function comparisonBudgetDigits() {
+    return onlyDigits(state.aiContext.budgetRange || fields.price.value);
+  }
+
   function shouldUseAiRecommendation() {
-    return isWithoutQuote() && ["LG전자", "삼성전자", "비교견적"].includes(fields.brand.value);
+    return isWithoutQuote() && ["LG전자", "삼성전자"].includes(selectedBrandKey());
   }
 
   function updateNativeRequirement() {
     if (fields.image) fields.image.required = isWithQuote();
-    if (fields.price) fields.price.required = false;
+    if (fields.price) fields.price.required = isWithQuote() || isComparisonWithoutQuote();
   }
 
   function syncAllFields() {
@@ -1299,9 +1494,14 @@ function validateQuoteType() {
     fields.purchasePriority.value = state.aiContext.priorities.join(", ");
     fields.aiRequestSummary.value = buildAiSummary();
     if (!shouldUseAiRecommendation()) fields.aiModelRecommendations.value = "";
+    if (isComparisonWithoutQuote()) {
+      const budget = comparisonBudgetDigits();
+      fields.budgetStatus.value = "예산 확정";
+      fields.budgetRange.value = budget;
+      fields.price.value = budget || "0";
+    }
     if (isWithQuote()) {
       fields.items.value = "견적서 첨부";
-      fields.price.value = "0";
     }
     updateNativeRequirement();
   }
@@ -1349,7 +1549,7 @@ function buildAiSummary() {
   function clearAiRecommendation() {
     state.recommendationGroups = [];
     fields.aiModelRecommendations.value = "";
-    if (isWithoutQuote()) fields.price.value = "0";
+    if (isWithoutQuote() && !isComparisonWithoutQuote()) fields.price.value = "0";
   }
 
   async function runAiRecommendation() {
@@ -1392,7 +1592,6 @@ function buildAiSummary() {
 
   function selectedAiBrandLabel() {
     if (fields.brand.value === "삼성전자") return "삼성전자";
-    if (fields.brand.value === "비교견적") return "LG전자와 삼성전자";
     return "LG전자";
   }
 
@@ -1406,18 +1605,11 @@ function buildAiSummary() {
   }
 
   async function loadCatalog() {
-    if (fields.brand.value === "삼성전자") return loadCatalogByBrand("삼성전자");
-    if (fields.brand.value !== "비교견적") return loadCatalogByBrand("LG전자");
-
-    const [lgCatalog, samsungCatalog] = await Promise.all([loadCatalogByBrand("LG전자"), loadCatalogByBrand("삼성전자")]);
-    const merged = {};
-    productOptions.forEach((product) => {
-      const key = product.value;
-      const lgModels = Array.isArray(lgCatalog?.[key]?.models) ? lgCatalog[key].models.map((model) => ({ ...model, brand: model.brand || "LG전자" })) : [];
-      const samsungModels = Array.isArray(samsungCatalog?.[key]?.models) ? samsungCatalog[key].models.map((model) => ({ ...model, brand: model.brand || "삼성전자" })) : [];
-      merged[key] = { brand: "비교견적", source: "merged_lg_samsung_catalogues", models: [...lgModels, ...samsungModels] };
-    });
-    return merged;
+    const brand = selectedBrandKey();
+    if (!shouldUseAiRecommendation() || !["LG전자", "삼성전자"].includes(brand)) {
+      throw new Error("비교견적에는 AI 추천을 사용하지 않습니다.");
+    }
+    return loadCatalogByBrand(brand);
   }
 
   async function buildAiModelRecommendations() {
@@ -1848,8 +2040,7 @@ function buildAiSummary() {
   }
 
   function displayModelName(model) {
-    const brand = model?.brand && fields.brand.value === "비교견적" ? `[${model.brand}] ` : "";
-    return `${brand}${model?.modelName || "판매자 상담 후 모델 확정"}`;
+    return model?.modelName || "판매자 상담 후 모델 확정";
   }
 
   function formatWon(value) {
@@ -1917,7 +2108,9 @@ function buildAiSummary() {
       previewMeta.textContent = `${type} · ${brand} · ${region}`;
     }
     if (imagePreview && isWithoutQuote()) {
-      imagePreview.innerHTML = "<span>견적서 없이 AI 추천 정보로 접수됩니다.</span>";
+      imagePreview.innerHTML = isComparisonWithoutQuote()
+        ? "<span>견적서 없이 선택 품목·옵션과 예산으로 비교 요청됩니다.</span>"
+        : "<span>견적서 없이 AI 추천 정보로 접수됩니다.</span>";
     }
   }
 

@@ -2343,6 +2343,8 @@ requestForm.addEventListener("submit", (event) => {
   const quoteType = formData.get("quoteType") || "";
   const hasQuoteImage = quoteType === "with_quote";
   const selectedItems = String(formData.get("items") || "").trim();
+  const desiredBrand = normalizeQuoteBrand(formData.get("desiredBrand"));
+  const enteredPrice = parseManwon(formData.get("price"));
   if (!hasQuoteImage && quoteImage) {
     quoteImage.required = false;
     quoteImage.value = "";
@@ -2365,8 +2367,18 @@ requestForm.addEventListener("submit", (event) => {
     return;
   }
 
+  if (hasQuoteImage && enteredPrice <= 0) {
+    setRequestFormMessage("기존 견적 금액을 만원 단위로 입력해주세요.", "error");
+    return;
+  }
+
   if (!hasQuoteImage && !selectedItems) {
     setRequestFormMessage("견적서가 없는 경우 구매 예정 품목을 1개 이상 선택해주세요.", "error");
+    return;
+  }
+
+  if (!hasQuoteImage && desiredBrand === "비교견적" && enteredPrice <= 0) {
+    setRequestFormMessage("비교견적 예산을 만원 단위로 입력해주세요.", "error");
     return;
   }
 
