@@ -13,6 +13,9 @@ let pendingQuoteFormData = null;
 let pendingBidSelection = null;
 let pendingQuoteCloseId = null;
 let lookupAccessGranted = false;
+let activeLookupRequestIds = [];
+let quoteCountdownTimer = 0;
+let quoteCountdownRefreshQueued = false;
 
 const ADMIN_EMAIL = "di02013@naver.com";
 const STORAGE_KEYS = {
@@ -162,28 +165,41 @@ function createQuoteNumber() {
   return `${dateKey}-${String(lastSequence + 1).padStart(4, "0")}`;
 }
 
+const QUOTE_RECEIVE_HOURS = 72;
+
 function getQuoteDeadline(request) {
   if (request?.quoteExpiresAt) return new Date(request.quoteExpiresAt);
   if (request?.quote_expires_at) return new Date(request.quote_expires_at);
   if (!request?.createdAt) return null;
   const deadline = new Date(request.createdAt);
-  deadline.setHours(deadline.getHours() + 48);
+  deadline.setHours(deadline.getHours() + QUOTE_RECEIVE_HOURS);
   return deadline;
+}
+
+function getQuoteRemainingParts(request) {
+  const deadline = getQuoteDeadline(request);
+  if (!deadline || Number.isNaN(deadline.getTime())) {
+    return { days: 0, hours: 0, minutes: 0, seconds: 0, totalSeconds: 0 };
+  }
+  const remainingMs = deadline.getTime() - Date.now();
+  const totalSeconds = remainingMs > 0 ? Math.ceil(remainingMs / 1000) : 0;
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  return { days, hours, minutes, seconds, totalSeconds };
+}
+
+function formatQuoteRemainingParts(parts) {
+  if (!parts.totalSeconds) return "견적 마감";
+  const dayPart = parts.days > 0 ? `${parts.days}일 ` : "";
+  return `${dayPart}${parts.hours}시간 ${parts.minutes}분 ${parts.seconds}초`;
 }
 
 function getQuoteRemainingLabel(request) {
   const deadline = getQuoteDeadline(request);
   if (!deadline || Number.isNaN(deadline.getTime())) return "남은 시간 확인중";
-
-  const remainingMs = deadline.getTime() - Date.now();
-  if (remainingMs <= 0) return "견적 마감";
-
-  const totalMinutes = Math.ceil(remainingMs / 60000);
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-  if (hours >= 24) return `${Math.floor(hours / 24)}일 ${hours % 24}시간 남음`;
-  if (hours > 0) return `${hours}시간 ${minutes}분 남음`;
-  return `${minutes}분 남음`;
+  return formatQuoteRemainingParts(getQuoteRemainingParts(request));
 }
 
 function isQuoteExpired(request) {
@@ -195,21 +211,62 @@ function isQuoteClosed(request) {
   return request?.status === "closed" || isQuoteExpired(request) || hasValidSelectedBid(request);
 }
 
-function getQuoteRemainingParts(request) {
-  const deadline = getQuoteDeadline(request);
-  if (!deadline || Number.isNaN(deadline.getTime())) return { hours: 0, minutes: 0, totalMinutes: 0 };
-  const totalMinutes = Math.max(0, Math.ceil((deadline.getTime() - Date.now()) / 60000));
-  return {
-    hours: Math.floor(totalMinutes / 60),
-    minutes: totalMinutes % 60,
-    totalMinutes,
-  };
+function getQuoteRemainingShortLabel(request) {
+  return formatQuoteRemainingParts(getQuoteRemainingParts(request));
 }
 
-function getQuoteRemainingShortLabel(request) {
-  const { hours, minutes } = getQuoteRemainingParts(request);
-  if (hours > 0) return `${hours}시간 ${minutes}분`;
-  return `${minutes}분`;
+function quoteCountdownMarkup(request, options = {}) {
+  const mode = options.mode === "short" ? "short" : "full";
+  const prefix = options.prefix || "";
+  const expired = isQuoteExpired(request);
+  const label = mode === "short" ? getQuoteRemainingShortLabel(request) : getQuoteRemainingLabel(request);
+  return `<span data-quote-countdown data-quote-id="${escapeHTML(request.id)}" data-countdown-mode="${mode}" data-countdown-prefix="${escapeHTML(prefix)}" data-countdown-expired="${expired ? "1" : "0"}" class="${expired ? "deadline-expired" : "deadline-live"}">${escapeHTML(prefix + label)}</span>`;
+}
+
+function queueQuoteCountdownViewRefresh() {
+  if (quoteCountdownRefreshQueued) return;
+  quoteCountdownRefreshQueued = true;
+  window.setTimeout(() => {
+    quoteCountdownRefreshQueued = false;
+    if (pendingBidSelection) {
+      const pendingRequest = requests.find((request) => sameId(request.id, pendingBidSelection.requestId));
+      if (pendingRequest && isQuoteExpired(pendingRequest)) closeBidSelectConfirmModal();
+    }
+    if (pendingQuoteCloseId) {
+      const pendingRequest = requests.find((request) => sameId(request.id, pendingQuoteCloseId));
+      if (pendingRequest && isQuoteExpired(pendingRequest)) closeQuoteCloseConfirmModal();
+    }
+    renderRequests();
+    renderSelectedRequest();
+    if (lookupAccessGranted && activeLookupRequestIds.length) {
+      const activeMatches = requests.filter((request) => activeLookupRequestIds.some((id) => sameId(id, request.id)));
+      renderLookupResults(activeMatches);
+    }
+  }, 0);
+}
+
+function updateQuoteCountdowns() {
+  let expiryTransitioned = false;
+  document.querySelectorAll("[data-quote-countdown]").forEach((element) => {
+    const request = requests.find((item) => sameId(item.id, element.dataset.quoteId));
+    if (!request) return;
+    const expired = isQuoteExpired(request);
+    const mode = element.dataset.countdownMode === "short" ? "short" : "full";
+    const prefix = element.dataset.countdownPrefix || "";
+    const label = mode === "short" ? getQuoteRemainingShortLabel(request) : getQuoteRemainingLabel(request);
+    element.textContent = `${prefix}${label}`;
+    element.classList.toggle("deadline-live", !expired);
+    element.classList.toggle("deadline-expired", expired);
+    if (element.dataset.countdownExpired === "0" && expired) expiryTransitioned = true;
+    element.dataset.countdownExpired = expired ? "1" : "0";
+  });
+  if (expiryTransitioned) queueQuoteCountdownViewRefresh();
+}
+
+function startQuoteCountdownTimer() {
+  if (quoteCountdownTimer) return;
+  updateQuoteCountdowns();
+  quoteCountdownTimer = window.setInterval(updateQuoteCountdowns, 1000);
 }
 
 function sameId(left, right) {
@@ -1748,7 +1805,7 @@ async function createCustomerRequest(formData) {
         fullQuoteImagesDays: 7,
         representativeImageDays: 365,
         customerInfoDays: 365,
-        quoteReceiveHours: 48,
+        quoteReceiveHours: QUOTE_RECEIVE_HOURS,
       },
     },
   };
@@ -1787,7 +1844,7 @@ function openBidSelectConfirmModal(request, bid) {
   }
   if (bidSelectConfirmDescription) {
     bidSelectConfirmDescription.innerHTML = shouldCloseEarly
-      ? `견적비교 가능시간이 아직 <strong>${escapeHTML(remainingLabel)}</strong> 남았습니다.<br />종료하고 선택할까요?`
+      ? `견적비교 가능시간이 아직 <strong data-quote-countdown data-quote-id="${escapeHTML(request.id)}" data-countdown-mode="short" data-countdown-prefix="" data-countdown-expired="0">${escapeHTML(remainingLabel)}</strong> 남았습니다.<br />종료하고 선택할까요?`
       : "선택하신 견적은 이후 변경할 수 없습니다. 연락처 공개 범위를 선택한 뒤 확인을 눌러주세요.";
   }
   if (confirmBidSelectBtn) {
@@ -1858,7 +1915,7 @@ function openQuoteCloseConfirmModal(request) {
   const modal = getQuoteCloseModal();
   const description = modal.querySelector("#quoteCloseConfirmDescription");
   const remainingLabel = getQuoteRemainingShortLabel(request);
-  description.innerHTML = `견적비교 가능시간이 아직 <strong>${escapeHTML(remainingLabel)}</strong> 남았습니다.<br />종료하면 판매자는 더 이상 제안할 수 없고, 받은 제안만 확인할 수 있습니다.`;
+  description.innerHTML = `견적비교 가능시간이 아직 <strong data-quote-countdown data-quote-id="${escapeHTML(request.id)}" data-countdown-mode="short" data-countdown-prefix="" data-countdown-expired="0">${escapeHTML(remainingLabel)}</strong> 남았습니다.<br />종료하면 판매자는 더 이상 제안할 수 없고, 받은 제안만 확인할 수 있습니다.`;
   modal.hidden = false;
 }
 
@@ -1968,6 +2025,7 @@ async function confirmBidSelection() {
 
 function renderLookupResults(matches, label = "내 견적") {
   setLookupActionMessage("");
+  activeLookupRequestIds = lookupAccessGranted ? matches.map((request) => request.id) : [];
   if (!lookupAccessGranted) {
     lookupResults.innerHTML = `
       <div class="empty-state">
@@ -2000,7 +2058,6 @@ function renderLookupResults(matches, label = "내 견적") {
       const safeQuoteNumber = escapeHTML(request.quoteNumber || "번호 없음");
       const safeMemo = escapeHTML(request.memo || "추가 요청사항 없음");
       const expired = isQuoteExpired(request);
-      const safeRemaining = escapeHTML(getQuoteRemainingLabel(request));
       const canCloseQuote = !hasValidSelectedBid(request) && request.status !== "closed" && !expired;
       const selectionState = request.selectedBidId
         ? "선택 완료"
@@ -2024,7 +2081,7 @@ function renderLookupResults(matches, label = "내 견적") {
               <div><dt>${getRequestPriceLabel(request)}</dt><dd>${formatPrice(request.price)}</dd></div>
               <div><dt>설치 지역</dt><dd>${safeRegion}</dd></div>
               <div><dt>설치 예정일</dt><dd>${safeInstallDate}</dd></div>
-              <div><dt>남은 시간</dt><dd class="${expired ? "deadline-expired" : "deadline-live"}">${safeRemaining}</dd></div>
+              <div><dt>남은 시간</dt><dd>${quoteCountdownMarkup(request)}</dd></div>
               <div><dt>선택 상태</dt><dd>${selectionState}</dd></div>
               <div><dt>요청사항</dt><dd>${safeMemo}</dd></div>
             </dl>
@@ -2987,7 +3044,6 @@ function renderRequests() {
     const safeInstallDate = escapeHTML(request.installDate || "미입력");
     const safePurchasePurpose = escapeHTML(request.purchasePurpose || "미선택");
     const safeQuoteNumber = escapeHTML(request.quoteNumber || "번호 없음");
-    const safeRemaining = escapeHTML(getQuoteRemainingLabel(request));
     const expired = isQuoteExpired(request);
     const item = document.createElement("button");
     item.type = "button";
@@ -2998,7 +3054,7 @@ function renderRequests() {
       <span>견적서 ${safeQuoteType}</span>
       <span>${safeCustomer} · ${isClosedTab ? safePhone : safeRegion}</span>
       <span>견적번호 ${safeQuoteNumber}</span>
-      <span class="${expired ? "deadline-expired" : "deadline-live"}">남은 시간 ${safeRemaining}</span>
+      ${quoteCountdownMarkup(request, { prefix: "남은 시간 " })}
       <span>구매 목적 ${safePurchasePurpose}</span>
       <span>설치 예정일 ${safeInstallDate}</span>
       ${
@@ -3048,7 +3104,6 @@ function renderSelectedRequest() {
   const safeInstallDate = escapeHTML(request.installDate || "미입력");
   const safeQuoteNumber = escapeHTML(request.quoteNumber || "번호 없음");
   const safeMemo = formatSellerRequestMemoHtml(request.memo);
-  const safeRemaining = escapeHTML(getQuoteRemainingLabel(request));
   const expired = isQuoteExpired(request);
   const activeSellerBid = getActiveSellerBid(request);
   const isSelectedSeller = canActiveSellerSeeCustomerPhone(request);
@@ -3086,7 +3141,7 @@ function renderSelectedRequest() {
           ? `<div><span>1위 금액</span><strong>${lowestBid ? formatPrice(lowestBid.price) : "제안 없음"}</strong></div>`
           : `<div><span>${getRequestPriceLabel(request)}</span><strong>${formatPrice(request.price)}</strong></div>`
       }
-      <div><span>견적 가능 시간</span><strong class="${expired ? "deadline-expired" : "deadline-live"}">${safeRemaining}</strong></div>
+      <div><span>견적 가능 시간</span><strong>${quoteCountdownMarkup(request)}</strong></div>
       ${repeatNotice ? `<div><span>재등록 안내</span><strong>${escapeHTML(repeatNotice)}</strong></div>` : ""}
       ${rankNotice ? `<div><span>마감 결과</span><strong>${escapeHTML(rankNotice)}</strong></div>` : ""}
     </div>
@@ -3194,6 +3249,7 @@ async function bootApplication() {
   renderRequests();
   renderSelectedRequest();
   renderLookupResults([], "성함과 휴대전화로 등록한 견적을 조회하세요.");
+  startQuoteCountdownTimer();
 }
 
 bootApplication();

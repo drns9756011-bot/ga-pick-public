@@ -1911,13 +1911,20 @@ h3 {
   line-height: 1.22;
 }
 
-@media (min-width: 901px) {
+@media (min-width: 768px) {
   .page-head h1,
   .page-head h2,
   .pick-section-head h2,
   .pick-safe-home strong {
     white-space: nowrap;
     overflow-wrap: normal;
+    word-break: keep-all;
+  }
+
+  .pick-safe-home strong {
+    font-size: clamp(24px, 2.9vw, 46px);
+    letter-spacing: -0.02em;
+    text-wrap: nowrap;
   }
 }
 
@@ -8430,4 +8437,19 @@ html.is-mobile-device .header-ad-slot.is-image-banner img {
     padding-left: max(14px, env(safe-area-inset-left));
     padding-right: max(14px, env(safe-area-inset-right));
   }
+}
+
+/* 2026-08-04: PC privacy notice subtitle stays on one line. Mobile wrapping remains unchanged. */
+@media (min-width: 1024px) {
+  .pick-safe-home p {
+    max-width: none;
+    white-space: nowrap;
+    overflow-wrap: normal;
+    word-break: keep-all;
+  }
+}
+
+
+[data-quote-countdown] {
+  font-variant-numeric: tabular-nums;
 }

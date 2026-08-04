@@ -19,7 +19,9 @@ const SOLAPI_DEFAULTS = {
   SOLAPI_TEMPLATE_SELLER_REJECTED: "KA01TP260725102900428RYxfTGV9SoG",
 };
 
-const PUBLIC_API_VERSION = "20260802-ai-recommendation-production";
+const PUBLIC_API_VERSION = "20260804-quote-72h-second-countdown";
+const QUOTE_DURATION_HOURS = 72;
+const QUOTE_DURATION_POLICY_KEY = "quote-duration-hours";
 const NAVER_SHOPPING_CLIENT_ID_DEFAULT = "x1CsXB5ZCYULxcGnclGq";
 const LPLAN_SYNC_TOKEN_DEFAULT = "pickquote-lplan-sync-v1";
 const MASTER_SELLER_ID = "pickgj";
@@ -1029,8 +1031,82 @@ async function getBidsForQuote(env, quoteId) {
   return (result.results || []).map(normalizeBid);
 }
 
-async function closeExpiredQuotes(env) {
+let quoteDurationPolicyReady = false;
+
+async function ensureQuoteDurationPolicy72(env) {
+  if (quoteDurationPolicyReady) return;
   await ensureCustomerQuoteColumns(env);
+  await env.DB.prepare(
+    `CREATE TABLE IF NOT EXISTS app_settings (
+      setting_key TEXT PRIMARY KEY,
+      setting_value TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )`
+  ).run();
+
+  const current = await env.DB.prepare(
+    "SELECT setting_value FROM app_settings WHERE setting_key = ?"
+  ).bind(QUOTE_DURATION_POLICY_KEY).first();
+  if (String(current?.setting_value || "") === String(QUOTE_DURATION_HOURS)) {
+    quoteDurationPolicyReady = true;
+    return;
+  }
+
+  const now = new Date();
+  const result = await env.DB.prepare(
+    `SELECT id, created_at, status, selected_bid_id, quote_expires_at, rank_notice_queued_at
+       FROM customer_quotes
+      WHERE created_at != ''`
+  ).all();
+
+  for (const quote of result.results || []) {
+    if (quote.selected_bid_id) continue;
+    const expiresAt = addHours(quote.created_at, QUOTE_DURATION_HOURS);
+    const expiresTime = new Date(expiresAt).getTime();
+    const wasAutomaticallyClosed =
+      quote.status === "closed" && Boolean(String(quote.rank_notice_queued_at || "").trim());
+
+    if (quote.status !== "closed") {
+      await env.DB.prepare(
+        "UPDATE customer_quotes SET quote_expires_at = ? WHERE id = ?"
+      ).bind(expiresAt, quote.id).run();
+      continue;
+    }
+
+    if (wasAutomaticallyClosed && Number.isFinite(expiresTime) && expiresTime > now.getTime()) {
+      await env.DB.prepare(
+        `UPDATE customer_quotes
+            SET status = 'open', quote_expires_at = ?, rank_notice_queued_at = ''
+          WHERE id = ?`
+      ).bind(expiresAt, quote.id).run();
+      try {
+        await ensureAlimtalkColumns(env);
+        await env.DB.prepare(
+          `DELETE FROM alimtalk_queue
+            WHERE related_id = ?
+              AND type = 'customer-quote-closed'
+              AND status IN ('ready', 'sending', 'accepted')
+              AND (sent_at = '' OR sent_at IS NULL)`
+        ).bind(quote.id).run();
+      } catch (error) {
+        // 기존 DB의 알림톡 테이블 구조가 다르더라도 견적 연장 처리는 유지합니다.
+      }
+    }
+  }
+
+  const updatedAt = new Date().toISOString();
+  await env.DB.prepare(
+    `INSERT INTO app_settings (setting_key, setting_value, updated_at)
+     VALUES (?, ?, ?)
+     ON CONFLICT(setting_key) DO UPDATE SET
+       setting_value = excluded.setting_value,
+       updated_at = excluded.updated_at`
+  ).bind(QUOTE_DURATION_POLICY_KEY, String(QUOTE_DURATION_HOURS), updatedAt).run();
+  quoteDurationPolicyReady = true;
+}
+
+async function closeExpiredQuotes(env) {
+  await ensureQuoteDurationPolicy72(env);
   const now = new Date().toISOString();
   const result = await env.DB.prepare(
     `SELECT * FROM customer_quotes
@@ -2149,7 +2225,7 @@ async function getCustomerQuotes(env, request) {
 }
 
 async function createCustomerQuote(env, request) {
-  await ensureCustomerQuoteColumns(env);
+  await ensureQuoteDurationPolicy72(env);
   const body = await request.json();
   const images = Array.isArray(body.images) ? body.images.slice(0, 4) : [];
 
@@ -2160,7 +2236,7 @@ async function createCustomerQuote(env, request) {
   const id = body.id || createId("quote");
   const createdAt = body.createdAt || new Date().toISOString();
   const quoteNumber = await createUniqueQuoteNumber(env, body.quoteNumber);
-  const quoteExpiresAt = addHours(createdAt, 48);
+  const quoteExpiresAt = addHours(createdAt, QUOTE_DURATION_HOURS);
   const fullImagesExpiresAt = addDays(createdAt, 7);
   const personalExpiresAt = addDays(createdAt, 365);
   const previousStats = await getPreviousQuoteStats(env, String(body.customer || "").trim(), body.phone);
