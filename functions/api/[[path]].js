@@ -19,7 +19,7 @@ const SOLAPI_DEFAULTS = {
   SOLAPI_TEMPLATE_SELLER_REJECTED: "KA01TP260725102900428RYxfTGV9SoG",
 };
 
-const PUBLIC_API_VERSION = "20260804-quote-72h-second-countdown";
+const PUBLIC_API_VERSION = "20260804-seller-access-log";
 const QUOTE_DURATION_HOURS = 72;
 const QUOTE_DURATION_POLICY_KEY = "quote-duration-hours";
 const NAVER_SHOPPING_CLIENT_ID_DEFAULT = "x1CsXB5ZCYULxcGnclGq";
@@ -865,6 +865,38 @@ function normalizeBid(row) {
     benefits: row.benefits || "",
     createdAt: row.created_at || "",
     updatedAt: row.updated_at || "",
+  };
+}
+
+function maskSellerBranchName(value) {
+  const text = String(value || "").trim();
+  if (!text) return "지점 비공개";
+  if (text.includes("*")) return text;
+  const hasBranchSuffix = text.endsWith("점");
+  const core = hasBranchSuffix ? text.slice(0, -1) : text;
+  if (!core) return "*점";
+  return `${core.slice(0, 1)}${"*".repeat(Math.max(2, core.length - 1))}${hasBranchSuffix ? "점" : ""}`;
+}
+
+function maskSellerManagerName(value) {
+  const text = String(value || "").trim();
+  if (!text) return "매니저 비공개";
+  if (text.includes("*")) return text;
+  return `${text.slice(0, 1)}${"*".repeat(Math.max(1, text.length - 1))}`;
+}
+
+function hideBidIdentityBeforeSelection(bid) {
+  if (!bid) return bid;
+  const channel = String(bid.channel || "판매 채널").trim() || "판매 채널";
+  return {
+    ...bid,
+    seller: channel,
+    channel,
+    branch: maskSellerBranchName(bid.branch),
+    manager: maskSellerManagerName(bid.manager),
+    managerPosition: "",
+    phone: "",
+    cardImage: "",
   };
 }
 
@@ -1826,6 +1858,163 @@ async function updateSellerApplication(env, request, id) {
   return json({ ok: true, row: updated });
 }
 
+
+let sellerAccessTablesReady = false;
+
+async function ensureSellerAccessTables(env) {
+  if (sellerAccessTablesReady) return;
+  await env.DB.batch([
+    env.DB.prepare(
+      `CREATE TABLE IF NOT EXISTS seller_access_logs (
+        id TEXT PRIMARY KEY,
+        seller_id TEXT NOT NULL,
+        access_type TEXT NOT NULL DEFAULT 'login',
+        access_date TEXT NOT NULL,
+        accessed_at TEXT NOT NULL,
+        ip_masked TEXT DEFAULT '',
+        ip_hash TEXT DEFAULT '',
+        user_agent TEXT DEFAULT '',
+        device_type TEXT DEFAULT '',
+        browser_name TEXT DEFAULT '',
+        created_at TEXT NOT NULL
+      )`
+    ),
+    env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_seller_access_logs_seller_time ON seller_access_logs(seller_id, accessed_at DESC)`),
+    env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_seller_access_logs_date ON seller_access_logs(access_date, accessed_at DESC)`),
+  ]);
+  sellerAccessTablesReady = true;
+}
+
+function maskClientIp(value) {
+  const ip = String(value || '').trim();
+  if (!ip || ip === 'unknown') return '확인 불가';
+  if (ip.includes(':')) {
+    const parts = ip.split(':').filter(Boolean);
+    return `${parts.slice(0, 2).join(':') || 'IPv6'}::****`;
+  }
+  const parts = ip.split('.');
+  if (parts.length === 4) return `${parts[0]}.${parts[1]}.*.*`;
+  return '마스킹됨';
+}
+
+function sellerAccessDevice(userAgent) {
+  const ua = String(userAgent || '');
+  if (/Android/i.test(ua)) return 'Android';
+  if (/iPhone|iPad|iPod/i.test(ua)) return 'iOS';
+  if (/Windows/i.test(ua)) return 'Windows';
+  if (/Macintosh|Mac OS X/i.test(ua)) return 'macOS';
+  if (/Linux/i.test(ua)) return 'Linux';
+  return '기타';
+}
+
+function sellerAccessBrowser(userAgent) {
+  const ua = String(userAgent || '');
+  if (/SamsungBrowser/i.test(ua)) return 'Samsung Internet';
+  if (/Edg\//i.test(ua)) return 'Edge';
+  if (/CriOS|Chrome\//i.test(ua)) return /; wv\)|Version\/4\.0.*Chrome/i.test(ua) ? 'Android WebView' : 'Chrome';
+  if (/FxiOS|Firefox\//i.test(ua)) return 'Firefox';
+  if (/Safari\//i.test(ua) && !/Chrome|CriOS|Edg\//i.test(ua)) return 'Safari';
+  return '기타';
+}
+
+async function recordSellerAccess(env, request, sellerRow, accessType = 'login') {
+  await ensureSellerAccessTables(env);
+  const sellerId = String(sellerRow?.seller_id || sellerRow?.sellerId || '').trim();
+  if (!sellerId) return;
+  const now = new Date().toISOString();
+  const accessDate = todayKey();
+  const userAgent = String(request.headers.get('User-Agent') || '').slice(0, 500);
+  const ip = getClientIp(request);
+  const salt = String(env.SELLER_ACCESS_HASH_SALT || env.ADMIN_API_TOKEN || 'ga-pick-seller-access-v1');
+  const ipHash = await sha256Hex(`${salt}|${ip}`);
+  const fiveMinuteBucket = Math.floor(Date.now() / (5 * 60 * 1000));
+  const id = await sha256Hex(`${sellerId}|${accessType}|${ipHash}|${userAgent}|${fiveMinuteBucket}`);
+  await env.DB.prepare(
+    `INSERT OR IGNORE INTO seller_access_logs
+      (id, seller_id, access_type, access_date, accessed_at, ip_masked, ip_hash, user_agent, device_type, browser_name, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).bind(
+    id,
+    sellerId,
+    accessType,
+    accessDate,
+    now,
+    maskClientIp(ip),
+    ipHash,
+    userAgent,
+    sellerAccessDevice(userAgent),
+    sellerAccessBrowser(userAgent),
+    now
+  ).run();
+}
+
+async function getSellerAccessLogs(env, request) {
+  await ensureSellerAccessTables(env);
+  const url = new URL(request.url);
+  const limit = Math.min(500, Math.max(20, Number(url.searchParams.get('limit') || 200) || 200));
+  const sellerId = String(url.searchParams.get('sellerId') || '').trim();
+  const days = Math.min(365, Math.max(1, Number(url.searchParams.get('days') || 30) || 30));
+  const fromDate = dateKeyDaysAgo(days - 1);
+  const today = todayKey();
+
+  const where = ['l.access_date >= ?'];
+  const values = [fromDate];
+  if (sellerId) {
+    where.push('l.seller_id = ?');
+    values.push(sellerId);
+  }
+
+  const rows = await env.DB.prepare(
+    `SELECT l.id, l.seller_id, l.access_type, l.access_date, l.accessed_at,
+            l.ip_masked, l.device_type, l.browser_name,
+            s.channel, s.branch, s.branch_region, s.manager, s.manager_position
+       FROM seller_access_logs l
+       LEFT JOIN approved_sellers s ON s.seller_id = l.seller_id
+      WHERE ${where.join(' AND ')}
+      ORDER BY l.accessed_at DESC
+      LIMIT ?`
+  ).bind(...values, limit).all();
+
+  const [todaySummary, weekSummary, totalSummary] = await Promise.all([
+    env.DB.prepare(
+      `SELECT COUNT(*) AS login_count, COUNT(DISTINCT seller_id) AS seller_count
+         FROM seller_access_logs WHERE access_date = ?`
+    ).bind(today).first(),
+    env.DB.prepare(
+      `SELECT COUNT(*) AS login_count, COUNT(DISTINCT seller_id) AS seller_count
+         FROM seller_access_logs WHERE access_date >= ? AND access_date <= ?`
+    ).bind(dateKeyDaysAgo(6), today).first(),
+    env.DB.prepare(
+      `SELECT COUNT(*) AS login_count, COUNT(DISTINCT seller_id) AS seller_count
+         FROM seller_access_logs`
+    ).first(),
+  ]);
+
+  return json({
+    ok: true,
+    summary: {
+      today: { loginCount: Number(todaySummary?.login_count || 0), sellerCount: Number(todaySummary?.seller_count || 0) },
+      last7Days: { loginCount: Number(weekSummary?.login_count || 0), sellerCount: Number(weekSummary?.seller_count || 0) },
+      total: { loginCount: Number(totalSummary?.login_count || 0), sellerCount: Number(totalSummary?.seller_count || 0) },
+    },
+    rows: (rows.results || []).map((row) => ({
+      id: row.id,
+      sellerId: row.seller_id,
+      accessType: row.access_type,
+      accessDate: row.access_date,
+      accessedAt: row.accessed_at,
+      ipMasked: row.ip_masked || '',
+      deviceType: row.device_type || '기타',
+      browserName: row.browser_name || '기타',
+      channel: row.channel || '',
+      branch: row.branch || '',
+      branchRegion: row.branch_region || '',
+      manager: row.manager || '',
+      managerPosition: row.manager_position || '',
+    })),
+  });
+}
+
 async function loginSeller(env, request) {
   await ensureSellerColumns(env);
   const body = await request.json().catch(() => ({}));
@@ -1861,6 +2050,11 @@ async function loginSeller(env, request) {
   }
 
   const updated = await env.DB.prepare("SELECT * FROM approved_sellers WHERE id = ?").bind(row.id).first();
+  try {
+    await recordSellerAccess(env, request, updated, "login");
+  } catch (error) {
+    console.warn("판매자 접속 기록 저장에 실패했습니다.", error);
+  }
   return json({ ok: true, row: normalizeApprovedSeller(updated) });
 }
 
@@ -2346,24 +2540,32 @@ async function getBids(env, request) {
   const url = new URL(request.url);
   const quoteId = String(url.searchParams.get("quoteId") || "").trim();
   const sellerId = String(url.searchParams.get("sellerId") || "").trim();
-  let sql = "SELECT * FROM bids";
+  const isAdminView = hasValidAdminToken(request, env);
+  let sql = `SELECT b.*, q.selected_bid_id AS quote_selected_bid_id
+             FROM bids b
+             LEFT JOIN customer_quotes q ON q.id = b.quote_id`;
   const bindings = [];
   const where = [];
 
   if (quoteId) {
-    where.push("quote_id = ?");
+    where.push("b.quote_id = ?");
     bindings.push(quoteId);
   }
   if (sellerId) {
-    where.push("seller_id = ?");
+    where.push("b.seller_id = ?");
     bindings.push(sellerId);
   }
   if (where.length) sql += ` WHERE ${where.join(" AND ")}`;
-  sql += " ORDER BY price ASC, created_at ASC";
+  sql += " ORDER BY b.price ASC, b.created_at ASC";
 
   const statement = env.DB.prepare(sql);
   const result = bindings.length ? await statement.bind(...bindings).all() : await statement.all();
-  return json({ ok: true, rows: (result.results || []).map(normalizeBid) });
+  const rows = (result.results || []).map((row) => {
+    const bid = normalizeBid(row);
+    const isSelectedBid = String(row.quote_selected_bid_id || "") === String(row.id || "");
+    return isAdminView || isSelectedBid ? bid : hideBidIdentityBeforeSelection(bid);
+  });
+  return json({ ok: true, rows });
 }
 
 async function getReviews(env, request) {
@@ -2603,7 +2805,13 @@ async function selectBid(env, request) {
 
   const row = await env.DB.prepare("SELECT * FROM customer_quotes WHERE id = ?").bind(quoteId).first();
   const images = await getQuoteImages(env, quoteId, true);
-  return json({ ok: true, row: hideSellerOnlyQuoteFields(normalizeCustomerQuote(row, images)), releasedBidIds, selectedAt: now });
+  return json({
+    ok: true,
+    row: hideSellerOnlyQuoteFields(normalizeCustomerQuote(row, images)),
+    selectedBid,
+    releasedBidIds,
+    selectedAt: now,
+  });
 }
 
 async function closeQuoteByCustomer(env, request) {
@@ -3542,6 +3750,11 @@ export async function onRequest(context) {
     const denied = requireAdmin(request, env);
     if (denied) return denied;
     return apiBoundary(() => getSiteVisitStats(env), "방문자 통계를 불러오지 못했습니다.");
+  }
+  if (path === "seller-access-logs" && method === "GET") {
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
+    return apiBoundary(() => getSellerAccessLogs(env, request), "판매자 접속 기록을 불러오지 못했습니다.");
   }
 
   if (path === "seller-applications" && method === "POST") return createSellerApplication(env, request);

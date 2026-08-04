@@ -397,6 +397,50 @@ function formatManagerDisplayName(manager, position) {
   return [manager || "담당 매니저", position].filter(Boolean).join(" ");
 }
 
+function maskBranchDisplayName(value) {
+  const text = String(value || "").trim();
+  if (!text) return "지점 비공개";
+  if (text.includes("*")) return text;
+  const hasBranchSuffix = text.endsWith("점");
+  const core = hasBranchSuffix ? text.slice(0, -1) : text;
+  if (!core) return "*점";
+  const visible = core.slice(0, 1);
+  const masked = "*".repeat(Math.max(2, core.length - 1));
+  return `${visible}${masked}${hasBranchSuffix ? "점" : ""}`;
+}
+
+function maskManagerDisplayName(value) {
+  const text = String(value || "").trim();
+  if (!text) return "매니저 비공개";
+  if (text.includes("*")) return text;
+  return `${text.slice(0, 1)}${"*".repeat(Math.max(1, text.length - 1))}`;
+}
+
+function canCustomerSeeBidIdentity(request, bid) {
+  return Boolean(request && bid && sameId(request.selectedBidId, bid.id));
+}
+
+function getCustomerBidIdentity(request, bid) {
+  const isRevealed = canCustomerSeeBidIdentity(request, bid);
+  const channel = String(bid?.channel || "판매 채널").trim() || "판매 채널";
+  const branch = isRevealed
+    ? String(bid?.branch || "등록 지점").trim() || "등록 지점"
+    : maskBranchDisplayName(bid?.branch);
+  const manager = isRevealed
+    ? String(bid?.manager || "담당 매니저").trim() || "담당 매니저"
+    : maskManagerDisplayName(bid?.manager);
+  const position = isRevealed ? String(bid?.managerPosition || "").trim() : "";
+  return {
+    isRevealed,
+    channel,
+    branch,
+    manager,
+    position,
+    sellerDisplayName: isRevealed ? formatSellerDisplayName(channel, branch) : channel,
+    managerDisplayName: formatManagerDisplayName(manager, position),
+  };
+}
+
 function starText(rating) {
   return "★".repeat(Number(rating || 0)) + "☆".repeat(5 - Number(rating || 0));
 }
@@ -412,8 +456,12 @@ function openManagerReviewModal(bidId) {
   const bid = bids.find((item) => item.id === Number(bidId));
   if (!bid) return;
 
-  const sellerDisplayName = formatSellerDisplayName(bid.channel, bid.branch) || bid.seller;
-  const managerDisplayName = formatManagerDisplayName(bid.manager, bid.managerPosition);
+  const identity = getCustomerBidIdentity(
+    requests.find((request) => sameId(request.id, bid.requestId || bid.quoteId)),
+    bid
+  );
+  const sellerDisplayName = identity.sellerDisplayName;
+  const managerDisplayName = identity.managerDisplayName;
   const safeSeller = escapeHTML(sellerDisplayName);
   const safeManager = escapeHTML(managerDisplayName);
   const reviews = getReviewsForBid(bid);
@@ -1627,11 +1675,14 @@ function renderBidCards(request) {
       const isBusinessCardReleased = isContactReleased;
       const isLockedBySelection = hasValidSelectedBid(request);
       const isSaleCompleted = isSaleCompletedForBid(request, bid);
-      const sellerDisplayName = formatSellerDisplayName(bid.channel, bid.branch) || bid.seller;
-      const managerDisplayName = formatManagerDisplayName(bid.manager, bid.managerPosition);
+      const identity = getCustomerBidIdentity(request, bid);
+      const sellerDisplayName = identity.sellerDisplayName;
+      const managerDisplayName = identity.managerDisplayName;
       const safeSeller = escapeHTML(sellerDisplayName);
       const safeManager = escapeHTML(managerDisplayName);
-      const safePhone = escapeHTML(bid.phone || "연락처 확인 필요");
+      const safeBranch = escapeHTML(identity.branch);
+      const safeChannel = escapeHTML(identity.channel);
+      const safePhone = escapeHTML(identity.isRevealed ? bid.phone || "연락처 확인 필요" : "연락처 비공개");
       const safeBenefits = escapeHTML(bid.benefits);
       const reviews = getReviewsForBid(bid);
       const averageRating = reviews.length
@@ -1641,7 +1692,7 @@ function renderBidCards(request) {
         (review) => sameId(review.requestId, request.id) && sameId(review.bidId, bid.id)
       );
       const cardAlt = `${safeSeller} ${safeManager} 명함`;
-      const cardButton = isBusinessCardReleased && bid.cardImage
+      const cardButton = identity.isRevealed && bid.cardImage
         ? `<button class="card-image-open-btn" type="button" data-card-image="${escapeHTML(bid.cardImage)}" data-card-alt="${cardAlt}">명함 보기</button>`
         : "";
       const reviewArea = isSelected
@@ -1679,13 +1730,13 @@ function renderBidCards(request) {
 
       return `
         <article class="seller-bid-card${isSelected ? " is-selected" : ""}">
-          <div class="bid-card-visual${isBusinessCardReleased ? " is-released" : " is-locked"}">
+          <div class="bid-card-visual${identity.isRevealed ? " is-released" : " is-locked"}">
             <button class="heart-btn" type="button" aria-label="관심 제안">♡</button>
-            <div class="bid-card-thumb${isBusinessCardReleased ? "" : " is-private-card"}">
+            <div class="bid-card-thumb${identity.isRevealed ? "" : " is-private-card"}">
               <div class="manager-card-placeholder">
-                <strong>${isBusinessCardReleased ? "명함 확인 가능" : "선택 후 명함 공개"}</strong>
-                <span>${safeManager}</span>
-                <small>${safeSeller}</small>
+                <strong>${identity.isRevealed ? "명함 확인 가능" : "선택 후 지점·매니저 공개"}</strong>
+                <span>${identity.isRevealed ? safeManager : safeChannel}</span>
+                <small>${identity.isRevealed ? safeSeller : `${safeBranch} · ${safeManager}`}</small>
               </div>
               ${cardButton}
             </div>
@@ -1696,7 +1747,7 @@ function renderBidCards(request) {
               <span class="saving-text">${formatPrice(saving)} 절감</span>
             </div>
             <h3>${safeSeller}</h3>
-            <p class="manager-line">${safeManager}</p>
+            <p class="manager-line">${identity.isRevealed ? safeManager : `지점 ${safeBranch} · 매니저 ${safeManager}`}</p>
             <button class="review-summary-btn" type="button" data-review-bid-id="${bid.id}">
               <span class="review-stars">${reviews.length ? starText(Math.round(averageRating)) : "☆☆☆☆☆"}</span>
               <strong>${reviews.length ? averageRating.toFixed(1) : "0.0"}</strong>
@@ -1830,8 +1881,9 @@ async function createCustomerRequest(formData) {
 }
 
 function openBidSelectConfirmModal(request, bid) {
-  const sellerDisplayName = formatSellerDisplayName(bid.channel, bid.branch) || bid.seller;
-  const managerDisplayName = formatManagerDisplayName(bid.manager, bid.managerPosition);
+  const identity = getCustomerBidIdentity(request, bid);
+  const sellerDisplayName = identity.sellerDisplayName;
+  const managerDisplayName = identity.managerDisplayName;
   const rankInfo = getBidRankInfo(request, bid);
   const remainingLabel = getQuoteRemainingShortLabel(request);
   const shouldCloseEarly = !isQuoteExpired(request) && request?.status !== "closed";
@@ -1854,8 +1906,9 @@ function openBidSelectConfirmModal(request, bid) {
     cancelBidSelectBtn.textContent = shouldCloseEarly ? "아니오 조금 더 지켜볼게요" : "취소";
   }
   bidSelectConfirmSummary.innerHTML = `
-    <div><span>선택 견적</span><strong>${escapeHTML(sellerDisplayName)}</strong></div>
-    <div><span>담당</span><strong>${escapeHTML(managerDisplayName)}</strong></div>
+    <div><span>판매 채널</span><strong>${escapeHTML(identity.channel)}</strong></div>
+    <div><span>지점</span><strong>${escapeHTML(identity.branch)}</strong></div>
+    <div><span>매니저</span><strong>${escapeHTML(managerDisplayName)}</strong></div>
     <div><span>현재 순위</span><strong>${rankInfo.rank ? `${rankInfo.rank}위 / ${rankInfo.total}개 제안` : "순위 확인중"}</strong></div>
     <div><span>제안 금액</span><strong>${formatPrice(bid.price)}</strong></div>
   `;
@@ -1943,6 +1996,11 @@ async function confirmQuoteClose() {
         return;
       }
       savedRequest = serverResult.row;
+      if (serverResult.selectedBid) {
+        const selectedBidIndex = bids.findIndex((item) => sameId(item.id, serverResult.selectedBid.id));
+        if (selectedBidIndex >= 0) bids[selectedBidIndex] = serverResult.selectedBid;
+        else bids.push(serverResult.selectedBid);
+      }
     }
 
     if (savedRequest) {

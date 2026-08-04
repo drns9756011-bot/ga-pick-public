@@ -223,3 +223,20 @@ CREATE TABLE IF NOT EXISTS site_visit_events (
 );
 CREATE INDEX IF NOT EXISTS idx_site_visit_events_date ON site_visit_events(visit_date);
 
+
+
+CREATE TABLE IF NOT EXISTS seller_access_logs (
+  id TEXT PRIMARY KEY,
+  seller_id TEXT NOT NULL,
+  access_type TEXT NOT NULL DEFAULT 'login',
+  access_date TEXT NOT NULL,
+  accessed_at TEXT NOT NULL,
+  ip_masked TEXT DEFAULT '',
+  ip_hash TEXT DEFAULT '',
+  user_agent TEXT DEFAULT '',
+  device_type TEXT DEFAULT '',
+  browser_name TEXT DEFAULT '',
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_seller_access_logs_seller_time ON seller_access_logs(seller_id, accessed_at DESC);
+CREATE INDEX IF NOT EXISTS idx_seller_access_logs_date ON seller_access_logs(access_date, accessed_at DESC);
