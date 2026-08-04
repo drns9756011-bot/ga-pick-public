@@ -1,9 +1,9 @@
-﻿import { onRequest, onScheduled } from "../functions/api/[[path]].js";
+import { onRequest, onScheduled } from "../functions/api/[[path]].js";
 
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    const routeVersion = "20260729-seller-login-public-route-fix";
+    const routeVersion = "20260804-sentv-press-naver-exact-model";
 
     if (url.pathname === "/robots.txt") {
       return new Response("User-agent: *\nAllow: /\n\nSitemap: https://ga-pick.com/sitemap.xml\n", {
@@ -20,31 +20,31 @@ export default {
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://ga-pick.com/</loc>
-    <lastmod>2026-07-25</lastmod>
+    <lastmod>2026-08-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://ga-pick.com/quote</loc>
-    <lastmod>2026-07-25</lastmod>
+    <lastmod>2026-08-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://ga-pick.com/my-quote</loc>
-    <lastmod>2026-07-25</lastmod>
+    <lastmod>2026-08-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://ga-pick.com/seller</loc>
-    <lastmod>2026-07-25</lastmod>
+    <lastmod>2026-08-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://ga-pick.com/seller/register</loc>
-    <lastmod>2026-07-25</lastmod>
+    <lastmod>2026-08-04</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>

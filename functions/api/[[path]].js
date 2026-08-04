@@ -1,4 +1,4 @@
-﻿const jsonHeaders = {
+const jsonHeaders = {
   "Content-Type": "application/json; charset=utf-8",
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
@@ -240,23 +240,46 @@ function normalizeSearchText(value) {
     .replace(/[^A-Z0-9가-힣]/g, "");
 }
 
+function normalizeModelCode(value) {
+  return String(value || "")
+    .toUpperCase()
+    .replace(/<[^>]*>/g, "")
+    .replace(/[^A-Z0-9]/g, "");
+}
+
 function getModelSearchTokens(query) {
-  const raw = String(query || "").trim();
-  const compact = normalizeSearchText(raw);
-  const beforeDot = normalizeSearchText(raw.split(".")[0] || raw);
-  return Array.from(new Set([compact, beforeDot].filter((token) => token.length >= 5)));
+  const raw = stripHtmlTags(query);
+  const full = normalizeModelCode(raw);
+  const beforeDot = normalizeModelCode(raw.split(".")[0] || raw);
+  return Array.from(new Set([full, beforeDot].filter((token) => token.length >= 5)));
+}
+
+function getTitleModelCandidates(title) {
+  const chunks = stripHtmlTags(title).toUpperCase().match(/[A-Z0-9]+/g) || [];
+  const candidates = new Set();
+  const maxParts = Math.min(7, chunks.length);
+
+  for (let start = 0; start < chunks.length; start += 1) {
+    let joined = "";
+    for (let offset = 0; offset < maxParts && start + offset < chunks.length; offset += 1) {
+      joined += chunks[start + offset];
+      if (joined.length >= 5 && joined.length <= 40) candidates.add(joined);
+    }
+  }
+
+  return candidates;
 }
 
 function isAccessoryShoppingItem(item) {
-  const text = normalizeSearchText(`${item.title} ${item.category3} ${item.category4}`);
-  const blockedWords = [
+  const titleText = normalizeSearchText(item?.title || "");
+  const categoryText = normalizeSearchText(`${item?.category3 || ""} ${item?.category4 || ""}`);
+  const strongBlockedWords = [
     "리모컨",
     "리모콘",
     "케이블",
     "안테나",
     "호환",
     "부품",
-    "필터",
     "받침대",
     "거치대",
     "브라켓",
@@ -270,7 +293,13 @@ function isAccessoryShoppingItem(item) {
     "어댑터",
     "충전기",
   ];
-  return blockedWords.some((word) => text.includes(normalizeSearchText(word)));
+  if (strongBlockedWords.some((word) => titleText.includes(normalizeSearchText(word)))) return true;
+
+  const accessoryCategoryWords = ["액세서리", "악세사리", "부품", "소모품", "주변기기"];
+  if (accessoryCategoryWords.some((word) => categoryText.includes(normalizeSearchText(word)))) return true;
+
+  const filterAccessoryPhrases = ["교체용필터", "호환필터", "정품필터", "필터세트", "필터리필"];
+  return filterAccessoryPhrases.some((phrase) => titleText.includes(normalizeSearchText(phrase)));
 }
 
 function isSubscriptionShoppingItem(item) {
@@ -302,10 +331,24 @@ function isGeneralPurchaseShoppingItem(item) {
   return true;
 }
 
-function isLikelySameModel(item, query) {
-  const titleText = normalizeSearchText(item.title);
-  const tokens = getModelSearchTokens(query);
-  return tokens.some((token) => titleText.includes(token));
+function isExactSameModel(item, query) {
+  const targets = getModelSearchTokens(query);
+  if (!targets.length) return false;
+
+  const titleCandidates = getTitleModelCandidates(item?.title || "");
+  return targets.some((target) => titleCandidates.has(target));
+}
+
+function filterAbnormallyLowModelPrices(items) {
+  if (items.length < 4) return items;
+  const prices = items.map((item) => Number(item.lprice || 0)).filter((price) => price >= 300000).sort((a, b) => a - b);
+  if (prices.length < 4) return items;
+
+  const middle = Math.floor(prices.length / 2);
+  const median = prices.length % 2 ? prices[middle] : Math.round((prices[middle - 1] + prices[middle]) / 2);
+  const abnormalFloor = Math.max(300000, Math.round(median * 0.35));
+  const filtered = items.filter((item) => Number(item.lprice || 0) >= abnormalFloor);
+  return filtered.length ? filtered : items;
 }
 
 function normalizeNaverShoppingItem(item) {
@@ -379,7 +422,7 @@ async function getNaverShoppingLowest(env, request) {
     rawItems.push(...await requestNaverShoppingItems(config, query, display));
 
     const firstMatches = rawItems.filter(
-      (item) => isLikelySameModel(item, query) && isGeneralPurchaseShoppingItem(item)
+      (item) => isExactSameModel(item, query) && isGeneralPurchaseShoppingItem(item)
     );
     if (!firstMatches.length && modelBodyQuery && modelBodyQuery !== query) {
       searchQueries.push(modelBodyQuery);
@@ -403,9 +446,10 @@ async function getNaverShoppingLowest(env, request) {
     if (!previous || item.lprice < previous.lprice) uniqueItems.set(key, item);
   });
   const dedupedItems = [...uniqueItems.values()].sort((a, b) => a.lprice - b.lprice);
-  const items = dedupedItems.filter(
-    (item) => isLikelySameModel(item, query) && isGeneralPurchaseShoppingItem(item)
+  const exactModelItems = dedupedItems.filter(
+    (item) => isExactSameModel(item, query) && isGeneralPurchaseShoppingItem(item)
   );
+  const items = filterAbnormallyLowModelPrices(exactModelItems);
 
   return json({
     ok: true,
@@ -418,7 +462,9 @@ async function getNaverShoppingLowest(env, request) {
     rawResultCount: dedupedItems.length,
     filteredResultCount: items.length,
     ignoredResultCount: dedupedItems.length - items.length,
-    pricePolicy: "general-purchase-only-min-300000-no-subscription",
+    exactModelResultCount: exactModelItems.length,
+    modelMatchPolicy: "exact-normalized-model-name-category-agnostic",
+    pricePolicy: "general-purchase-min-300000-no-accessory-no-subscription-abnormal-low-guard",
     items,
   });
 }
