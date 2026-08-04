@@ -1,4 +1,4 @@
-﻿const requests = [];
+const requests = [];
 const bids = [];
 const managerReviews = [];
 
@@ -3129,7 +3129,34 @@ function renderSelectedRequest() {
     : quoteImageMarkup(request, `${request.customer} 고객님이 올린 견적서`);
 }
 
+
+function trackPublicPageVisit() {
+  if (window.__gaPickVisitTracked) return;
+  window.__gaPickVisitTracked = true;
+  const payload = JSON.stringify({
+    path: normalizeAppPath(window.location.pathname),
+  });
+
+  try {
+    if (navigator.sendBeacon) {
+      const body = new Blob([payload], { type: "application/json" });
+      if (navigator.sendBeacon("/api/site-visit", body)) return;
+    }
+  } catch (error) {
+    // keepalive fetch fallback below
+  }
+
+  fetch("/api/site-visit", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: payload,
+    cache: "no-store",
+    keepalive: true,
+  }).catch(() => {});
+}
+
 async function bootApplication() {
+  trackPublicPageVisit();
   const initialPath = normalizeAppPath(window.location.pathname);
   const isSellerPath = initialPath === "/seller";
   const isSellerRegisterPath = initialPath === "/seller/register";

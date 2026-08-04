@@ -3281,6 +3281,166 @@ async function getLplanModelLearning(env) {
   });
 }
 
+
+let siteVisitTablesReady = false;
+
+async function ensureSiteVisitTables(env) {
+  if (siteVisitTablesReady) return;
+  await env.DB.batch([
+    env.DB.prepare(
+      `CREATE TABLE IF NOT EXISTS site_visit_daily (
+        visit_date TEXT PRIMARY KEY,
+        page_views INTEGER NOT NULL DEFAULT 0,
+        unique_visitors INTEGER NOT NULL DEFAULT 0,
+        updated_at TEXT NOT NULL
+      )`
+    ),
+    env.DB.prepare(
+      `CREATE TABLE IF NOT EXISTS site_visit_uniques (
+        visit_date TEXT NOT NULL,
+        visitor_hash TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        PRIMARY KEY (visit_date, visitor_hash)
+      )`
+    ),
+    env.DB.prepare(
+      `CREATE TABLE IF NOT EXISTS site_visit_events (
+        event_key TEXT PRIMARY KEY,
+        visit_date TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      )`
+    ),
+    env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_site_visit_events_date ON site_visit_events(visit_date)`),
+  ]);
+  siteVisitTablesReady = true;
+}
+
+function dateKeyDaysAgo(days) {
+  const [year, month, day] = todayKey().split("-").map(Number);
+  const value = new Date(Date.UTC(year, month - 1, day));
+  value.setUTCDate(value.getUTCDate() - Number(days || 0));
+  return value.toISOString().slice(0, 10);
+}
+
+function normalizeVisitPath(value) {
+  const raw = String(value || "/").trim();
+  const path = raw.startsWith("/") ? raw : `/${raw}`;
+  return path.replace(/[^a-zA-Z0-9/_-]/g, "").slice(0, 120) || "/";
+}
+
+function isAutomatedVisitor(userAgent) {
+  return /bot|crawler|spider|preview|headless|lighthouse|pagespeed|facebookexternalhit|kakaotalk-scrap/i.test(
+    String(userAgent || "")
+  );
+}
+
+async function recordSiteVisit(env, request) {
+  await ensureSiteVisitTables(env);
+  const userAgent = String(request.headers.get("User-Agent") || "");
+  if (isAutomatedVisitor(userAgent)) return json({ ok: true, counted: false, reason: "automated" });
+
+  let payload = {};
+  try {
+    payload = await request.json();
+  } catch (error) {
+    payload = {};
+  }
+
+  const visitDate = todayKey();
+  const path = normalizeVisitPath(payload.path);
+  const now = new Date().toISOString();
+  const ip = getClientIp(request);
+  const salt = String(env.VISITOR_HASH_SALT || env.ADMIN_API_TOKEN || "ga-pick-visit-daily-v1");
+  const visitorHash = await sha256Hex(`${salt}|${visitDate}|${ip}|${userAgent.slice(0, 300)}`);
+  const thirtyMinuteBucket = Math.floor(Date.now() / (30 * 60 * 1000));
+  const eventKey = await sha256Hex(`${visitorHash}|${path}|${thirtyMinuteBucket}`);
+
+  const eventInsert = await env.DB.prepare(
+    `INSERT OR IGNORE INTO site_visit_events (event_key, visit_date, created_at) VALUES (?, ?, ?)`
+  )
+    .bind(eventKey, visitDate, now)
+    .run();
+  const countedPageView = Number(eventInsert?.meta?.changes || 0) > 0;
+  if (!countedPageView) return json({ ok: true, counted: false, duplicateWindow: true });
+
+  const uniqueInsert = await env.DB.prepare(
+    `INSERT OR IGNORE INTO site_visit_uniques (visit_date, visitor_hash, created_at) VALUES (?, ?, ?)`
+  )
+    .bind(visitDate, visitorHash, now)
+    .run();
+  const countedUnique = Number(uniqueInsert?.meta?.changes || 0) > 0;
+
+  await env.DB.prepare(
+    `INSERT INTO site_visit_daily (visit_date, page_views, unique_visitors, updated_at)
+     VALUES (?, 1, ?, ?)
+     ON CONFLICT(visit_date) DO UPDATE SET
+       page_views = site_visit_daily.page_views + 1,
+       unique_visitors = site_visit_daily.unique_visitors + excluded.unique_visitors,
+       updated_at = excluded.updated_at`
+  )
+    .bind(visitDate, countedUnique ? 1 : 0, now)
+    .run();
+
+  if (Math.random() < 0.02) {
+    await env.DB.prepare(`DELETE FROM site_visit_events WHERE visit_date < ?`).bind(dateKeyDaysAgo(30)).run();
+    await env.DB.prepare(`DELETE FROM site_visit_uniques WHERE visit_date < ?`).bind(dateKeyDaysAgo(400)).run();
+  }
+
+  return json({ ok: true, counted: true, unique: countedUnique });
+}
+
+async function getSiteVisitStats(env) {
+  await ensureSiteVisitTables(env);
+  const today = todayKey();
+  const sevenDaysAgo = dateKeyDaysAgo(6);
+  const [todayRow, sevenDayRow, totalRow, dailyRows] = await Promise.all([
+    env.DB.prepare(
+      `SELECT page_views, unique_visitors FROM site_visit_daily WHERE visit_date = ?`
+    ).bind(today).first(),
+    env.DB.prepare(
+      `SELECT COALESCE(SUM(page_views), 0) AS page_views,
+              COALESCE(SUM(unique_visitors), 0) AS unique_visitors
+         FROM site_visit_daily
+        WHERE visit_date >= ? AND visit_date <= ?`
+    ).bind(sevenDaysAgo, today).first(),
+    env.DB.prepare(
+      `SELECT COALESCE(SUM(page_views), 0) AS page_views,
+              COALESCE(SUM(unique_visitors), 0) AS unique_visitors
+         FROM site_visit_daily`
+    ).first(),
+    env.DB.prepare(
+      `SELECT visit_date, page_views, unique_visitors
+         FROM site_visit_daily
+        ORDER BY visit_date DESC
+        LIMIT 14`
+    ).all(),
+  ]);
+
+  return json({
+    ok: true,
+    today: {
+      date: today,
+      pageViews: Number(todayRow?.page_views || 0),
+      uniqueVisitors: Number(todayRow?.unique_visitors || 0),
+    },
+    last7Days: {
+      from: sevenDaysAgo,
+      to: today,
+      pageViews: Number(sevenDayRow?.page_views || 0),
+      uniqueVisitors: Number(sevenDayRow?.unique_visitors || 0),
+    },
+    total: {
+      pageViews: Number(totalRow?.page_views || 0),
+      dailyUniqueVisitors: Number(totalRow?.unique_visitors || 0),
+    },
+    daily: (dailyRows?.results || []).map((row) => ({
+      date: row.visit_date,
+      pageViews: Number(row.page_views || 0),
+      uniqueVisitors: Number(row.unique_visitors || 0),
+    })),
+  });
+}
+
 export async function onRequest(context) {
   const { request, env, params } = context;
   const pathParts = Array.isArray(params.path) ? params.path : [];
@@ -3297,6 +3457,15 @@ export async function onRequest(context) {
       sellerLoginIsPublic: true,
       message: "노출용 API가 정상 연결되었습니다.",
     });
+  }
+
+  if (path === "site-visit" && method === "POST") {
+    return apiBoundary(() => recordSiteVisit(env, request), "방문 기록 처리 중 오류가 발생했습니다.");
+  }
+  if (path === "visit-stats" && method === "GET") {
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
+    return apiBoundary(() => getSiteVisitStats(env), "방문자 통계를 불러오지 못했습니다.");
   }
 
   if (path === "seller-applications" && method === "POST") return createSellerApplication(env, request);
