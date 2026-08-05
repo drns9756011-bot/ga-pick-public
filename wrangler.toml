@@ -21,6 +21,8 @@ SOLAPI_TEMPLATE_SELLER_QUOTE_REGISTERED = "KA01TP260805074550965Bb2zfMAs16w"
 [assets]
 directory = "./public"
 binding = "ASSETS"
+html_handling = "none"
+not_found_handling = "none"
 run_worker_first = ["/", "/index.html", "/quote*", "/my-quote*", "/seller*", "/api/*"]
 
 [[d1_databases]]

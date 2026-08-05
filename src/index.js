@@ -74,7 +74,22 @@ export default {
     if (appRoutes.has(normalizedPath)) {
       const indexUrl = new URL(request.url);
       indexUrl.pathname = "/index.html";
-      const response = await env.ASSETS.fetch(new Request(indexUrl, request));
+      const assetRequest = new Request(indexUrl.toString(), {
+        method: "GET",
+        headers: request.headers,
+        redirect: "manual",
+      });
+      const response = await env.ASSETS.fetch(assetRequest);
+      if (response.status >= 300 && response.status < 400) {
+        return new Response("Application shell routing error", {
+          status: 500,
+          headers: {
+            "Content-Type": "text/plain; charset=utf-8",
+            "Cache-Control": "no-store",
+            "X-GA-Pick-Asset-Redirect": response.headers.get("Location") || "unknown",
+          },
+        });
+      }
       const headers = new Headers(response.headers);
       headers.set("Cache-Control", "no-store");
       headers.set("X-GA-Pick-Route-Version", routeVersion);
