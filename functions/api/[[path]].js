@@ -20,7 +20,7 @@ const SOLAPI_DEFAULTS = {
   SOLAPI_TEMPLATE_SELLER_QUOTE_REGISTERED: "KA01TP260805074550965Bb2zfMAs16w",
 };
 
-const PUBLIC_API_VERSION = "20260805-seller-quote-alimtalk-route-refresh-fix";
+const PUBLIC_API_VERSION = "20260805-early-close-alimtalk-idempotency-fix";
 const QUOTE_DURATION_HOURS = 72;
 const QUOTE_DURATION_POLICY_KEY = "quote-duration-hours";
 const NAVER_SHOPPING_CLIENT_ID_DEFAULT = "x1CsXB5ZCYULxcGnclGq";
@@ -1153,6 +1153,32 @@ async function ensureQuoteDurationPolicy72(env) {
   quoteDurationPolicyReady = true;
 }
 
+async function queueQuoteClosedNotice(env, quote, claimedAt) {
+  try {
+    return await queueAlimtalk(env, {
+      type: "customer-quote-closed",
+      targetRole: "customer",
+      targetName: quote.customer,
+      targetPhone: quote.phone,
+      title: "견적 비교 시간이 종료되었습니다",
+      body: `${quote.customer} 고객님의 견적 비교 시간이 종료되었습니다. 견적번호 ${quote.quote_number}의 제안 내역을 확인해 주세요.`,
+      relatedId: quote.id,
+      variables: {
+        "#{고객명}": quote.customer,
+        "#{견적번호}": quote.quote_number,
+      },
+    });
+  } catch (error) {
+    // 큐 저장 자체가 실패한 경우에만 선점 상태를 되돌려 다음 요청에서 재시도합니다.
+    await env.DB.prepare(
+      `UPDATE customer_quotes
+          SET rank_notice_queued_at = ''
+        WHERE id = ? AND rank_notice_queued_at = ?`
+    ).bind(quote.id, claimedAt).run().catch(() => {});
+    throw error;
+  }
+}
+
 async function closeExpiredQuotes(env) {
   await ensureQuoteDurationPolicy72(env);
   const now = new Date().toISOString();
@@ -1167,22 +1193,16 @@ async function closeExpiredQuotes(env) {
 
   const rows = result.results || [];
   for (const quote of rows) {
-    await queueAlimtalk(env, {
-      type: "customer-quote-closed",
-      targetRole: "customer",
-      targetName: quote.customer,
-      targetPhone: quote.phone,
-      title: "견적 비교 시간이 종료되었습니다",
-      body: `${quote.customer} 고객님의 견적 비교 시간이 종료되었습니다. 견적번호 ${quote.quote_number}의 제안 내역을 확인해 주세요.`,
-      relatedId: quote.id,
-      variables: {
-        "#{고객명}": quote.customer,
-        "#{견적번호}": quote.quote_number,
-      },
-    });
-    await env.DB.prepare("UPDATE customer_quotes SET status = 'closed', rank_notice_queued_at = ? WHERE id = ?")
-      .bind(now, quote.id)
-      .run();
+    // 여러 화면이 동시에 만료 확인 API를 호출해도 한 요청만 알림 발송 권한을 갖습니다.
+    const claim = await env.DB.prepare(
+      `UPDATE customer_quotes
+          SET status = 'closed', rank_notice_queued_at = ?
+        WHERE id = ?
+          AND (rank_notice_queued_at = '' OR rank_notice_queued_at IS NULL)`
+    ).bind(now, quote.id).run();
+    if (Number(claim?.meta?.changes || 0) !== 1) continue;
+
+    await queueQuoteClosedNotice(env, quote, now);
   }
 }
 
@@ -2963,10 +2983,11 @@ async function selectBid(env, request) {
   const now = new Date().toISOString();
   await env.DB.prepare(
     `UPDATE customer_quotes
-     SET selected_bid_id = ?, contact_release_scope = ?, contact_released_bid_ids = ?, status = 'closed', quote_expires_at = ?
+     SET selected_bid_id = ?, contact_release_scope = ?, contact_released_bid_ids = ?,
+         status = 'closed', quote_expires_at = ?, rank_notice_queued_at = ?
      WHERE id = ?`
   )
-    .bind(bidId, scope, JSON.stringify(releasedBidIds), now, quoteId)
+    .bind(bidId, scope, JSON.stringify(releasedBidIds), now, now, quoteId)
     .run();
 
   for (const bid of quoteBids.filter((item) => releasedBidIds.includes(item.id))) {
@@ -3019,11 +3040,20 @@ async function closeQuoteByCustomer(env, request) {
   const alreadyClosed = quote.status === "closed" || Boolean(quote.selected_bid_id);
   if (!alreadyClosed) {
     const now = new Date().toISOString();
-    await env.DB.prepare(
-      "UPDATE customer_quotes SET status = 'closed', quote_expires_at = ? WHERE id = ?"
+    // 상태 변경과 종료 알림 선점을 한 번의 조건부 UPDATE로 처리해 중복 클릭·동시 조회를 차단합니다.
+    const closeResult = await env.DB.prepare(
+      `UPDATE customer_quotes
+          SET status = 'closed', quote_expires_at = ?, rank_notice_queued_at = ?
+        WHERE id = ?
+          AND status != 'closed'
+          AND (selected_bid_id = '' OR selected_bid_id IS NULL)`
     )
-      .bind(now, quoteId)
+      .bind(now, now, quoteId)
       .run();
+
+    if (Number(closeResult?.meta?.changes || 0) === 1) {
+      await queueQuoteClosedNotice(env, quote, now);
+    }
   }
 
   const row = await env.DB.prepare("SELECT * FROM customer_quotes WHERE id = ?").bind(quoteId).first();

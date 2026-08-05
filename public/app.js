@@ -12,6 +12,7 @@ let activeSellerRegionFilter = "all";
 let pendingQuoteFormData = null;
 let pendingBidSelection = null;
 let pendingQuoteCloseId = null;
+let quoteCloseSubmitting = false;
 let lookupAccessGranted = false;
 let activeLookupRequestIds = [];
 let quoteCountdownTimer = 0;
@@ -2029,10 +2030,19 @@ function closeQuoteCloseConfirmModal() {
 }
 
 async function confirmQuoteClose() {
+  if (quoteCloseSubmitting) return;
   const request = requests.find((item) => sameId(item.id, pendingQuoteCloseId));
   if (!request) {
     closeQuoteCloseConfirmModal();
     return;
+  }
+
+  quoteCloseSubmitting = true;
+  const modal = getQuoteCloseModal();
+  const confirmButton = modal.querySelector("[data-quote-close-confirm]");
+  if (confirmButton) {
+    confirmButton.disabled = true;
+    confirmButton.textContent = "종료 중...";
   }
 
   showServerLoading("견적 비교를 종료 중입니다.", "받은 제안은 유지하고 추가 제안 접수만 마감하고 있습니다.");
@@ -2069,6 +2079,11 @@ async function confirmQuoteClose() {
     console.error(error);
     setLookupActionMessage("견적 비교 종료 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
   } finally {
+    quoteCloseSubmitting = false;
+    if (confirmButton) {
+      confirmButton.disabled = false;
+      confirmButton.textContent = "종료";
+    }
     hideServerLoading();
   }
 }
