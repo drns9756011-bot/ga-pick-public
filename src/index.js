@@ -3,7 +3,7 @@ import { onRequest, onScheduled } from "../functions/api/[[path]].js";
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    const routeVersion = "20260804-visitor-stats-banner1";
+    const routeVersion = "20260805-single-app-shell-refresh-fold-fix";
 
     if (url.pathname === "/robots.txt") {
       return new Response("User-agent: *\nAllow: /\n\nSitemap: https://ga-pick.com/sitemap.xml\n", {
@@ -69,8 +69,8 @@ export default {
       });
     }
 
-    const appRoutes = new Set(["/", "/quote", "/my-quote", "/seller", "/seller/register"]);
-    const normalizedPath = url.pathname.replace(/\/+$/, "") || "/";
+    const appRoutes = new Set(["/", "/index.html", "/quote", "/my-quote", "/seller", "/seller/register"]);
+    const normalizedPath = decodeURIComponent(url.pathname).replace(/\/+$/, "") || "/";
     if (appRoutes.has(normalizedPath)) {
       const indexUrl = new URL(request.url);
       indexUrl.pathname = "/index.html";

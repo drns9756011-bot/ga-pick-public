@@ -17,9 +17,10 @@ const SOLAPI_DEFAULTS = {
   SOLAPI_TEMPLATE_SELLER_BID_SELECTED: "KA01TP260725101805441M3apRU3OCMB",
   SOLAPI_TEMPLATE_SELLER_APPROVED: "KA01TP260725101616235ziVJkZImZ9O",
   SOLAPI_TEMPLATE_SELLER_REJECTED: "KA01TP260725102900428RYxfTGV9SoG",
+  SOLAPI_TEMPLATE_SELLER_QUOTE_REGISTERED: "KA01TP260805074550965Bb2zfMAs16w",
 };
 
-const PUBLIC_API_VERSION = "20260804-seller-access-log";
+const PUBLIC_API_VERSION = "20260805-seller-quote-alimtalk-route-refresh-fix";
 const QUOTE_DURATION_HOURS = 72;
 const QUOTE_DURATION_POLICY_KEY = "quote-duration-hours";
 const NAVER_SHOPPING_CLIENT_ID_DEFAULT = "x1CsXB5ZCYULxcGnclGq";
@@ -798,10 +799,25 @@ function normalizeQuoteBrand(value) {
   return raw;
 }
 
+function storedFileUrl(objectKey, fallbackUrl = "") {
+  const key = String(objectKey || "").trim();
+  if (key) {
+    return `/api/files/${key.split("/").map((part) => encodeURIComponent(part)).join("/")}`;
+  }
+  return String(fallbackUrl || "");
+}
+
+function normalizedStoredImage(image) {
+  if (!image) return { url: "" };
+  return { ...image, url: storedFileUrl(image.object_key || image.objectKey, image.url || "") };
+}
+
 function normalizeCustomerQuote(row, images = []) {
   if (!row) return null;
-  const fullImages = images.filter((image) => image.image_type !== "thumbnail");
-  const displayImages = fullImages.length ? fullImages : row.thumbnail_image ? [{ url: row.thumbnail_image }] : [];
+  const normalizedImages = images.map(normalizedStoredImage);
+  const fullImages = normalizedImages.filter((image) => image.image_type !== "thumbnail");
+  const thumbnailUrl = storedFileUrl(row.thumbnail_image_key, row.thumbnail_image || "");
+  const displayImages = fullImages.length ? fullImages : thumbnailUrl ? [{ url: thumbnailUrl }] : [];
   const bids = Array.isArray(row.bids) ? row.bids : [];
   return {
     id: row.id,
@@ -824,14 +840,14 @@ function normalizeCustomerQuote(row, images = []) {
     previousLowestPrice: Number(row.previous_lowest_price || 0),
     rankNoticeQueuedAt: row.rank_notice_queued_at || "",
     saleCompletedAt: row.sale_completed_at || "",
-    thumbnailImage: row.thumbnail_image || "",
+    thumbnailImage: thumbnailUrl,
     thumbnailImageKey: row.thumbnail_image_key || "",
     quoteExpiresAt: row.quote_expires_at || "",
     fullImagesExpiresAt: row.full_images_expires_at || "",
     personalExpiresAt: row.personal_expires_at || "",
     createdAt: row.created_at || "",
     consent: parseJson(row.consent_json, {}),
-    image: displayImages[0]?.url || row.thumbnail_image || "",
+    image: displayImages[0]?.url || thumbnailUrl,
     images: displayImages.map((image) => image.url),
     bidCount: Number(row.bid_count || bids.length || 0),
     bids,
@@ -1284,24 +1300,6 @@ function parseJson(value, fallback) {
   }
 }
 
-function dataUrlInfo(dataUrl) {
-  const match = String(dataUrl || "").match(/^data:([^;]+);base64,(.+)$/);
-  if (!match) return null;
-  const contentType = String(match[1] || "").toLowerCase();
-  const base64 = match[2];
-  const ext = {
-    "image/jpeg": "jpg",
-    "image/jpg": "jpg",
-    "image/png": "png",
-    "image/webp": "webp",
-    "image/gif": "gif",
-    "image/heic": "heic",
-    "image/heif": "heif",
-    "application/pdf": "pdf",
-  }[contentType] || "bin";
-  return { contentType, base64, ext };
-}
-
 function base64ToArrayBuffer(base64) {
   const binary = atob(base64);
   const bytes = new Uint8Array(binary.length);
@@ -1311,15 +1309,59 @@ function base64ToArrayBuffer(base64) {
   return bytes;
 }
 
+function detectFileContentType(bytes, declaredType = "") {
+  const data = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes || []);
+  const ascii = (start, length) => String.fromCharCode(...data.slice(start, start + length));
+  if (data.length >= 3 && data[0] === 0xff && data[1] === 0xd8 && data[2] === 0xff) return "image/jpeg";
+  if (data.length >= 8 && data[0] === 0x89 && ascii(1, 3) === "PNG") return "image/png";
+  if (data.length >= 12 && ascii(0, 4) === "RIFF" && ascii(8, 4) === "WEBP") return "image/webp";
+  if (data.length >= 6 && (ascii(0, 6) === "GIF87a" || ascii(0, 6) === "GIF89a")) return "image/gif";
+  if (data.length >= 5 && ascii(0, 5) === "%PDF-") return "application/pdf";
+  if (data.length >= 12 && ascii(4, 4) === "ftyp") {
+    const brand = ascii(8, 4).toLowerCase();
+    if (["heic", "heix", "hevc", "hevx", "heif", "mif1", "msf1"].includes(brand)) return "image/heic";
+    if (["avif", "avis"].includes(brand)) return "image/avif";
+  }
+  return String(declaredType || "application/octet-stream").toLowerCase();
+}
+
+function extensionForContentType(contentType) {
+  return {
+    "image/jpeg": "jpg",
+    "image/jpg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+    "image/gif": "gif",
+    "image/heic": "heic",
+    "image/heif": "heif",
+    "image/avif": "avif",
+    "application/pdf": "pdf",
+  }[contentType] || "bin";
+}
+
+function isBrowserSafeQuoteImageType(contentType) {
+  return ["image/jpeg", "image/jpg", "image/png", "image/webp"].includes(String(contentType || "").toLowerCase());
+}
+
+function dataUrlInfo(dataUrl) {
+  const match = String(dataUrl || "").match(/^data:([^;]+);base64,(.+)$/);
+  if (!match) return null;
+  const declaredType = String(match[1] || "").toLowerCase();
+  const base64 = match[2];
+  const bytes = base64ToArrayBuffer(base64);
+  const contentType = detectFileContentType(bytes, declaredType);
+  return { contentType, declaredType, base64, bytes, ext: extensionForContentType(contentType) };
+}
+
 async function saveDataUrlToR2(env, dataUrl, prefix, id) {
   const info = dataUrlInfo(dataUrl);
-  if (!info || !env.FILES) return { url: dataUrl || "", key: "" };
+  if (!info || !env.FILES) return { url: dataUrl || "", key: "", contentType: info?.contentType || "" };
 
   const key = `${prefix}/${id}.${info.ext}`;
-  await env.FILES.put(key, base64ToArrayBuffer(info.base64), {
+  await env.FILES.put(key, info.bytes, {
     httpMetadata: { contentType: info.contentType },
   });
-  return { key, url: `/api/files/${key}` };
+  return { key, url: `/api/files/${key}`, contentType: info.contentType };
 }
 
 function getSolapiConfig(env) {
@@ -1366,6 +1408,7 @@ function getSolapiTemplateId(env, type) {
     "seller-approved": solapiValue(env, "SOLAPI_TEMPLATE_SELLER_APPROVED"),
     "seller-rejected": solapiValue(env, "SOLAPI_TEMPLATE_SELLER_REJECTED"),
     "seller-application-received": solapiValue(env, "SOLAPI_TEMPLATE_ADMIN_SELLER_APPLICATION"),
+    "seller-quote-registered": solapiValue(env, "SOLAPI_TEMPLATE_SELLER_QUOTE_REGISTERED"),
   };
   return templates[type] || "";
 }
@@ -1694,6 +1737,89 @@ async function traceSellerAdminAlert(env, sellerId, message) {
   await env.DB.prepare("UPDATE seller_applications SET review_memo = ? WHERE id = ?")
     .bind(message, sellerId)
     .run();
+}
+
+
+async function queueSellerQuoteRegisteredAlerts(env, quote) {
+  const templateId = solapiValue(env, "SOLAPI_TEMPLATE_SELLER_QUOTE_REGISTERED");
+  if (!templateId) {
+    return { ok: false, skipped: true, total: 0, sent: 0, failed: 0, error: "판매자 신규 견적 알림톡 템플릿이 없습니다." };
+  }
+
+  await ensureSellerColumns(env);
+  const result = await env.DB.prepare(
+    `SELECT seller_id, channel, branch, manager, phone
+       FROM approved_sellers
+      WHERE status = 'approved'
+        AND phone IS NOT NULL
+        AND TRIM(phone) != ''
+      ORDER BY approved_at DESC`
+  ).all();
+
+  const uniqueRecipients = new Map();
+  for (const seller of result.results || []) {
+    const phone = normalizePhone(seller.phone);
+    if (!phone || phone.length < 10) continue;
+    if (!uniqueRecipients.has(phone)) {
+      uniqueRecipients.set(phone, {
+        phone,
+        sellerId: String(seller.seller_id || ""),
+        manager: String(seller.manager || "매니저"),
+      });
+    }
+  }
+
+  const recipients = Array.from(uniqueRecipients.values());
+  const variables = {
+    "#{견적번호}": String(quote.quoteNumber || ""),
+    "#{구매목적}": String(quote.purchasePurpose || "미선택"),
+    "#{브랜드}": String(quote.desiredBrand || "비교견적"),
+  };
+  let sent = 0;
+  let failed = 0;
+  const errors = [];
+
+  // 외부 발송 요청이 한꺼번에 몰리지 않도록 5명씩 나누어 처리합니다.
+  for (let offset = 0; offset < recipients.length; offset += 5) {
+    const chunk = recipients.slice(offset, offset + 5);
+    const results = await Promise.allSettled(
+      chunk.map((seller) =>
+        queueAlimtalk(env, {
+          type: "seller-quote-registered",
+          targetRole: "seller",
+          targetName: seller.manager,
+          targetPhone: seller.phone,
+          relatedId: quote.id,
+          title: "새로운 견적이 등록되었습니다",
+          body: `새로운 견적이 등록되었습니다. 견적번호: ${quote.quoteNumber}`,
+          templateId,
+          allowDuplicates: true,
+          variables,
+        })
+      )
+    );
+
+    results.forEach((item, index) => {
+      if (item.status === "fulfilled" && item.value?.ok) {
+        sent += 1;
+        return;
+      }
+      failed += 1;
+      const reason =
+        item.status === "rejected"
+          ? item.reason?.message || String(item.reason || "")
+          : item.value?.error || "알림톡 발송 실패";
+      errors.push(`${chunk[index]?.sellerId || chunk[index]?.phone || "판매자"}: ${reason}`);
+    });
+  }
+
+  return {
+    ok: failed === 0,
+    total: recipients.length,
+    sent,
+    failed,
+    errors: errors.slice(0, 20),
+  };
 }
 
 async function createSellerApplication(env, request) {
@@ -2418,10 +2544,10 @@ async function getCustomerQuotes(env, request) {
   return json({ ok: true, rows: normalized });
 }
 
-async function createCustomerQuote(env, request) {
+async function createCustomerQuote(env, request, executionContext) {
   await ensureQuoteDurationPolicy72(env);
   const body = await request.json();
-  const images = Array.isArray(body.images) ? body.images.slice(0, 4) : [];
+  const images = Array.isArray(body.images) ? body.images.slice(0, 4).filter(Boolean) : [];
 
   if (!body.quoteNumber || !body.customer || !body.phone || !body.items) {
     return json({ ok: false, message: "고객명, 연락처, 품목 정보가 필요합니다." }, 400);
@@ -2435,13 +2561,50 @@ async function createCustomerQuote(env, request) {
   const personalExpiresAt = addDays(createdAt, 365);
   const previousStats = await getPreviousQuoteStats(env, String(body.customer || "").trim(), body.phone);
 
+  if (images.length && !env.FILES) {
+    return json({ ok: false, message: "견적서 이미지 저장소가 연결되지 않았습니다. 잠시 후 다시 시도해주세요." }, 500);
+  }
+
   const thumbnailDataUrl = body.thumbnailImage || images[0] || "";
-  const thumbnail = thumbnailDataUrl
-    ? await saveDataUrlToR2(env, thumbnailDataUrl, "quote-thumbnails", `${id}-thumb`)
-    : { url: "", key: "" };
-  const thumbnailUrl = thumbnail.url || thumbnailDataUrl || "";
+  const imageDataToValidate = [thumbnailDataUrl, ...images].filter(Boolean);
+  const invalidImage = imageDataToValidate.find((dataUrl) => {
+    const info = dataUrlInfo(dataUrl);
+    return !info || !isBrowserSafeQuoteImageType(info.contentType);
+  });
+  if (invalidImage) {
+    return json(
+      {
+        ok: false,
+        message: "JPG, PNG 또는 WebP 견적서만 등록할 수 있습니다. 고효율 사진은 화면 캡처 후 다시 올려주세요.",
+      },
+      415
+    );
+  }
+
+  const savedObjectKeys = [];
+  let thumbnail = { url: "", key: "" };
+  const savedOriginals = [];
+  try {
+    if (thumbnailDataUrl) {
+      thumbnail = await saveDataUrlToR2(env, thumbnailDataUrl, "quote-thumbnails", `${id}-thumb`);
+      if (!thumbnail.key) throw new Error("대표 이미지 저장에 실패했습니다.");
+      savedObjectKeys.push(thumbnail.key);
+    }
+    for (let index = 0; index < images.length; index += 1) {
+      const saved = await saveDataUrlToR2(env, images[index], "quote-originals", `${id}-${index + 1}`);
+      if (!saved.key) throw new Error(`견적서 이미지 ${index + 1} 저장에 실패했습니다.`);
+      savedOriginals.push(saved);
+      savedObjectKeys.push(saved.key);
+    }
+  } catch (error) {
+    await Promise.all(savedObjectKeys.map((key) => deleteR2Object(env, key)));
+    return json({ ok: false, message: error?.message || "견적서 이미지 저장에 실패했습니다." }, 500);
+  }
+
+  const thumbnailUrl = thumbnail.url || "";
   const thumbnailKey = thumbnail.key || "";
 
+  try {
   await env.DB.prepare(
     `INSERT INTO customer_quotes
       (id, quote_number, customer, phone, items, quote_type, purchase_purpose, desired_brand, price, region, install_date, memo, status,
@@ -2490,8 +2653,8 @@ async function createCustomerQuote(env, request) {
       .run();
   }
 
-  for (let index = 0; index < images.length; index += 1) {
-    const saved = await saveDataUrlToR2(env, images[index], "quote-originals", `${id}-${index + 1}`);
+  for (let index = 0; index < savedOriginals.length; index += 1) {
+    const saved = savedOriginals[index];
     await env.DB.prepare(
       `INSERT INTO quote_images (id, quote_id, object_key, url, image_type, sort_order, expires_at, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
@@ -2507,6 +2670,13 @@ async function createCustomerQuote(env, request) {
         createdAt
       )
       .run();
+  }
+
+  } catch (error) {
+    await env.DB.prepare("DELETE FROM quote_images WHERE quote_id = ?").bind(id).run().catch(() => {});
+    await env.DB.prepare("DELETE FROM customer_quotes WHERE id = ?").bind(id).run().catch(() => {});
+    await Promise.all(savedObjectKeys.map((key) => deleteR2Object(env, key)));
+    return json({ ok: false, message: error?.message || "견적서 저장 처리 중 오류가 발생했습니다." }, 500);
   }
 
   await queueAlimtalk(env, {
@@ -2526,6 +2696,20 @@ async function createCustomerQuote(env, request) {
   const row = await env.DB.prepare("SELECT * FROM customer_quotes WHERE id = ?").bind(id).first();
   const savedImages = await getQuoteImages(env, id, true);
   const normalizedRow = normalizeCustomerQuote(row, savedImages);
+
+  const sellerAlimtalkTask = queueSellerQuoteRegisteredAlerts(env, normalizedRow).catch((error) => ({
+    ok: false,
+    total: 0,
+    sent: 0,
+    failed: 1,
+    errors: [error?.message || "판매자 신규 견적 알림톡 발송 처리 중 오류가 발생했습니다."],
+  }));
+  if (executionContext?.waitUntil) {
+    executionContext.waitUntil(sellerAlimtalkTask);
+  } else {
+    await sellerAlimtalkTask;
+  }
+
   const pushResult = await notifyPublicAppQuoteCreated(env, normalizedRow).catch((error) => ({
     ok: false,
     sent: 0,
@@ -3005,10 +3189,18 @@ async function getFile(env, key) {
   const object = await env.FILES.get(key);
   if (!object) return new Response("Not found", { status: 404 });
 
-  return new Response(object.body, {
+  const buffer = await object.arrayBuffer();
+  const contentType = detectFileContentType(
+    new Uint8Array(buffer),
+    object.httpMetadata?.contentType || "application/octet-stream"
+  );
+
+  return new Response(buffer, {
     headers: {
-      "Content-Type": object.httpMetadata?.contentType || "application/octet-stream",
+      "Content-Type": contentType,
+      "Content-Disposition": "inline",
       "Cache-Control": "private, no-store",
+      "X-Content-Type-Options": "nosniff",
     },
   });
 }
@@ -3075,6 +3267,7 @@ function getSolapiHealth(env) {
     sellerBidSelected: solapiValue(env, "SOLAPI_TEMPLATE_SELLER_BID_SELECTED"),
     sellerApproved: solapiValue(env, "SOLAPI_TEMPLATE_SELLER_APPROVED"),
     sellerRejected: solapiValue(env, "SOLAPI_TEMPLATE_SELLER_REJECTED"),
+    sellerQuoteRegistered: solapiValue(env, "SOLAPI_TEMPLATE_SELLER_QUOTE_REGISTERED"),
   };
   return json({
     ok: true,
@@ -3097,6 +3290,7 @@ function getSolapiHealth(env) {
       !templates.sellerBidSelected && "SOLAPI_TEMPLATE_SELLER_BID_SELECTED",
       !templates.sellerApproved && "SOLAPI_TEMPLATE_SELLER_APPROVED",
       !templates.sellerRejected && "SOLAPI_TEMPLATE_SELLER_REJECTED",
+      !templates.sellerQuoteRegistered && "SOLAPI_TEMPLATE_SELLER_QUOTE_REGISTERED",
     ].filter(Boolean),
   });
 }
@@ -3803,7 +3997,7 @@ export async function onRequest(context) {
     return deleteCustomerQuote(env, request, decodeURIComponent(pathParts.slice(1).join("/")));
   }
   if (path === "customer-quotes" && method === "GET") return getCustomerQuotes(env, request);
-  if (path === "customer-quotes" && method === "POST") return createCustomerQuote(env, request);
+  if (path === "customer-quotes" && method === "POST") return createCustomerQuote(env, request, context.ctx || context);
   if (path === "lplan-training-quotes" && method === "POST") return saveLplanTrainingQuote(env, request);
   if (path === "lplan-training-quotes" && method === "GET") return getLplanTrainingQuotes(env, request);
   if (path === "lplan-model-learning" && method === "GET") return getLplanModelLearning(env);

@@ -22,11 +22,14 @@ const STORAGE_KEYS = {
   sellerApplications: "pickquoteSellerApplications",
   approvedSellers: "pickquoteApprovedSellers",
   activeSellerId: "pickquoteActiveSellerId",
+  sellerBrandFilter: "pickquoteSellerBrandFilter",
+  sellerRegionFilter: "pickquoteSellerRegionFilter",
 };
 const registeredSellerPhones = new Set();
 const sellerAccounts = new Map();
 hydrateApprovedSellerAccounts();
 restoreActiveSellerSession();
+restoreSellerFilterState();
 const money = new Intl.NumberFormat("ko-KR");
 
 const pages = document.querySelectorAll(".page");
@@ -312,15 +315,27 @@ function createLightweightImage(dataUrl, maxWidth = 720, quality = 0.72) {
 
     const image = new Image();
     image.onload = () => {
-      const ratio = Math.min(1, maxWidth / image.width);
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.max(1, Math.round(image.width * ratio));
-      canvas.height = Math.max(1, Math.round(image.height * ratio));
-      const context = canvas.getContext("2d");
-      context.drawImage(image, 0, 0, canvas.width, canvas.height);
-      resolve(canvas.toDataURL("image/jpeg", quality));
+      try {
+        const ratio = Math.min(1, maxWidth / Math.max(1, image.width));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(image.width * ratio));
+        canvas.height = Math.max(1, Math.round(image.height * ratio));
+        const context = canvas.getContext("2d", { alpha: false });
+        if (!context) {
+          resolve("");
+          return;
+        }
+        context.fillStyle = "#ffffff";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        const converted = canvas.toDataURL("image/jpeg", quality);
+        resolve(/^data:image\/jpeg;base64,/i.test(converted) ? converted : "");
+      } catch (error) {
+        console.warn("Image conversion failed", error);
+        resolve("");
+      }
     };
-    image.onerror = () => resolve(dataUrl);
+    image.onerror = () => resolve("");
     image.src = dataUrl;
   });
 }
@@ -334,9 +349,31 @@ function readFileAsDataUrl(file) {
   });
 }
 
+const BROWSER_SAFE_UPLOAD_MIME_TYPES = new Set(["image/jpeg", "image/jpg", "image/png", "image/webp"]);
+
+function browserSafeMimeForFile(file) {
+  const type = String(file?.type || "").toLowerCase();
+  const name = String(file?.name || "").toLowerCase();
+  if (BROWSER_SAFE_UPLOAD_MIME_TYPES.has(type)) return type === "image/jpg" ? "image/jpeg" : type;
+  if (/\.jpe?g$/i.test(name)) return "image/jpeg";
+  if (/\.png$/i.test(name)) return "image/png";
+  if (/\.webp$/i.test(name)) return "image/webp";
+  return "";
+}
+
+function isBrowserSafeUploadFile(file) {
+  return Boolean(browserSafeMimeForFile(file));
+}
+
 async function createBrowserSafeUploadImage(file) {
-  const dataUrl = await readFileAsDataUrl(file);
-  if (!dataUrl || !String(file?.type || "").startsWith("image/")) return dataUrl;
+  const safeMime = browserSafeMimeForFile(file);
+  if (!file || !safeMime) return "";
+  let dataUrl = String(await readFileAsDataUrl(file) || "");
+  if (!dataUrl) return "";
+  if (!/^data:image\/(?:jpeg|jpg|png|webp);base64,/i.test(dataUrl)) {
+    dataUrl = dataUrl.replace(/^data:[^;]*;base64,/i, `data:${safeMime};base64,`);
+  }
+  if (!/^data:image\/(?:jpeg|jpg|png|webp);base64,/i.test(dataUrl)) return "";
   return createLightweightImage(dataUrl, 1800, 0.86);
 }
 
@@ -606,6 +643,27 @@ function restoreActiveSellerSession() {
   const sellerId = readActiveSellerSession();
   if (sellerId && sellerAccounts.has(sellerId)) {
     activeSellerId = sellerId;
+  }
+}
+
+function restoreSellerFilterState() {
+  try {
+    activeSellerBrandFilter = normalizeSellerBrandFilter(
+      sessionStorage.getItem(STORAGE_KEYS.sellerBrandFilter) || "all"
+    );
+    activeSellerRegionFilter = sessionStorage.getItem(STORAGE_KEYS.sellerRegionFilter) || "all";
+  } catch (error) {
+    activeSellerBrandFilter = "all";
+    activeSellerRegionFilter = "all";
+  }
+}
+
+function persistSellerFilterState() {
+  try {
+    sessionStorage.setItem(STORAGE_KEYS.sellerBrandFilter, activeSellerBrandFilter || "all");
+    sessionStorage.setItem(STORAGE_KEYS.sellerRegionFilter, activeSellerRegionFilter || "all");
+  } catch (error) {
+    // 세션 저장이 제한된 환경에서도 필터는 현재 화면에서 계속 유지합니다.
   }
 }
 
@@ -1229,13 +1287,14 @@ function quoteImageMarkup(request, label) {
   if (images.length) {
     const visibleImages = images.slice(0, 4);
     const extraCount = Math.max(0, images.length - visibleImages.length);
+    const fallbackImage = String(request.thumbnailImage || "");
     return `
       <div class="quote-image-preview-strip image-count-${Math.min(images.length, 4)}" aria-label="${escapeHTML(label)} 미리보기">
         ${visibleImages
           .map((image, index) => {
             return `
               <button class="quote-thumb-button" type="button" aria-label="${escapeHTML(`${label} ${index + 1} 원본 보기`)}">
-                <img src="${image}" alt="${escapeHTML(`${label} ${index + 1}`)}" />
+                <img src="${image}" alt="${escapeHTML(`${label} ${index + 1}`)}" data-quote-image data-fallback-src="${escapeHTML(fallbackImage)}" />
               </button>
             `;
           })
@@ -1519,23 +1578,16 @@ function getAvailableSellerBrands(baseRequests = getSellerTabRequests()) {
 
 function getFilteredSellerRequests() {
   const tabRequests = getSellerTabRequests();
-  const normalizedBrandFilter = normalizeSellerBrandFilter(activeSellerBrandFilter);
-
-  activeSellerBrandFilter = getAvailableSellerBrands(tabRequests).includes(normalizedBrandFilter)
-    ? normalizedBrandFilter
-    : "all";
+  activeSellerBrandFilter = normalizeSellerBrandFilter(activeSellerBrandFilter);
 
   let filteredRequests = activeSellerBrandFilter === "all"
     ? tabRequests
     : tabRequests.filter((request) => getSellerBrandValue(request) === activeSellerBrandFilter);
 
-  const availableRegions = Array.from(new Set(filteredRequests.map((request) => normalizeSellerRegionCategory(request.region)).filter(Boolean)));
-  if (activeSellerRegionFilter !== "all" && !availableRegions.includes(activeSellerRegionFilter)) {
-    activeSellerRegionFilter = "all";
-  }
-
   if (activeSellerRegionFilter !== "all") {
-    filteredRequests = filteredRequests.filter((request) => normalizeSellerRegionCategory(request.region) === activeSellerRegionFilter);
+    filteredRequests = filteredRequests.filter(
+      (request) => normalizeSellerRegionCategory(request.region) === activeSellerRegionFilter
+    );
   }
 
   return filteredRequests;
@@ -1543,9 +1595,10 @@ function getFilteredSellerRequests() {
 
 function getSellerRequestsForDynamicRegion() {
   const tabRequests = getSellerTabRequests();
-  const normalizedBrandFilter = normalizeSellerBrandFilter(activeSellerBrandFilter);
-  const brandFilter = getAvailableSellerBrands(tabRequests).includes(normalizedBrandFilter) ? normalizedBrandFilter : "all";
-  return brandFilter === "all" ? tabRequests : tabRequests.filter((request) => getSellerBrandValue(request) === brandFilter);
+  const brandFilter = normalizeSellerBrandFilter(activeSellerBrandFilter);
+  return brandFilter === "all"
+    ? tabRequests
+    : tabRequests.filter((request) => getSellerBrandValue(request) === brandFilter);
 }
 
 function getAvailableSellerRegions() {
@@ -1566,9 +1619,6 @@ function renderSellerFilterBar() {
   requestList.prepend(filterBar);
 
   const availableRegions = getAvailableSellerRegions();
-  if (activeSellerRegionFilter !== "all" && !availableRegions.includes(activeSellerRegionFilter)) {
-    activeSellerRegionFilter = "all";
-  }
 
   const brandOptions = [
     ["all", "전체"],
@@ -1611,7 +1661,7 @@ function syncSelectedRequestWithTab() {
     return filteredRequests;
   }
 
-  if (!filteredRequests.some((request) => request.id === selectedRequestId)) {
+  if (!filteredRequests.some((request) => sameId(request.id, selectedRequestId))) {
     selectedRequestId = filteredRequests[0]?.id || 0;
   }
 
@@ -2330,6 +2380,7 @@ document.addEventListener("click", (event) => {
     activeSellerRegionFilter = filterValue;
   }
 
+  persistSellerFilterState();
   setBidFormMessage("");
   closeSellerMobileDetail();
   renderRequests();
@@ -2339,16 +2390,39 @@ document.addEventListener("click", (event) => {
 sellerMobileListBack?.addEventListener("click", leaveSellerMobileDetail);
 
 quoteImage.addEventListener("change", async (event) => {
-  const files = Array.from(event.target.files || []).filter((file) => file.type.startsWith("image/")).slice(0, 4);
+  const selectedFiles = Array.from(event.target.files || []).slice(0, 4);
 
-  if (!files.length) {
+  if (!selectedFiles.length) {
     uploadedImages = [];
     imagePreview.innerHTML = "<span>이미지 미리보기</span>";
     return;
   }
 
-  uploadedImages = (await Promise.all(files.map(createBrowserSafeUploadImage))).filter(Boolean);
+  const unsupportedFiles = selectedFiles.filter((file) => !isBrowserSafeUploadFile(file));
+  if (unsupportedFiles.length) {
+    uploadedImages = [];
+    event.target.value = "";
+    imagePreview.innerHTML = "<span>JPG, PNG 또는 WebP 이미지만 등록할 수 있습니다.</span>";
+    setRequestFormMessage(
+      "휴대전화의 고효율 사진(HEIC/HEIF)은 바로 표시되지 않습니다. 사진을 화면 캡처한 뒤 JPG 또는 PNG로 다시 선택해주세요.",
+      "error"
+    );
+    return;
+  }
 
+  const convertedImages = await Promise.all(selectedFiles.map(createBrowserSafeUploadImage));
+  if (convertedImages.some((image) => !image)) {
+    uploadedImages = [];
+    event.target.value = "";
+    imagePreview.innerHTML = "<span>이미지를 변환하지 못했습니다.</span>";
+    setRequestFormMessage(
+      "선택한 사진을 표시 가능한 형식으로 변환하지 못했습니다. 사진을 화면 캡처한 뒤 다시 등록해주세요.",
+      "error"
+    );
+    return;
+  }
+
+  uploadedImages = convertedImages;
   imagePreview.innerHTML = `
     <div class="quote-image-grid image-count-${uploadedImages.length}">
       ${uploadedImages
@@ -3105,7 +3179,8 @@ function renderRequests() {
     const expired = isQuoteExpired(request);
     const item = document.createElement("button");
     item.type = "button";
-    item.className = `request-item${request.id === selectedRequestId ? " is-active" : ""}`;
+    item.dataset.requestId = String(request.id);
+    item.className = `request-item${sameId(request.id, selectedRequestId) ? " is-active" : ""}`;
     item.innerHTML = `
       <strong>${safeItems}</strong>
       <span>브랜드 ${safeDesiredBrand}</span>
@@ -3128,7 +3203,8 @@ function renderRequests() {
     item.addEventListener("click", () => {
       selectedRequestId = request.id;
       setBidFormMessage("");
-      renderRequests();
+      requestList.querySelectorAll(".request-item.is-active").forEach((row) => row.classList.remove("is-active"));
+      item.classList.add("is-active");
       renderSelectedRequest();
       openSellerMobileDetail();
     });
@@ -3313,3 +3389,24 @@ async function bootApplication() {
 bootApplication();
 
 
+
+
+document.addEventListener(
+  "error",
+  (event) => {
+    const image = event.target?.closest?.("img[data-quote-image]");
+    if (!image) return;
+    const fallback = image.dataset.fallbackSrc || "";
+    if (fallback && image.dataset.fallbackTried !== "true") {
+      image.dataset.fallbackTried = "true";
+      image.src = fallback;
+      return;
+    }
+    const button = image.closest(".quote-thumb-button");
+    if (button) {
+      button.innerHTML = '<span class="quote-image-load-error">이미지 형식을 표시하지 못했습니다.</span>';
+      button.disabled = true;
+    }
+  },
+  true
+);

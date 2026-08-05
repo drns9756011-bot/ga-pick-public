@@ -3352,9 +3352,17 @@ select {
 }
 
 .seller-filter-bar {
+  position: sticky;
+  top: 0;
+  z-index: 6;
   display: grid;
   gap: 12px;
-  padding: 0 14px 12px;
+  margin: -14px -14px 4px;
+  padding: 14px 14px 12px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.98);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
 }
 
 .seller-filter-group {
@@ -4033,6 +4041,14 @@ select {
   padding: 42px 6vw 82px;
 }
 
+@media (min-width: 901px) {
+  .seller-page-layout .request-list {
+    position: sticky;
+    top: 92px;
+    max-height: calc(100vh - 116px);
+  }
+}
+
 .seller-detail {
   display: grid;
   gap: 22px;
@@ -4057,8 +4073,15 @@ select {
 
 .request-list {
   display: grid;
+  align-content: start;
   gap: 10px;
+  max-height: min(72vh, 820px);
   padding: 14px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  -webkit-overflow-scrolling: touch;
   box-shadow: none;
 }
 
@@ -6894,6 +6917,8 @@ td strong {
 
   .seller-page-layout .request-list {
     display: grid;
+    min-height: 320px;
+    max-height: min(68dvh, 720px);
   }
 
   .seller-page-layout .seller-detail {
@@ -8476,3 +8501,4 @@ html.is-mobile-device .header-ad-slot.is-image-banner img {
 [data-quote-countdown] {
   font-variant-numeric: tabular-nums;
 }
+
