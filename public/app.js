@@ -1609,7 +1609,8 @@ function getAvailableSellerRegions() {
 }
 
 function renderSellerFilterBar() {
-  if (!requestList) return;
+  const filterHost = document.querySelector("#sellerFilterHost");
+  if (!filterHost) return;
 
   let filterBar = document.querySelector("#sellerFilterBar");
   if (!filterBar) {
@@ -1617,7 +1618,9 @@ function renderSellerFilterBar() {
     filterBar.id = "sellerFilterBar";
     filterBar.className = "seller-filter-bar";
   }
-  requestList.prepend(filterBar);
+  if (filterBar.parentElement !== filterHost) {
+    filterHost.replaceChildren(filterBar);
+  }
 
   const availableRegions = getAvailableSellerRegions();
 
@@ -3137,8 +3140,8 @@ function renderRequests() {
   const isRegionTab = activeSellerTab === "region";
   sellerQuoteWorkspace.hidden = isRegionTab;
   sellerRegionPanel.hidden = !isRegionTab;
-  const filterBar = document.querySelector("#sellerFilterBar");
-  if (filterBar) filterBar.hidden = isRegionTab;
+  const filterHost = document.querySelector("#sellerFilterHost");
+  if (filterHost) filterHost.hidden = isRegionTab;
 
   if (isRegionTab) {
     sellerTabs.forEach((tab) => {
@@ -3157,8 +3160,7 @@ function renderRequests() {
   });
 
   if (!filteredRequests.length) {
-    const currentFilterBar = document.querySelector("#sellerFilterBar");
-      const emptyLabel =
+    const emptyLabel =
         activeSellerTab === "proposed"
           ? "선택 대기 중인 제안 견적이 없습니다."
         : activeSellerTab === "selected"
@@ -3172,7 +3174,6 @@ function renderRequests() {
         <p>해당하는 견적이 생기면 이곳에 표시됩니다.</p>
       </div>
     `;
-    if (currentFilterBar) requestList.prepend(currentFilterBar);
     return;
   }
 

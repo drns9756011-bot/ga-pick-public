@@ -8496,3 +8496,99 @@ html.is-mobile-device .header-ad-picture img {
 
 
 
+
+/* Seller filter panel separation fix - 2026-08-05
+   Keep filters visually independent from the scrolling quote cards. */
+.seller-list-column {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 12px;
+  min-width: 0;
+  align-content: start;
+}
+
+.seller-filter-host {
+  position: relative;
+  z-index: 3;
+  isolation: isolate;
+  overflow: hidden;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 10px 28px rgba(22, 32, 42, 0.08);
+}
+
+.seller-filter-host[hidden] {
+  display: none !important;
+}
+
+.seller-filter-bar {
+  position: static;
+  inset: auto;
+  z-index: auto;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: #fff;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.seller-filter-group + .seller-filter-group {
+  padding-top: 12px;
+  border-top: 1px solid #edf1f3;
+}
+
+.seller-page-layout .request-list {
+  position: static;
+  min-height: 0;
+  margin: 0;
+  padding: 12px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 10px 28px rgba(22, 32, 42, 0.06);
+  scroll-padding-block: 12px;
+}
+
+@media (min-width: 901px) {
+  .seller-page-layout .seller-list-column {
+    position: sticky;
+    top: 92px;
+    max-height: calc(100vh - 116px);
+  }
+
+  .seller-page-layout .request-list {
+    max-height: none;
+    height: 100%;
+  }
+}
+
+@media (max-width: 900px) {
+  .seller-page-layout .seller-list-column {
+    display: grid;
+    width: 100%;
+    max-width: 100%;
+    gap: 10px;
+  }
+
+  .seller-filter-host {
+    padding: 14px;
+    border-radius: 14px;
+    box-shadow: 0 8px 22px rgba(22, 32, 42, 0.08);
+  }
+
+  .seller-page-layout .request-list {
+    min-height: 300px;
+    max-height: min(58dvh, 620px);
+    border-radius: 14px;
+  }
+
+  .seller-mobile-detail-open .seller-page-layout .seller-list-column {
+    display: none;
+  }
+
+  .seller-mobile-detail-open .seller-page-layout .seller-detail {
+    display: grid;
+  }
+}
