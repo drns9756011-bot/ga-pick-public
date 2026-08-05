@@ -1266,6 +1266,10 @@ h3 {
   color: #fff;
 }
 
+.pick-press-primary.is-cbci {
+  background: #163a70;
+}
+
 .pick-press-secondary {
   border: 1px solid #cfd8e3;
   background: #fff;
@@ -1279,6 +1283,12 @@ h3 {
   color: #8a94a3;
   font-size: 12px;
   line-height: 1.55;
+}
+
+.pick-press-card-list {
+  min-width: 0;
+  display: grid;
+  gap: 18px;
 }
 
 .pick-press-card {
@@ -1310,6 +1320,19 @@ h3 {
 .pick-press-card-head strong {
   font-size: 21px;
   font-weight: 1000;
+}
+
+.pick-press-card.is-cbci .pick-press-card-head {
+  border-bottom-color: #1d4f91;
+}
+
+.pick-press-card.is-cbci .pick-press-card-head span {
+  background: #1d4f91;
+}
+
+.pick-press-card.is-cbci .pick-press-card-body > span,
+.pick-press-card.is-cbci .pick-press-card-foot strong {
+  color: #1d4f91;
 }
 
 .pick-press-card-head span {
