@@ -153,7 +153,7 @@
         display: block;
       }
     </style>
-    <link rel="stylesheet" href="/styles.css?v=20260805-seller-header-ad-route-fix-v1" />
+    <link rel="stylesheet" href="/styles.css?v=20260805-mobile-banner-picture-v2" />
     <script defer src="/app.js?v=20260805-seller-header-ad-route-fix-v1"></script>
     <script defer src="/customer-wizard.js?v=20260802-ai-recommendation-production"></script>
     <script defer src="/page-guide.js?v=20260731-mobile-modal-safe-area"></script>
@@ -178,7 +178,19 @@
         rel="noopener noreferrer"
         aria-label="전자랜드 경산점 리뉴얼 오픈, 9월 4일 OPEN, 온라인최저가 참고형 매장 안내 오픈채팅으로 이동"
       >
-        <span class="visually-hidden">전자랜드 경산점 리뉴얼 오픈, 9월 4일 OPEN, 온라인최저가 참고형 매장</span>
+        <picture class="header-ad-picture">
+          <source
+            media="(max-width: 900px)"
+            srcset="/assets/banner1-gyeongsan-mobile-640x80.png?v=20260805-mobile-picture-v2"
+          />
+          <img
+            src="/assets/banner1-gyeongsan-pc-1520x96.png?v=20260805-mobile-picture-v2"
+            alt="전자랜드 경산점 리뉴얼 오픈, 9월 4일 OPEN"
+            width="1520"
+            height="96"
+            decoding="async"
+          />
+        </picture>
       </a>
       <nav class="nav" aria-label="주요 메뉴">
         <button type="button" data-view="customer">견적올리기</button>
