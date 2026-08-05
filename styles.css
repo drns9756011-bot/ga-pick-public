@@ -8502,3 +8502,35 @@ html.is-mobile-device .header-ad-slot.is-image-banner img {
   font-variant-numeric: tabular-nums;
 }
 
+
+
+/* 2026-08-05: seller route header banner absolute asset fix */
+.header-ad-slot.is-image-banner {
+  background-color: #071326;
+  background-image: url("/assets/banner1-gyeongsan-pc-1520x96.png?v=20260805-seller-route-fix-v1");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 100% 100%;
+}
+
+.header-ad-slot.is-image-banner .visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+@media (max-width: 900px) {
+  .header-ad-slot.is-image-banner {
+    background-image: url("/assets/banner1-gyeongsan-mobile-640x80.png?v=20260805-seller-route-fix-v1");
+  }
+}
+
+html.is-mobile-device .header-ad-slot.is-image-banner {
+  background-image: url("/assets/banner1-gyeongsan-mobile-640x80.png?v=20260805-seller-route-fix-v1");
+}
