@@ -1,6 +1,6 @@
 name = "ga-pick-public"
 main = "src/index.js"
-compatibility_date = "2026-07-17"
+compatibility_date = "2026-08-05"
 
 [triggers]
 crons = ["0 */6 * * *"]
@@ -19,8 +19,9 @@ SOLAPI_TEMPLATE_SELLER_REJECTED = "KA01TP260725102900428RYxfTGV9SoG"
 SOLAPI_TEMPLATE_SELLER_QUOTE_REGISTERED = "KA01TP260805074550965Bb2zfMAs16w"
 
 [assets]
-directory = "."
+directory = "./public"
 binding = "ASSETS"
+run_worker_first = ["/", "/index.html", "/quote*", "/my-quote*", "/seller*", "/api/*"]
 
 [[d1_databases]]
 binding = "DB"
@@ -30,4 +31,3 @@ database_id = "32dfadf4-bbd8-440c-b4ed-58fb564c6f06"
 [[r2_buckets]]
 binding = "FILES"
 bucket_name = "ga-pick-files"
-
