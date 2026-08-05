@@ -8592,3 +8592,55 @@ html.is-mobile-device .header-ad-picture img {
     display: grid;
   }
 }
+
+/* 2026-08: additional press coverage cards */
+.pick-press-card.is-family .pick-press-card-head {
+  border-bottom-color: #15803d;
+}
+.pick-press-card.is-family .pick-press-card-head span {
+  background: #15803d;
+}
+.pick-press-card.is-family .pick-press-card-body > span,
+.pick-press-card.is-family .pick-press-card-foot strong {
+  color: #15803d;
+}
+
+.pick-press-card.is-today .pick-press-card-head {
+  border-bottom-color: #7c3aed;
+}
+.pick-press-card.is-today .pick-press-card-head span {
+  background: #7c3aed;
+}
+.pick-press-card.is-today .pick-press-card-body > span,
+.pick-press-card.is-today .pick-press-card-foot strong {
+  color: #7c3aed;
+}
+
+.pick-press-card.is-cpjournal .pick-press-card-head {
+  border-bottom-color: #c2410c;
+}
+.pick-press-card.is-cpjournal .pick-press-card-head span {
+  background: #c2410c;
+}
+.pick-press-card.is-cpjournal .pick-press-card-body > span,
+.pick-press-card.is-cpjournal .pick-press-card-foot strong {
+  color: #c2410c;
+}
+
+@media (min-width: 901px) {
+  .pick-press-card-list {
+    max-height: 820px;
+    padding-right: 8px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+  }
+  .pick-press-card-list::-webkit-scrollbar {
+    width: 7px;
+  }
+  .pick-press-card-list::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: #cbd5e1;
+  }
+}

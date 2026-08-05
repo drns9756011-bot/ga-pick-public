@@ -1,6 +1,6 @@
-﻿{
-  "name": "?쎄껄??- 媛??寃ъ쟻 鍮꾧탳 ?쒕퉬??,
-  "short_name": "?쎄껄??,
+{
+  "name": "픽견적 - 가전 견적 비교 서비스",
+  "short_name": "픽견적",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -24,4 +24,3 @@
     }
   ]
 }
-
