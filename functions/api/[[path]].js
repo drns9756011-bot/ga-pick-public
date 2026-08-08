@@ -20,7 +20,7 @@ const SOLAPI_DEFAULTS = {
   SOLAPI_TEMPLATE_SELLER_QUOTE_REGISTERED: "KA01TP260805074550965Bb2zfMAs16w",
 };
 
-const PUBLIC_API_VERSION = "20260805-early-close-alimtalk-idempotency-fix";
+const PUBLIC_API_VERSION = "20260808-brand-admin-operated-v6";
 const QUOTE_DURATION_HOURS = 72;
 const QUOTE_DURATION_POLICY_KEY = "quote-duration-hours";
 const NAVER_SHOPPING_CLIENT_ID_DEFAULT = "x1CsXB5ZCYULxcGnclGq";
@@ -3949,6 +3949,358 @@ async function getSiteVisitStats(env) {
   });
 }
 
+
+
+async function ensureBrandHallTables(env) {
+  await env.DB.prepare(
+    `CREATE TABLE IF NOT EXISTS brand_packages (
+      id TEXT PRIMARY KEY,
+      seller_id TEXT NOT NULL,
+      channel TEXT DEFAULT '',
+      branch TEXT DEFAULT '',
+      branch_region TEXT DEFAULT '',
+      manager TEXT DEFAULT '',
+      manager_phone TEXT DEFAULT '',
+      brand TEXT DEFAULT '',
+      title TEXT NOT NULL,
+      items_json TEXT DEFAULT '[]',
+      original_price INTEGER DEFAULT 0,
+      sale_price INTEGER DEFAULT 0,
+      benefits TEXT DEFAULT '',
+      cover_image TEXT DEFAULT '',
+      cover_image_key TEXT DEFAULT '',
+      status TEXT DEFAULT 'active',
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )`
+  ).run();
+  await env.DB.prepare(
+    `CREATE TABLE IF NOT EXISTS brand_consultations (
+      id TEXT PRIMARY KEY,
+      package_id TEXT NOT NULL,
+      seller_id TEXT NOT NULL,
+      channel TEXT DEFAULT '',
+      branch TEXT DEFAULT '',
+      manager TEXT DEFAULT '',
+      manager_phone TEXT DEFAULT '',
+      package_title TEXT DEFAULT '',
+      customer_name TEXT NOT NULL,
+      customer_phone TEXT NOT NULL,
+      customer_region TEXT DEFAULT '',
+      preferred_time TEXT DEFAULT '',
+      memo TEXT DEFAULT '',
+      consent_json TEXT DEFAULT '{}',
+      status TEXT DEFAULT 'new',
+      delivery_status TEXT DEFAULT 'pending',
+      delivery_error TEXT DEFAULT '',
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )`
+  ).run();
+  const statements = [
+    "CREATE INDEX IF NOT EXISTS idx_brand_packages_status_updated ON brand_packages(status, updated_at DESC)",
+    "CREATE INDEX IF NOT EXISTS idx_brand_packages_seller ON brand_packages(seller_id, updated_at DESC)",
+    "CREATE INDEX IF NOT EXISTS idx_brand_consultations_seller ON brand_consultations(seller_id, created_at DESC)",
+    "CREATE INDEX IF NOT EXISTS idx_brand_consultations_package ON brand_consultations(package_id, created_at DESC)",
+  ];
+  for (const sql of statements) {
+    try { await env.DB.prepare(sql).run(); } catch (error) { console.warn("브랜드관 인덱스 생성 실패", error); }
+  }
+}
+
+function normalizePublicBrandChannel(value) {
+  const text = String(value || "").replace(/\s+/g, " ").trim();
+  const compact = text.replace(/\s+/g, "").toLowerCase();
+  if (compact.includes("전자랜드")) return "전자랜드";
+  if (compact.includes("하이마트")) return "하이마트";
+  if (compact.includes("삼성스토어") || compact.includes("samsungstore")) return "삼성스토어";
+  if (compact.includes("lg전자bestshop") || compact.includes("lgbestshop") || compact.includes("lg베스트샵") || compact.includes("베스트샵")) return "LG전자 BEST SHOP";
+  return "";
+}
+
+function normalizeBrandPackage(row, options = {}) {
+  if (!row) return null;
+  const publicView = options.publicView !== false;
+  const normalized = {
+    id: row.id,
+    channel: publicView ? normalizePublicBrandChannel(row.channel) : (row.channel || ""),
+    brand: row.brand || "",
+    title: row.title || "",
+    items: parseJson(row.items_json, []),
+    originalPrice: Number(row.original_price || 0),
+    salePrice: Number(row.sale_price || 0),
+    benefits: row.benefits || "",
+    coverImage: row.cover_image || "",
+    status: row.status || "active",
+    createdAt: row.created_at || "",
+    updatedAt: row.updated_at || "",
+  };
+  if (!publicView) {
+    normalized.branch = row.branch || "";
+    normalized.branchRegion = row.branch_region || "";
+  }
+  if (!publicView) {
+    normalized.sellerId = row.seller_id || "";
+    normalized.manager = row.manager || "";
+    normalized.managerPhone = row.manager_phone || "";
+    normalized.coverImageKey = row.cover_image_key || "";
+  }
+  return normalized;
+}
+
+function normalizeBrandConsultation(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    packageId: row.package_id || "",
+    sellerId: row.seller_id || "",
+    channel: row.channel || "",
+    branch: row.branch || "",
+    manager: row.manager || "",
+    packageTitle: row.package_title || "",
+    customerName: row.customer_name || "",
+    customerPhone: normalizePhone(row.customer_phone || ""),
+    customerPhoneFormatted: formatPhoneNumber(row.customer_phone || ""),
+    customerRegion: row.customer_region || "",
+    preferredTime: row.preferred_time || "",
+    memo: row.memo || "",
+    status: row.status || "new",
+    deliveryStatus: row.delivery_status || "pending",
+    deliveryError: row.delivery_error || "",
+    createdAt: row.created_at || "",
+    updatedAt: row.updated_at || "",
+  };
+}
+
+async function authenticateBrandSeller(env, sellerIdValue, passwordValue) {
+  await ensureSellerColumns(env);
+  const sellerId = String(sellerIdValue || "").trim();
+  const password = String(passwordValue || "");
+  if (!sellerId || !password) return { ok: false, status: 400, message: "판매자 아이디와 비밀번호가 필요합니다." };
+
+  let row = await env.DB.prepare("SELECT * FROM approved_sellers WHERE seller_id = ? AND status = 'approved' LIMIT 1")
+    .bind(sellerId)
+    .first();
+  let authenticated = row ? await safelyVerifyPassword(password, row.password) : false;
+  if (!authenticated && (await isMasterSellerLogin(sellerId, password))) {
+    row = await upsertMasterSeller(env);
+    authenticated = Boolean(row);
+  }
+  if (!row || !authenticated) return { ok: false, status: 401, message: "승인된 판매자 계정의 아이디 또는 비밀번호가 일치하지 않습니다." };
+  return { ok: true, row };
+}
+
+async function getPublicBrandPackages(env, request) {
+  await ensureBrandHallTables(env);
+  const url = new URL(request.url);
+  const brand = String(url.searchParams.get("brand") || "").trim();
+  const channel = String(url.searchParams.get("channel") || "").trim();
+  const clauses = ["status = 'active'"];
+  const values = [];
+  if (brand) { clauses.push("brand = ?"); values.push(brand); }
+  const sql = `SELECT * FROM brand_packages WHERE ${clauses.join(" AND ")} ORDER BY updated_at DESC LIMIT 200`;
+  const statement = env.DB.prepare(sql);
+  const result = values.length ? await statement.bind(...values).all() : await statement.all();
+  const rows = (result.results || [])
+    .map((row) => normalizeBrandPackage(row, { publicView: true }))
+    .filter((row) => row.channel && (!channel || row.channel === channel));
+  return json({ ok: true, rows });
+}
+
+async function handleBrandSellerPackages(env, request) {
+  await ensureBrandHallTables(env);
+  const body = await request.json().catch(() => ({}));
+  const auth = await authenticateBrandSeller(env, body.sellerId, body.password);
+  if (!auth.ok) return json({ ok: false, message: auth.message }, auth.status || 401);
+  const seller = auth.row;
+  const sellerId = String(seller.seller_id || body.sellerId || "").trim();
+  const action = String(body.action || "list").trim();
+
+  if (action === "list") {
+    const result = await env.DB.prepare("SELECT * FROM brand_packages WHERE seller_id = ? ORDER BY updated_at DESC")
+      .bind(sellerId)
+      .all();
+    return json({ ok: true, rows: (result.results || []).map((row) => normalizeBrandPackage(row, { publicView: false })) });
+  }
+
+  if (action === "consultations") {
+    const result = await env.DB.prepare("SELECT * FROM brand_consultations WHERE seller_id = ? ORDER BY created_at DESC LIMIT 300")
+      .bind(sellerId)
+      .all();
+    return json({ ok: true, rows: (result.results || []).map(normalizeBrandConsultation) });
+  }
+
+  if (action === "delete") {
+    const packageId = String(body.packageId || "").trim();
+    if (!packageId) return json({ ok: false, message: "삭제할 패키지를 찾을 수 없습니다." }, 400);
+    const existing = await env.DB.prepare("SELECT * FROM brand_packages WHERE id = ? AND seller_id = ? LIMIT 1")
+      .bind(packageId, sellerId)
+      .first();
+    if (!existing) return json({ ok: false, message: "삭제할 패키지가 없거나 다른 판매자의 패키지입니다." }, 404);
+    await env.DB.prepare("DELETE FROM brand_packages WHERE id = ? AND seller_id = ?").bind(packageId, sellerId).run();
+    if (existing.cover_image_key) await deleteR2Object(env, existing.cover_image_key);
+    const verify = await env.DB.prepare("SELECT id FROM brand_packages WHERE id = ? LIMIT 1").bind(packageId).first();
+    if (verify?.id) return json({ ok: false, message: "서버에서 패키지 삭제를 확인하지 못했습니다." }, 500);
+    return json({ ok: true, deletedId: packageId });
+  }
+
+  if (action !== "create" && action !== "update") {
+    return json({ ok: false, message: "지원하지 않는 브랜드관 판매자 작업입니다." }, 400);
+  }
+
+  const payload = body.package || {};
+  const title = String(payload.title || "").trim().slice(0, 80);
+  const brand = String(payload.brand || "").trim().slice(0, 40);
+  const items = Array.isArray(payload.items)
+    ? payload.items.map((item) => String(item || "").trim()).filter(Boolean).slice(0, 12)
+    : [];
+  const originalPrice = Math.max(0, Math.floor(Number(payload.originalPrice || 0)));
+  const salePrice = Math.max(0, Math.floor(Number(payload.salePrice || 0)));
+  const benefits = String(payload.benefits || "").trim().slice(0, 600);
+  const status = String(payload.status || "active") === "hidden" ? "hidden" : "active";
+  if (!title || !brand || !items.length || !salePrice) {
+    return json({ ok: false, message: "브랜드, 패키지 제목, 제품 구성, 패키지 금액을 모두 입력해주세요." }, 400);
+  }
+
+  const now = new Date().toISOString();
+  const packageId = action === "update" ? String(payload.id || "").trim() : createId("brandpkg");
+  let existing = null;
+  if (action === "update") {
+    if (!packageId) return json({ ok: false, message: "수정할 패키지 ID가 없습니다." }, 400);
+    existing = await env.DB.prepare("SELECT * FROM brand_packages WHERE id = ? AND seller_id = ? LIMIT 1")
+      .bind(packageId, sellerId)
+      .first();
+    if (!existing) return json({ ok: false, message: "수정할 패키지가 없거나 다른 판매자의 패키지입니다." }, 404);
+  }
+
+  let coverImage = existing?.cover_image || "";
+  let coverImageKey = existing?.cover_image_key || "";
+  const coverDataUrl = String(payload.coverImageDataUrl || "");
+  if (coverDataUrl) {
+    const info = dataUrlInfo(coverDataUrl);
+    if (!info || !isBrowserSafeQuoteImageType(info.contentType)) {
+      return json({ ok: false, message: "브랜드관 대표 이미지는 JPG, PNG 또는 WebP만 등록할 수 있습니다." }, 415);
+    }
+    if (!env.FILES) return json({ ok: false, message: "브랜드관 이미지 저장소(R2)가 연결되지 않았습니다." }, 500);
+    const saved = await saveDataUrlToR2(env, coverDataUrl, "brand-packages", `${packageId}-cover-${Date.now()}`);
+    if (!saved.key) return json({ ok: false, message: "브랜드관 대표 이미지를 저장하지 못했습니다." }, 500);
+    const oldKey = coverImageKey;
+    coverImage = saved.url || "";
+    coverImageKey = saved.key || "";
+    if (oldKey && oldKey !== coverImageKey) await deleteR2Object(env, oldKey);
+  }
+
+  const snapshot = {
+    channel: seller.channel || "",
+    branch: seller.branch || "",
+    branchRegion: seller.branch_region || "",
+    manager: seller.manager || "",
+    managerPhone: normalizePhone(seller.phone || ""),
+  };
+
+  if (action === "create") {
+    await env.DB.prepare(
+      `INSERT INTO brand_packages
+        (id, seller_id, channel, branch, branch_region, manager, manager_phone, brand, title, items_json,
+         original_price, sale_price, benefits, cover_image, cover_image_key, status, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).bind(
+      packageId, sellerId, snapshot.channel, snapshot.branch, snapshot.branchRegion, snapshot.manager,
+      snapshot.managerPhone, brand, title, JSON.stringify(items), originalPrice, salePrice, benefits,
+      coverImage, coverImageKey, status, now, now
+    ).run();
+  } else {
+    await env.DB.prepare(
+      `UPDATE brand_packages SET channel = ?, branch = ?, branch_region = ?, manager = ?, manager_phone = ?,
+       brand = ?, title = ?, items_json = ?, original_price = ?, sale_price = ?, benefits = ?, cover_image = ?,
+       cover_image_key = ?, status = ?, updated_at = ? WHERE id = ? AND seller_id = ?`
+    ).bind(
+      snapshot.channel, snapshot.branch, snapshot.branchRegion, snapshot.manager, snapshot.managerPhone,
+      brand, title, JSON.stringify(items), originalPrice, salePrice, benefits, coverImage, coverImageKey,
+      status, now, packageId, sellerId
+    ).run();
+  }
+
+  const savedRow = await env.DB.prepare("SELECT * FROM brand_packages WHERE id = ? AND seller_id = ? LIMIT 1")
+    .bind(packageId, sellerId)
+    .first();
+  if (!savedRow) return json({ ok: false, message: "패키지가 서버에 저장되었는지 확인하지 못했습니다." }, 500);
+  return json({ ok: true, row: normalizeBrandPackage(savedRow, { publicView: false }) });
+}
+
+async function createBrandConsultation(env, request) {
+  await ensureBrandHallTables(env);
+  const body = await request.json().catch(() => ({}));
+  if (String(body.website || "").trim()) return json({ ok: true, message: "접수되었습니다." });
+  const packageId = String(body.packageId || "").trim();
+  const customerName = String(body.customerName || "").trim().slice(0, 20);
+  const customerPhone = normalizePhone(body.customerPhone || "");
+  const customerRegion = String(body.customerRegion || "").trim().slice(0, 40);
+  const preferredTime = String(body.preferredTime || "").trim().slice(0, 50);
+  const memo = String(body.memo || "").trim().slice(0, 500);
+  const consent = body.consent || {};
+  if (!packageId || !customerName || customerPhone.length < 10 || !customerRegion || !preferredTime || !consent.privacy) {
+    return json({ ok: false, message: "이름, 연락처, 설치 지역, 상담 희망 시간과 개인정보 동의를 확인해주세요." }, 400);
+  }
+
+  const pkg = await env.DB.prepare("SELECT * FROM brand_packages WHERE id = ? AND status = 'active' LIMIT 1")
+    .bind(packageId)
+    .first();
+  if (!pkg) return json({ ok: false, message: "현재 상담할 수 없는 패키지입니다. 목록을 새로고침해주세요." }, 404);
+
+  const duplicateSince = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+  const duplicate = await env.DB.prepare(
+    "SELECT id FROM brand_consultations WHERE package_id = ? AND customer_phone = ? AND created_at >= ? LIMIT 1"
+  ).bind(packageId, customerPhone, duplicateSince).first();
+  if (duplicate?.id) return json({ ok: true, id: duplicate.id, deliveryStatus: "already_received", message: "이미 동일한 상담 요청이 접수되었습니다." });
+
+  const id = createId("brandconsult");
+  const now = new Date().toISOString();
+  await env.DB.prepare(
+    `INSERT INTO brand_consultations
+      (id, package_id, seller_id, channel, branch, manager, manager_phone, package_title, customer_name,
+       customer_phone, customer_region, preferred_time, memo, consent_json, status, delivery_status,
+       delivery_error, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', 'pending', '', ?, ?)`
+  ).bind(
+    id, packageId, pkg.seller_id || "", pkg.channel || "", pkg.branch || "", pkg.manager || "",
+    normalizePhone(pkg.manager_phone || ""), pkg.title || "", customerName, customerPhone, customerRegion,
+    preferredTime, memo, JSON.stringify({ ...consent, receivedAt: now }), now, now
+  ).run();
+
+  // 브랜드관 상담은 판매자에게 직접 전달하지 않습니다.
+  // 픽견적 운영자가 먼저 상담한 뒤 실제 계약 단계에서 판매처를 연결합니다.
+  const adminPhone = normalizePhone(solapiValue(env, "SOLAPI_ADMIN_PHONE") || "");
+  let deliveryStatus = "saved";
+  let deliveryError = "";
+  if (adminPhone) {
+    const smsBody = [
+      "[픽견적 브랜드관 신규 상담]",
+      `${customerName} 고객님 상담 요청`,
+      `공개 채널: ${normalizePublicBrandChannel(pkg.channel) || "브랜드관"}`,
+      `내부 판매처: ${[pkg.channel, pkg.branch].filter(Boolean).join(" ")}`,
+      `담당 매니저: ${pkg.manager || "미지정"} ${formatPhoneNumber(pkg.manager_phone || "")}`.trim(),
+      `패키지: ${pkg.title || "다품목 가전 패키지"}`,
+      `고객 연락처: ${formatPhoneNumber(customerPhone)}`,
+      `설치지역: ${customerRegion}`,
+      `희망시간: ${preferredTime}`,
+      memo ? `문의: ${memo}` : "",
+      "관리자 브랜드관에서 상담 및 정산 상태를 관리해주세요.",
+    ].filter(Boolean).join("\n");
+    const sent = await sendSolapiTextMessage(env, { targetPhone: adminPhone, body: smsBody, allowDuplicates: true })
+      .catch((error) => ({ ok: false, error: String(error?.message || error || "관리자 문자 발송 실패") }));
+    if (sent?.ok) deliveryStatus = "admin_notified";
+    else { deliveryStatus = "saved"; deliveryError = String(sent?.error || "관리자 문자 전달 실패").slice(0, 500); }
+  } else {
+    deliveryError = "SOLAPI_ADMIN_PHONE이 설정되어 있지 않아 서버에만 저장되었습니다.";
+  }
+
+  await env.DB.prepare("UPDATE brand_consultations SET delivery_status = ?, delivery_error = ?, updated_at = ? WHERE id = ?")
+    .bind(deliveryStatus, deliveryError, new Date().toISOString(), id)
+    .run();
+  return json({ ok: true, id, deliveryStatus, message: "상담 요청이 픽견적에 정상적으로 접수되었습니다." });
+}
+
 export async function onRequest(context) {
   const { request, env, params } = context;
   const pathParts = Array.isArray(params.path) ? params.path : [];
@@ -3987,6 +4339,8 @@ export async function onRequest(context) {
   }
   if (path === "seller-account-find" && method === "POST") return findSellerAccount(env, request);
   if (path === "seller-password-reset" && method === "POST") return resetSellerPassword(env, request);
+  if (path === "brand-packages" && method === "GET") return apiBoundary(() => getPublicBrandPackages(env, request), "브랜드관 패키지를 불러오지 못했습니다.");
+  if (path === "brand-consultations" && method === "POST") return apiBoundary(() => createBrandConsultation(env, request), "브랜드관 상담 요청 처리 중 오류가 발생했습니다.");
 
   if (path === "seller-applications" && method === "GET") {
     const denied = requireAdmin(request, env);

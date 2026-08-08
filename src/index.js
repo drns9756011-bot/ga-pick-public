@@ -3,7 +3,7 @@ import { onRequest, onScheduled } from "../functions/api/[[path]].js";
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    const routeVersion = "20260805-single-app-shell-refresh-fold-fix";
+    const routeVersion = "20260808-brand-admin-operated-v6";
 
     if (url.pathname === "/robots.txt") {
       return new Response("User-agent: *\nAllow: /\n\nSitemap: https://ga-pick.com/sitemap.xml\n", {
@@ -35,6 +35,12 @@ export default {
     <lastmod>2026-08-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://ga-pick.com/brand</loc>
+    <lastmod>2026-08-07</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://ga-pick.com/seller</loc>
@@ -69,8 +75,23 @@ export default {
       });
     }
 
-    const appRoutes = new Set(["/", "/index.html", "/quote", "/my-quote", "/seller", "/seller/register"]);
     const normalizedPath = decodeURIComponent(url.pathname).replace(/\/+$/, "") || "/";
+
+    const standaloneRoutes = new Map([
+      ["/brand", "/brand/index.html"],
+      ["/brand/index.html", "/brand/index.html"],
+    ]);
+    if (standaloneRoutes.has(normalizedPath)) {
+      const assetUrl = new URL(request.url);
+      assetUrl.pathname = standaloneRoutes.get(normalizedPath);
+      const response = await env.ASSETS.fetch(new Request(assetUrl.toString(), { method: "GET", headers: request.headers, redirect: "manual" }));
+      const headers = new Headers(response.headers);
+      headers.set("Cache-Control", "no-store");
+      headers.set("X-GA-Pick-Route-Version", routeVersion);
+      return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+    }
+
+    const appRoutes = new Set(["/", "/index.html", "/quote", "/my-quote", "/seller", "/seller/register"]);
     if (appRoutes.has(normalizedPath)) {
       const indexUrl = new URL(request.url);
       indexUrl.pathname = "/index.html";

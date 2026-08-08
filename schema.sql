@@ -240,3 +240,52 @@ CREATE TABLE IF NOT EXISTS seller_access_logs (
 );
 CREATE INDEX IF NOT EXISTS idx_seller_access_logs_seller_time ON seller_access_logs(seller_id, accessed_at DESC);
 CREATE INDEX IF NOT EXISTS idx_seller_access_logs_date ON seller_access_logs(access_date, accessed_at DESC);
+
+-- 브랜드관: 승인 판매자 다품목 패키지
+CREATE TABLE IF NOT EXISTS brand_packages (
+  id TEXT PRIMARY KEY,
+  seller_id TEXT NOT NULL,
+  channel TEXT DEFAULT '',
+  branch TEXT DEFAULT '',
+  branch_region TEXT DEFAULT '',
+  manager TEXT DEFAULT '',
+  manager_phone TEXT DEFAULT '',
+  brand TEXT DEFAULT '',
+  title TEXT NOT NULL,
+  items_json TEXT DEFAULT '[]',
+  original_price INTEGER DEFAULT 0,
+  sale_price INTEGER DEFAULT 0,
+  benefits TEXT DEFAULT '',
+  cover_image TEXT DEFAULT '',
+  cover_image_key TEXT DEFAULT '',
+  status TEXT DEFAULT 'active',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_brand_packages_status_updated ON brand_packages(status, updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_brand_packages_seller ON brand_packages(seller_id, updated_at DESC);
+
+-- 브랜드관: 고객 상담 신청
+CREATE TABLE IF NOT EXISTS brand_consultations (
+  id TEXT PRIMARY KEY,
+  package_id TEXT NOT NULL,
+  seller_id TEXT NOT NULL,
+  channel TEXT DEFAULT '',
+  branch TEXT DEFAULT '',
+  manager TEXT DEFAULT '',
+  manager_phone TEXT DEFAULT '',
+  package_title TEXT DEFAULT '',
+  customer_name TEXT NOT NULL,
+  customer_phone TEXT NOT NULL,
+  customer_region TEXT DEFAULT '',
+  preferred_time TEXT DEFAULT '',
+  memo TEXT DEFAULT '',
+  consent_json TEXT DEFAULT '{}',
+  status TEXT DEFAULT 'new',
+  delivery_status TEXT DEFAULT 'pending',
+  delivery_error TEXT DEFAULT '',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_brand_consultations_seller ON brand_consultations(seller_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_brand_consultations_package ON brand_consultations(package_id, created_at DESC);

@@ -8644,3 +8644,34 @@ html.is-mobile-device .header-ad-picture img {
     background: #cbd5e1;
   }
 }
+
+/* Brand hall navigation / seller entry - 2026-08-07 */
+.nav .pick-top-link {
+  color: inherit;
+  text-decoration: none;
+  font-weight: 700;
+  padding: 8px 0;
+}
+.nav .pick-top-link:hover { color: var(--primary); }
+.seller-brand-manage-callout {
+  margin: -4px 0 18px;
+  min-height: 64px;
+  padding: 14px 18px;
+  border: 1px solid rgba(15, 118, 101, .2);
+  border-radius: 14px;
+  background: linear-gradient(90deg, rgba(15, 118, 101, .09), rgba(15, 118, 101, .025));
+  color: #43514d;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 700;
+}
+.seller-brand-manage-callout b,
+.seller-brand-manage-callout strong { color: var(--primary); }
+.seller-brand-manage-callout strong { white-space: nowrap; }
+@media (max-width: 760px) {
+  .seller-brand-manage-callout { margin: 0 0 14px; align-items: flex-start; font-size: 13px; }
+}
