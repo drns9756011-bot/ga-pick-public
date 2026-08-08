@@ -340,3 +340,197 @@ body.brand-server-is-loading { cursor: wait; }
   .brand-showcase-cta b { width:20px; height:20px; }
   .brand-showcase-trust { margin-top:13px; }
 }
+
+/* ===== 브랜드관 모바일 전용 화면 맞춤 v9 (PC 영향 없음) ===== */
+@media (max-width: 768px) {
+  html,
+  body.brand-hall-body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden !important;
+  }
+
+  .brand-hall-main {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto 50px !important;
+    padding: 0 !important;
+    overflow-x: clip;
+  }
+
+  .brand-hall-hero {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 18px !important;
+    padding: 24px 14px 20px !important;
+    border-radius: 0 0 24px 24px !important;
+    overflow: hidden !important;
+  }
+
+  .brand-hall-hero-copy,
+  .brand-showcase-wrap,
+  .brand-showcase-stack,
+  .brand-hall-hero-panel,
+  .brand-hero-preview,
+  .brand-hero-flow {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .brand-showcase-intro {
+    margin: 8px 2px 10px !important;
+  }
+  .brand-showcase-intro > strong {
+    font-size: 1.05rem !important;
+    line-height: 1.35;
+  }
+  .brand-showcase-intro > span {
+    margin-top: 3px !important;
+    font-size: .68rem !important;
+    line-height: 1.45;
+  }
+
+  .brand-showcase-stack {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 9px !important;
+  }
+
+  .brand-showcase-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    min-height: 148px !important;
+    height: 148px;
+    border-radius: 18px !important;
+    overflow: hidden !important;
+  }
+
+  .brand-showcase-logo {
+    left: 13px !important;
+    top: 12px !important;
+    height: 23px !important;
+    max-width: 108px !important;
+  }
+  .brand-showcase-logo img {
+    max-width: 108px !important;
+    max-height: 23px !important;
+  }
+
+  .brand-showcase-products {
+    inset: 23px 2px 3px 46px !important;
+    width: auto !important;
+    max-width: calc(100% - 48px) !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+  }
+  .brand-showcase-products img {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    object-position: right center !important;
+    transform: none !important;
+  }
+
+  .brand-showcase-card::after {
+    background: linear-gradient(90deg, rgba(255,255,255,.98) 0%, rgba(255,255,255,.80) 26%, rgba(255,255,255,.20) 48%, transparent 70%) !important;
+  }
+
+  .brand-showcase-cta {
+    left: 12px !important;
+    bottom: 10px !important;
+    max-width: calc(100% - 24px);
+    font-size: .66rem !important;
+    padding: 5px 8px !important;
+    white-space: nowrap;
+  }
+
+  .brand-showcase-trust {
+    width: 100%;
+    max-width: 100%;
+    margin-top: 10px !important;
+    padding-bottom: 2px;
+    overflow-x: auto !important;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .brand-hall-hero-panel {
+    padding: 14px !important;
+    border-radius: 18px !important;
+    overflow: hidden !important;
+  }
+
+  .brand-hero-preview {
+    display: flex !important;
+    gap: 8px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    padding: 0 0 4px !important;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+  }
+  .brand-hero-preview-card,
+  .brand-hero-preview-skeleton {
+    flex: 0 0 min(42vw, 146px) !important;
+    width: min(42vw, 146px) !important;
+    min-width: min(42vw, 146px) !important;
+    max-width: min(42vw, 146px) !important;
+    scroll-snap-align: start;
+  }
+  .brand-hero-preview-skeleton { height: 184px !important; }
+  .brand-hero-preview-media { height: 94px !important; }
+  .brand-hero-preview-media img { max-width: 100%; max-height: 100%; }
+
+  .brand-hero-flow {
+    grid-template-columns: minmax(0,1fr) 8px minmax(0,1fr) 8px minmax(0,1fr) !important;
+    gap: 2px !important;
+  }
+  .brand-hero-flow > div { min-width: 0 !important; }
+  .brand-hero-flow strong {
+    max-width: 100%;
+    font-size: .67rem !important;
+    white-space: normal;
+    line-height: 1.25;
+  }
+
+  .brand-hall-proof-strip,
+  .brand-hall-toolbar,
+  .brand-hall-grid,
+  .brand-hall-guide {
+    max-width: calc(100% - 24px) !important;
+    margin-left: 12px !important;
+    margin-right: 12px !important;
+  }
+
+  .brand-package-card {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    grid-template-columns: 104px minmax(0,1fr) !important;
+  }
+  .brand-package-image,
+  .brand-package-body { min-width: 0 !important; }
+
+  .brand-consult-dialog {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .brand-hall-hero { padding-left: 11px !important; padding-right: 11px !important; }
+  .brand-showcase-card { height: 136px; min-height: 136px !important; }
+  .brand-showcase-products { left: 40px !important; max-width: calc(100% - 42px) !important; }
+  .brand-hero-preview-card,
+  .brand-hero-preview-skeleton {
+    flex-basis: 134px !important;
+    width: 134px !important;
+    min-width: 134px !important;
+    max-width: 134px !important;
+  }
+}
