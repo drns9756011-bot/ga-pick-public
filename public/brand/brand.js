@@ -195,6 +195,13 @@
     brandFilters.querySelectorAll("button").forEach((item) => item.classList.toggle("is-active", item === button));
     render();
   });
+  document.querySelectorAll("[data-showcase-brand]").forEach((card) => card.addEventListener("click", () => {
+    const brand = card.dataset.showcaseBrand || "";
+    state.brand = brand;
+    brandFilters?.querySelectorAll("button[data-brand]").forEach((button) => button.classList.toggle("is-active", button.dataset.brand === brand));
+    render();
+    scrollToPackages();
+  }));
   channelFilter?.addEventListener("change", () => { state.channel = channelFilter.value; render(); });
   grid?.addEventListener("click", (event) => { const button = event.target.closest("[data-consult-id]"); if (button) openConsult(button.dataset.consultId); });
   modal?.addEventListener("click", (event) => { if (event.target.closest("[data-close-consult]")) closeConsult(); });

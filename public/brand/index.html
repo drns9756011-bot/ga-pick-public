@@ -3,6 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <!-- Google AdSense site ownership / ads script -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9286156779528114"
+     crossorigin="anonymous"></script>
   <title>브랜드관 | 픽견적 - 매장별 다품목 가전 패키지</title>
   <link rel="canonical" href="https://ga-pick.com/brand" />
   <link rel="shortcut icon" href="/favicon.ico?v=20260804-center" />
@@ -17,15 +20,15 @@
       if (mobile || (touch && compact)) document.documentElement.classList.add("is-mobile-device");
     })();
   </script>
-  <meta name="description" content="픽견적 브랜드관에서 승인된 판매자가 직접 등록한 혼수·입주 다품목 가전 패키지와 가격을 확인하고 원하는 판매 채널에 상담을 요청하세요." />
+  <meta name="description" content="픽견적 브랜드관에서 LG전자·삼성전자 등 주요 판매 채널의 다품목 가전 패키지와 가격을 확인하고 픽견적에 상담을 요청하세요." />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="픽견적" />
   <meta property="og:title" content="픽견적 브랜드관 | 매장별 다품목 가전 패키지" />
-  <meta property="og:description" content="판매자가 직접 등록한 다품목 가전 패키지와 금액을 확인하고 원하는 판매 채널에 바로 상담을 요청하세요." />
+  <meta property="og:description" content="LG전자·삼성전자 다품목 가전 패키지와 금액을 비교하고 픽견적에 바로 상담을 요청하세요." />
   <meta property="og:url" content="https://ga-pick.com/brand" />
   <link rel="stylesheet" href="/styles.css?v=20260805-press5" />
-  <link rel="stylesheet" href="/brand/brand.css?v=20260808-brand-channel-only-v5" />
-  <script defer src="/brand/brand.js?v=20260808-brand-channel-only-v5"></script>
+  <link rel="stylesheet" href="/brand/brand.css?v=20260808-brand-visual-v8" />
+  <script defer src="/brand/brand.js?v=20260808-brand-visual-v8"></script>
 </head>
 <body class="brand-hall-body">
   <header class="topbar brand-hall-topbar">
@@ -56,18 +59,36 @@
 
   <main class="brand-hall-main">
     <section class="brand-hall-hero">
-      <div class="brand-hall-hero-copy">
+      <div class="brand-hall-hero-copy brand-showcase-wrap">
         <span class="brand-hall-kicker"><i></i>PICK BRAND HALL</span>
-        <h1>매장이 직접 구성한<br /><strong>다품목 가전 패키지</strong></h1>
-        <p>주요 판매 채널의 다품목 패키지를 비교하고,<br class="brand-desktop-break" /> 원하는 상품을 바로 상담받아보세요.</p>
-        <div class="brand-hall-hero-actions">
-          <button class="brand-hero-primary" id="heroBrowsePackages" type="button"><span class="brand-action-icon">◇</span>패키지 둘러보기 <b>›</b></button>
-          <button class="brand-hero-secondary" id="heroConsultFirst" type="button"><span class="brand-action-icon">◌</span>상담받기 <b>›</b></button>
+        <div class="brand-showcase-intro">
+          <strong>대표 브랜드 패키지</strong>
+          <span>LG전자와 삼성전자 다품목 가전을 한눈에 확인하세요.</span>
         </div>
-        <div class="brand-hall-trust">
-          <span><b>✓</b> 승인 판매자만 등록</span>
-          <span><b>✓</b> 판매 채널별 직접 가격 등록</span>
-          <span><b>✓</b> 등록 판매자에게 안전하게 상담 전달</span>
+        <div class="brand-showcase-stack" aria-label="대표 브랜드 패키지 바로가기">
+          <button class="brand-showcase-card brand-showcase-lg" type="button" data-showcase-brand="LG전자" aria-label="LG전자 패키지 보기">
+            <span class="brand-showcase-logo brand-showcase-logo-lg">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/a/a0/LG_Electronics_logo_2015_%28hangul%29.svg" alt="LG전자" loading="eager" referrerpolicy="no-referrer" />
+            </span>
+            <span class="brand-showcase-products">
+              <img src="/assets/brand-hero-lg-products.png?v=20260808-brand-visual-v8" alt="LG전자 다품목 가전 패키지" width="1962" height="831" decoding="async" />
+            </span>
+            <span class="brand-showcase-cta">LG전자 패키지 보기 <b>›</b></span>
+          </button>
+          <button class="brand-showcase-card brand-showcase-samsung" type="button" data-showcase-brand="삼성전자" aria-label="삼성전자 패키지 보기">
+            <span class="brand-showcase-logo brand-showcase-logo-samsung">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/1/1c/Samsung_Electronics_logo_%28hangul%29.svg" alt="삼성전자" loading="eager" referrerpolicy="no-referrer" />
+            </span>
+            <span class="brand-showcase-products">
+              <img src="/assets/brand-hero-samsung-products.png?v=20260808-brand-visual-v8" alt="삼성전자 다품목 가전 패키지" width="1794" height="704" decoding="async" />
+            </span>
+            <span class="brand-showcase-cta">삼성전자 패키지 보기 <b>›</b></span>
+          </button>
+        </div>
+        <div class="brand-hall-trust brand-showcase-trust">
+          <span><b>✓</b> 픽견적 직접 운영</span>
+          <span><b>✓</b> 채널별 패키지 비교</span>
+          <span><b>✓</b> 상담은 픽견적이 직접 연결</span>
         </div>
       </div>
       <div class="brand-hall-hero-panel" aria-label="추천 브랜드 패키지">
@@ -85,15 +106,15 @@
           <em>›</em>
           <div><i>2</i><span class="brand-flow-icon">◌</span><strong>상담받기</strong><small>원하는 패키지 선택</small></div>
           <em>›</em>
-          <div><i>3</i><span class="brand-flow-icon">♙</span><strong>판매자 연결</strong><small>등록 판매자 상담 연결</small></div>
+          <div><i>3</i><span class="brand-flow-icon">♙</span><strong>판매자 연결</strong><small>픽견적 상담 연결</small></div>
         </div>
       </div>
     </section>
 
     <section class="brand-hall-proof-strip" aria-label="브랜드관 신뢰 안내">
-      <div><span class="brand-proof-icon">♢</span><p><strong>엄격한 판매자 검수</strong><small>승인된 판매자만 입점</small></p></div>
-      <div><span class="brand-proof-icon">◇</span><p><strong>채널별 직접 가격</strong><small>등록 판매자가 직접 등록한 조건</small></p></div>
-      <div><span class="brand-proof-icon">◉</span><p><strong>상담 연결</strong><small>등록 판매자가 직접 상담</small></p></div>
+      <div><span class="brand-proof-icon">♢</span><p><strong>검증된 판매 채널</strong><small>픽견적이 직접 관리</small></p></div>
+      <div><span class="brand-proof-icon">◇</span><p><strong>채널별 패키지 가격</strong><small>픽견적이 직접 등록·관리</small></p></div>
+      <div><span class="brand-proof-icon">◉</span><p><strong>픽견적 직접 상담</strong><small>상담 후 적합한 판매처 연결</small></p></div>
       <div class="brand-proof-highlight"><span class="brand-proof-stars">★★★★★</span><p><strong>믿을 수 있는 Pick견적 브랜드관</strong><small>비교는 간편하게, 상담은 정확하게</small></p></div>
     </section>
 
