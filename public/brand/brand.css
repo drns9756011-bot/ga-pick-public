@@ -103,9 +103,13 @@
 .brand-form-message.is-success { color: var(--brand-green); }
 .brand-honeypot { position: absolute !important; left: -10000px !important; width: 1px !important; height: 1px !important; opacity: 0 !important; }
 .brand-hall-footer .footer-register-btn { text-decoration: none; display: inline-flex; align-items: center; }
-.brand-mobile-nav a { color: inherit; text-decoration: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-width: 0; }
-.brand-mobile-nav a.is-active { color: var(--brand-green); font-weight: 780; }
-.brand-mobile-symbol { font-size: 1.15rem; line-height: 1; }
+/* 모바일 하단 메뉴는 픽견적 공통 mobile-flow-nav UI를 그대로 사용 */
+html.is-mobile-device .brand-mobile-nav a.is-current {
+  color: var(--primary);
+}
+html.is-mobile-device .brand-mobile-nav a.is-current .mobile-flow-icon {
+  color: var(--primary);
+}
 @media (max-width: 980px) {
   .brand-hall-main { width: min(100% - 24px, 900px); margin-top: 20px; }
   .brand-hall-hero { grid-template-columns: 1fr; gap: 28px; padding: 38px; }
@@ -151,7 +155,7 @@
   .brand-consult-dialog { max-height: 92dvh; border-radius: 24px 24px 0 0; padding: 24px 18px calc(24px + env(safe-area-inset-bottom)); }
   .brand-form-row { grid-template-columns: 1fr; }
 }
-.brand-mobile-nav .mobile-flow-logo { background: var(--brand-green); box-shadow: 0 12px 24px rgba(15, 118, 101, .22); }
+/* 홈 P 버튼은 공통 스타일의 빨간 원형 디자인 유지 */
 
 /* 브랜드관 서버 요청 공통 로딩 모달 */
 .brand-server-loading[hidden] { display: none !important; }
@@ -533,4 +537,9 @@ body.brand-server-is-loading { cursor: wait; }
     min-width: 134px !important;
     max-width: 134px !important;
   }
+}
+
+/* V10: 브랜드관 모바일 하단 메뉴의 폰트까지 기존 픽견적 공통 UI와 동일하게 */
+html.is-mobile-device .brand-mobile-nav {
+  font-family: "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "맑은 고딕", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
