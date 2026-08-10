@@ -666,3 +666,40 @@ html.is-mobile-device .brand-mobile-nav {
   .brand-detail-pre { font-size:.82rem; line-height:1.68; }
   .brand-detail-price strong { font-size:1.55rem; }
 }
+
+/* V13: 브랜드관 카드 대표 이미지 원본 비율 그대로 전체 노출 */
+.brand-package-card-visual .brand-package-image-button {
+  aspect-ratio: auto !important;
+  height: auto !important;
+  min-height: 0 !important;
+  display: block !important;
+  overflow: hidden;
+  background: #fff;
+}
+.brand-package-card-visual .brand-package-image-button img {
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+  max-width: 100% !important;
+  max-height: none !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  transform: none !important;
+  background: #fff;
+}
+.brand-package-card-visual:hover .brand-package-image-button img {
+  transform: none !important;
+}
+@media (max-width: 768px) {
+  .brand-package-card-visual .brand-package-image,
+  .brand-package-card-visual .brand-package-image-button {
+    aspect-ratio: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+  .brand-package-card-visual .brand-package-image-button img {
+    width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+}
