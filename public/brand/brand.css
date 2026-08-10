@@ -304,9 +304,9 @@ body.brand-server-is-loading { cursor: wait; }
 
 /* ===== 브랜드관 LG전자 · 삼성전자 비주얼 히어로 v8 ===== */
 .brand-showcase-wrap { display:flex; flex-direction:column; justify-content:center; min-width:0; }
-.brand-showcase-intro { margin:18px 0 16px; display:flex; align-items:baseline; justify-content:space-between; gap:16px; }
-.brand-showcase-intro > strong { font-size:1.35rem; font-weight:720; letter-spacing:-.035em; color:#1d2b31; }
-.brand-showcase-intro > span { color:#73807d; font-size:.78rem; font-weight:530; text-align:right; }
+.brand-showcase-intro { margin:2px 0 18px; display:flex; align-items:flex-end; justify-content:space-between; gap:18px; }
+.brand-showcase-intro > strong { max-width:360px; font-size:1.48rem; line-height:1.2; font-weight:700; letter-spacing:-.045em; color:#17272d; }
+.brand-showcase-intro > span { max-width:290px; color:#6f7d79; font-size:.78rem; line-height:1.55; font-weight:500; text-align:right; }
 .brand-showcase-stack { display:grid; gap:13px; }
 .brand-showcase-card { position:relative; width:100%; min-height:198px; overflow:hidden; border:1px solid #dce7e3; border-radius:23px; background:rgba(255,255,255,.92); padding:0; cursor:pointer; box-shadow:0 13px 34px rgba(25,72,61,.075); text-align:left; transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
 .brand-showcase-card:hover { transform:translateY(-2px); border-color:#bfd9d2; box-shadow:0 18px 42px rgba(25,72,61,.12); }
@@ -321,7 +321,29 @@ body.brand-server-is-loading { cursor: wait; }
 .brand-showcase-products img { display:block; width:100%; height:100%; object-fit:contain; object-position:right center; filter:drop-shadow(0 13px 18px rgba(20,31,35,.12)); }
 .brand-showcase-cta { position:absolute; z-index:4; left:22px; bottom:18px; display:inline-flex; align-items:center; gap:8px; color:#24584e; font-size:.78rem; font-weight:680; letter-spacing:-.015em; }
 .brand-showcase-samsung .brand-showcase-cta { color:#264d79; }
-.brand-showcase-cta b { width:23px; height:23px; display:grid; place-items:center; border-radius:50%; border:1px solid currentColor; font-size:1rem; font-weight:500; }
+.brand-showcase-cta b {
+  width:23px;
+  height:23px;
+  flex:0 0 23px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:50%;
+  border:1px solid currentColor;
+  font-size:0;
+  line-height:0;
+  box-sizing:border-box;
+}
+.brand-showcase-cta b::before {
+  content:"";
+  width:6px;
+  height:6px;
+  border-top:1.5px solid currentColor;
+  border-right:1.5px solid currentColor;
+  transform:rotate(45deg) translate(-1px,1px);
+  transform-origin:center;
+  box-sizing:border-box;
+}
 .brand-showcase-trust { margin-top:17px; }
 .brand-showcase-trust span { font-size:.73rem; padding:8px 11px; }
 @media (max-width:1100px) {
@@ -341,7 +363,7 @@ body.brand-server-is-loading { cursor: wait; }
   .brand-showcase-logo img { max-width:122px; }
   .brand-showcase-products { inset:28px 4px 0 68px; }
   .brand-showcase-cta { left:15px; bottom:12px; font-size:.7rem; padding:6px 9px; background:rgba(255,255,255,.9); border-radius:999px; }
-  .brand-showcase-cta b { width:20px; height:20px; }
+  .brand-showcase-cta b { width:20px; height:20px; flex-basis:20px; }
   .brand-showcase-trust { margin-top:13px; }
 }
 
@@ -388,13 +410,16 @@ body.brand-server-is-loading { cursor: wait; }
     margin: 8px 2px 10px !important;
   }
   .brand-showcase-intro > strong {
-    font-size: 1.05rem !important;
-    line-height: 1.35;
+    max-width: 100%;
+    font-size: 1.08rem !important;
+    line-height: 1.32;
+    letter-spacing: -.035em;
   }
   .brand-showcase-intro > span {
-    margin-top: 3px !important;
+    max-width: 100%;
+    margin-top: 5px !important;
     font-size: .68rem !important;
-    line-height: 1.45;
+    line-height: 1.5;
   }
 
   .brand-showcase-stack {
@@ -539,7 +564,105 @@ body.brand-server-is-loading { cursor: wait; }
   }
 }
 
+/* V11: 브랜드 비주얼 문구 정리 + LG/삼성 CTA 화살표 정중앙 보정 */
+.brand-showcase-cta b,
+.brand-showcase-lg .brand-showcase-cta b,
+.brand-showcase-samsung .brand-showcase-cta b {
+  position:relative;
+  vertical-align:middle;
+}
+.brand-showcase-cta b::before {
+  position:absolute;
+  left:50%;
+  top:50%;
+  margin:0;
+  transform:translate(-60%,-50%) rotate(45deg);
+}
+@media (max-width:768px) {
+  .brand-showcase-cta { align-items:center !important; }
+  .brand-showcase-cta b::before { transform:translate(-60%,-50%) rotate(45deg); }
+}
+
 /* V10: 브랜드관 모바일 하단 메뉴의 폰트까지 기존 픽견적 공통 UI와 동일하게 */
 html.is-mobile-device .brand-mobile-nav {
   font-family: "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "맑은 고딕", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+
+/* V12: 노출용 브랜드관 카드 간소화 + 상세 모달 */
+.brand-package-card-visual {
+  display:flex;
+  flex-direction:column;
+}
+.brand-package-image-button {
+  width:100%;
+  border:0;
+  padding:0;
+  cursor:pointer;
+  font:inherit;
+}
+.brand-package-image-button:focus-visible {
+  outline:3px solid rgba(15,118,101,.25);
+  outline-offset:-3px;
+}
+.brand-package-price-only {
+  margin:0;
+  padding:16px 18px 18px;
+  background:#fff;
+}
+.brand-package-price-only del { margin-bottom:3px; }
+.brand-package-card-visual:hover .brand-package-image img { transform:scale(1.015); }
+.brand-package-card-visual .brand-package-image img { transition:transform .2s ease; }
+.brand-package-card-visual .brand-package-image img { object-fit:contain; background:#fff; }
+
+.brand-detail-modal[hidden] { display:none !important; }
+.brand-detail-modal {
+  position:fixed; inset:0; z-index:11000; display:grid; place-items:center; padding:22px;
+}
+.brand-detail-backdrop {
+  position:absolute; inset:0; background:rgba(7,24,20,.62); backdrop-filter:blur(6px);
+}
+.brand-detail-dialog {
+  position:relative; z-index:1; width:min(720px,100%); max-height:min(900px,calc(100dvh - 34px)); overflow:auto;
+  background:#fff; border-radius:26px; padding:28px; box-shadow:0 34px 90px rgba(0,0,0,.24);
+}
+.brand-detail-close {
+  position:absolute; right:17px; top:16px; z-index:3; width:40px; height:40px; border:0; border-radius:50%;
+  background:rgba(247,250,249,.96); color:#33433f; font-size:1.55rem; cursor:pointer; box-shadow:0 5px 16px rgba(0,0,0,.08);
+}
+.brand-detail-media {
+  width:100%; aspect-ratio:16/9; border-radius:20px; overflow:hidden; background:linear-gradient(135deg,#edf7f3,#f8faf9); display:grid; place-items:center;
+}
+.brand-detail-image { width:100%; height:100%; object-fit:contain; background:#fff; }
+.brand-detail-fallback { height:100%; display:grid; place-items:center; align-content:center; gap:8px; color:var(--brand-green); }
+.brand-detail-fallback b { font-size:2rem; }
+.brand-detail-meta { display:flex; flex-wrap:wrap; gap:7px; margin-top:18px; }
+.brand-detail-meta span { padding:7px 10px; border-radius:999px; background:#eef7f4; color:#176d5e; font-size:.75rem; font-weight:750; }
+.brand-detail-title { margin:12px 0 18px; font-size:1.55rem; line-height:1.35; letter-spacing:-.035em; color:#17252a; }
+.brand-detail-section { margin-top:14px; padding:16px; border:1px solid #e1e9e6; border-radius:16px; background:#fafcfb; }
+.brand-detail-section > strong { display:block; margin-bottom:8px; color:#263632; font-size:.88rem; }
+.brand-detail-pre {
+  color:#576662; font-size:.87rem; line-height:1.72; white-space:pre-wrap; overflow-wrap:anywhere; word-break:keep-all;
+}
+.brand-detail-price { margin-top:20px; padding-top:17px; border-top:1px solid #e7ecea; }
+.brand-detail-price del { display:block; color:#9aa3a1; font-size:.88rem; }
+.brand-detail-price strong { display:block; margin-top:3px; color:var(--brand-green-dark); font-size:1.8rem; letter-spacing:-.025em; }
+.brand-detail-price strong small { font-size:.78rem; margin-left:2px; }
+.brand-detail-date { margin:8px 0 0; color:#929d99; font-size:.74rem; }
+.brand-detail-consult { margin-top:20px; }
+
+@media (max-width:768px) {
+  .brand-package-card-visual { display:flex !important; grid-template-columns:none !important; }
+  .brand-package-card-visual .brand-package-image { aspect-ratio:16/10 !important; min-height:0 !important; }
+  .brand-package-price-only { padding:13px 14px 15px !important; }
+  .brand-package-price-only strong { font-size:1.3rem !important; }
+  .brand-detail-modal { padding:0; align-items:end; }
+  .brand-detail-dialog {
+    width:100%; max-width:100%; max-height:92dvh; border-radius:24px 24px 0 0; padding:20px 16px calc(18px + env(safe-area-inset-bottom));
+  }
+  .brand-detail-media { border-radius:17px; }
+  .brand-detail-title { font-size:1.28rem; margin-bottom:14px; }
+  .brand-detail-section { padding:13px; }
+  .brand-detail-pre { font-size:.82rem; line-height:1.68; }
+  .brand-detail-price strong { font-size:1.55rem; }
 }

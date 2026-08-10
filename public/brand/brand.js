@@ -1,5 +1,5 @@
 (() => {
-  const state = { rows: [], brand: "", channel: "", selected: null };
+  const state = { rows: [], brand: "", channel: "", selected: null, detailSelected: null };
   const grid = document.querySelector("#packageGrid");
   const count = document.querySelector("#packageCount");
   const brandFilters = document.querySelector("#brandFilters");
@@ -8,6 +8,9 @@
   const form = document.querySelector("#consultForm");
   const summary = document.querySelector("#consultPackageSummary");
   const message = document.querySelector("#consultMessage");
+  const detailModal = document.querySelector("#packageDetailModal");
+  const detailContent = document.querySelector("#packageDetailContent");
+  const detailConsultButton = document.querySelector("#packageDetailConsult");
   const money = new Intl.NumberFormat("ko-KR");
   const heroPreview = document.querySelector("#heroPackagePreview");
   const heroBrowse = document.querySelector("#heroBrowsePackages");
@@ -128,22 +131,41 @@
       return;
     }
     grid.innerHTML = rows.map((row) => {
-      const items = Array.isArray(row.items) ? row.items : [];
-      const itemText = items.join(" · ");
-      const image = row.coverImage ? `<img src="${escapeHtml(row.coverImage)}" alt="${escapeHtml(row.title)} 패키지 이미지" loading="lazy" />` : `<div class="brand-package-fallback"><b>${escapeHtml((row.brand || "P").slice(0,1))}</b><span>다품목 패키지</span></div>`;
-      return `<article class="brand-package-card">
-        <div class="brand-package-image">${image}<span class="brand-package-badge">${escapeHtml(row.brand || "다품목")}</span></div>
-        <div class="brand-package-body">
-          <div class="brand-package-store"><span>${escapeHtml(row.channel || "판매 채널")}</span></div>
-          <h3>${escapeHtml(row.title)}</h3>
-          <div class="brand-package-items">${escapeHtml(itemText || "제품 구성은 상담 시 확인해주세요.")}</div>
-          ${row.benefits ? `<div class="brand-package-benefits">${escapeHtml(row.benefits)}</div>` : ""}
-          <div class="brand-package-price">${Number(row.originalPrice || 0) > Number(row.salePrice || 0) ? `<del>${formatPrice(row.originalPrice)}</del>` : ""}<strong>${formatPrice(row.salePrice)}<small>~</small></strong></div>
-          <div class="brand-package-updated">${formatDate(row.updatedAt)} 기준 · 상담 시 최종 조건 확인</div>
-          <button class="brand-consult-btn" type="button" data-consult-id="${escapeHtml(row.id)}">상담받기</button>
-        </div>
+      const image = row.coverImage ? `<img src="${escapeHtml(row.coverImage)}" alt="${escapeHtml(row.title)} 패키지 이미지" loading="lazy" />` : `<div class="brand-package-fallback"><b>${escapeHtml((row.brand || "P").slice(0,1))}</b><span>패키지 이미지 준비중</span></div>`;
+      return `<article class="brand-package-card brand-package-card-visual">
+        <button class="brand-package-image brand-package-image-button" type="button" data-detail-id="${escapeHtml(row.id)}" aria-label="${escapeHtml(row.title)} 상세보기">${image}</button>
+        <div class="brand-package-price brand-package-price-only">${Number(row.originalPrice || 0) > 0 ? `<del>${formatPrice(row.originalPrice)}</del>` : ""}<strong>${formatPrice(row.salePrice)}<small>~</small></strong></div>
       </article>`;
     }).join("");
+  }
+
+
+  function openDetail(id) {
+    const row = state.rows.find((item) => String(item.id) === String(id));
+    if (!row || !detailModal || !detailContent) return;
+    state.detailSelected = row;
+    const items = Array.isArray(row.items) ? row.items : [];
+    const image = row.coverImage
+      ? `<img class="brand-detail-image" src="${escapeHtml(row.coverImage)}" alt="${escapeHtml(row.title)} 패키지 이미지" />`
+      : `<div class="brand-detail-fallback"><b>${escapeHtml((row.brand || "P").slice(0,1))}</b><span>패키지 이미지 준비중</span></div>`;
+    detailContent.innerHTML = `
+      <div class="brand-detail-media">${image}</div>
+      <div class="brand-detail-meta"><span>${escapeHtml(row.channel || "판매 채널")}</span><span>${escapeHtml(row.brand || "가전 패키지")}</span></div>
+      <h2 class="brand-detail-title">${escapeHtml(row.title || "가전 패키지")}</h2>
+      <div class="brand-detail-section"><strong>제품 구성</strong><div class="brand-detail-pre">${escapeHtml(items.length ? items.join("\n") : "제품 구성은 상담 시 확인해주세요.")}</div></div>
+      ${row.benefits ? `<div class="brand-detail-section"><strong>혜택 안내</strong><div class="brand-detail-pre">${escapeHtml(row.benefits)}</div></div>` : ""}
+      <div class="brand-detail-price">${Number(row.originalPrice || 0) > 0 ? `<del>${formatPrice(row.originalPrice)}</del>` : ""}<strong>${formatPrice(row.salePrice)}<small>~</small></strong></div>
+      <p class="brand-detail-date">${formatDate(row.updatedAt)} 기준 · 상담 시 최종 조건 확인</p>`;
+    if (detailConsultButton) detailConsultButton.dataset.consultId = row.id;
+    detailModal.hidden = false;
+    document.documentElement.style.overflow = "hidden";
+  }
+
+  function closeDetail() {
+    if (!detailModal) return;
+    detailModal.hidden = true;
+    state.detailSelected = null;
+    document.documentElement.style.overflow = "";
   }
 
   function openConsult(id) {
@@ -203,9 +225,22 @@
     scrollToPackages();
   }));
   channelFilter?.addEventListener("change", () => { state.channel = channelFilter.value; render(); });
-  grid?.addEventListener("click", (event) => { const button = event.target.closest("[data-consult-id]"); if (button) openConsult(button.dataset.consultId); });
+  grid?.addEventListener("click", (event) => {
+    const detail = event.target.closest("[data-detail-id]");
+    if (detail) openDetail(detail.dataset.detailId);
+  });
+  detailModal?.addEventListener("click", (event) => { if (event.target.closest("[data-close-detail]")) closeDetail(); });
+  detailConsultButton?.addEventListener("click", () => {
+    const id = detailConsultButton.dataset.consultId;
+    closeDetail();
+    if (id) openConsult(id);
+  });
   modal?.addEventListener("click", (event) => { if (event.target.closest("[data-close-consult]")) closeConsult(); });
-  window.addEventListener("keydown", (event) => { if (event.key === "Escape" && !modal.hidden) closeConsult(); });
+  window.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    if (detailModal && !detailModal.hidden) closeDetail();
+    else if (modal && !modal.hidden) closeConsult();
+  });
   form?.elements.customerPhone?.addEventListener("input", (event) => { event.target.value = formatPhoneInput(event.target.value); });
 
   form?.addEventListener("submit", async (event) => {

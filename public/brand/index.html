@@ -27,8 +27,8 @@
   <meta property="og:description" content="LG전자·삼성전자 다품목 가전 패키지와 금액을 비교하고 픽견적에 바로 상담을 요청하세요." />
   <meta property="og:url" content="https://ga-pick.com/brand" />
   <link rel="stylesheet" href="/styles.css?v=20260805-press5" />
-  <link rel="stylesheet" href="/brand/brand.css?v=20260809-brand-nav-unified-v10" />
-  <script defer src="/brand/brand.js?v=20260809-brand-mobile-fit-v9"></script>
+  <link rel="stylesheet" href="/brand/brand.css?v=20260809-brand-detail-modal-v12" />
+  <script defer src="/brand/brand.js?v=20260809-brand-detail-modal-v12"></script>
 </head>
 <body class="brand-hall-body">
   <header class="topbar brand-hall-topbar">
@@ -60,29 +60,28 @@
   <main class="brand-hall-main">
     <section class="brand-hall-hero">
       <div class="brand-hall-hero-copy brand-showcase-wrap">
-        <span class="brand-hall-kicker"><i></i>PICK BRAND HALL</span>
         <div class="brand-showcase-intro">
-          <strong>대표 브랜드 패키지</strong>
-          <span>LG전자와 삼성전자 다품목 가전을 한눈에 확인하세요.</span>
+          <strong>공간을 완성하는 가전 셀렉션</strong>
+          <span>LG전자와 삼성전자의 대표 가전을 픽견적에서 한눈에 만나보세요.</span>
         </div>
-        <div class="brand-showcase-stack" aria-label="대표 브랜드 패키지 바로가기">
-          <button class="brand-showcase-card brand-showcase-lg" type="button" data-showcase-brand="LG전자" aria-label="LG전자 패키지 보기">
+        <div class="brand-showcase-stack" aria-label="대표 브랜드 가전 바로가기">
+          <button class="brand-showcase-card brand-showcase-lg" type="button" data-showcase-brand="LG전자" aria-label="LG전자 제품 보기">
             <span class="brand-showcase-logo brand-showcase-logo-lg">
               <img src="https://upload.wikimedia.org/wikipedia/commons/a/a0/LG_Electronics_logo_2015_%28hangul%29.svg" alt="LG전자" loading="eager" referrerpolicy="no-referrer" />
             </span>
             <span class="brand-showcase-products">
-              <img src="/assets/brand-hero-lg-products.png?v=20260809-brand-mobile-fit-v9" alt="LG전자 다품목 가전 패키지" width="1962" height="831" decoding="async" />
+              <img src="/assets/brand-hero-lg-products.png?v=20260809-brand-polish-v11" alt="LG전자 대표 가전" width="1962" height="831" decoding="async" />
             </span>
-            <span class="brand-showcase-cta">LG전자 패키지 보기 <b>›</b></span>
+            <span class="brand-showcase-cta">LG전자 제품 보기 <b aria-hidden="true"></b></span>
           </button>
-          <button class="brand-showcase-card brand-showcase-samsung" type="button" data-showcase-brand="삼성전자" aria-label="삼성전자 패키지 보기">
+          <button class="brand-showcase-card brand-showcase-samsung" type="button" data-showcase-brand="삼성전자" aria-label="삼성전자 제품 보기">
             <span class="brand-showcase-logo brand-showcase-logo-samsung">
               <img src="https://upload.wikimedia.org/wikipedia/commons/1/1c/Samsung_Electronics_logo_%28hangul%29.svg" alt="삼성전자" loading="eager" referrerpolicy="no-referrer" />
             </span>
             <span class="brand-showcase-products">
-              <img src="/assets/brand-hero-samsung-products.png?v=20260809-brand-mobile-fit-v9" alt="삼성전자 다품목 가전 패키지" width="1794" height="704" decoding="async" />
+              <img src="/assets/brand-hero-samsung-products.png?v=20260809-brand-polish-v11" alt="삼성전자 대표 가전" width="1794" height="704" decoding="async" />
             </span>
-            <span class="brand-showcase-cta">삼성전자 패키지 보기 <b>›</b></span>
+            <span class="brand-showcase-cta">삼성전자 제품 보기 <b aria-hidden="true"></b></span>
           </button>
         </div>
         <div class="brand-hall-trust brand-showcase-trust">
@@ -217,6 +216,16 @@
     <span class="kakao-floating-icon" aria-hidden="true"><svg viewBox="0 0 48 48" role="img" focusable="false"><path d="M24 8C13.5 8 5 14.8 5 23.2c0 5.3 3.4 10 8.7 12.7l-1.4 5.4c-.2.8.7 1.4 1.4.9l6.4-4.1c1.3.2 2.6.3 3.9.3 10.5 0 19-6.8 19-15.2S34.5 8 24 8Z"/><circle cx="17" cy="23.5" r="2.2"/><circle cx="24" cy="23.5" r="2.2"/><circle cx="31" cy="23.5" r="2.2"/></svg></span>
     <span class="kakao-floating-text">카카오톡 문의</span>
   </a>
+
+
+  <div class="brand-detail-modal" id="packageDetailModal" hidden>
+    <div class="brand-detail-backdrop" data-close-detail></div>
+    <div class="brand-detail-dialog" role="dialog" aria-modal="true" aria-label="브랜드관 패키지 상세">
+      <button class="brand-detail-close" type="button" data-close-detail aria-label="닫기">×</button>
+      <div id="packageDetailContent"></div>
+      <button class="brand-primary-btn brand-detail-consult" id="packageDetailConsult" type="button">상담받기</button>
+    </div>
+  </div>
 
   <div class="brand-consult-modal" id="consultModal" hidden>
     <div class="brand-consult-backdrop" data-close-consult></div>
