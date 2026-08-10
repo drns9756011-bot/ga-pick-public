@@ -703,3 +703,38 @@ html.is-mobile-device .brand-mobile-nav {
     max-height: none !important;
   }
 }
+
+/* V14: 상세 모달 대표 이미지 원본 비율 전체 노출 */
+.brand-detail-media {
+  aspect-ratio: auto !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  display: block !important;
+  overflow: hidden;
+  background: #fff;
+}
+.brand-detail-image {
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+  max-width: 100% !important;
+  max-height: 340px !important;
+  margin: 0 auto;
+  object-fit: contain !important;
+  object-position: center center !important;
+  background: #fff;
+}
+@media (max-width: 768px) {
+  .brand-detail-media {
+    aspect-ratio: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+  .brand-detail-image {
+    width: 100% !important;
+    height: auto !important;
+    max-height: 250px !important;
+    object-fit: contain !important;
+  }
+}
