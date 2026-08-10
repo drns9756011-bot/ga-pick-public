@@ -8675,3 +8675,35 @@ html.is-mobile-device .header-ad-picture img {
 @media (max-width: 760px) {
   .seller-brand-manage-callout { margin: 0 0 14px; align-items: flex-start; font-size: 13px; }
 }
+
+
+/* PICKQUOTE FORCE LIGHT THEME - 2026-08-10 V15
+   iOS Safari / Samsung Internet / Chrome / Android WebView에서
+   시스템 다크 모드가 켜져 있어도 픽견적 UI는 라이트 테마로 유지합니다. */
+:root {
+  color-scheme: only light;
+}
+html {
+  background-color: #ffffff;
+}
+button,
+input,
+select,
+textarea,
+option {
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root,
+  html,
+  body {
+    color-scheme: only light !important;
+  }
+  button,
+  input,
+  select,
+  textarea,
+  option {
+    color-scheme: light !important;
+  }
+}
