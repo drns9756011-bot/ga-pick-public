@@ -514,6 +514,7 @@ function normalizeApprovedSeller(row) {
     reviewedAt: row.reviewed_at || "",
     reviewMemo: row.review_memo || "",
     approvedAt: row.approved_at || "",
+    quoteAlimtalkOptOut: Number(row.quote_alimtalk_opt_out || 0) === 1,
   };
 }
 
@@ -1005,6 +1006,7 @@ async function ensureSellerColumns(env) {
     "ALTER TABLE approved_sellers ADD COLUMN reviewed_at TEXT DEFAULT ''",
     "ALTER TABLE approved_sellers ADD COLUMN review_memo TEXT DEFAULT ''",
     "ALTER TABLE approved_sellers ADD COLUMN approved_at TEXT DEFAULT ''",
+    "ALTER TABLE approved_sellers ADD COLUMN quote_alimtalk_opt_out INTEGER NOT NULL DEFAULT 0",
   ];
 
   for (const statement of statements) {
@@ -1771,6 +1773,7 @@ async function queueSellerQuoteRegisteredAlerts(env, quote) {
     `SELECT seller_id, channel, branch, manager, phone
        FROM approved_sellers
       WHERE status = 'approved'
+        AND COALESCE(quote_alimtalk_opt_out, 0) = 0
         AND phone IS NOT NULL
         AND TRIM(phone) != ''
       ORDER BY approved_at DESC`

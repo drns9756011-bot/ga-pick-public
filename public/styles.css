@@ -1,3 +1,5 @@
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css");
+
 :root {
   --bg: #f6f7f9;
   --ink: #16202a;
@@ -25,7 +27,9 @@ html {
 
 body {
   margin: 0;
-  font-family: "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "맑은 고딕", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: "Pretendard Variable", Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-weight: 450;
+  letter-spacing: -0.008em;
   color: var(--ink);
   background: var(--bg);
   line-height: 1.5;
@@ -46,6 +50,7 @@ input,
 select,
 textarea {
   font: inherit;
+  font-family: "Pretendard Variable", Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 [hidden] {
@@ -8706,4 +8711,124 @@ option {
   option {
     color-scheme: light !important;
   }
+}
+
+
+/* 메인 페이지 브랜드관 소개 */
+.pick-brand-home {
+  margin-top: 28px;
+  padding: clamp(28px, 5vw, 56px);
+  display: grid;
+  grid-template-columns: minmax(0, .92fr) minmax(420px, 1.08fr);
+  align-items: center;
+  gap: clamp(28px, 5vw, 64px);
+  border: 1px solid #d6e4df;
+  border-radius: 30px;
+  background:
+    radial-gradient(circle at 92% 10%, rgba(40, 159, 127, .13), transparent 35%),
+    linear-gradient(135deg, #ffffff 0%, #f5faf8 100%);
+  box-shadow: 0 18px 52px rgba(16, 45, 38, .07);
+  overflow: hidden;
+}
+.pick-brand-home-kicker {
+  display: inline-flex;
+  width: fit-content;
+  padding: 7px 11px;
+  border-radius: 999px;
+  background: #e7f5f0;
+  color: #0f7665;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .05em;
+}
+.pick-brand-home-copy h2 {
+  margin: 14px 0 16px;
+  color: #12221e;
+  font-size: clamp(31px, 4vw, 52px);
+  line-height: 1.14;
+  letter-spacing: -.035em;
+  word-break: keep-all;
+}
+.pick-brand-home-copy > p {
+  margin: 0;
+  max-width: 590px;
+  color: #60706b;
+  font-size: clamp(15px, 1.7vw, 18px);
+  line-height: 1.72;
+  word-break: keep-all;
+}
+.pick-brand-home-points {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 20px;
+}
+.pick-brand-home-points span {
+  padding: 8px 11px;
+  border: 1px solid #d9e8e3;
+  border-radius: 999px;
+  background: rgba(255,255,255,.84);
+  color: #31544b;
+  font-size: 13px;
+  font-weight: 700;
+}
+.pick-brand-home-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 48px;
+  margin-top: 24px;
+  padding: 0 20px;
+  border-radius: 13px;
+  background: #0f7665;
+  color: #fff;
+  font-weight: 800;
+  box-shadow: 0 12px 24px rgba(15,118,101,.16);
+}
+.pick-brand-home-btn:hover { background: #0c5e51; }
+.pick-brand-home-visual {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.pick-brand-home-visual article {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid #dde8e4;
+  border-radius: 22px;
+  background: rgba(255,255,255,.9);
+  box-shadow: 0 12px 30px rgba(29,64,54,.06);
+}
+.pick-brand-home-visual strong {
+  display: block;
+  margin-bottom: 8px;
+  color: #20332d;
+  font-size: 14px;
+  font-weight: 800;
+}
+.pick-brand-home-visual img {
+  display: block;
+  width: 100%;
+  height: 220px;
+  object-fit: contain;
+  object-position: center;
+}
+@media (max-width: 900px) {
+  .pick-brand-home {
+    grid-template-columns: 1fr;
+    margin: 24px 0 0;
+    padding: 28px 20px;
+    border-radius: 24px;
+  }
+  .pick-brand-home-copy h2 { font-size: clamp(29px, 8vw, 42px); }
+  .pick-brand-home-visual img { height: 180px; }
+}
+@media (max-width: 520px) {
+  .pick-brand-home { padding: 24px 17px; }
+  .pick-brand-home-visual { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .pick-brand-home-visual article { padding: 10px; border-radius: 17px; }
+  .pick-brand-home-visual strong { font-size: 12px; }
+  .pick-brand-home-visual img { height: 128px; }
+  .pick-brand-home-btn { width: 100%; }
 }

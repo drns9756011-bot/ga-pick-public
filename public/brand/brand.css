@@ -585,7 +585,7 @@ body.brand-server-is-loading { cursor: wait; }
 
 /* V10: 브랜드관 모바일 하단 메뉴의 폰트까지 기존 픽견적 공통 UI와 동일하게 */
 html.is-mobile-device .brand-mobile-nav {
-  font-family: "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "맑은 고딕", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: "Pretendard Variable", Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 
