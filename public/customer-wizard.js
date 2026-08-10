@@ -1,4 +1,4 @@
-﻿(() => {
+(() => {
   const form = document.querySelector("#requestForm");
   if (!form) return;
 
@@ -662,10 +662,46 @@
     updatePreview();
   }
 
+  function isMobileWizardViewport() {
+    return window.matchMedia?.("(max-width: 720px)")?.matches ?? window.innerWidth <= 720;
+  }
+
+  function guardMobileStepScroll(previousScrollY) {
+    if (!isMobileWizardViewport()) return;
+
+    const preventDownwardJump = () => {
+      // 단계 전환 직후 DOM 높이가 달라지면 모바일 Safari/Chrome의
+      // scroll anchoring이 클릭 지점을 따라 아래로 이동시키는 경우가 있다.
+      // 사용자가 누르기 직전 위치보다 아래로 밀린 경우에만 원래 위치로 복원한다.
+      if (window.scrollY > previousScrollY + 2) {
+        window.scrollTo({ top: previousScrollY, left: window.scrollX, behavior: "auto" });
+      }
+    };
+
+    preventDownwardJump();
+    requestAnimationFrame(() => {
+      preventDownwardJump();
+      requestAnimationFrame(preventDownwardJump);
+    });
+    [60, 140, 260].forEach((delay) => window.setTimeout(preventDownwardJump, delay));
+  }
+
   function move(delta) {
     if (delta > 0 && !validateCurrentStep()) return;
+
+    const mobile = isMobileWizardViewport();
+    const previousScrollY = mobile ? window.scrollY : 0;
+
+    // 키보드/포커스가 남아 있는 상태에서 단계 DOM이 교체되면 iOS Safari가
+    // 포커스 위치를 맞추기 위해 추가 스크롤을 만들 수 있으므로 먼저 해제한다.
+    if (mobile && document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+
     state.stepIndex = Math.max(0, Math.min(visibleSteps().length - 1, state.stepIndex + delta));
     render();
+
+    if (mobile) guardMobileStepScroll(previousScrollY);
   }
 
   function validateCurrentStep() {

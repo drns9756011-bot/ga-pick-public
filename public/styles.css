@@ -8832,3 +8832,13 @@ option {
   .pick-brand-home-visual img { height: 128px; }
   .pick-brand-home-btn { width: 100%; }
 }
+
+
+/* Mobile quote wizard: prevent browser scroll anchoring from pushing the page down on Next/Back. */
+@media (max-width: 720px) {
+  .quote-wizard,
+  .quote-wizard .wizard-step,
+  .quote-wizard .wizard-actions {
+    overflow-anchor: none;
+  }
+}
