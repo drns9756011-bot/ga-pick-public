@@ -790,6 +790,54 @@ function normalizeQuoteBrand(value) {
   return raw;
 }
 
+function normalizeSellerBidBrandGroup(channelValue) {
+  const compact = String(channelValue || "")
+    .replace(/\s+/g, "")
+    .replace(/[·ㆍ]/g, "")
+    .toLowerCase();
+
+  if (
+    compact.includes("삼성스토어") ||
+    compact.includes("이마트(삼성)") ||
+    compact.includes("이마트삼성") ||
+    compact.includes("전자랜드(삼성)") ||
+    compact.includes("전자랜드삼성")
+  ) return "samsung";
+
+  if (
+    compact.includes("lg전자bestshop") ||
+    compact.includes("lg전자베스트샵") ||
+    compact.includes("이마트(lg)") ||
+    compact.includes("이마트lg") ||
+    compact.includes("전자랜드(lg)") ||
+    compact.includes("전자랜드lg")
+  ) return "lg";
+
+  return "all";
+}
+
+function sellerCanBidQuoteBrand(channelValue, quoteBrandValue) {
+  const group = normalizeSellerBidBrandGroup(channelValue);
+  const brand = normalizeQuoteBrand(quoteBrandValue);
+  if (!brand || brand === "비교견적" || group === "all") return true;
+  if (group === "samsung") return brand === "삼성전자";
+  if (group === "lg") return brand === "LG전자";
+  return true;
+}
+
+function sellerBidBrandRestrictionMessage(channelValue) {
+  const group = normalizeSellerBidBrandGroup(channelValue);
+  if (group === "samsung") return "삼성 계열 판매 채널은 삼성전자 또는 비교견적에만 제안할 수 있습니다.";
+  if (group === "lg") return "LG 계열 판매 채널은 LG전자 또는 비교견적에만 제안할 수 있습니다.";
+  return "현재 판매 채널에서는 이 브랜드 견적에 제안할 수 없습니다.";
+}
+
+function canActiveSellerBidRequest(request) {
+  const account = sellerAccounts.get(activeSellerId);
+  if (!account) return true;
+  return sellerCanBidQuoteBrand(account.channel, getQuoteBrand(request));
+}
+
 function getQuoteBrand(request) {
   return normalizeQuoteBrand(
     request?.desiredBrand ||
@@ -1570,7 +1618,7 @@ function getSellerTabRequests() {
     return requests.filter((request) => isQuoteClosed(request));
   }
 
-  return requests.filter((request) => !isQuoteClosed(request));
+  return requests.filter((request) => !isQuoteClosed(request) && canActiveSellerBidRequest(request));
 }
 
 function getAvailableSellerBrands(baseRequests = getSellerTabRequests()) {
@@ -2888,6 +2936,11 @@ bidForm.addEventListener("submit", async (event) => {
 
   if (!request) {
     setBidFormMessage("제안할 고객님 견적을 먼저 선택해주세요.", "error");
+    return;
+  }
+
+  if (!sellerCanBidQuoteBrand(channelName, getQuoteBrand(request))) {
+    setBidFormMessage(sellerBidBrandRestrictionMessage(channelName), "error");
     return;
   }
 
