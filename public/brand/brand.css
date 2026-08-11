@@ -1,4 +1,4 @@
-@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css");
+﻿@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css");
 
 :root {
   --brand-green: #0f7665;
@@ -17,9 +17,9 @@
 .brand-hall-topbar .brand-hall-nav a.is-active::after { content: ""; position: absolute; left: 0; right: 0; bottom: -.35rem; height: 2px; border-radius: 999px; background: var(--brand-green); }
 .brand-hall-main { width: min(1180px, calc(100% - 36px)); margin: 32px auto 80px; }
 .brand-hall-hero { min-height: 390px; border: 1px solid #d4e6df; border-radius: 32px; padding: 54px; display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(310px, .8fr); gap: 54px; align-items: center; background: radial-gradient(circle at 84% 18%, rgba(34, 155, 125, .18), transparent 31%), linear-gradient(135deg, #f7fcfa 0%, #edf8f4 54%, #e4f4ee 100%); box-shadow: 0 24px 60px rgba(26, 75, 64, .08); overflow: hidden; position: relative; }
-.brand-hall-hero::after { content: "PICK"; position: absolute; right: -10px; bottom: -52px; font-size: 9rem; font-weight: 800; letter-spacing: -.08em; color: rgba(15, 118, 101, .035); pointer-events: none; }
+.brand-hall-hero::after { content: "PICK"; position: absolute; right: -10px; bottom: -52px; font-size: 9rem; font-weight: 800; letter-spacing: 0; color: rgba(15, 118, 101, .035); pointer-events: none; }
 .brand-hall-kicker { color: var(--brand-green); font-size: .75rem; font-weight: 720; letter-spacing: .12em; }
-.brand-hall-hero h1 { margin: 13px 0 18px; font-size: clamp(2.5rem, 5vw, 4.3rem); letter-spacing: -.045em; line-height: 1.08; font-weight: 720; }
+.brand-hall-hero h1 { margin: 13px 0 18px; font-size: clamp(2.5rem, 5vw, 4.3rem); letter-spacing: 0; line-height: 1.08; font-weight: 720; }
 .brand-hall-hero h1 strong { color: var(--brand-green); font-weight: 780; }
 .brand-hall-hero-copy > p { max-width: 620px; color: #4e5e67; font-size: 1.08rem; line-height: 1.78; font-weight: 480; }
 .brand-hall-trust { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 28px; }
@@ -35,7 +35,7 @@
 .brand-hall-hero-panel strong { color: #22312e; font-size: .95rem; }
 .brand-hall-toolbar { margin-top: 42px; }
 .brand-hall-toolbar-heading { display: flex; align-items: end; justify-content: space-between; gap: 24px; }
-.brand-hall-toolbar h2 { margin: 7px 0 0; font-size: 1.8rem; letter-spacing: -.045em; }
+.brand-hall-toolbar h2 { margin: 7px 0 0; font-size: 1.8rem; letter-spacing: 0; }
 .brand-hall-toolbar-heading > p { color: #7a858c; font-size: .86rem; font-weight: 700; }
 .brand-hall-filter-row { margin-top: 20px; padding: 16px; border-radius: 20px; background: white; border: 1px solid var(--brand-line); display: flex; justify-content: space-between; gap: 16px; align-items: center; }
 .brand-hall-filter-chips { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -55,15 +55,15 @@
 .brand-package-store { display: flex; align-items: center; gap: 7px; color: var(--brand-green-dark); font-size: .78rem; font-weight: 780; min-width: 0; }
 .brand-package-store::before { content: "▣"; color: var(--brand-green); }
 .brand-package-store span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.brand-package-card h3 { margin: 12px 0 7px; font-size: 1.18rem; letter-spacing: -.02em; line-height: 1.42; font-weight: 700; }
+.brand-package-card h3 { margin: 12px 0 7px; font-size: 1.18rem; letter-spacing: 0; line-height: 1.42; font-weight: 700; }
 .brand-package-items { color: #66716f; font-size: .84rem; line-height: 1.6; min-height: 43px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .brand-package-benefits { margin-top: 10px; padding: 10px 11px; border-radius: 12px; background: #f6f9f8; color: #53605d; font-size: .78rem; line-height: 1.5; }
 .brand-package-price { margin-top: auto; padding-top: 17px; }
 .brand-package-price del { display: block; color: #9aa3a1; font-size: .82rem; }
-.brand-package-price strong { display: block; margin-top: 3px; color: var(--brand-green-dark); font-size: 1.55rem; letter-spacing: -.02em; font-weight: 780; }
+.brand-package-price strong { display: block; margin-top: 3px; color: var(--brand-green-dark); font-size: 1.55rem; letter-spacing: 0; font-weight: 780; }
 .brand-package-price strong small { font-size: .75rem; margin-left: 2px; }
 .brand-package-updated { color: #98a19f; font-size: .69rem; margin-top: 8px; }
-.brand-consult-btn, .brand-primary-btn { border: 0; border-radius: 12px; background: var(--brand-green); color: white; padding: 13px 16px; font-weight: 700; letter-spacing: -.01em; cursor: pointer; width: 100%; }
+.brand-consult-btn, .brand-primary-btn { border: 0; border-radius: 12px; background: var(--brand-green); color: white; padding: 13px 16px; font-weight: 700; letter-spacing: 0; cursor: pointer; width: 100%; }
 .brand-consult-btn { margin-top: 15px; }
 .brand-consult-btn:hover, .brand-primary-btn:hover { background: var(--brand-green-dark); }
 .brand-empty { grid-column: 1 / -1; background: white; border: 1px dashed #cbdad5; border-radius: 24px; padding: 70px 24px; text-align: center; }
@@ -72,7 +72,7 @@
 .brand-empty p { color: #78837f; margin: 0; line-height: 1.6; }
 .brand-hall-guide { margin-top: 58px; border-radius: 28px; padding: 36px; background: #102722; color: white; display: grid; grid-template-columns: 280px 1fr; gap: 35px; }
 .brand-hall-guide .brand-hall-kicker { color: #6fe0be; }
-.brand-hall-guide h2 { font-size: 1.7rem; line-height: 1.35; letter-spacing: -.04em; }
+.brand-hall-guide h2 { font-size: 1.7rem; line-height: 1.35; letter-spacing: 0; }
 .brand-hall-guide-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
 .brand-hall-guide-grid article { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.09); border-radius: 18px; padding: 20px; }
 .brand-hall-guide-grid span { color: #79dfc1; font-size: .73rem; font-weight: 780; }
@@ -83,7 +83,7 @@
 .brand-consult-backdrop { position: absolute; inset: 0; background: rgba(7, 24, 20, .58); backdrop-filter: blur(5px); }
 .brand-consult-dialog { position: relative; z-index: 1; width: min(630px, 100%); max-height: min(860px, calc(100dvh - 34px)); overflow: auto; background: white; border-radius: 24px; padding: 28px; box-shadow: 0 30px 80px rgba(0,0,0,.2); }
 .brand-consult-close { position: absolute; right: 18px; top: 17px; width: 38px; height: 38px; border: 0; border-radius: 50%; background: #f2f6f4; color: #3d4c49; font-size: 1.5rem; cursor: pointer; }
-.brand-consult-head h2 { margin: 7px 0 5px; font-size: 1.8rem; letter-spacing: -.05em; }
+.brand-consult-head h2 { margin: 7px 0 5px; font-size: 1.8rem; letter-spacing: 0; }
 .brand-consult-head p { color: #71807c; margin: 0; font-size: .88rem; }
 .brand-consult-package { margin: 20px 0; border: 1px solid #dfe9e5; background: #f7faf9; border-radius: 16px; padding: 14px; display: grid; gap: 5px; }
 .brand-consult-package span { color: var(--brand-green); font-size: .72rem; font-weight: 780; }
@@ -162,7 +162,7 @@ html.is-mobile-device .brand-mobile-nav a.is-current .mobile-flow-icon {
 .brand-server-loading { position: fixed; inset: 0; z-index: 30000; display: grid; place-items: center; padding: 22px; }
 .brand-server-loading-backdrop { position: absolute; inset: 0; background: rgba(7, 24, 20, .48); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
 .brand-server-loading-card { position: relative; z-index: 1; width: min(330px, calc(100vw - 44px)); background: rgba(255,255,255,.98); border: 1px solid rgba(15,118,101,.14); border-radius: 22px; padding: 28px 24px 25px; box-shadow: 0 28px 80px rgba(5,46,39,.22); text-align: center; color: #18302b; }
-.brand-server-loading-card strong { display: block; margin-top: 15px; font-size: 1.08rem; font-weight: 800; letter-spacing: -.03em; }
+.brand-server-loading-card strong { display: block; margin-top: 15px; font-size: 1.08rem; font-weight: 800; letter-spacing: 0; }
 .brand-server-loading-card p { margin: 8px 0 0; color: #71807c; font-size: .82rem; font-weight: 650; line-height: 1.55; }
 .brand-server-loading-spinner { width: 46px; height: 46px; display: inline-block; border-radius: 50%; border: 4px solid #dceee8; border-top-color: var(--brand-green); animation: brand-server-spin .78s linear infinite; }
 body.brand-server-is-loading { cursor: wait; }
@@ -190,7 +190,7 @@ body.brand-server-is-loading { cursor: wait; }
 .brand-hall-hero-copy { position:relative; z-index:1; align-self:center; }
 .brand-hall-kicker { display:inline-flex; align-items:center; gap:10px; font-size:.78rem; letter-spacing:.18em; }
 .brand-hall-kicker i { width:8px; height:8px; border-radius:50%; background:var(--brand-green); box-shadow:0 0 0 5px rgba(15,118,101,.08); }
-.brand-hall-hero h1 { margin:20px 0 22px; font-size:clamp(3.2rem,5vw,5.15rem); line-height:1.03; letter-spacing:-.07em; }
+.brand-hall-hero h1 { margin:20px 0 22px; font-size:clamp(3.2rem,5vw,5.15rem); line-height:1.03; letter-spacing: 0; }
 .brand-hall-hero h1 strong { display:inline-block; margin-top:5px; background:linear-gradient(95deg,#05735f,#158b73); -webkit-background-clip:text; background-clip:text; color:transparent; }
 .brand-hall-hero-copy > p { margin:0; max-width:590px; font-size:1.12rem; line-height:1.78; color:#56655f; font-weight:480; }
 .brand-hall-hero-actions { display:flex; gap:14px; margin-top:34px; }
@@ -204,7 +204,7 @@ body.brand-server-is-loading { cursor: wait; }
 .brand-hall-trust span { padding:10px 14px; border-color:#dce8e4; background:rgba(255,255,255,.86); box-shadow:0 7px 18px rgba(32,75,66,.035); }
 .brand-hall-hero-panel { align-self:stretch; display:flex; flex-direction:column; justify-content:center; padding:30px; border-radius:30px; background:rgba(255,255,255,.93); border:1px solid #dfe9e5; box-shadow:0 24px 60px rgba(27,78,67,.1); backdrop-filter:blur(10px); }
 .brand-hero-panel-head { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:18px; }
-.brand-hero-panel-head > strong { font-size:1.08rem; letter-spacing:-.025em; }
+.brand-hero-panel-head > strong { font-size:1.08rem; letter-spacing: 0; }
 .brand-hero-panel-head button { border:0; background:transparent; color:var(--brand-green); font-size:.78rem; font-weight:850; cursor:pointer; }
 .brand-hero-panel-head button span { font-size:1.1rem; margin-left:4px; }
 .brand-hero-preview { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:13px; }
@@ -215,7 +215,7 @@ body.brand-server-is-loading { cursor: wait; }
 .brand-hero-preview-fallback { height:100%; display:grid; place-items:center; color:#2e7769; font-size:2.1rem; font-weight:950; background:linear-gradient(145deg,#edf7f3,#f9fbfa); }
 .brand-hero-preview-copy { padding:13px 13px 14px; }
 .brand-hero-preview-copy strong { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:.9rem; color:#22302d; }
-.brand-hero-preview-copy b { display:block; margin-top:6px; color:var(--brand-green-dark); font-size:1.05rem; letter-spacing:-.03em; }
+.brand-hero-preview-copy b { display:block; margin-top:6px; color:var(--brand-green-dark); font-size:1.05rem; letter-spacing: 0; }
 .brand-hero-preview-copy small { display:block; margin-top:6px; color:#87918e; font-size:.68rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .brand-hero-preview-skeleton { height:216px; border-radius:18px; background:linear-gradient(90deg,#f2f5f4 25%,#f9fbfa 38%,#f2f5f4 55%); background-size:300% 100%; animation:brandHeroShimmer 1.3s ease infinite; }
 @keyframes brandHeroShimmer { to { background-position:-100% 0; } }
@@ -283,29 +283,29 @@ body.brand-server-is-loading { cursor: wait; }
 .brand-hero-preview-empty { grid-column:1/-1; min-height:210px; display:grid; place-items:center; border:1px dashed #d9e5e1; border-radius:18px; color:#82908b; font-size:.82rem; font-weight:750; background:#fafcfb; }
 
 /* Brand Hall typography refinement v4 */
-.brand-hall-body { font-family: "Pretendard Variable", Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-weight: 450; letter-spacing: -.008em; }
-.brand-hall-hero h1 { font-weight: 720; letter-spacing: -.045em; line-height: 1.075; }
+.brand-hall-body { font-family: "Pretendard Variable", Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-weight: 450; letter-spacing: 0; }
+.brand-hall-hero h1 { font-weight: 720; letter-spacing: 0; line-height: 1.075; }
 .brand-hall-hero h1 strong { font-weight: 780; }
-.brand-hall-hero-copy > p { font-weight: 470; letter-spacing: -.012em; }
+.brand-hall-hero-copy > p { font-weight: 470; letter-spacing: 0; }
 .brand-hall-kicker, .brand-hall-trust span { font-weight: 680; }
-.brand-hall-hero-actions button { font-weight: 700; letter-spacing: -.015em; }
+.brand-hall-hero-actions button { font-weight: 700; letter-spacing: 0; }
 .brand-action-icon { font-weight: 700; }
 .brand-hero-panel-head > strong, .brand-hero-preview-copy strong, .brand-hero-flow strong { font-weight: 690; }
 .brand-hero-panel-head button, .brand-hero-flow > div i { font-weight: 650; }
-.brand-package-card h3 { font-weight: 690; letter-spacing: -.018em; }
+.brand-package-card h3 { font-weight: 690; letter-spacing: 0; }
 .brand-package-store, .brand-package-badge { font-weight: 650; }
-.brand-package-price strong { font-weight: 760; letter-spacing: -.018em; }
+.brand-package-price strong { font-weight: 760; letter-spacing: 0; }
 .brand-consult-btn, .brand-primary-btn, .brand-hall-filter-chips button { font-weight: 680; }
 .brand-consult-form label, .brand-hall-selects select { font-weight: 600; }
 @media (max-width:760px) {
-  .brand-hall-hero h1 { font-weight: 710; letter-spacing: -.04em; line-height: 1.08; }
+  .brand-hall-hero h1 { font-weight: 710; letter-spacing: 0; line-height: 1.08; }
 }
 
 
 /* ===== 브랜드관 LG전자 · 삼성전자 비주얼 히어로 v8 ===== */
 .brand-showcase-wrap { display:flex; flex-direction:column; justify-content:center; min-width:0; }
 .brand-showcase-intro { margin:2px 0 18px; display:flex; align-items:flex-end; justify-content:space-between; gap:18px; }
-.brand-showcase-intro > strong { max-width:360px; font-size:1.48rem; line-height:1.2; font-weight:700; letter-spacing:-.045em; color:#17272d; }
+.brand-showcase-intro > strong { max-width:360px; font-size:1.48rem; line-height:1.2; font-weight:700; letter-spacing: 0; color:#17272d; }
 .brand-showcase-intro > span { max-width:290px; color:#6f7d79; font-size:.78rem; line-height:1.55; font-weight:500; text-align:right; }
 .brand-showcase-stack { display:grid; gap:13px; }
 .brand-showcase-card { position:relative; width:100%; min-height:198px; overflow:hidden; border:1px solid #dce7e3; border-radius:23px; background:rgba(255,255,255,.92); padding:0; cursor:pointer; box-shadow:0 13px 34px rgba(25,72,61,.075); text-align:left; transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
@@ -319,7 +319,7 @@ body.brand-server-is-loading { cursor: wait; }
 .brand-showcase-logo-samsung { height:35px; }
 .brand-showcase-products { position:absolute; z-index:1; inset:7px 6px 6px 130px; display:flex; align-items:flex-end; justify-content:flex-end; }
 .brand-showcase-products img { display:block; width:100%; height:100%; object-fit:contain; object-position:right center; filter:drop-shadow(0 13px 18px rgba(20,31,35,.12)); }
-.brand-showcase-cta { position:absolute; z-index:4; left:22px; bottom:18px; display:inline-flex; align-items:center; gap:8px; color:#24584e; font-size:.78rem; font-weight:680; letter-spacing:-.015em; }
+.brand-showcase-cta { position:absolute; z-index:4; left:22px; bottom:18px; display:inline-flex; align-items:center; gap:8px; color:#24584e; font-size:.78rem; font-weight:680; letter-spacing: 0; }
 .brand-showcase-samsung .brand-showcase-cta { color:#264d79; }
 .brand-showcase-cta b {
   width:23px;
@@ -413,7 +413,7 @@ body.brand-server-is-loading { cursor: wait; }
     max-width: 100%;
     font-size: 1.08rem !important;
     line-height: 1.32;
-    letter-spacing: -.035em;
+    letter-spacing: 0;
   }
   .brand-showcase-intro > span {
     max-width: 100%;
@@ -638,7 +638,7 @@ html.is-mobile-device .brand-mobile-nav {
 .brand-detail-fallback b { font-size:2rem; }
 .brand-detail-meta { display:flex; flex-wrap:wrap; gap:7px; margin-top:18px; }
 .brand-detail-meta span { padding:7px 10px; border-radius:999px; background:#eef7f4; color:#176d5e; font-size:.75rem; font-weight:750; }
-.brand-detail-title { margin:12px 0 18px; font-size:1.55rem; line-height:1.35; letter-spacing:-.035em; color:#17252a; }
+.brand-detail-title { margin:12px 0 18px; font-size:1.55rem; line-height:1.35; letter-spacing: 0; color:#17252a; }
 .brand-detail-section { margin-top:14px; padding:16px; border:1px solid #e1e9e6; border-radius:16px; background:#fafcfb; }
 .brand-detail-section > strong { display:block; margin-bottom:8px; color:#263632; font-size:.88rem; }
 .brand-detail-pre {
@@ -646,7 +646,7 @@ html.is-mobile-device .brand-mobile-nav {
 }
 .brand-detail-price { margin-top:20px; padding-top:17px; border-top:1px solid #e7ecea; }
 .brand-detail-price del { display:block; color:#9aa3a1; font-size:.88rem; }
-.brand-detail-price strong { display:block; margin-top:3px; color:var(--brand-green-dark); font-size:1.8rem; letter-spacing:-.025em; }
+.brand-detail-price strong { display:block; margin-top:3px; color:var(--brand-green-dark); font-size:1.8rem; letter-spacing: 0; }
 .brand-detail-price strong small { font-size:.78rem; margin-left:2px; }
 .brand-detail-date { margin:8px 0 0; color:#929d99; font-size:.74rem; }
 .brand-detail-consult { margin-top:20px; }
@@ -738,3 +738,4 @@ html.is-mobile-device .brand-mobile-nav {
     object-fit: contain !important;
   }
 }
+
