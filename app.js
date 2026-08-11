@@ -12,6 +12,7 @@ let activeSellerRegionFilter = "all";
 let pendingQuoteFormData = null;
 let pendingBidSelection = null;
 let pendingQuoteCloseId = null;
+let quoteCloseSubmitting = false;
 let lookupAccessGranted = false;
 let activeLookupRequestIds = [];
 let quoteCountdownTimer = 0;
@@ -789,6 +790,54 @@ function normalizeQuoteBrand(value) {
   return raw;
 }
 
+function normalizeSellerBidBrandGroup(channelValue) {
+  const compact = String(channelValue || "")
+    .replace(/\s+/g, "")
+    .replace(/[·ㆍ]/g, "")
+    .toLowerCase();
+
+  if (
+    compact.includes("삼성스토어") ||
+    compact.includes("이마트(삼성)") ||
+    compact.includes("이마트삼성") ||
+    compact.includes("전자랜드(삼성)") ||
+    compact.includes("전자랜드삼성")
+  ) return "samsung";
+
+  if (
+    compact.includes("lg전자bestshop") ||
+    compact.includes("lg전자베스트샵") ||
+    compact.includes("이마트(lg)") ||
+    compact.includes("이마트lg") ||
+    compact.includes("전자랜드(lg)") ||
+    compact.includes("전자랜드lg")
+  ) return "lg";
+
+  return "all";
+}
+
+function sellerCanBidQuoteBrand(channelValue, quoteBrandValue) {
+  const group = normalizeSellerBidBrandGroup(channelValue);
+  const brand = normalizeQuoteBrand(quoteBrandValue);
+  if (!brand || brand === "비교견적" || group === "all") return true;
+  if (group === "samsung") return brand === "삼성전자";
+  if (group === "lg") return brand === "LG전자";
+  return true;
+}
+
+function sellerBidBrandRestrictionMessage(channelValue) {
+  const group = normalizeSellerBidBrandGroup(channelValue);
+  if (group === "samsung") return "삼성 계열 판매 채널은 삼성전자 또는 비교견적에만 제안할 수 있습니다.";
+  if (group === "lg") return "LG 계열 판매 채널은 LG전자 또는 비교견적에만 제안할 수 있습니다.";
+  return "현재 판매 채널에서는 이 브랜드 견적에 제안할 수 없습니다.";
+}
+
+function canActiveSellerBidRequest(request) {
+  const account = sellerAccounts.get(activeSellerId);
+  if (!account) return true;
+  return sellerCanBidQuoteBrand(account.channel, getQuoteBrand(request));
+}
+
 function getQuoteBrand(request) {
   return normalizeQuoteBrand(
     request?.desiredBrand ||
@@ -1485,25 +1534,21 @@ function quoteHomeStatus(request, quoteBids) {
 function renderHomeFeeds() {
   if (homeLiveBoard) {
     const quoteRows = requests
+      .filter((request) => !isQuoteClosed(request))
       .slice()
       .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
-      .slice(0, 8);
+      .slice(0, 6);
 
     if (quoteRows.length) {
-      homeLiveBoard.innerHTML = duplicateRelayRows(quoteRows)
+      homeLiveBoard.innerHTML = quoteRows
         .map((request) => {
           const quoteBids = bids.filter((bid) => sameId(bid.requestId, request.id));
-          const bidPrices = quoteBids.map((bid) => Number(bid.price || 0)).filter(Boolean);
-          const lowestBidPrice = bidPrices.length ? Math.min(...bidPrices) : 0;
-          const priceText = lowestBidPrice
-            ? `최저 제안 ${formatPrice(lowestBidPrice)}`
-            : request.price
-              ? `${getRequestPriceLabel(request)} ${formatPrice(request.price)}`
-              : getQuoteTypeLabel(request);
+          const region = String(request.region || request.installRegion || "지역 확인 중").trim();
+          const purpose = String(request.purchasePurpose || "가전 견적").trim();
           return `
             <article>
-              <span>${escapeHTML(request.purchasePurpose || getQuoteBrand(request) || "가전 견적")}</span>
-              <strong>${escapeHTML(priceText)}</strong>
+              <span>${escapeHTML(region)} · ${escapeHTML(purpose)}</span>
+              <strong>${escapeHTML(quoteBids.length ? `제안 ${quoteBids.length}건 도착` : "판매자 제안 대기")}</strong>
               <p>${escapeHTML(homeQuoteTitle(request))}</p>
               <em>${escapeHTML(quoteHomeStatus(request, quoteBids))}</em>
             </article>
@@ -1519,10 +1564,10 @@ function renderHomeFeeds() {
     const reviewRows = managerReviews
       .filter((review) => review.content)
       .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
-      .slice(0, 8);
+      .slice(0, 6);
 
     if (reviewRows.length) {
-      homeReviewGrid.innerHTML = duplicateRelayRows(reviewRows)
+      homeReviewGrid.innerHTML = reviewRows
         .map((review) => `
           <article>
             <span>${escapeHTML(starText(review.rating || 5))}</span>
@@ -1569,7 +1614,7 @@ function getSellerTabRequests() {
     return requests.filter((request) => isQuoteClosed(request));
   }
 
-  return requests.filter((request) => !isQuoteClosed(request));
+  return requests.filter((request) => !isQuoteClosed(request) && canActiveSellerBidRequest(request));
 }
 
 function getAvailableSellerBrands(baseRequests = getSellerTabRequests()) {
@@ -1608,7 +1653,8 @@ function getAvailableSellerRegions() {
 }
 
 function renderSellerFilterBar() {
-  if (!requestList) return;
+  const filterHost = document.querySelector("#sellerFilterHost");
+  if (!filterHost) return;
 
   let filterBar = document.querySelector("#sellerFilterBar");
   if (!filterBar) {
@@ -1616,7 +1662,9 @@ function renderSellerFilterBar() {
     filterBar.id = "sellerFilterBar";
     filterBar.className = "seller-filter-bar";
   }
-  requestList.prepend(filterBar);
+  if (filterBar.parentElement !== filterHost) {
+    filterHost.replaceChildren(filterBar);
+  }
 
   const availableRegions = getAvailableSellerRegions();
 
@@ -2029,10 +2077,19 @@ function closeQuoteCloseConfirmModal() {
 }
 
 async function confirmQuoteClose() {
+  if (quoteCloseSubmitting) return;
   const request = requests.find((item) => sameId(item.id, pendingQuoteCloseId));
   if (!request) {
     closeQuoteCloseConfirmModal();
     return;
+  }
+
+  quoteCloseSubmitting = true;
+  const modal = getQuoteCloseModal();
+  const confirmButton = modal.querySelector("[data-quote-close-confirm]");
+  if (confirmButton) {
+    confirmButton.disabled = true;
+    confirmButton.textContent = "종료 중...";
   }
 
   showServerLoading("견적 비교를 종료 중입니다.", "받은 제안은 유지하고 추가 제안 접수만 마감하고 있습니다.");
@@ -2069,6 +2126,11 @@ async function confirmQuoteClose() {
     console.error(error);
     setLookupActionMessage("견적 비교 종료 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
   } finally {
+    quoteCloseSubmitting = false;
+    if (confirmButton) {
+      confirmButton.disabled = false;
+      confirmButton.textContent = "종료";
+    }
     hideServerLoading();
   }
 }
@@ -2873,6 +2935,11 @@ bidForm.addEventListener("submit", async (event) => {
     return;
   }
 
+  if (!sellerCanBidQuoteBrand(channelName, getQuoteBrand(request))) {
+    setBidFormMessage(sellerBidBrandRestrictionMessage(channelName), "error");
+    return;
+  }
+
   if (!bidPrice) {
     setBidFormMessage("제안 금액을 만원 단위로 입력해주세요.", "error");
     bidForm.elements.bidPrice.focus();
@@ -3122,8 +3189,8 @@ function renderRequests() {
   const isRegionTab = activeSellerTab === "region";
   sellerQuoteWorkspace.hidden = isRegionTab;
   sellerRegionPanel.hidden = !isRegionTab;
-  const filterBar = document.querySelector("#sellerFilterBar");
-  if (filterBar) filterBar.hidden = isRegionTab;
+  const filterHost = document.querySelector("#sellerFilterHost");
+  if (filterHost) filterHost.hidden = isRegionTab;
 
   if (isRegionTab) {
     sellerTabs.forEach((tab) => {
@@ -3142,8 +3209,7 @@ function renderRequests() {
   });
 
   if (!filteredRequests.length) {
-    const currentFilterBar = document.querySelector("#sellerFilterBar");
-      const emptyLabel =
+    const emptyLabel =
         activeSellerTab === "proposed"
           ? "선택 대기 중인 제안 견적이 없습니다."
         : activeSellerTab === "selected"
@@ -3157,7 +3223,6 @@ function renderRequests() {
         <p>해당하는 견적이 생기면 이곳에 표시됩니다.</p>
       </div>
     `;
-    if (currentFilterBar) requestList.prepend(currentFilterBar);
     return;
   }
 
