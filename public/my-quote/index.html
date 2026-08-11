@@ -161,7 +161,8 @@
         display: block;
       }
     </style>
-    <link rel="stylesheet" href="/styles.css?v=20260810-mobile-next-scroll-guard-v17" />
+    <link rel="stylesheet" href="/styles.css?v=20260811-privacy-policy-v19" />
+    <script defer src="/privacy-policy.js?v=20260811-privacy-policy-v19"></script>
     <script defer src="/app.js?v=20260811-seller-channel-brand-bid-v18"></script>
     <script defer src="/customer-wizard.js?v=20260810-mobile-next-scroll-guard-v17"></script>
     <script defer src="/page-guide.js?v=20260731-mobile-modal-safe-area"></script>
@@ -1074,7 +1075,7 @@
       <div class="footer-company">
         <strong>픽브릿지</strong>
         <p>
-          <span>개인정보 처리방침</span>
+          <button class="footer-privacy-btn" type="button" data-open-privacy-policy>개인정보 처리방침</button>
           <span>사업자등록번호 : 548-61-00920</span>
         </p>
         <p>
@@ -1120,19 +1121,19 @@
         <div class="consent-box">
           <h3>개인정보 수집·이용</h3>
           <ul>
-            <li>수집 항목: 고객님 성함, 연락처, 설치 지역, 구매 품목, 견적서 이미지 최대 4장, 요청사항</li>
+            <li>수집 항목: 고객님 성함, 연락처, 설치 지역, 구매 품목, 구매 목적, 희망 브랜드, 예상 금액, 설치 희망일, 견적서 이미지 최대 4장, 요청사항</li>
             <li>이용 목적: 견적 요청 접수, 본인 견적 조회, 판매자 제안 연결, 상담 진행</li>
             <li>열람 대상: 페이지 운영 회사, 관리자, 견적 검토 및 고객님 응대 담당 직원</li>
-            <li>보유 기간: 견적 처리 완료 후 1년 또는 고객님 삭제 요청 시까지</li>
+            <li>보유 기간: 견적 등록일로부터 1년 또는 고객님 삭제 요청 시까지 (원본 견적서 이미지는 등록 후 7일)</li>
           </ul>
         </div>
         <div class="consent-box">
           <h3>개인정보 제3자 제공</h3>
           <ul>
-            <li>제공받는 자: 견적 제안 참여 판매자 및 고객님이 선택한 판매자</li>
+            <li>제공받는 자: 승인 판매자 중 해당 견적을 열람·제안하는 판매자 및 고객님이 연락처 공개 대상으로 선택한 판매자</li>
             <li>제공 목적: 가전 견적 제안, 설치·배송 상담, 구매 상담 연결</li>
-            <li>제공 항목: 견적서 이미지 최대 4장, 구매 품목, 설치 지역, 요청사항, 선택 후 고객님 연락처</li>
-            <li>보유 기간: 상담 종료 후 1년 또는 고객님 삭제 요청 시까지</li>
+            <li>제공 항목: 고객 성함, 견적서 이미지 최대 4장, 구매 품목, 희망 브랜드, 설치 지역·일정, 요청사항 / 연락처는 고객님이 지정한 공개 범위의 판매자에게만 제공</li>
+            <li>보유 기간: 제안·상담 목적 달성 시까지 (법령상 보존의무 또는 별도 동의가 있는 경우 해당 기간)</li>
           </ul>
         </div>
         <label class="consent-check">
@@ -1141,7 +1142,7 @@
         </label>
         <label class="consent-check">
           <input id="thirdPartyConsent" type="checkbox" />
-          고객님이 선택한 판매자에게 연락처가 공개되는 것에 동의합니다.
+          고객님이 지정한 공개 범위의 판매자에게 연락처가 공개되는 것에 동의합니다.
         </label>
         <p class="form-message" id="consentMessage" role="alert"></p>
         <div class="consent-actions">

@@ -1299,9 +1299,50 @@ async function cleanupExpiredStoredData(env) {
     await env.DB.prepare("DELETE FROM customer_quotes WHERE id = ?").bind(quote.id).run();
   }
 
+  // 개인정보 처리방침의 1년 보유정책과 실제 서버 보관기간을 맞춥니다.
+  // 아직 생성되지 않은 선택 기능 테이블은 기존 서비스에 영향을 주지 않도록 개별적으로 무시합니다.
+  const oneYearAgo = addDays(now, -365);
+  const cleanupResults = {};
+  const cleanupQueries = [
+    {
+      key: "brandConsultationsDeleted",
+      sql: "DELETE FROM brand_consultations WHERE created_at != '' AND created_at < ?",
+    },
+    {
+      key: "reviewedSellerApplicationsDeleted",
+      sql: "DELETE FROM seller_applications WHERE status != 'pending' AND reviewed_at != '' AND reviewed_at < ?",
+    },
+    {
+      key: "sellerAccessLogsDeleted",
+      sql: "DELETE FROM seller_access_logs WHERE created_at != '' AND created_at < ?",
+    },
+    {
+      key: "deletedQuoteLogsDeleted",
+      sql: "DELETE FROM deleted_quote_logs WHERE deleted_at != '' AND deleted_at < ?",
+    },
+    {
+      key: "alimtalkLogsDeleted",
+      sql: "DELETE FROM alimtalk_queue WHERE created_at != '' AND created_at < ?",
+    },
+    {
+      key: "inactivePushTokensDeleted",
+      sql: "DELETE FROM push_tokens WHERE updated_at != '' AND updated_at < ?",
+    },
+  ];
+
+  for (const task of cleanupQueries) {
+    try {
+      const result = await env.DB.prepare(task.sql).bind(oneYearAgo).run();
+      cleanupResults[task.key] = Number(result?.meta?.changes || 0);
+    } catch (error) {
+      cleanupResults[task.key] = 0;
+    }
+  }
+
   return {
     fullImagesDeleted: Number((expiredFullImages.results || []).length),
     quotesDeleted: Number((expiredQuotes.results || []).length),
+    ...cleanupResults,
   };
 }
 
