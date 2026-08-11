@@ -118,6 +118,8 @@ const serverLoadingTitle = document.querySelector("#serverLoadingTitle");
 const serverLoadingText = document.querySelector("#serverLoadingText");
 const homeLiveBoard = document.querySelector(".pick-live-board");
 const homeReviewGrid = document.querySelector(".pick-review-grid");
+const homeCaseStudy = document.querySelector("#homeCaseStudy");
+const homeCaseContent = document.querySelector(".pick-case-content");
 const fallbackHomeLiveHTML = homeLiveBoard?.innerHTML || "";
 const fallbackHomeReviewHTML = homeReviewGrid?.innerHTML || "";
 
@@ -1561,9 +1563,16 @@ function renderHomeFeeds() {
   }
 
   if (homeReviewGrid) {
+    const seenReviews = new Set();
     const reviewRows = managerReviews
       .filter((review) => review.content)
       .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+      .filter((review) => {
+        const key = `${String(review.customer || "").trim()}|${String(review.content || "").trim()}`;
+        if (seenReviews.has(key)) return false;
+        seenReviews.add(key);
+        return true;
+      })
       .slice(0, 6);
 
     if (reviewRows.length) {
@@ -1578,6 +1587,53 @@ function renderHomeFeeds() {
         .join("");
     } else {
       homeReviewGrid.innerHTML = fallbackHomeReviewHTML;
+    }
+  }
+
+  if (homeCaseStudy && homeCaseContent) {
+    const caseRow = requests
+      .map((request) => ({
+        request,
+        quoteBids: bids
+          .filter((bid) => sameId(bid.requestId, request.id) && Number(bid.price) > 0)
+          .sort((a, b) => Number(a.price) - Number(b.price)),
+      }))
+      .filter((row) => row.quoteBids.length)
+      .sort((a, b) => new Date(b.request.createdAt || 0) - new Date(a.request.createdAt || 0))[0];
+
+    if (!caseRow) {
+      homeCaseStudy.hidden = true;
+      homeCaseContent.innerHTML = "";
+    } else {
+      const { request, quoteBids } = caseRow;
+      const lowestBid = quoteBids[0];
+      const originalPrice = Number(request.price) || 0;
+      const region = String(request.region || request.installRegion || "지역 비공개").trim();
+      const purpose = String(request.purchasePurpose || "가전 견적 비교").trim();
+      const conditions = String(lowestBid.benefits || "")
+        .split(/\r?\n|,|·/)
+        .map((value) => value.trim())
+        .filter(Boolean)
+        .slice(0, 3);
+      const conditionText = conditions.length
+        ? conditions.join(" · ")
+        : "가격과 구매 조건을 함께 비교했습니다.";
+
+      homeCaseStudy.hidden = false;
+      homeCaseContent.innerHTML = `
+        <article>
+          <div>
+            <h3>${escapeHTML(region)} · ${escapeHTML(purpose)}</h3>
+            <p>${escapeHTML(homeQuoteTitle(request))}</p>
+            <p>${escapeHTML(conditionText)}</p>
+          </div>
+          <div class="pick-case-prices">
+            ${originalPrice > 0 ? `<div><span>기존 견적</span><strong>${escapeHTML(formatPrice(originalPrice))}</strong></div>` : ""}
+            <div><span>받은 제안</span><strong>${escapeHTML(`${quoteBids.length}건`)}</strong></div>
+            <div><span>최저 제안</span><strong>${escapeHTML(formatPrice(lowestBid.price))}</strong></div>
+          </div>
+        </article>
+      `;
     }
   }
 }
