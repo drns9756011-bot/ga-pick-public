@@ -119,10 +119,11 @@ const serverLoadingTitle = document.querySelector("#serverLoadingTitle");
 const serverLoadingText = document.querySelector("#serverLoadingText");
 const homeLiveBoard = document.querySelector(".pick-live-board");
 const homeReviewGrid = document.querySelector(".pick-review-grid");
+const homeReviewSection = homeReviewGrid?.closest(".pick-review-home");
 const homeCaseStudy = document.querySelector("#homeCaseStudy");
 const homeCaseContent = document.querySelector(".pick-case-content");
 const fallbackHomeLiveHTML = homeLiveBoard?.innerHTML || "";
-const fallbackHomeReviewHTML = homeReviewGrid?.innerHTML || "";
+let homeLiveRelayTimer = 0;
 
 let securityBlanketTimer;
 let serverLoadingCount = 0;
@@ -1559,32 +1560,80 @@ function quoteHomeStatus(request, quoteBids) {
   return "판매자 제안 대기";
 }
 
+function firstQuoteImageSrc(request) {
+  const candidate = Array.isArray(request?.images) && request.images.length
+    ? request.images[0]
+    : request?.image;
+  if (!candidate) return "";
+  if (typeof candidate === "string") return candidate;
+  return String(candidate.url || candidate.src || candidate.imageUrl || "");
+}
+
+function stopHomeLiveRelay() {
+  if (!homeLiveRelayTimer) return;
+  window.clearInterval(homeLiveRelayTimer);
+  homeLiveRelayTimer = 0;
+}
+
+function startHomeLiveRelay() {
+  stopHomeLiveRelay();
+  if (!homeLiveBoard || window.innerWidth > 600 || homeLiveBoard.children.length < 2) return;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  let index = 0;
+  homeLiveRelayTimer = window.setInterval(() => {
+    const cards = Array.from(homeLiveBoard.children);
+    if (document.hidden || cards.length < 2) return;
+    index = (index + 1) % cards.length;
+    homeLiveBoard.scrollTo({ left: cards[index].offsetLeft - homeLiveBoard.offsetLeft, behavior: "smooth" });
+  }, 4200);
+}
+
 function renderHomeFeeds() {
   if (homeLiveBoard) {
+    stopHomeLiveRelay();
     const quoteRows = requests
-      .filter((request) => !isQuoteClosed(request))
-      .slice()
-      .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
-      .slice(0, 6);
+      .map((request) => {
+        const quoteBids = bids
+          .filter((bid) => sameId(bid.requestId, request.id) && Number(bid.price) > 0)
+          .sort((a, b) => Number(a.price) - Number(b.price));
+        const originalPrice = Number(request.price) || 0;
+        const selectedBid = getSelectedBid(request);
+        const selectedPrice = Number(selectedBid?.price) || 0;
+        const lowestBid = quoteBids[0] || null;
+        const offerBid = selectedPrice > 0 && selectedPrice < originalPrice ? selectedBid : lowestBid;
+        const offerPrice = Number(offerBid?.price) || 0;
+        return { request, quoteBids, originalPrice, offerPrice };
+      })
+      .filter((row) => row.originalPrice > 0 && row.offerPrice > 0 && row.offerPrice < row.originalPrice)
+      .sort((a, b) => {
+        const aSelected = hasValidSelectedBid(a.request) ? 1 : 0;
+        const bSelected = hasValidSelectedBid(b.request) ? 1 : 0;
+        return bSelected - aSelected || new Date(b.request.createdAt || 0) - new Date(a.request.createdAt || 0);
+      })
+      .slice(0, 8);
 
     if (quoteRows.length) {
       homeLiveBoard.innerHTML = quoteRows
-        .map((request) => {
-          const quoteBids = bids.filter((bid) => sameId(bid.requestId, request.id));
+        .map(({ request, quoteBids, originalPrice, offerPrice }) => {
           const region = String(request.region || request.installRegion || "지역 확인 중").trim();
           const purpose = String(request.purchasePurpose || "가전 견적").trim();
+          const imageSrc = firstQuoteImageSrc(request);
+          const savings = originalPrice - offerPrice;
           return `
             <article>
+              ${imageSrc ? `<img class="pick-live-thumb" src="${escapeHTML(imageSrc)}" alt="등록된 견적서 미리보기" loading="lazy" />` : ""}
               <span>${escapeHTML(region)} · ${escapeHTML(purpose)}</span>
-              <strong>${escapeHTML(quoteBids.length ? `제안 ${quoteBids.length}건 도착` : "판매자 제안 대기")}</strong>
+              <strong>${escapeHTML(hasValidSelectedBid(request) ? "제안 선택 완료" : `제안 ${quoteBids.length}건 도착`)}</strong>
               <p>${escapeHTML(homeQuoteTitle(request))}</p>
-              <em>${escapeHTML(quoteHomeStatus(request, quoteBids))}</em>
+              <em>${escapeHTML(`${formatPrice(savings)} 낮은 제안 확인`)}</em>
             </article>
           `;
         })
         .join("");
+      window.requestAnimationFrame(startHomeLiveRelay);
     } else {
-      homeLiveBoard.innerHTML = fallbackHomeLiveHTML;
+      homeLiveBoard.innerHTML = `<article class="pick-empty-feed"><strong>비교 가능한 견적을 준비하고 있습니다.</strong><p>기존 견적보다 낮은 실제 제안만 이곳에 표시합니다.</p></article>`;
     }
   }
 
@@ -1601,7 +1650,8 @@ function renderHomeFeeds() {
       })
       .slice(0, 6);
 
-    if (reviewRows.length) {
+    if (reviewRows.length >= 4) {
+      if (homeReviewSection) homeReviewSection.hidden = false;
       homeReviewGrid.innerHTML = reviewRows
         .map((review) => `
           <article>
@@ -1612,7 +1662,8 @@ function renderHomeFeeds() {
         `)
         .join("");
     } else {
-      homeReviewGrid.innerHTML = fallbackHomeReviewHTML;
+      if (homeReviewSection) homeReviewSection.hidden = true;
+      homeReviewGrid.innerHTML = "";
     }
   }
 
@@ -1624,7 +1675,10 @@ function renderHomeFeeds() {
           .filter((bid) => sameId(bid.requestId, request.id) && Number(bid.price) > 0)
           .sort((a, b) => Number(a.price) - Number(b.price)),
       }))
-      .filter((row) => row.quoteBids.length)
+      .filter((row) => {
+        const originalPrice = Number(row.request.price) || 0;
+        return originalPrice > 0 && row.quoteBids.length && Number(row.quoteBids[0].price) < originalPrice;
+      })
       .sort((a, b) => new Date(b.request.createdAt || 0) - new Date(a.request.createdAt || 0))[0];
 
     if (!caseRow) {
