@@ -7386,6 +7386,147 @@ html.is-mobile-device .header-ad-picture img {
   }
 }
 
+/* 2026-08-13: public home refresh for the Pickquote green brand. */
+.pick-app-home {
+  --home-green: #08b957;
+  --home-green-dark: #073b26;
+  --home-ink: #10231a;
+  --home-muted: #63736a;
+  --home-line: #dce9e1;
+  --home-soft: #f4fbf6;
+  background: #fff;
+}
+
+.pick-trust-hero {
+  min-height: 600px;
+  padding: 50px clamp(28px, 5vw, 68px);
+  background: #f6fcf8;
+  border-color: #d5eadc;
+  border-radius: 0;
+}
+
+.pick-home-logo {
+  display: block;
+  width: min(360px, 78%);
+  height: auto;
+  margin: -18px 0 -10px -16px;
+  object-fit: contain;
+}
+
+.pick-zero-fee,
+.pick-home-heading > span,
+.pick-home-heading > div > span,
+.pick-final-cta > div > span {
+  color: var(--home-green-dark);
+}
+
+.pick-trust-copy h1 {
+  color: var(--home-green-dark);
+  font-size: clamp(44px, 5vw, 70px);
+  font-weight: 850;
+}
+
+.pick-trust-lead {
+  color: #315040;
+}
+
+.pick-primary-cta,
+.pick-final-cta button {
+  background: var(--home-green);
+  border-color: var(--home-green);
+  box-shadow: 0 8px 18px rgba(8, 185, 87, 0.18);
+}
+
+.pick-secondary-cta {
+  color: var(--home-green-dark);
+  border-color: #9ed7b5;
+}
+
+.pick-trust-points span,
+.pick-approved-note span {
+  border-color: #bde5ca;
+  background: #fff;
+}
+
+.pick-trust-visual {
+  border-color: #cde5d4;
+  border-radius: 0;
+  background: #fff;
+}
+
+.pick-home-shortcuts > * {
+  border-color: var(--home-line);
+  border-radius: 0;
+}
+
+.pick-home-shortcuts .is-primary {
+  border-color: #9ed7b5;
+  background: #ecfbf1;
+}
+
+.pick-home-ad-slot {
+  display: grid;
+  place-items: center;
+  gap: 6px;
+  min-height: 118px;
+  margin: 36px 0 0;
+  padding: 22px;
+  border: 1px dashed #b9d6c2;
+  background: #fbfefc;
+  color: #7a8b81;
+  text-align: center;
+}
+
+.pick-home-ad-slot span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 0 8px;
+  border: 1px solid #c9ded0;
+  color: #6d7e73;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.pick-home-ad-slot strong {
+  color: #66796c;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.pick-privacy-home,
+.pick-live-home,
+.pick-flow-home,
+.pick-brand-home {
+  border-bottom-color: #e3eee7;
+}
+
+.pick-final-cta {
+  border-radius: 0;
+  background: #ecfbf1;
+  border-color: #c2e6cd;
+}
+
+@media (max-width: 600px) {
+  .pick-trust-hero {
+    padding: 30px 20px 24px;
+  }
+
+  .pick-home-logo {
+    width: min(300px, 94%);
+    margin: -10px auto 0;
+  }
+
+  .pick-trust-copy h1 {
+    font-size: clamp(40px, 12vw, 58px);
+  }
+
+  .pick-home-ad-slot {
+    min-height: 96px;
+    margin-top: 24px;
+  }
+}
+
 /* Brand hall navigation / seller entry - 2026-08-07 */
 .nav .pick-top-link {
   color: inherit;
