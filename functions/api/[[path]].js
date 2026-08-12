@@ -1198,6 +1198,9 @@ async function ensureQuoteDurationPolicy72(env) {
 }
 
 async function queueQuoteClosedNotice(env, quote, claimedAt) {
+  if (isTestCustomerName(quote?.customer)) {
+    return { ok: true, skipped: true, reason: "test-customer" };
+  }
   try {
     return await queueAlimtalk(env, {
       type: "customer-quote-closed",
@@ -1221,6 +1224,13 @@ async function queueQuoteClosedNotice(env, quote, claimedAt) {
     ).bind(quote.id, claimedAt).run().catch(() => {});
     throw error;
   }
+}
+
+function isTestCustomerName(value) {
+  return String(value || "")
+    .replace(/\s+/g, "")
+    .toLowerCase()
+    .includes("테스트용");
 }
 
 async function closeExpiredQuotes(env) {
@@ -1846,6 +1856,9 @@ async function traceSellerAdminAlert(env, sellerId, message) {
 
 
 async function queueSellerQuoteRegisteredAlerts(env, quote) {
+  if (isTestCustomerName(quote?.customer)) {
+    return { ok: true, skipped: true, total: 0, sent: 0, failed: 0, reason: "test-customer" };
+  }
   const templateId = solapiValue(env, "SOLAPI_TEMPLATE_SELLER_QUOTE_REGISTERED");
   if (!templateId) {
     return { ok: false, skipped: true, total: 0, sent: 0, failed: 0, error: "판매자 신규 견적 알림톡 템플릿이 없습니다." };
@@ -2785,19 +2798,21 @@ async function createCustomerQuote(env, request, executionContext) {
     return json({ ok: false, message: error?.message || "견적서 저장 처리 중 오류가 발생했습니다." }, 500);
   }
 
-  await queueAlimtalk(env, {
-    type: "customer-quote-received",
-    targetRole: "customer",
-    targetName: body.customer,
-    targetPhone: body.phone,
-    relatedId: id,
-    title: "견적 요청이 접수되었습니다",
-    body: `${body.customer} 고객님의 견적 요청이 정상 접수되었습니다. 견적번호: ${quoteNumber}`,
-    variables: {
-      "#{고객명}": body.customer,
-      "#{견적번호}": quoteNumber,
-    },
-  });
+  if (!isTestCustomerName(body.customer)) {
+    await queueAlimtalk(env, {
+      type: "customer-quote-received",
+      targetRole: "customer",
+      targetName: body.customer,
+      targetPhone: body.phone,
+      relatedId: id,
+      title: "견적 요청이 접수되었습니다",
+      body: `${body.customer} 고객님의 견적 요청이 정상 접수되었습니다. 견적번호: ${quoteNumber}`,
+      variables: {
+        "#{고객명}": body.customer,
+        "#{견적번호}": quoteNumber,
+      },
+    });
+  }
 
   const row = await env.DB.prepare("SELECT * FROM customer_quotes WHERE id = ?").bind(id).first();
   const savedImages = await getQuoteImages(env, id, true);
@@ -3030,20 +3045,22 @@ async function upsertBid(env, request) {
       )
       .run();
 
-    await queueAlimtalk(env, {
-      type: "customer-bid-received",
-      targetRole: "customer",
-      targetName: quote.customer,
-      targetPhone: quote.phone,
-      relatedId: quote.id,
-      title: "새로운 판매자 제안이 도착했습니다",
-      body: `${quote.customer} 고객님의 견적번호 ${quote.quote_number}에 새로운 판매자 제안이 도착했습니다.`,
-      variables: {
-        "#{고객명}": quote.customer,
-        "#{견적번호}": quote.quote_number,
-        "#{제안금액}": formatAlimtalkPrice(body.price),
-      },
-    });
+    if (!isTestCustomerName(quote.customer)) {
+      await queueAlimtalk(env, {
+        type: "customer-bid-received",
+        targetRole: "customer",
+        targetName: quote.customer,
+        targetPhone: quote.phone,
+        relatedId: quote.id,
+        title: "새로운 판매자 제안이 도착했습니다",
+        body: `${quote.customer} 고객님의 견적번호 ${quote.quote_number}에 새로운 판매자 제안이 도착했습니다.`,
+        variables: {
+          "#{고객명}": quote.customer,
+          "#{견적번호}": quote.quote_number,
+          "#{제안금액}": formatAlimtalkPrice(body.price),
+        },
+      });
+    }
   }
 
   const row = await env.DB.prepare("SELECT * FROM bids WHERE quote_id = ? AND seller_id = ? LIMIT 1")
@@ -3084,22 +3101,24 @@ async function selectBid(env, request) {
     .bind(bidId, scope, JSON.stringify(releasedBidIds), now, now, quoteId)
     .run();
 
-  for (const bid of quoteBids.filter((item) => releasedBidIds.includes(item.id))) {
-    await queueAlimtalk(env, {
-      type: "seller-bid-selected",
-      targetRole: "seller",
-      targetName: bid.manager || bid.seller,
-      targetPhone: bid.phone,
-      relatedId: quoteId,
-      title: "고객님이 제안을 선택했습니다",
-      body: `${bid.manager || "매니저"}님, 견적번호 ${quote.quote_number}에서 고객님 연락처 공개 대상 제안으로 선택되었습니다.`,
-      variables: {
-        "#{매니저명}": bid.manager || bid.seller || "",
-        "#{견적번호}": quote.quote_number,
-        "#{고객명}": quote.customer,
-        "#{고객연락처}": formatPhoneNumber(quote.phone),
-      },
-    });
+  if (!isTestCustomerName(quote.customer)) {
+    for (const bid of quoteBids.filter((item) => releasedBidIds.includes(item.id))) {
+      await queueAlimtalk(env, {
+        type: "seller-bid-selected",
+        targetRole: "seller",
+        targetName: bid.manager || bid.seller,
+        targetPhone: bid.phone,
+        relatedId: quoteId,
+        title: "고객님이 제안을 선택했습니다",
+        body: `${bid.manager || "매니저"}님, 견적번호 ${quote.quote_number}에서 고객님 연락처 공개 대상 제안으로 선택되었습니다.`,
+        variables: {
+          "#{매니저명}": bid.manager || bid.seller || "",
+          "#{견적번호}": quote.quote_number,
+          "#{고객명}": quote.customer,
+          "#{고객연락처}": formatPhoneNumber(quote.phone),
+        },
+      });
+    }
   }
 
   const row = await env.DB.prepare("SELECT * FROM customer_quotes WHERE id = ?").bind(quoteId).first();
@@ -4561,4 +4580,3 @@ export async function onScheduled(context) {
   await cleanupExpiredStoredData(env);
   await migrateLegacySellerPasswords(env);
 }
-
