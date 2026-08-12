@@ -7169,12 +7169,23 @@ html.is-mobile-device :where(.model-code, .quote-number, .ai-recommendation-grou
   object-position: center;
 }
 @media (max-width: 900px) {
+  .topbar {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .topbar .brand {
+    justify-self: center;
+  }
+  .topbar .header-ad-slot.is-image-banner {
+    grid-column: 1 / -1;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    aspect-ratio: 8 / 1;
+  }
   .header-ad-slot.is-image-banner {
     width: 100%;
     max-width: none;
-    height: 40px;
-    min-height: 40px;
-    max-height: 40px;
     padding: 0;
     border-radius: 10px;
   }
@@ -7183,9 +7194,10 @@ html.is-mobile-device .header-ad-slot.is-image-banner {
   width: 100%;
   max-width: none;
   min-width: 0;
-  height: 40px;
-  min-height: 40px;
-  max-height: 40px;
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  aspect-ratio: 8 / 1;
   padding: 0;
   gap: 0;
   border: 0;
