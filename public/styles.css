@@ -111,47 +111,13 @@ button {
   padding: 0;
 }
 
-.brand-mark {
-  display: grid;
-  place-items: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  background: linear-gradient(145deg, #126b5d, #0b4d43);
-  color: #fff;
-  box-shadow: 0 10px 22px rgba(18, 107, 93, 0.22);
-}
-
-.brand-mark svg {
-  width: 27px;
-  height: 27px;
-}
-
-.logo-sheet {
-  fill: rgba(255, 255, 255, 0.96);
-}
-
-.logo-fold {
-  fill: none;
-  stroke: #d5eee8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 2;
-}
-
-.logo-line {
-  fill: none;
-  stroke: var(--primary);
-  stroke-linecap: round;
-  stroke-width: 2.2;
-}
-
-.logo-check {
-  fill: none;
-  stroke: #e7b44d;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 3.2;
+.brand-logo-image {
+  display: block;
+  width: clamp(132px, 11vw, 168px);
+  height: auto;
+  max-height: 48px;
+  object-fit: contain;
+  object-position: left center;
 }
 
 .nav {
@@ -6046,10 +6012,9 @@ html.is-mobile-device .brand {
   white-space: nowrap;
 }
 
-html.is-mobile-device .brand-mark {
-  width: 34px;
-  height: 34px;
-  border-radius: 9px;
+html.is-mobile-device .brand-logo-image {
+  width: 126px;
+  max-height: 40px;
 }
 
 html.is-mobile-device .header-ad-slot {
@@ -6127,8 +6092,7 @@ html.is-mobile-device .mobile-flow-nav a {
   cursor: pointer;
 }
 
-html.is-mobile-device .mobile-flow-icon,
-html.is-mobile-device .mobile-flow-logo {
+html.is-mobile-device .mobile-flow-icon {
   display: grid;
   place-items: center;
   width: 32px;
@@ -6153,14 +6117,25 @@ html.is-mobile-device .mobile-flow-home {
 }
 
 html.is-mobile-device .mobile-flow-logo {
+  display: grid;
+  place-items: center;
   width: 44px;
   height: 44px;
-  border-radius: 50%;
-  background: linear-gradient(145deg, #f0525f, #d93648);
-  color: #fff;
-  font-size: 20px;
-  font-weight: 1000;
-  box-shadow: 0 12px 24px rgba(217, 54, 72, 0.22);
+  border-radius: 14px;
+  background: #fff;
+  padding: 4px;
+  color: inherit;
+  font-size: initial;
+  font-weight: initial;
+  box-shadow: 0 12px 24px rgba(0, 169, 79, 0.2);
+  overflow: hidden;
+}
+
+html.is-mobile-device .mobile-flow-logo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 html.is-mobile-device .mobile-flow-nav button.is-current,

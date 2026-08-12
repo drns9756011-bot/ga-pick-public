@@ -1,11 +1,11 @@
 {
-  "name": "픽견적 - 가전 견적 비교 서비스",
+  "name": "픽견적 - 가전 견적 비교 플랫폼",
   "short_name": "픽견적",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#0f7665",
+  "theme_color": "#00a94f",
   "icons": [
     {
       "src": "/favicon-48x48.png",
