@@ -10,6 +10,7 @@ let activeSellerTab = "all";
 let activeSellerBrandFilter = "all";
 let activeSellerRegionFilter = "all";
 let pendingQuoteFormData = null;
+let quoteSubmitInFlight = false;
 let pendingBidSelection = null;
 let pendingQuoteCloseId = null;
 let quoteCloseSubmitting = false;
@@ -118,10 +119,11 @@ const serverLoadingTitle = document.querySelector("#serverLoadingTitle");
 const serverLoadingText = document.querySelector("#serverLoadingText");
 const homeLiveBoard = document.querySelector(".pick-live-board");
 const homeReviewGrid = document.querySelector(".pick-review-grid");
+const homeReviewSection = homeReviewGrid?.closest(".pick-review-home");
 const homeCaseStudy = document.querySelector("#homeCaseStudy");
 const homeCaseContent = document.querySelector(".pick-case-content");
 const fallbackHomeLiveHTML = homeLiveBoard?.innerHTML || "";
-const fallbackHomeReviewHTML = homeReviewGrid?.innerHTML || "";
+let homeLiveRelayTimer = 0;
 
 let securityBlanketTimer;
 let serverLoadingCount = 0;
@@ -505,7 +507,7 @@ function openManagerReviewModal(bidId) {
   const safeSeller = escapeHTML(sellerDisplayName);
   const safeManager = escapeHTML(managerDisplayName);
   const reviews = getReviewsForBid(bid);
-  managerReviewTitle.textContent = `${sellerDisplayName} 쨌 ${managerDisplayName}`;
+  managerReviewTitle.textContent = `${sellerDisplayName} · ${managerDisplayName}`;
   managerReviewList.innerHTML = reviews.length
     ? reviews
         .map((review) => {
@@ -934,14 +936,31 @@ async function syncSellerDashboardData(options = {}) {
   }
 
   try {
-    await Promise.all([
+    const syncResults = await Promise.allSettled([
       syncCustomerQuotesFromServer({ showLoading: false }),
       syncBidsFromServer({ showLoading: false }),
       syncReviewsFromServer({ showLoading: false }),
     ]);
-    hydrateApprovedSellerAccounts();
-    renderRequests();
-    renderSelectedRequest();
+
+    syncResults.forEach((result, index) => {
+      if (result.status === "rejected") {
+        const labels = ["고객님 견적", "제안", "후기"];
+        console.warn(`${labels[index]} 동기화에 실패했습니다.`, result.reason);
+      }
+    });
+
+    try {
+      hydrateApprovedSellerAccounts();
+      renderRequests();
+      renderSelectedRequest();
+    } catch (error) {
+      console.warn("판매자 화면을 갱신하지 못했습니다.", error);
+    }
+
+    return {
+      ok: syncResults.some((result) => result.status === "fulfilled"),
+      results: syncResults,
+    };
   } finally {
     if (showLoading) hideServerLoading(true);
   }
@@ -969,7 +988,15 @@ async function lookupCustomerQuotesFromServer(customer, phone, quoteNumber = "")
     loadingText: "입력하신 성함과 연락처로 견적을 확인하고 있습니다.",
   });
 
-  return result?.ok && Array.isArray(result.rows) ? result.rows : [];
+  if (!result?.ok || !Array.isArray(result.rows)) {
+    return {
+      ok: false,
+      rows: [],
+      message: result?.message || "서버에서 견적 정보를 확인하지 못했습니다. 잠시 후 다시 시도해주세요.",
+    };
+  }
+
+  return { ok: true, rows: result.rows };
 }
 
 async function saveCustomerQuoteToServer(quote) {
@@ -1533,32 +1560,80 @@ function quoteHomeStatus(request, quoteBids) {
   return "판매자 제안 대기";
 }
 
+function firstQuoteImageSrc(request) {
+  const candidate = Array.isArray(request?.images) && request.images.length
+    ? request.images[0]
+    : request?.image;
+  if (!candidate) return "";
+  if (typeof candidate === "string") return candidate;
+  return String(candidate.url || candidate.src || candidate.imageUrl || "");
+}
+
+function stopHomeLiveRelay() {
+  if (!homeLiveRelayTimer) return;
+  window.clearInterval(homeLiveRelayTimer);
+  homeLiveRelayTimer = 0;
+}
+
+function startHomeLiveRelay() {
+  stopHomeLiveRelay();
+  if (!homeLiveBoard || window.innerWidth > 600 || homeLiveBoard.children.length < 2) return;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  let index = 0;
+  homeLiveRelayTimer = window.setInterval(() => {
+    const cards = Array.from(homeLiveBoard.children);
+    if (document.hidden || cards.length < 2) return;
+    index = (index + 1) % cards.length;
+    homeLiveBoard.scrollTo({ left: cards[index].offsetLeft - homeLiveBoard.offsetLeft, behavior: "smooth" });
+  }, 4200);
+}
+
 function renderHomeFeeds() {
   if (homeLiveBoard) {
+    stopHomeLiveRelay();
     const quoteRows = requests
-      .filter((request) => !isQuoteClosed(request))
-      .slice()
-      .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
-      .slice(0, 6);
+      .map((request) => {
+        const quoteBids = bids
+          .filter((bid) => sameId(bid.requestId, request.id) && Number(bid.price) > 0)
+          .sort((a, b) => Number(a.price) - Number(b.price));
+        const originalPrice = Number(request.price) || 0;
+        const selectedBid = getSelectedBid(request);
+        const selectedPrice = Number(selectedBid?.price) || 0;
+        const lowestBid = quoteBids[0] || null;
+        const offerBid = selectedPrice > 0 && selectedPrice < originalPrice ? selectedBid : lowestBid;
+        const offerPrice = Number(offerBid?.price) || 0;
+        return { request, quoteBids, originalPrice, offerPrice };
+      })
+      .filter((row) => row.originalPrice > 0 && row.offerPrice > 0 && row.offerPrice < row.originalPrice)
+      .sort((a, b) => {
+        const aSelected = hasValidSelectedBid(a.request) ? 1 : 0;
+        const bSelected = hasValidSelectedBid(b.request) ? 1 : 0;
+        return bSelected - aSelected || new Date(b.request.createdAt || 0) - new Date(a.request.createdAt || 0);
+      })
+      .slice(0, 8);
 
     if (quoteRows.length) {
       homeLiveBoard.innerHTML = quoteRows
-        .map((request) => {
-          const quoteBids = bids.filter((bid) => sameId(bid.requestId, request.id));
+        .map(({ request, quoteBids, originalPrice, offerPrice }) => {
           const region = String(request.region || request.installRegion || "지역 확인 중").trim();
           const purpose = String(request.purchasePurpose || "가전 견적").trim();
+          const imageSrc = firstQuoteImageSrc(request);
+          const savings = originalPrice - offerPrice;
           return `
             <article>
+              ${imageSrc ? `<img class="pick-live-thumb" src="${escapeHTML(imageSrc)}" alt="등록된 견적서 미리보기" loading="lazy" />` : ""}
               <span>${escapeHTML(region)} · ${escapeHTML(purpose)}</span>
-              <strong>${escapeHTML(quoteBids.length ? `제안 ${quoteBids.length}건 도착` : "판매자 제안 대기")}</strong>
+              <strong>${escapeHTML(hasValidSelectedBid(request) ? "제안 선택 완료" : `제안 ${quoteBids.length}건 도착`)}</strong>
               <p>${escapeHTML(homeQuoteTitle(request))}</p>
-              <em>${escapeHTML(quoteHomeStatus(request, quoteBids))}</em>
+              <em>${escapeHTML(`${formatPrice(savings)} 낮은 제안 확인`)}</em>
             </article>
           `;
         })
         .join("");
+      window.requestAnimationFrame(startHomeLiveRelay);
     } else {
-      homeLiveBoard.innerHTML = fallbackHomeLiveHTML;
+      homeLiveBoard.innerHTML = `<article class="pick-empty-feed"><strong>비교 가능한 견적을 준비하고 있습니다.</strong><p>기존 견적보다 낮은 실제 제안만 이곳에 표시합니다.</p></article>`;
     }
   }
 
@@ -1575,7 +1650,8 @@ function renderHomeFeeds() {
       })
       .slice(0, 6);
 
-    if (reviewRows.length) {
+    if (reviewRows.length >= 4) {
+      if (homeReviewSection) homeReviewSection.hidden = false;
       homeReviewGrid.innerHTML = reviewRows
         .map((review) => `
           <article>
@@ -1586,7 +1662,8 @@ function renderHomeFeeds() {
         `)
         .join("");
     } else {
-      homeReviewGrid.innerHTML = fallbackHomeReviewHTML;
+      if (homeReviewSection) homeReviewSection.hidden = true;
+      homeReviewGrid.innerHTML = "";
     }
   }
 
@@ -1598,7 +1675,10 @@ function renderHomeFeeds() {
           .filter((bid) => sameId(bid.requestId, request.id) && Number(bid.price) > 0)
           .sort((a, b) => Number(a.price) - Number(b.price)),
       }))
-      .filter((row) => row.quoteBids.length)
+      .filter((row) => {
+        const originalPrice = Number(row.request.price) || 0;
+        return originalPrice > 0 && row.quoteBids.length && Number(row.quoteBids[0].price) < originalPrice;
+      })
       .sort((a, b) => new Date(b.request.createdAt || 0) - new Date(a.request.createdAt || 0))[0];
 
     if (!caseRow) {
@@ -1942,10 +2022,14 @@ function resetCustomerForm() {
 async function createCustomerRequestOnServer(formData) {
   showServerLoading("견적 요청을 등록 중입니다.", "견적서 이미지와 입력 내용을 처리하고 있습니다.");
   try {
-    await new Promise((resolve) => window.setTimeout(resolve, 450));
-    await createCustomerRequest(formData);
+    return await createCustomerRequest(formData);
+  } catch (error) {
+    console.error("견적 요청 등록에 실패했습니다.", error);
+    const message = "견적 요청을 처리하지 못했습니다. 입력 내용을 확인한 뒤 다시 시도해주세요.";
+    setRequestFormMessage(message, "error");
+    return { ok: false, message };
   } finally {
-    hideServerLoading();
+    hideServerLoading(true);
   }
 }
 
@@ -2019,8 +2103,9 @@ async function createCustomerRequest(formData) {
   if (canUseApiServer()) {
     const serverResult = await saveCustomerQuoteToServer(newRequest);
     if (!serverResult?.ok || !serverResult.row) {
-      setRequestFormMessage(serverResult?.message || "견적 요청을 서버에 저장하지 못했습니다. 잠시 후 다시 시도해주세요.", "error");
-      return;
+      const message = serverResult?.message || "견적 요청을 서버에 저장하지 못했습니다. 잠시 후 다시 시도해주세요.";
+      setRequestFormMessage(message, "error");
+      return { ok: false, message };
     }
     savedRequest = serverResult.row;
   }
@@ -2032,6 +2117,7 @@ async function createCustomerRequest(formData) {
   renderSelectedRequest();
   resetCustomerForm();
   setView("lookup");
+  return { ok: true, row: savedRequest };
 }
 
 function openBidSelectConfirmModal(request, bid) {
@@ -2737,35 +2823,65 @@ sellerRegisterCompleteModal?.addEventListener("click", (event) => {
   }
 });
 
-confirmConsentBtn.addEventListener("click", () => {
+confirmConsentBtn.addEventListener("click", async () => {
   if (!collectionConsent.checked || !thirdPartyConsent.checked) {
     setConsentMessage("필수 동의 항목을 모두 체크해야 견적 요청을 등록할 수 있습니다.", "error");
     return;
   }
 
-  if (pendingQuoteFormData) {
-    createCustomerRequestOnServer(pendingQuoteFormData);
-  }
+  if (!pendingQuoteFormData || quoteSubmitInFlight) return;
 
-  closeConsentModal();
+  quoteSubmitInFlight = true;
+  confirmConsentBtn.disabled = true;
+  const previousLabel = confirmConsentBtn.textContent;
+  confirmConsentBtn.textContent = "등록 중...";
+  setConsentMessage("");
+
+  try {
+    const result = await createCustomerRequestOnServer(pendingQuoteFormData);
+    if (result?.ok) {
+      closeConsentModal();
+      return;
+    }
+
+    setConsentMessage(result?.message || "견적 요청을 등록하지 못했습니다. 잠시 후 다시 시도해주세요.", "error");
+  } finally {
+    quoteSubmitInFlight = false;
+    confirmConsentBtn.disabled = false;
+    confirmConsentBtn.textContent = previousLabel;
+  }
 });
 
 lookupForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const formData = new FormData(lookupForm);
-  const customer = normalizeName(formData.get("lookupCustomer"));
+  const enteredCustomer = String(formData.get("lookupCustomer") || "").trim();
+  const customer = normalizeName(enteredCustomer);
   const phone = normalizePhone(formData.get("lookupPhone"));
 
-  lookupAccessGranted = true;
-  if (!customer || !phone) {
-    renderLookupResults([]);
+  if (!customer || phone.length < 9) {
+    lookupAccessGranted = false;
+    renderLookupResults([], "성함과 휴대전화로 등록한 견적을 조회하세요.");
+    setLookupActionMessage("견적 등록 시 입력한 고객님 성함과 연락처를 정확히 입력해주세요.");
     return;
   }
 
-  const serverMatches = canUseApiServer() ? await lookupCustomerQuotesFromServer(formData.get("lookupCustomer").trim(), phone) : [];
+  const lookupResult = canUseApiServer()
+    ? await lookupCustomerQuotesFromServer(enteredCustomer, phone)
+    : { ok: true, rows: [] };
+
+  if (!lookupResult.ok) {
+    lookupAccessGranted = false;
+    renderLookupResults([], "성함과 휴대전화로 등록한 견적을 조회하세요.");
+    setLookupActionMessage(lookupResult.message);
+    return;
+  }
+
+  lookupAccessGranted = true;
+  const serverMatches = lookupResult.rows;
   if (serverMatches.length && canUseApiServer()) {
     mergeRequests(serverMatches);
-    await Promise.all([
+    await Promise.allSettled([
       syncBidsFromServer(),
       syncReviewsFromServer({ showLoading: false }),
     ]);
@@ -2912,7 +3028,7 @@ sellerLoginForm.addEventListener("submit", async (event) => {
   try {
     showServerLoading(
       "판매자 페이지를 준비 중입니다.",
-      "로그인 확인 후 고객님 견적과 제안 정보를 한 번에 불러오고 있습니다."
+      "로그인 정보를 확인하고 있습니다."
     );
 
     const loginResult = await loginSellerToServer(loginId, loginPassword, { showLoading: false });
@@ -2948,8 +3064,15 @@ sellerLoginForm.addEventListener("submit", async (event) => {
     if (bidForm.elements.managerName) bidForm.elements.managerName.value = account.manager || "";
     if (bidForm.elements.managerPhone) bidForm.elements.managerPhone.value = formatPhoneNumber(account.phone || "");
 
-    await syncSellerDashboardData({ showLoading: false });
     setView("seller", { replacePath: true });
+    hideServerLoading(true);
+
+    try {
+      await syncSellerDashboardData({ showLoading: true });
+    } catch (error) {
+      console.warn("로그인은 완료됐지만 판매자 데이터를 모두 불러오지 못했습니다.", error);
+      setBidFormMessage("로그인은 완료되었습니다. 일부 정보를 불러오지 못한 경우 새로고침해주세요.", "error");
+    }
   } catch (error) {
     activeSellerId = "";
     writeActiveSellerSession("");

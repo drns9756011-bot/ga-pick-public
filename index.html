@@ -2,6 +2,7 @@
 <html lang="ko">
   <head>
     <meta charset="utf-8" />
+    <meta name="pickquote-build" content="20260811-main-redesign-v21-worker" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     
     <!-- 픽견적은 시스템 다크모드와 무관하게 항상 라이트 UI를 사용합니다. -->
@@ -234,7 +235,7 @@
                 </div>
               </div>
               <figure class="pick-trust-visual">
-                <img src="/assets/customer-quote-comparison.png" alt="픽견적에서 판매자별 가격과 혜택을 비교하는 화면" />
+                <img src="/assets/customer-quote-comparison-v3.png" alt="한 장의 가전 견적서로 여러 판매자 제안을 비교하는 과정" />
                 <figcaption><strong>한눈에 조건 비교</strong><span>가격, 카드 혜택, 배송과 설치 조건까지 확인하세요.</span></figcaption>
               </figure>
             </section>
@@ -292,24 +293,18 @@
               <div class="pick-case-content"></div>
             </section>
 
-            <section class="pick-proof-home" aria-labelledby="pickPressTitle">
-              <div><span>언론 보도</span><h2 id="pickPressTitle">언론이 소개한 픽견적</h2><p>서울경제TV · 2026.08.04</p></div>
-              <a href="https://www.sentv.co.kr/article/view/sentv202608040149" target="_blank" rel="noopener noreferrer">기사 원문 보기 <span aria-hidden="true">→</span></a>
-            </section>
-
-            <section class="pick-review-home" aria-labelledby="pickReviewTitle">
+            <section class="pick-review-home" aria-labelledby="pickReviewTitle" hidden>
               <div class="pick-home-heading">
                 <span>실제 이용 후기</span>
                 <h2 id="pickReviewTitle">실제 픽견적 이용 고객 후기</h2>
               </div>
               <div class="pick-review-grid" aria-live="polite">
-                <article class="pick-empty-feed"><strong>아직 등록된 후기가 없습니다.</strong><p>거래 완료 후 고객님이 직접 작성한 후기만 표시합니다.</p></article>
               </div>
             </section>
 
             <section class="pick-brand-home" aria-labelledby="pickBrandTitle">
               <div class="pick-home-heading is-row">
-                <div><span>브랜드관</span><h2 id="pickBrandTitle">아직 어떤 제품을 살지 못 정하셨나요?</h2><p>LG전자와 삼성전자 인기 제품과 패키지를 먼저 살펴보세요.</p></div>
+                <div><span>브랜드관</span><h2 id="pickBrandTitle">견적 전, 우리 집에 맞는 제품부터 살펴보세요.</h2><p>LG전자·삼성전자 제품과 패키지를 비교한 뒤 바로 견적을 요청할 수 있습니다.</p></div>
               </div>
               <div class="pick-brand-grid">
                 <a href="/brand" aria-label="LG전자 브랜드관"><img src="/assets/brand-hero-lg-products.png" alt="LG전자 가전 제품" /><strong>LG전자 브랜드관</strong><span>인기 제품과 패키지 보기</span></a>
@@ -323,6 +318,7 @@
             </section>
           </div>
         </section>
+      </section>
 
         <section class="page" id="customerPage" data-page="customer">
         <div class="page-head">
@@ -1140,9 +1136,5 @@
     <div class="security-blanket" id="securityBlanket" aria-hidden="true"></div>
   </body>
 </html>
-
-
-
-
 
 

@@ -1326,7 +1326,6 @@ h3 {
 }
 
 .pick-home-heading h2,
-.pick-proof-home h2,
 .pick-final-cta h2 {
   margin: 8px 0 0;
   color: var(--home-ink);
@@ -1457,7 +1456,39 @@ h3 {
 .pick-live-board p,
 .pick-review-grid p { margin: 8px 0 0; color: #4c5a64; line-height: 1.55; }
 .pick-live-board em { display: block; margin-top: 16px; color: var(--home-muted); font-size: 13px; font-style: normal; }
+.pick-live-thumb {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  margin-bottom: 16px;
+  border-radius: 6px;
+  background: #edf2f4;
+  object-fit: cover;
+  filter: blur(3px);
+  transform: scale(1.01);
+}
 .pick-empty-feed { grid-column: 1 / -1; text-align: center; }
+.pick-review-home[hidden] { display: none; }
+
+.wizard-brand-guide {
+  display: grid;
+  grid-template-columns: minmax(0, .8fr) minmax(340px, 1.2fr);
+  gap: 18px;
+  margin-top: 18px;
+  padding: 20px;
+  border: 1px solid #cfe0dc;
+  border-radius: 8px;
+  background: #f4f9f7;
+}
+
+.wizard-brand-guide-copy { align-self: center; }
+.wizard-brand-guide-copy span { display: block; color: #147565; font-size: 13px; font-weight: 800; }
+.wizard-brand-guide-copy strong { display: block; margin-top: 7px; color: #10232b; font-size: 19px; }
+.wizard-brand-guide-copy p { margin: 7px 0 0; color: #63717a; font-size: 14px; line-height: 1.5; }
+.wizard-brand-guide-links { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.wizard-brand-guide-links a { display: grid; grid-template-columns: 92px 1fr; align-items: center; gap: 10px; min-width: 0; padding: 10px; border: 1px solid #d7e2df; border-radius: 6px; background: #fff; color: #10232b; text-decoration: none; }
+.wizard-brand-guide-links img { width: 92px; height: 64px; object-fit: contain; }
+.wizard-brand-guide-links span { font-size: 14px; font-weight: 800; }
 
 .pick-flow-time {
   margin: 18px 0 0;
@@ -1479,22 +1510,6 @@ h3 {
 .pick-case-prices div { display: flex; justify-content: space-between; gap: 16px; padding: 13px 15px; border: 1px solid var(--home-line); border-radius: 6px; background: #fff; }
 .pick-case-prices span { color: var(--home-muted); }
 .pick-case-prices strong { color: var(--home-green-dark); }
-
-.pick-proof-home {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 30px;
-  margin-top: 76px;
-  padding: 34px 38px;
-  border: 1px solid var(--home-line);
-  border-radius: 8px;
-  background: #f7f9fa;
-}
-
-.pick-proof-home h2 { font-size: 30px; }
-.pick-proof-home p { margin: 8px 0 0; color: var(--home-muted); }
-.pick-proof-home a { color: var(--home-green-dark); font-weight: 800; text-decoration: none; white-space: nowrap; }
 
 .pick-brand-grid {
   display: grid;
@@ -1569,23 +1584,37 @@ h3 {
   .pick-privacy-home, .pick-live-home, .pick-flow-home, .pick-case-home, .pick-review-home, .pick-brand-home { padding: 48px 0; }
   .pick-home-heading { margin-bottom: 20px; }
   .pick-home-heading.is-row { align-items: flex-start; }
-  .pick-home-heading h2, .pick-proof-home h2, .pick-final-cta h2 { font-size: 27px; }
+  .pick-home-heading h2, .pick-final-cta h2 { font-size: 27px; }
   .pick-privacy-steps li, .pick-flow-list li { padding: 18px; }
   .pick-privacy-steps strong, .pick-flow-list strong { font-size: 16px; }
   .pick-privacy-steps p, .pick-flow-list p { font-size: 14px; }
   .pick-privacy-emphasis { font-size: 15px; }
   .pick-approved-note { display: grid; gap: 7px; }
   .pick-heading-link { display: none; }
-  .pick-live-board, .pick-review-grid { grid-template-columns: 1fr; }
+  .pick-live-board {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding: 0 2px 10px;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .pick-live-board::-webkit-scrollbar { display: none; }
+  .pick-live-board article { flex: 0 0 min(84vw, 340px); scroll-snap-align: start; }
+  .pick-live-board .pick-empty-feed { flex-basis: 100%; }
+  .pick-review-grid { grid-template-columns: 1fr; }
   .pick-live-board article, .pick-review-grid article, .pick-case-content article { padding: 18px; }
   .pick-flow-time { font-size: 14px; line-height: 1.55; }
   .pick-case-content h3 { font-size: 20px; }
-  .pick-proof-home { align-items: flex-start; margin-top: 48px; padding: 24px 20px; }
-  .pick-proof-home a { font-size: 13px; }
   .pick-brand-grid a { grid-template-columns: 96px 1fr; padding: 14px; }
   .pick-brand-grid img { width: 96px; height: 76px; }
   .pick-brand-grid strong { font-size: 16px; }
   .pick-brand-grid span { font-size: 12px; }
+  .wizard-brand-guide { grid-template-columns: 1fr; padding: 16px; }
+  .wizard-brand-guide-links { grid-template-columns: 1fr; }
+  .wizard-brand-guide-links a { grid-template-columns: 82px 1fr; }
+  .wizard-brand-guide-links img { width: 82px; height: 56px; }
   .pick-final-cta { display: grid; margin-top: 48px; padding: 30px 22px; }
   .pick-final-cta button { width: 100%; }
 }
@@ -1596,7 +1625,7 @@ h3 {
   .pick-trust-actions { grid-template-columns: 1fr; }
   .pick-secondary-cta { min-height: 44px; }
   .pick-home-shortcuts strong { font-size: 12px; }
-  .pick-home-heading h2, .pick-proof-home h2, .pick-final-cta h2 { font-size: 25px; }
+  .pick-home-heading h2, .pick-final-cta h2 { font-size: 25px; }
 }
 
 
@@ -3879,8 +3908,8 @@ select {
 }
 
 .quote-wizard .wizard-choice-card {
-  min-height: 112px;
-  padding: 22px 20px;
+  min-height: 96px;
+  padding: 18px;
   background: #fbfcfd;
   grid-template-columns: auto minmax(0, 1fr) auto;
 }
@@ -3891,8 +3920,9 @@ select {
 }
 
 .quote-wizard .wizard-choice-card strong {
-  font-size: clamp(20px, 2vw, 21px);
-  line-height: 1.25;
+  font-size: 18px;
+  font-weight: 750;
+  line-height: 1.3;
   white-space: nowrap;
   word-break: keep-all;
   overflow-wrap: normal;
@@ -3900,8 +3930,13 @@ select {
 
 .quote-wizard .wizard-choice-card small {
   max-width: 560px;
+  font-weight: 600;
   line-height: 1.5;
   word-break: keep-all;
+}
+
+.quote-wizard .wizard-choice-card em {
+  font-weight: 700;
 }
 
 .quote-wizard .wizard-product-list {
@@ -3925,8 +3960,8 @@ select {
 
 .wizard-navigation .primary-btn,
 .wizard-navigation .secondary-btn {
-  min-height: 64px;
-  font-size: 18px;
+  min-height: 56px;
+  font-size: 16px;
 }
 
 .option-sheet-modal {
@@ -6516,76 +6551,6 @@ html.is-mobile-device :where(.model-code, .quote-number, .ai-recommendation-grou
 }
 
 @media (max-width: 720px) {
-  .quote-wizard {
-    gap: 18px;
-  }
-
-  .quote-wizard .wizard-step {
-    gap: 18px;
-  }
-
-  .quote-wizard .wizard-choice-grid,
-  .quote-wizard .wizard-choice-grid-two,
-  .quote-wizard .wizard-choice-grid-three {
-    grid-template-columns: 1fr;
-  }
-
-  .quote-wizard .wizard-choice-card {
-    min-height: 94px;
-    grid-template-columns: 32px minmax(0, 1fr);
-    padding: 18px 16px;
-    column-gap: 18px;
-    row-gap: 8px;
-  }
-
-  .quote-wizard .wizard-choice-card strong {
-    font-size: clamp(24px, 6vw, 30px);
-    line-height: 1.18;
-    white-space: nowrap;
-  }
-
-  .quote-wizard .wizard-choice-card small {
-    font-size: clamp(16px, 4vw, 20px);
-    line-height: 1.45;
-  }
-
-  .quote-wizard .wizard-choice-card em {
-    grid-column: 2;
-    justify-self: start;
-    margin-top: 2px;
-    font-size: clamp(13px, 3.5vw, 15px);
-  }
-
-  .quote-wizard .wizard-product-card:not(.selected-option-card) {
-    grid-template-columns: auto auto minmax(0, 1fr);
-  }
-
-  .quote-wizard .selected-option-card {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 14px;
-  }
-
-  .quote-wizard .option-select-btn {
-    width: 100%;
-  }
-
-  .wizard-navigation,
-  .wizard-navigation.has-prev,
-  .wizard-navigation.is-final {
-    grid-template-columns: 0.42fr 1fr;
-    gap: 10px;
-  }
-
-  .wizard-navigation:not(.has-prev) {
-    grid-template-columns: 1fr;
-  }
-
-  .wizard-navigation .primary-btn,
-  .wizard-navigation .secondary-btn {
-    min-height: 58px;
-    font-size: 17px;
-  }
-
   .option-sheet-modal {
     align-items: end;
     padding: 10px 10px calc(104px + env(safe-area-inset-bottom));
@@ -6633,7 +6598,8 @@ html.is-mobile-device :where(.model-code, .quote-number, .ai-recommendation-grou
 .quote-wizard .wizard-step h3 {
   margin: 0;
   color: var(--ink);
-  font-size: clamp(30px, 4vw, 44px);
+  font-size: clamp(28px, 3vw, 36px);
+  font-weight: 780;
   line-height: 1.18;
   letter-spacing: 0;
   word-break: keep-all;
@@ -6642,7 +6608,7 @@ html.is-mobile-device :where(.model-code, .quote-number, .ai-recommendation-grou
 .quote-wizard .wizard-step p {
   margin: 0;
   color: var(--muted);
-  font-weight: 800;
+  font-weight: 600;
   line-height: 1.55;
   word-break: keep-all;
 }
@@ -6844,13 +6810,13 @@ html.is-mobile-device :where(.model-code, .quote-number, .ai-recommendation-grou
 .quote-wizard .wizard-back {
   display: grid;
   place-items: center;
-  min-height: 58px;
+  min-height: 56px;
   border: 1px solid #d5dfe7;
   border-radius: 8px;
   background: #fff;
   color: var(--ink);
-  font-size: 18px;
-  font-weight: 950;
+  font-size: 16px;
+  font-weight: 800;
 }
 
 .quote-wizard .ai-recommendation-panel {
@@ -7024,8 +6990,8 @@ html.is-mobile-device :where(.model-code, .quote-number, .ai-recommendation-grou
 
 @media (max-width: 720px) {
   .quote-wizard .wizard-step h3 {
-    font-size: clamp(28px, 8.4vw, 40px);
-    line-height: 1.12;
+    font-size: 24px;
+    line-height: 1.25;
   }
 
   .quote-wizard .wizard-choice-grid,
@@ -7037,9 +7003,37 @@ html.is-mobile-device :where(.model-code, .quote-number, .ai-recommendation-grou
 
   .quote-wizard .wizard-choice-card,
   .quote-wizard .wizard-product-card {
-    min-height: 88px;
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    gap: 12px;
+    min-height: 84px;
+    grid-template-columns: 26px minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .quote-wizard .wizard-choice-card .wizard-radio,
+  .quote-wizard .wizard-checkbox {
+    width: 26px;
+    height: 26px;
+    font-size: 14px;
+  }
+
+  .quote-wizard .wizard-choice-card strong {
+    font-size: 16px;
+    font-weight: 750;
+    line-height: 1.3;
+    white-space: nowrap;
+  }
+
+  .quote-wizard .wizard-choice-card small {
+    margin-top: 4px;
+    font-size: 12.5px;
+    font-weight: 600;
+    line-height: 1.45;
+  }
+
+  .quote-wizard .wizard-choice-card em {
+    padding: 5px 8px;
+    font-size: 11px;
+    font-weight: 700;
   }
 
   .quote-wizard .wizard-actions {
@@ -7086,15 +7080,37 @@ html.is-mobile-device :where(.model-code, .quote-number, .ai-recommendation-grou
   .quote-wizard .wizard-choice-card strong,
   .quote-wizard .wizard-product-card strong,
   .quote-wizard .wizard-option-row strong {
-    font-size: clamp(18px, 5.3vw, 24px);
-    line-height: 1.18;
+    font-size: 16px;
+    font-weight: 750;
+    line-height: 1.3;
   }
 
   .quote-wizard .wizard-choice-card span,
   .quote-wizard .wizard-product-card span,
   .quote-wizard .wizard-option-row span {
-    font-size: clamp(13px, 3.7vw, 16px);
+    font-size: 12.5px;
+    font-weight: 600;
     line-height: 1.45;
+  }
+
+  .wizard-navigation,
+  .wizard-navigation.has-prev,
+  .wizard-navigation.is-final {
+    grid-template-columns: 0.38fr 1fr;
+    gap: 10px;
+  }
+
+  .wizard-navigation:not(.has-prev) {
+    grid-template-columns: 1fr;
+  }
+
+  .wizard-navigation .primary-btn,
+  .wizard-navigation .secondary-btn,
+  .quote-wizard .wizard-back,
+  .quote-wizard .wizard-next {
+    min-height: 52px;
+    font-size: 15px;
+    font-weight: 750;
   }
 }
 
@@ -7557,46 +7573,4 @@ option {
   .privacy-policy-section li { font-size: 13px; }
   .privacy-policy-table { min-width: 680px; }
   .privacy-policy-actions { padding: 12px 16px max(12px, env(safe-area-inset-bottom)); }
-}
-
-/* Quote wizard mobile typography */
-@media (max-width: 768px) {
-  .quote-wizard .wizard-choice-grid,
-  .quote-wizard .wizard-choice-grid-two,
-  .quote-wizard .quote-type-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .quote-wizard .wizard-choice-card,
-  .quote-wizard .wizard-choice-card.has-badge {
-    min-width: 0;
-    grid-template-columns: 44px minmax(0, 1fr);
-    align-items: center;
-    gap: 16px;
-  }
-
-  .quote-wizard .wizard-choice-card strong {
-    display: block;
-    width: 100%;
-    white-space: nowrap;
-    word-break: keep-all;
-    overflow-wrap: normal;
-    font-size: clamp(27px, 7.4vw, 34px);
-    line-height: 1.1;
-  }
-
-  .quote-wizard .wizard-choice-card small {
-    display: block;
-    width: 100%;
-    max-width: none;
-    font-size: clamp(16px, 4.3vw, 19px);
-    line-height: 1.45;
-  }
-
-  .quote-wizard .wizard-choice-card em {
-    justify-self: start;
-    grid-column: 2;
-    margin-top: 4px;
-    white-space: nowrap;
-  }
 }

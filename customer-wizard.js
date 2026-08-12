@@ -724,12 +724,28 @@
   }
 
   function renderQuoteType() {
+    const brandGuide = fields.quoteType.value === "without_quote"
+      ? `
+        <aside class="wizard-brand-guide">
+          <div class="wizard-brand-guide-copy">
+            <span>제품 선택이 막막하신가요?</span>
+            <strong>브랜드관에서 제품과 패키지를 먼저 살펴보세요.</strong>
+            <p>제품을 살펴본 뒤 필요한 품목만 선택해 견적을 요청할 수 있습니다.</p>
+          </div>
+          <div class="wizard-brand-guide-links">
+            <a href="/brand"><img src="/assets/brand-hero-lg-products.png" alt="LG전자 제품" /><span>LG전자 브랜드관</span></a>
+            <a href="/brand"><img src="/assets/brand-hero-samsung-products.png" alt="삼성전자 제품" /><span>삼성전자 브랜드관</span></a>
+          </div>
+        </aside>
+      `
+      : "";
     return `
       <h3>견적서가 있는지 먼저 선택해주세요.</h3>
       <p>견적서 유무에 따라 필요한 입력 단계가 달라집니다.</p>
       <div class="wizard-choice-grid wizard-choice-grid-two">
         ${quoteTypes.map((item) => choiceCard(item, "wizardQuoteTypeProxy", fields.quoteType.value)).join("")}
       </div>
+      ${brandGuide}
     `;
   }
 
@@ -2410,4 +2426,3 @@ function buildAiSummary() {
       .replace(/'/g, "&#39;");
   }
 })();
-
