@@ -1666,6 +1666,73 @@ body:has(#homePage.is-active) .pick-final-cta button {
   box-shadow: 0 8px 18px rgba(18, 59, 103, .2);
 }
 
+/* 2026-08-13: navy treatment for privacy steps and brand selection guidance. */
+body:has(#homePage.is-active) .pick-privacy-steps li {
+  border-color: #d5e0eb;
+  background: #ffffff;
+  box-shadow: 0 8px 20px rgba(18, 59, 103, .05);
+}
+
+body:has(#homePage.is-active) .pick-privacy-steps > li > span {
+  background: #eaf1f8;
+  color: #123b67;
+  border-color: #c7d7e7;
+}
+
+body:has(#homePage.is-active) .pick-privacy-steps strong,
+body:has(#homePage.is-active) .pick-privacy-emphasis {
+  color: #183c5f;
+}
+
+body:has(#homePage.is-active) .pick-privacy-steps p,
+body:has(#homePage.is-active) .pick-approved-note {
+  color: #64778a;
+}
+
+body:has(#homePage.is-active) .pick-privacy-emphasis {
+  background: #f1f5f9;
+  border-left-color: #123b67;
+}
+
+body:has(#homePage.is-active) .pick-approved-note span::before {
+  color: #123b67;
+}
+
+.wizard-brand-guide {
+  border-color: #d5e0eb;
+  background: #f1f5f9;
+}
+
+.wizard-brand-guide-copy span {
+  color: #123b67;
+}
+
+.wizard-brand-guide-copy strong,
+.wizard-brand-guide-links a {
+  color: #0b2747;
+}
+
+.wizard-brand-guide-copy p {
+  color: #64778a;
+}
+
+.wizard-brand-guide-links a {
+  border-color: #d5e0eb;
+  background: #ffffff;
+}
+
+.quote-wizard .wizard-choice-card.is-selected,
+.quote-wizard .wizard-product-card.is-selected {
+  background: #edf3f9;
+  box-shadow: 0 12px 28px rgba(18, 59, 103, .1);
+}
+
+.quote-wizard .wizard-chip.is-selected,
+.wizard-choice-card em {
+  background: #eaf1f8;
+  color: #123b67;
+}
+
 body:has(#homePage.is-active) .pick-secondary-cta,
 body:has(#homePage.is-active) .pick-no-quote-cta {
   color: #123b67;
@@ -1867,7 +1934,7 @@ body:has(#homePage.is-active) .pick-trust-lead {
 
 .pick-start-panel-actions {
   display: grid;
-  grid-template-columns: 1.1fr .9fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
   margin-top: 18px;
 }
@@ -1875,6 +1942,7 @@ body:has(#homePage.is-active) .pick-trust-lead {
 .pick-start-panel .pick-upload-cta,
 .pick-start-panel .pick-no-quote-cta {
   width: 100%;
+  min-width: 0;
 }
 
 .pick-start-panel > p {
@@ -2312,7 +2380,8 @@ select {
   margin-top: 12px;
   padding: 14px;
   border-radius: 8px;
-  background: #eef7f5;
+  background: #f1f5f9;
+  border: 1px solid #d5e0eb;
 }
 
 .seller-request-note p {
@@ -2328,9 +2397,9 @@ select {
   gap: 12px;
   margin-top: 12px;
   padding: 16px;
-  border: 1px solid #b9e2d9;
+  border: 1px solid #b8c9d9;
   border-radius: 8px;
-  background: #f5fffc;
+  background: #edf3f9;
 }
 
 .seller-image .without-quote-items {
@@ -2343,6 +2412,40 @@ select {
   color: var(--primary);
   font-size: 15px;
   font-weight: 900;
+}
+
+/* 2026-08-13: navy seller workspace surfaces and states. */
+.seller-page .seller-filter-host,
+.seller-page .seller-page-layout .request-list,
+.seller-page .seller-quote-card {
+  border-color: #d5e0eb;
+}
+
+.seller-page .seller-filter-group + .seller-filter-group {
+  border-top-color: #e1e8ef;
+}
+
+.seller-page .request-item.is-active,
+.seller-page .request-item:hover {
+  border-color: #123b67;
+  background: #edf3f9;
+}
+
+.seller-page .seller-request-note,
+.seller-page .without-quote-items {
+  background: #edf3f9;
+  border-color: #b8c9d9;
+}
+
+.seller-page .request-badge,
+.seller-page .seller-filter-group button.is-active {
+  background: #eaf1f8;
+  color: #123b67 !important;
+  border-color: #b8c9d9;
+}
+
+.seller-page .deadline-live {
+  color: #123b67 !important;
 }
 
 .without-quote-item-list {
@@ -2412,7 +2515,7 @@ select {
 }
 
 .seller-page {
-  background: #f4f7fb;
+  background: #f5f8fb;
 }
 
 .seller-tabs {
@@ -2420,7 +2523,7 @@ select {
   flex-wrap: wrap;
   gap: 8px;
   padding: 28px 6vw 0;
-  background: #f4f7fb;
+  background: #f5f8fb;
 }
 
 .seller-tabs button {
@@ -2484,9 +2587,9 @@ select {
 }
 
 .seller-filter-group button.is-active {
-  border-color: rgba(18, 107, 93, 0.22);
-  background: #e8f5f2;
-  color: var(--primary);
+  border-color: #b8c9d9;
+  background: #eaf1f8;
+  color: #123b67;
 }
 
 .seller-login-page {
@@ -2804,7 +2907,7 @@ select {
 
 .seller-bid-card.is-selected {
   border-color: var(--primary);
-  box-shadow: 0 0 0 4px rgba(18, 107, 93, 0.12);
+  box-shadow: 0 0 0 4px rgba(18, 59, 103, .12);
 }
 
 .bid-card-visual {
@@ -3254,7 +3357,7 @@ select {
 .request-item:hover,
 .request-item.is-active {
   border-color: var(--primary);
-  background: #f0f8f6;
+  background: #edf3f9;
 }
 
 .request-item strong {
@@ -3271,8 +3374,8 @@ select {
   min-height: 26px;
   padding: 4px 8px;
   border-radius: 999px;
-  background: #e8f7ef;
-  color: #117047 !important;
+  background: #eaf1f8;
+  color: #123b67 !important;
   font-weight: 900;
 }
 
@@ -3282,7 +3385,7 @@ select {
 }
 
 .deadline-live {
-  color: #126b5d !important;
+  color: #123b67 !important;
   font-weight: 900;
 }
 
@@ -3517,9 +3620,9 @@ select {
 
 .wizard-product-card.is-selected,
 .wizard-product-card:has(input:checked) {
-  border-color: rgba(18, 107, 93, 0.42);
-  background: #fff;
-  box-shadow: 0 14px 30px rgba(18, 107, 93, 0.12);
+  border-color: rgba(18, 59, 103, .42);
+  background: #edf3f9;
+  box-shadow: 0 14px 30px rgba(18, 59, 103, .12);
 }
 
 .wizard-product-main {
@@ -4073,7 +4176,7 @@ select {
   align-self: center;
   padding: 7px 10px;
   border-radius: 999px;
-  background: #e6f7ef;
+  background: #eaf1f8;
   color: var(--primary);
   font-size: 12px;
   font-style: normal;
@@ -4373,6 +4476,8 @@ select {
 
 .quote-wizard .wizard-choice-card em {
   font-weight: 700;
+  background: #eaf1f8;
+  color: #123b67;
 }
 
 .quote-wizard .wizard-product-list {
@@ -6995,6 +7100,33 @@ html.is-mobile-device :where(.model-code, .quote-number, .ai-recommendation-grou
   }
 }
 
+/* 2026-08-13: center the desktop hero logo and place the service line below it. */
+body:has(#homePage.is-active) .pick-hero-center {
+  width: min(760px, 100%);
+  margin: 0 auto;
+  text-align: center;
+}
+
+body:has(#homePage.is-active) .pick-home-logo-wrap {
+  display: block;
+  width: min(390px, 82vw);
+  margin: 0 auto 22px;
+  padding: 0;
+}
+
+body:has(#homePage.is-active) .pick-home-logo {
+  display: block;
+  width: 100%;
+  margin: 0 auto;
+}
+
+body:has(#homePage.is-active) .pick-zero-fee {
+  display: block;
+  width: 100%;
+  margin: 0 auto 14px;
+  text-align: center;
+}
+
 @media (max-width: 720px) {
   .option-sheet-modal {
     align-items: end;
@@ -7098,8 +7230,8 @@ html.is-mobile-device :where(.model-code, .quote-number, .ai-recommendation-grou
 .quote-wizard .wizard-choice-card.is-selected,
 .quote-wizard .wizard-product-card.is-selected {
   border-color: var(--primary);
-  background: #f0faf7;
-  box-shadow: 0 12px 28px rgba(15, 118, 101, 0.1);
+  background: #edf3f9;
+  box-shadow: 0 12px 28px rgba(18, 59, 103, .1);
 }
 
 .quote-wizard .wizard-choice-card .wizard-radio,
@@ -7234,7 +7366,7 @@ html.is-mobile-device :where(.model-code, .quote-number, .ai-recommendation-grou
 
 .quote-wizard .wizard-chip.is-selected {
   border-color: var(--primary);
-  background: #e6f7ef;
+  background: #eaf1f8;
   color: var(--primary);
 }
 
@@ -7811,10 +7943,10 @@ html.is-mobile-device .header-ad-picture img {
 .pick-app-home {
   --home-green: #123b67;
   --home-green-dark: #0b2747;
-  --home-ink: #10231a;
-  --home-muted: #63736a;
-  --home-line: #dce9e1;
-  --home-soft: #f4fbf6;
+  --home-ink: #12263d;
+  --home-muted: #647486;
+  --home-line: #d9e2ec;
+  --home-soft: #edf3f9;
   background: #fff;
 }
 
