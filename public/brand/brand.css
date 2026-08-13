@@ -1,9 +1,9 @@
 ﻿@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css");
 
 :root {
-  --brand-green: #0f7665;
-  --brand-green-dark: #074f45;
-  --brand-green-soft: #e9f6f2;
+  --brand-green: #123b67;
+  --brand-green-dark: #0b2747;
+  --brand-green-soft: #edf3f9;
   --brand-ink: #14212b;
   --brand-muted: #64717c;
   --brand-line: #dfe8e5;
@@ -196,7 +196,7 @@ body.brand-server-is-loading { cursor: wait; }
 .brand-hall-hero-actions { display:flex; gap:14px; margin-top:34px; }
 .brand-hall-hero-actions button { min-width:220px; height:58px; border-radius:15px; padding:0 20px; display:flex; align-items:center; justify-content:flex-start; gap:11px; font:inherit; font-size:1rem; font-weight:900; cursor:pointer; transition:transform .16s ease, box-shadow .16s ease, background .16s ease; }
 .brand-hall-hero-actions button b { margin-left:auto; font-size:1.6rem; font-weight:500; line-height:1; }
-.brand-hero-primary { border:1px solid #08705f; background:linear-gradient(135deg,#0f8a73,#056858); color:#fff; box-shadow:0 13px 28px rgba(10,111,91,.19); }
+.brand-hero-primary { border:1px solid #0b2747; background:linear-gradient(135deg,#164d82,#0b2747); color:#fff; box-shadow:0 13px 28px rgba(11,39,71,.19); }
 .brand-hero-secondary { border:1px solid #bcd8d0; background:rgba(255,255,255,.9); color:#146e5e; }
 .brand-hall-hero-actions button:hover { transform:translateY(-2px); }
 .brand-action-icon { width:28px; height:28px; border-radius:9px; display:grid; place-items:center; border:1px solid currentColor; font-weight:900; }

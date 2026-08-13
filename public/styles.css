@@ -1634,6 +1634,84 @@ h3 {
   .pick-final-cta button { width: 100%; }
 }
 
+/* 2026-08-13: trust-focused navy palette for the public home. */
+body:has(#homePage.is-active) .pick-app-home {
+  --home-green: #123b67;
+  --home-green-dark: #0b2747;
+  --home-ink: #12263d;
+  --home-muted: #647486;
+  --home-line: #d9e2ec;
+  background: #fff;
+}
+
+body:has(#homePage.is-active) .pick-trust-hero {
+  background: #f3f7fb;
+  border-bottom-color: #d9e5f0;
+}
+
+body:has(#homePage.is-active) .pick-zero-fee,
+body:has(#homePage.is-active) .pick-home-heading > span,
+body:has(#homePage.is-active) .pick-home-heading > div > span,
+body:has(#homePage.is-active) .pick-final-cta > div > span,
+body:has(#homePage.is-active) .pick-panel-kicker {
+  color: #123b67;
+}
+
+body:has(#homePage.is-active) .pick-hero-center h1,
+body:has(#homePage.is-active) .pick-final-cta h2,
+body:has(#homePage.is-active) .pick-home-heading h2 {
+  color: #0b2747;
+}
+
+body:has(#homePage.is-active) .pick-trust-lead,
+body:has(#homePage.is-active) .pick-quote-start-panel p {
+  color: #526477;
+}
+
+body:has(#homePage.is-active) .pick-primary-cta,
+body:has(#homePage.is-active) .pick-upload-cta,
+body:has(#homePage.is-active) .pick-final-cta button {
+  background: #123b67;
+  border-color: #123b67;
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(18, 59, 103, .2);
+}
+
+body:has(#homePage.is-active) .pick-secondary-cta,
+body:has(#homePage.is-active) .pick-no-quote-cta {
+  color: #123b67;
+  border-color: #9fb5ca;
+}
+
+body:has(#homePage.is-active) .pick-start-panel,
+body:has(#homePage.is-active) .pick-quote-start-panel {
+  border-color: #d7e2ed;
+  box-shadow: 0 14px 34px rgba(22, 61, 96, .1);
+}
+
+body:has(#homePage.is-active) .pick-home-shortcuts > div > span,
+body:has(#homePage.is-active) .pick-faq-list summary::after {
+  color: #123b67;
+}
+
+body:has(#homePage.is-active) .pick-home-ad-slot {
+  border-color: #b8c9d9;
+  background: #fbfcfe;
+}
+
+body:has(#homePage.is-active) .pick-final-cta {
+  background: #edf3f9;
+  border-color: #cbd9e7;
+}
+
+body:has(#homePage.is-active) .pick-final-cta p {
+  color: #435d74;
+}
+
+body:has(#homePage.is-active) .pick-final-cta small {
+  color: #6c8092;
+}
+
 /* 2026-08-13: Heydealer-style public home layout. */
 body:has(#homePage.is-active) .topbar .header-ad-slot {
   display: none;
