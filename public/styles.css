@@ -4,10 +4,10 @@
   --bg: #f6f7f9;
   --ink: #16202a;
   --muted: #687483;
-  --line: #d9e0e8;
+  --line: #d9e2ec;
   --panel: #ffffff;
-  --primary: #126b5d;
-  --primary-dark: #0d4f45;
+  --primary: #123b67;
+  --primary-dark: #0b2747;
   --accent: #e8b44f;
   --blue: #255f95;
   --danger: #c75146;
@@ -1423,17 +1423,6 @@ h3 {
 .pick-live-board p,
 .pick-review-grid p { margin: 8px 0 0; color: #4c5a64; line-height: 1.55; }
 .pick-live-board em { display: block; margin-top: 16px; color: var(--home-muted); font-size: 13px; font-style: normal; }
-.pick-live-thumb {
-  display: block;
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  margin-bottom: 16px;
-  border-radius: 6px;
-  background: #edf2f4;
-  object-fit: cover;
-  filter: blur(3px);
-  transform: scale(1.01);
-}
 .pick-empty-feed { grid-column: 1 / -1; text-align: center; }
 .pick-review-home[hidden] { display: none; }
 
@@ -1710,6 +1699,59 @@ body:has(#homePage.is-active) .pick-final-cta p {
 
 body:has(#homePage.is-active) .pick-final-cta small {
   color: #6c8092;
+}
+
+/* 2026-08-13: live quote cards relay on every viewport, without quote images. */
+body:has(#homePage.is-active) .pick-live-board {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  padding: 2px 2px 14px;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+  scrollbar-color: #9db1c4 transparent;
+}
+
+body:has(#homePage.is-active) .pick-live-board article {
+  flex: 0 0 calc((100% - 28px) / 3);
+  scroll-snap-align: start;
+  border-color: #d7e2ed;
+  border-radius: 0;
+  box-shadow: 0 8px 18px rgba(22, 61, 96, .05);
+}
+
+body:has(#homePage.is-active) .pick-live-board article > span {
+  color: #123b67;
+}
+
+body:has(#homePage.is-active) .pick-live-board article strong {
+  color: #0b2747;
+}
+
+body:has(#homePage.is-active) .pick-live-board article p {
+  color: #53687b;
+}
+
+body:has(#homePage.is-active) .pick-live-board article em {
+  color: #647b90;
+}
+
+body:has(#homePage.is-active) .pick-live-board .pick-empty-feed {
+  flex: 1 0 100%;
+}
+
+@media (max-width: 900px) {
+  body:has(#homePage.is-active) .pick-live-board article {
+    flex-basis: calc((100% - 14px) / 2);
+  }
+}
+
+@media (max-width: 600px) {
+  body:has(#homePage.is-active) .pick-live-board article {
+    flex-basis: min(86vw, 360px);
+  }
 }
 
 /* 2026-08-13: Heydealer-style public home layout. */
@@ -3100,8 +3142,15 @@ select {
 .topbar .brand {
   min-height: 50px;
   padding: 5px 10px;
-  background: #fff;
-  border: 1px solid #e2ece5;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.topbar .brand-logo-image {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
 }
 
 .pick-home-logo-wrap {
@@ -5258,7 +5307,7 @@ td strong {
   padding: 38px 30px;
   border-right: 1px solid var(--line);
   background:
-    linear-gradient(180deg, rgba(18, 107, 93, 0.08), rgba(255, 255, 255, 0) 34%),
+    linear-gradient(180deg, rgba(18, 59, 103, 0.08), rgba(255, 255, 255, 0) 34%),
     #f4f7fb;
 }
 
@@ -7760,8 +7809,8 @@ html.is-mobile-device .header-ad-picture img {
 
 /* 2026-08-13: public home refresh for the Pickquote green brand. */
 .pick-app-home {
-  --home-green: #08b957;
-  --home-green-dark: #073b26;
+  --home-green: #123b67;
+  --home-green-dark: #0b2747;
   --home-ink: #10231a;
   --home-muted: #63736a;
   --home-line: #dce9e1;
@@ -7772,7 +7821,7 @@ html.is-mobile-device .header-ad-picture img {
 .pick-trust-hero {
   min-height: 620px;
   padding: 56px clamp(28px, 6vw, 82px);
-  background: #f6fcf8;
+  background: #f5f8fb;
   border: 0;
   border-radius: 0;
 }
@@ -7846,7 +7895,7 @@ html.is-mobile-device .header-ad-picture img {
 }
 
 .pick-panel-kicker {
-  color: #08a84f;
+  color: #123b67;
   font-size: 13px;
   font-weight: 800;
 }
@@ -7866,14 +7915,14 @@ html.is-mobile-device .header-ad-picture img {
 .pick-upload-cta,
 .pick-no-quote-cta {
   min-height: 52px;
-  border: 1px solid #08b957;
+  border: 1px solid #123b67;
   font-size: 16px;
   font-weight: 800;
   cursor: pointer;
 }
 
 .pick-upload-cta {
-  background: #08b957;
+  background: #123b67;
   color: #fff;
 }
 
@@ -7884,7 +7933,7 @@ html.is-mobile-device .header-ad-picture img {
 
 .pick-no-quote-cta {
   background: #fff;
-  color: #08783c;
+  color: #123b67;
 }
 
 .pick-trust-visual figcaption {
@@ -7897,8 +7946,8 @@ html.is-mobile-device .header-ad-picture img {
 }
 
 .pick-home-shortcuts .is-primary {
-  border-color: #9ed7b5;
-  background: #ecfbf1;
+  border-color: #b9cadb;
+  background: #edf3f9;
 }
 
 .pick-home-shortcuts > div {
@@ -7910,7 +7959,7 @@ html.is-mobile-device .header-ad-picture img {
 }
 
 .pick-home-shortcuts > div > span {
-  color: #08a84f;
+  color: #123b67;
   font-size: 12px;
   font-weight: 900;
 }
@@ -7932,9 +7981,9 @@ html.is-mobile-device .header-ad-picture img {
   min-height: 118px;
   margin: 36px 0 0;
   padding: 22px;
-  border: 1px dashed #b9d6c2;
-  background: #fbfefc;
-  color: #7a8b81;
+  border: 1px dashed #b8c9d9;
+  background: #fbfcfe;
+  color: #6c8092;
   text-align: center;
 }
 
@@ -7943,14 +7992,14 @@ html.is-mobile-device .header-ad-picture img {
   align-items: center;
   min-height: 22px;
   padding: 0 8px;
-  border: 1px solid #c9ded0;
-  color: #6d7e73;
+  border: 1px solid #c4d4e2;
+  color: #526b82;
   font-size: 11px;
   font-weight: 800;
 }
 
 .pick-home-ad-slot strong {
-  color: #66796c;
+  color: #435d74;
   font-size: 14px;
   font-weight: 700;
 }
@@ -7959,13 +8008,13 @@ html.is-mobile-device .header-ad-picture img {
 .pick-live-home,
 .pick-flow-home,
 .pick-brand-home {
-  border-bottom-color: #e3eee7;
+  border-bottom-color: #d8e2ec;
 }
 
 .pick-final-cta {
   border-radius: 0;
-  background: #ecfbf1;
-  border-color: #c2e6cd;
+  background: #edf3f9;
+  border-color: #cbd9e7;
 }
 
 .pick-faq-home {
@@ -8265,4 +8314,97 @@ option {
   .privacy-policy-section li { font-size: 13px; }
   .privacy-policy-table { min-width: 680px; }
   .privacy-policy-actions { padding: 12px 16px max(12px, env(safe-area-inset-bottom)); }
+}
+
+/* 2026-08-13: transparent logo presentation and navy desktop copy. */
+body:has(#homePage.is-active) .pick-home-logo-wrap {
+  width: min(390px, 82vw);
+  margin: 0 auto 28px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+body:has(#homePage.is-active) .pick-home-logo {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: transparent;
+}
+
+body:has(#homePage.is-active) .pick-zero-fee,
+body:has(#homePage.is-active) .pick-trust-lead,
+body:has(#homePage.is-active) .pick-home-heading > span,
+body:has(#homePage.is-active) .pick-home-heading > div > span {
+  color: #123b67;
+}
+
+body:has(#homePage.is-active) .pick-trust-hero {
+  background: #f5f8fb;
+}
+
+/* 2026-08-13: unify public-home flow and closing sections with the navy brand. */
+body:has(#homePage.is-active) .pick-flow-home,
+body:has(#homePage.is-active) .pick-privacy-home,
+body:has(#homePage.is-active) .pick-brand-home {
+  border-bottom-color: #d8e2ec;
+}
+
+body:has(#homePage.is-active) .pick-flow-list li {
+  background: #ffffff;
+  border-color: #d5e0eb;
+  box-shadow: 0 8px 20px rgba(18, 59, 103, .05);
+}
+
+body:has(#homePage.is-active) .pick-flow-icon {
+  background: #eaf1f8;
+  color: #123b67;
+  border-color: #c7d7e7;
+}
+
+body:has(#homePage.is-active) .pick-flow-list strong,
+body:has(#homePage.is-active) .pick-flow-time {
+  color: #0b2747;
+}
+
+body:has(#homePage.is-active) .pick-flow-list p {
+  color: #5b7185;
+}
+
+body:has(#homePage.is-active) .pick-flow-home > .pick-flow-note {
+  background: #f1f5f9;
+  border-left-color: #123b67;
+  color: #183c5f;
+}
+
+body:has(#homePage.is-active) .pick-flow-home > .pick-flow-note strong,
+body:has(#homePage.is-active) .pick-flow-home > .pick-flow-note p,
+body:has(#homePage.is-active) .pick-flow-home > .pick-flow-note li {
+  color: #526b82;
+}
+
+body:has(#homePage.is-active) .pick-final-cta {
+  background: #edf3f9;
+  border-color: #cbd9e7;
+}
+
+body:has(#homePage.is-active) .pick-final-cta h2,
+body:has(#homePage.is-active) .pick-final-cta > div > span {
+  color: #0b2747;
+}
+
+body:has(#homePage.is-active) .pick-final-cta p {
+  color: #435d74;
+}
+
+body:has(#homePage.is-active) .pick-final-cta small {
+  color: #6c8092;
+}
+
+body:has(#homePage.is-active) .pick-final-cta button {
+  background: #123b67;
+  border-color: #123b67;
+  color: #ffffff;
+  box-shadow: 0 10px 22px rgba(18, 59, 103, .18);
 }

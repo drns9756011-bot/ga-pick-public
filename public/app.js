@@ -1561,15 +1561,6 @@ function quoteHomeStatus(request, quoteBids) {
   return "판매자 제안 대기";
 }
 
-function firstQuoteImageSrc(request) {
-  const candidate = Array.isArray(request?.images) && request.images.length
-    ? request.images[0]
-    : request?.image;
-  if (!candidate) return "";
-  if (typeof candidate === "string") return candidate;
-  return String(candidate.url || candidate.src || candidate.imageUrl || "");
-}
-
 function stopHomeLiveRelay() {
   if (!homeLiveRelayTimer) return;
   window.clearInterval(homeLiveRelayTimer);
@@ -1578,7 +1569,7 @@ function stopHomeLiveRelay() {
 
 function startHomeLiveRelay() {
   stopHomeLiveRelay();
-  if (!homeLiveBoard || window.innerWidth > 600 || homeLiveBoard.children.length < 2) return;
+  if (!homeLiveBoard || homeLiveBoard.children.length < 2) return;
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
   let index = 0;
@@ -1642,11 +1633,9 @@ function renderHomeFeeds() {
         .map(({ request, quoteBids, originalPrice, offerPrice }) => {
           const region = String(request.region || request.installRegion || "지역 확인 중").trim();
           const purpose = String(request.purchasePurpose || "가전 견적").trim();
-          const imageSrc = firstQuoteImageSrc(request);
           const savings = originalPrice - offerPrice;
           return `
             <article>
-              ${imageSrc ? `<img class="pick-live-thumb" src="${escapeHTML(imageSrc)}" alt="등록된 견적서 미리보기" loading="lazy" />` : ""}
               <span>${escapeHTML(region)} · ${escapeHTML(purpose)}</span>
               <strong>${escapeHTML(hasValidSelectedBid(request) ? "제안 선택 완료" : `제안 ${quoteBids.length}건 도착`)}</strong>
               <p>${escapeHTML(homeQuoteTitle(request))}</p>
