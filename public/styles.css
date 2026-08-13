@@ -2782,6 +2782,64 @@ select {
   }
 }
 
+/* 2026-08-13: final public-home contrast and logo treatment. */
+.topbar .brand {
+  min-height: 50px;
+  padding: 5px 10px;
+  background: #fff;
+  border: 1px solid #e2ece5;
+}
+
+.pick-home-logo-wrap {
+  display: inline-flex;
+  width: min(390px, 82%);
+  margin: -12px 0 2px -18px;
+  padding: 12px 18px;
+  background: #fff;
+  border: 1px solid #e1ece4;
+  box-shadow: 0 8px 22px rgba(31, 92, 53, .07);
+}
+
+.pick-home-logo-wrap .pick-home-logo {
+  width: 100%;
+  margin: 0;
+}
+
+.pick-final-cta {
+  background: #eaf9ef;
+  color: #10231a;
+}
+
+.pick-final-cta h2 {
+  color: #10231a;
+}
+
+.pick-final-cta p {
+  color: #365341;
+}
+
+.pick-final-cta small {
+  color: #587363;
+}
+
+.pick-final-cta button {
+  background: #08b957;
+  color: #062d1b;
+  border-color: #08b957;
+}
+
+@media (max-width: 600px) {
+  .topbar .brand {
+    justify-self: center;
+  }
+
+  .pick-home-logo-wrap {
+    width: min(100%, 340px);
+    margin: -4px auto 8px;
+    padding: 8px 12px;
+  }
+}
+
 .seller-detail {
   display: grid;
   gap: 22px;
