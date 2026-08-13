@@ -421,16 +421,10 @@ async function getNaverShoppingLowest(env, request) {
   const searchQueries = [];
   const rawItems = [];
   try {
-    searchQueries.push(query);
-    rawItems.push(...await requestNaverShoppingItems(config, query, display));
-
-    const firstMatches = rawItems.filter(
-      (item) => isExactSameModel(item, query) && isGeneralPurchaseShoppingItem(item)
-    );
-    if (!firstMatches.length && modelBodyQuery && modelBodyQuery !== query) {
-      searchQueries.push(modelBodyQuery);
-      rawItems.push(...await requestNaverShoppingItems(config, modelBodyQuery, display));
-    }
+    // Naver search uses the model body only. LG and Samsung suffixes are
+    // catalog-specific option codes and are handled by the AI catalog layer.
+    searchQueries.push(modelBodyQuery);
+    rawItems.push(...await requestNaverShoppingItems(config, modelBodyQuery, display));
   } catch (error) {
     const status = Number(error?.status || 502);
     return json({
@@ -450,7 +444,7 @@ async function getNaverShoppingLowest(env, request) {
   });
   const dedupedItems = [...uniqueItems.values()].sort((a, b) => a.lprice - b.lprice);
   const exactModelItems = dedupedItems.filter(
-    (item) => isExactSameModel(item, query) && isGeneralPurchaseShoppingItem(item)
+    (item) => isExactSameModel(item, modelBodyQuery) && isGeneralPurchaseShoppingItem(item)
   );
   const items = filterAbnormallyLowModelPrices(exactModelItems);
 
@@ -3875,8 +3869,10 @@ async function getLplanModelLearning(env) {
   ).all();
 
   const modelCounts = {};
+  const productCounts = {};
   for (const row of rows.results || []) {
     const quoteModels = new Set();
+    const quoteProducts = new Set();
     const parsedRows = parseJson(row.rows_json, []);
     const quoteRows = Array.isArray(parsedRows)
       ? parsedRows
@@ -3889,8 +3885,13 @@ async function getLplanModelLearning(env) {
         .toUpperCase()
         .replace(/\s+/g, "");
       if (model) quoteModels.add(model);
+      const product = String(item?.product || item?.category || item?.item || item?.name || "")
+        .trim()
+        .replace(/\s+/g, " ");
+      if (product) quoteProducts.add(product);
     }
     for (const model of quoteModels) modelCounts[model] = Number(modelCounts[model] || 0) + 1;
+    for (const product of quoteProducts) productCounts[product] = Number(productCounts[product] || 0) + 1;
   }
 
   return json({
@@ -3899,6 +3900,7 @@ async function getLplanModelLearning(env) {
     totalQuotes: Number(summary?.total || 0),
     latestSyncedAt: summary?.latest_synced_at || "",
     modelCounts,
+    productCounts,
   });
 }
 

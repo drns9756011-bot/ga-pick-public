@@ -45,6 +45,7 @@
     catalogs: {},
     lowestPriceCache: new Map(),
     modelLearning: null,
+    productLearning: null,
     recommendationGroups: [],
     recommending: false,
     recommendationMode: "",
@@ -1809,8 +1810,10 @@ function buildAiSummary() {
       const response = await fetchWithTimeout("/api/lplan-model-learning", { cache: "no-store" }, 9000);
       const data = response.ok ? await response.json() : null;
       state.modelLearning = data?.ok && data.modelCounts ? data.modelCounts : {};
+      state.productLearning = data?.ok && data.productCounts ? data.productCounts : {};
     } catch {
       state.modelLearning = {};
+      state.productLearning = {};
     }
     return state.modelLearning;
   }
@@ -2219,6 +2222,8 @@ function buildAiSummary() {
     let score = 0;
     const learnedCount = modelLearningCount(model);
     if (learnedCount > 0) score -= Math.min(0.3, Math.log2(learnedCount + 1) * 0.06);
+    const productCount = productLearningCount(productKey);
+    if (productCount > 0) score -= Math.min(0.12, Math.log2(productCount + 1) * 0.025);
     if (productKey === "TV") {
       if (/OLED|QNED9|QNED8/.test(name)) score -= 0.22;
       if (/^(KQ|QN).*9|OLED|NEO/.test(name) || /NEO QLED|OLED/.test(text)) score -= 0.18;
@@ -2261,6 +2266,17 @@ function buildAiSummary() {
     return Math.max(exactCount, bodyCount);
   }
 
+  function productLearningCount(product) {
+    const counts = state.productLearning || {};
+    const target = compactModelName(product);
+    return Object.entries(counts).reduce((max, [name, value]) => {
+      const normalized = compactModelName(name);
+      return normalized === target || normalized.includes(target) || target.includes(normalized)
+        ? Math.max(max, Number(value || 0))
+        : max;
+    }, 0);
+  }
+
   function extractTvInches(modelName) {
     const name = String(modelName || "").toUpperCase().replace(/\s+/g, "");
     const patterns = [
@@ -2287,14 +2303,14 @@ function buildAiSummary() {
   }
 
   async function fetchLowestPrice(modelName) {
-    const cacheKey = compactModelName(modelName);
+    const cacheKey = modelBody(modelName);
     if (!cacheKey) return 0;
     if (state.lowestPriceCache.has(cacheKey)) return state.lowestPriceCache.get(cacheKey);
 
     const request = (async () => {
       try {
         const response = await fetchWithTimeout(
-          `/api/naver-shopping-lowest?query=${encodeURIComponent(modelName)}&display=30`,
+          `/api/naver-shopping-lowest?query=${encodeURIComponent(cacheKey)}&display=30`,
           { cache: "no-store" },
           12000
         );
