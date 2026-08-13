@@ -87,6 +87,13 @@ const securityBlanket = document.querySelector("#securityBlanket");
 const privacyConsentModal = document.querySelector("#privacyConsentModal");
 const collectionConsent = document.querySelector("#collectionConsent");
 const thirdPartyConsent = document.querySelector("#thirdPartyConsent");
+const serviceNoticeConsent = document.querySelector("#serviceNoticeConsent");
+const customerMarketingConsent = document.querySelector("#customerMarketingConsent");
+const customerConsentAll = document.querySelector("#customerConsentAll");
+const sellerConsentAll = document.querySelector("#sellerConsentAll");
+const sellerPrivacyConsent = document.querySelector("#sellerPrivacyConsent");
+const sellerServiceNoticeConsent = document.querySelector("#sellerServiceNoticeConsent");
+const sellerMarketingConsent = document.querySelector("#sellerMarketingConsent");
 const consentMessage = document.querySelector("#consentMessage");
 const cancelConsentBtn = document.querySelector("#cancelConsentBtn");
 const confirmConsentBtn = document.querySelector("#confirmConsentBtn");
@@ -2088,9 +2095,41 @@ function openConsentModal(formData) {
   pendingQuoteFormData = formData;
   collectionConsent.checked = false;
   thirdPartyConsent.checked = false;
+  serviceNoticeConsent.checked = false;
+  customerMarketingConsent.checked = false;
+  customerConsentAll.checked = false;
   setConsentMessage("");
   privacyConsentModal.hidden = false;
 }
+
+function syncConsentAll(master, fields) {
+  if (!master) return;
+  master.checked = fields.length > 0 && fields.every((field) => field?.checked);
+}
+
+customerConsentAll?.addEventListener("change", () => {
+  [collectionConsent, thirdPartyConsent, serviceNoticeConsent, customerMarketingConsent].forEach((field) => {
+    if (field) field.checked = customerConsentAll.checked;
+  });
+});
+
+[collectionConsent, thirdPartyConsent, serviceNoticeConsent, customerMarketingConsent].forEach((field) => {
+  field?.addEventListener("change", () => {
+    syncConsentAll(customerConsentAll, [collectionConsent, thirdPartyConsent, serviceNoticeConsent, customerMarketingConsent]);
+  });
+});
+
+sellerConsentAll?.addEventListener("change", () => {
+  [sellerPrivacyConsent, sellerServiceNoticeConsent, sellerMarketingConsent].forEach((field) => {
+    if (field) field.checked = sellerConsentAll.checked;
+  });
+});
+
+[sellerPrivacyConsent, sellerServiceNoticeConsent, sellerMarketingConsent].forEach((field) => {
+  field?.addEventListener("change", () => {
+    syncConsentAll(sellerConsentAll, [sellerPrivacyConsent, sellerServiceNoticeConsent, sellerMarketingConsent]);
+  });
+});
 
 function closeConsentModal() {
   pendingQuoteFormData = null;
@@ -2126,6 +2165,9 @@ async function createCustomerRequest(formData) {
     consent: {
       collectionUse: true,
       thirdPartyProvision: true,
+      serviceNoticeAlimtalk: true,
+      customerMarketing: Boolean(customerMarketingConsent?.checked),
+      consentVersion: "20260813-consent-v1",
       agreedAt: new Date().toISOString(),
       retention: {
         fullQuoteImagesDays: 7,
@@ -2861,7 +2903,7 @@ sellerRegisterCompleteModal?.addEventListener("click", (event) => {
 });
 
 confirmConsentBtn.addEventListener("click", async () => {
-  if (!collectionConsent.checked || !thirdPartyConsent.checked) {
+  if (!collectionConsent.checked || !thirdPartyConsent.checked || !serviceNoticeConsent.checked) {
     setConsentMessage("필수 동의 항목을 모두 체크해야 견적 요청을 등록할 수 있습니다.", "error");
     return;
   }
@@ -3276,6 +3318,9 @@ sellerRegisterForm.addEventListener("submit", async (event) => {
       consent: {
         privacyUse: true,
         customerDisclosure: true,
+        serviceNoticeAlimtalk: true,
+        sellerMarketing: Boolean(sellerMarketingConsent?.checked),
+        consentVersion: "20260813-consent-v1",
         agreedAt: new Date().toISOString(),
       },
       memo: sellerMemo,

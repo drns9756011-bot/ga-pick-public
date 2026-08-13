@@ -784,19 +784,20 @@
               <textarea name="sellerMemo" rows="4" placeholder="담당 브랜드, 판매 가능 지역, 승인 요청 사항 등을 적어주세요."></textarea>
             </label>
 
-            <div class="consent-box inline-consent">
-              <h3>판매자 개인정보 수집·이용 및 공개 동의</h3>
+            <div class="consent-box inline-consent seller-consent-box">
+              <h3>판매자 개인정보 수집·이용 및 알림 안내 동의</h3>
               <ul>
                 <li>수집 항목: 채널, 지점명, 지점 지역, 판매자 아이디, 매니저 이름, 직책, 연락처, 명함 이미지, 추가 메모</li>
-                <li>이용 목적: 판매자 등록 검토, 계정 승인, 고객님 견적 제안, 고객님 선택 시 상담 연결</li>
+                <li>이용 목적: 판매자 등록 검토, 계정 승인, 고객님 견적 제안, 고객님 선택 시 상담 연결 및 서비스 진행 안내</li>
+                <li>알림톡 이용 목적: 판매자 등록 접수, 승인·반려 결과, 계정 관련 안내, 신규 견적, 고객님 선택 및 상담 연결 안내</li>
                 <li>열람 대상: 페이지 운영 회사, 관리자, 등록 검토 및 고객님 응대 담당 직원</li>
                 <li>공개 범위: 선택 전에는 판매 채널만 표시되며, 고객님이 제안을 선택한 경우 선택된 매니저의 매니저명, 직책, 지점명, 연락처, 명함 이미지가 공개됩니다.</li>
                 <li>보유 기간: 판매자 등록 해지 또는 삭제 요청 시까지, 관련 분쟁 처리 목적의 보관 기간은 별도 정책에 따릅니다.</li>
               </ul>
-              <label class="consent-check">
-                <input type="checkbox" name="sellerPrivacyConsent" required />
-                판매자 개인정보 수집·이용 및 고객님 선택 시 정보 공개에 동의합니다.
-              </label>
+              <label class="consent-check consent-all-check"><input id="sellerConsentAll" type="checkbox" /> <strong>전체 동의</strong></label>
+              <label class="consent-check"><input id="sellerPrivacyConsent" type="checkbox" name="sellerPrivacyConsent" required /> [필수] 판매자 개인정보 수집·이용 및 고객님 선택 시 정보 공개에 동의합니다.</label>
+              <label class="consent-check"><input id="sellerServiceNoticeConsent" type="checkbox" name="sellerServiceNoticeConsent" required /> [필수] 판매자 서비스 진행 안내 알림톡 수신에 동의합니다.</label>
+              <label class="consent-check"><input id="sellerMarketingConsent" type="checkbox" name="sellerMarketingConsent" /> [선택] 판매자 대상 이벤트·교육·제휴 혜택 등 광고성 정보 수신에 동의합니다.</label>
             </div>
 
             <button class="primary-btn full" type="submit">판매자 등록 요청</button>
@@ -949,6 +950,18 @@
         <label class="consent-check">
           <input id="thirdPartyConsent" type="checkbox" />
           고객님이 지정한 공개 범위의 판매자에게 연락처가 공개되는 것에 동의합니다.
+        </label>
+        <label class="consent-check">
+          <input id="serviceNoticeConsent" type="checkbox" required />
+          [필수] 견적 등록·판매자 제안·견적 진행상태 등 서비스 안내 알림톡 수신에 동의합니다.
+        </label>
+        <label class="consent-check">
+          <input id="customerMarketingConsent" type="checkbox" />
+          [선택] 이벤트·할인·제휴 혜택 등 광고성 정보 수신에 동의합니다.
+        </label>
+        <label class="consent-check consent-all-check">
+          <input id="customerConsentAll" type="checkbox" />
+          <strong>전체 동의</strong>
         </label>
         <p class="form-message" id="consentMessage" role="alert"></p>
         <div class="consent-actions">
