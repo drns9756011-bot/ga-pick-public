@@ -13,12 +13,12 @@
       "type": "image/png"
     },
     {
-      "src": "/assets/pick-logo-192-navy.png",
+      "src": "/assets/pick-logo-192-navy.png?v=20260813-symbol-cutout",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/assets/pick-logo-512-navy.png",
+      "src": "/assets/pick-logo-512-navy.png?v=20260813-symbol-cutout",
       "sizes": "512x512",
       "type": "image/png"
     }
