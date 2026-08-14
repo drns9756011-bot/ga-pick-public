@@ -746,7 +746,6 @@
       <div class="wizard-choice-grid wizard-choice-grid-two">
         ${quoteTypes.map((item) => choiceCard(item, "wizardQuoteTypeProxy", fields.quoteType.value)).join("")}
       </div>
-      ${brandGuide}
     `;
   }
 

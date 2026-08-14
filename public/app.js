@@ -821,7 +821,8 @@ async function refreshAnonymousConsultation(modal) {
   if (!result?.ok) { list.innerHTML = `<p class="empty-state">상담 내용을 불러오지 못했습니다.</p>`; return; }
   const rows = result.rows || [];
   list.innerHTML = rows.length ? rows.map((row) => `<div class="anonymous-message ${row.sender_role === activeAnonymousConsultation.role ? "is-mine" : ""}"><span>${row.sender_role === "seller" ? "판매자" : "고객"}</span><p>${escapeHTML(row.body)}</p></div>`).join("") : `<p class="empty-state">아직 메시지가 없습니다.</p>`;
-  const incomingCount = rows.filter((row) => row.sender_role !== activeAnonymousConsultation.role).length;
+  const roleReadAt = activeAnonymousConsultation.role === 'seller' ? result.consultation.sellerReadAt : result.consultation.customerReadAt;
+  const incomingCount = rows.filter((row) => row.sender_role !== activeAnonymousConsultation.role && (!roleReadAt || String(row.created_at || '') > String(roleReadAt))).length;
   document.querySelectorAll("[data-anonymous-chat-badge]").forEach((badge) => {
     if (String(badge.dataset.requestId || "") !== String(activeAnonymousConsultation.quoteId || "")) return;
     badge.textContent = incomingCount > 99 ? "99+" : String(incomingCount);
@@ -837,8 +838,30 @@ async function refreshAnonymousConsultation(modal) {
     state.textContent = read ? '읽음' : '전송됨';
     message.appendChild(state);
   });
-  await apiJson(`/api/anonymous-consultations/${encodeURIComponent(activeAnonymousConsultation.id)}/read`, { method: 'POST', showLoading: false, silent: true, body: JSON.stringify({ role: activeAnonymousConsultation.role }) });
+  const readResult = await apiJson(`/api/anonymous-consultations/${encodeURIComponent(activeAnonymousConsultation.id)}/read`, { method: 'POST', showLoading: false, silent: true, body: JSON.stringify({ role: activeAnonymousConsultation.role }) });
+  if (readResult?.ok) {
+    document.querySelectorAll("[data-anonymous-chat-badge]").forEach((badge) => {
+      if (String(badge.dataset.requestId || "") !== String(activeAnonymousConsultation.quoteId || "")) return;
+      badge.textContent = "0";
+      badge.hidden = true;
+    });
+    if (activeAnonymousConsultation.role === 'seller') clearSellerChatRoomBadge(activeAnonymousConsultation.id);
+  }
   list.scrollTop = list.scrollHeight;
+}
+
+function clearSellerChatRoomBadge(roomId) {
+  const room = sellerChatRooms.find((item) => String(item.id) === String(roomId));
+  if (room) room.customerMessageCount = 0;
+  const roomElement = document.querySelector(`[data-chat-room-id="${CSS.escape(String(roomId))}"]`);
+  const roomBadge = roomElement?.querySelector('.anonymous-chat-badge');
+  if (roomBadge) roomBadge.remove();
+  const count = sellerChatRooms.reduce((sum, item) => sum + Number(item.customerMessageCount || 0), 0);
+  const tabBadge = document.querySelector('#sellerChatTabBadge');
+  if (tabBadge) {
+    tabBadge.textContent = count > 99 ? '99+' : String(count);
+    tabBadge.hidden = count === 0;
+  }
 }
 
 async function findSellerAccountFromServer(payload) {
@@ -2322,7 +2345,11 @@ async function createCustomerRequest(formData) {
   renderRequests();
   renderSelectedRequest();
   resetCustomerForm();
-  setView("lookup");
+  if (quoteType === "without_quote") {
+    window.location.assign("/brand?from=quote");
+  } else {
+    setView("lookup");
+  }
   return { ok: true, row: savedRequest };
 }
 
