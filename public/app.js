@@ -820,6 +820,20 @@ async function refreshAnonymousConsultation(modal) {
   const list = modal.querySelector("[data-anonymous-messages]");
   if (!result?.ok) { list.innerHTML = `<p class="empty-state">상담 내용을 불러오지 못했습니다.</p>`; return; }
   const rows = result.rows || [];
+  const hasCustomerMessage = rows.some((row) => row.sender_role === 'customer' && Number(row.blocked || 0) === 0);
+  const composer = modal.querySelector('[data-anonymous-form] textarea');
+  const sendButton = modal.querySelector('[data-anonymous-form] button[type="submit"]');
+  const composerNotice = modal.querySelector('[data-anonymous-message]');
+  const sellerMustWait = activeAnonymousConsultation.role === 'seller' && !hasCustomerMessage;
+  if (composer) {
+    composer.disabled = sellerMustWait;
+    composer.placeholder = sellerMustWait ? '고객이 먼저 메시지를 보내면 답변할 수 있습니다.' : '설치, 배송, 혜택 등 조건을 물어보세요.';
+  }
+  if (sendButton) sendButton.disabled = sellerMustWait;
+  if (sellerMustWait && composerNotice) {
+    composerNotice.textContent = '고객이 먼저 메시지를 보내야 답변할 수 있습니다.';
+    composerNotice.dataset.type = 'normal';
+  }
   list.innerHTML = rows.length ? rows.map((row) => `<div class="anonymous-message ${row.sender_role === activeAnonymousConsultation.role ? "is-mine" : ""}"><span>${row.sender_role === "seller" ? "판매자" : "고객"}</span><p>${escapeHTML(row.body)}</p></div>`).join("") : `<p class="empty-state">아직 메시지가 없습니다.</p>`;
   const roleReadAt = activeAnonymousConsultation.role === 'seller' ? result.consultation.sellerReadAt : result.consultation.customerReadAt;
   const incomingCount = rows.filter((row) => row.sender_role !== activeAnonymousConsultation.role && (!roleReadAt || String(row.created_at || '') > String(roleReadAt))).length;
