@@ -7,6 +7,7 @@ let uploadedImages = [];
 let businessCardImage = "";
 let activeSellerId = "";
 let activeSellerTab = "all";
+let sellerChatRooms = [];
 let activeSellerBrandFilter = "all";
 let activeSellerRegionFilter = "all";
 let pendingQuoteFormData = null;
@@ -18,6 +19,8 @@ let lookupAccessGranted = false;
 let activeLookupRequestIds = [];
 let quoteCountdownTimer = 0;
 let quoteCountdownRefreshQueued = false;
+let activeAnonymousConsultation = null;
+let anonymousConsultationLoading = false;
 
 const ADMIN_EMAIL = "di02013@naver.com";
 const STORAGE_KEYS = {
@@ -756,6 +759,88 @@ async function loginSellerToServer(sellerId, password, options = {}) {
   });
 }
 
+async function openAnonymousConsultation(request, bid, role = "customer") {
+  if (!request || !bid || anonymousConsultationLoading) return;
+  anonymousConsultationLoading = true;
+  let modal = document.querySelector("#anonymousConsultationModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "anonymousConsultationModal";
+    modal.className = "modal-backdrop anonymous-consultation-modal";
+    modal.innerHTML = `<div class="modal-panel anonymous-consultation-panel" role="dialog" aria-modal="true" aria-labelledby="anonymousConsultationTitle">
+      <button class="modal-close" type="button" data-anonymous-close aria-label="닫기">×</button>
+      <p class="eyebrow">선택 전 익명상담</p><h2 id="anonymousConsultationTitle">궁금한 점을 물어보세요</h2>
+      <p class="anonymous-consultation-notice">고객과 판매자의 이름, 전화번호, 링크, 매장 정보는 선택 전 공개되지 않습니다. 상담은 텍스트만 사용할 수 있습니다.</p>
+      <div class="anonymous-message-list" data-anonymous-messages><p class="empty-state">상담을 불러오는 중입니다.</p></div>
+      <form class="anonymous-message-form" data-anonymous-form><textarea name="message" rows="3" maxlength="1000" placeholder="설치, 배송, 혜택 등 조건을 물어보세요." required></textarea><div class="anonymous-form-actions"><small>개인정보·연락처·링크 입력 금지</small><button class="primary-btn" type="submit">메시지 보내기</button></div><p class="form-message" data-anonymous-message></p></form>
+    </div>`;
+    document.body.appendChild(modal);
+    modal.querySelector('.anonymous-consultation-panel').insertAdjacentHTML('afterbegin', `<div class="anonymous-chat-header"><div class="anonymous-chat-avatar" aria-hidden="true"><img src="/assets/pickquote-official-symbol-navy.png" alt="" /></div><div><span class="anonymous-chat-kicker">안전한 견적 상담</span><strong>선택 전 익명상담</strong><p data-anonymous-context>견적 조건을 익명으로 확인하는 중</p></div><button class="modal-close" type="button" data-anonymous-close aria-label="닫기">×</button></div><div class="anonymous-chat-policy"><strong>개인정보 보호 안내</strong><span>전화번호, 링크, 메신저, 매장 정보는 공유할 수 없습니다.</span></div>`);
+    modal.addEventListener("click", (event) => { if (event.target.closest("[data-anonymous-close]")) closeAnonymousConsultation(); });
+    modal.querySelector("[data-anonymous-form] textarea").addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        event.currentTarget.form.requestSubmit();
+      }
+    });
+    modal.querySelector("[data-anonymous-form]").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const field = event.currentTarget.elements.message;
+      const message = field.value.trim();
+      if (!activeAnonymousConsultation || !message) return;
+      const notice = modal.querySelector("[data-anonymous-message]");
+      const result = await apiJson("/api/anonymous-consultation-messages", { method: "POST", body: JSON.stringify({ consultationId: activeAnonymousConsultation.id, role: activeAnonymousConsultation.role, senderId: activeAnonymousConsultation.role === "seller" ? activeSellerId : "", message }) });
+      if (!result?.ok) { notice.textContent = result?.message || "메시지를 보내지 못했습니다."; notice.dataset.type = "error"; return; }
+      field.value = ""; notice.textContent = ""; await refreshAnonymousConsultation(modal);
+    });
+  }
+  try {
+    let result;
+    if (role === "customer") result = await apiJson("/api/anonymous-consultations", { method: "POST", body: JSON.stringify({ quoteId: request.id, bidId: bid.id, role }) });
+    else result = await apiJson(`/api/anonymous-consultations?quoteId=${encodeURIComponent(request.id)}&bidId=${encodeURIComponent(bid.id)}`, { method: "GET" });
+    if (!result?.ok) { setLookupActionMessage(result?.message || "익명상담을 열지 못했습니다."); return; }
+    if (role === "seller" && !result.consultation) { setBidFormMessage("아직 고객 질문이 시작되지 않은 제안입니다.", "normal"); return; }
+    activeAnonymousConsultation = { ...(result.consultation || result), role };
+    const contextLabel = modal.querySelector('[data-anonymous-context]');
+    if (contextLabel) contextLabel.textContent = role === 'seller' ? '고객의 질문에 익명으로 답변하세요.' : '선택 전 판매자에게 조건을 물어보세요.';
+    modal.hidden = false;
+    await refreshAnonymousConsultation(modal);
+  } finally { anonymousConsultationLoading = false; }
+}
+
+function closeAnonymousConsultation() {
+  const modal = document.querySelector("#anonymousConsultationModal");
+  if (modal) modal.hidden = true;
+  activeAnonymousConsultation = null;
+}
+
+async function refreshAnonymousConsultation(modal) {
+  if (!activeAnonymousConsultation?.id) return;
+  const result = await apiJson(`/api/anonymous-consultations?id=${encodeURIComponent(activeAnonymousConsultation.id)}`, { method: "GET" });
+  const list = modal.querySelector("[data-anonymous-messages]");
+  if (!result?.ok) { list.innerHTML = `<p class="empty-state">상담 내용을 불러오지 못했습니다.</p>`; return; }
+  const rows = result.rows || [];
+  list.innerHTML = rows.length ? rows.map((row) => `<div class="anonymous-message ${row.sender_role === activeAnonymousConsultation.role ? "is-mine" : ""}"><span>${row.sender_role === "seller" ? "판매자" : "고객"}</span><p>${escapeHTML(row.body)}</p></div>`).join("") : `<p class="empty-state">아직 메시지가 없습니다.</p>`;
+  const incomingCount = rows.filter((row) => row.sender_role !== activeAnonymousConsultation.role).length;
+  document.querySelectorAll("[data-anonymous-chat-badge]").forEach((badge) => {
+    if (String(badge.dataset.requestId || "") !== String(activeAnonymousConsultation.quoteId || "")) return;
+    badge.textContent = incomingCount > 99 ? "99+" : String(incomingCount);
+    badge.hidden = incomingCount === 0;
+  });
+  const counterpartReadAt = activeAnonymousConsultation.role === 'seller' ? result.consultation.customerReadAt : result.consultation.sellerReadAt;
+  list.querySelectorAll('.anonymous-message').forEach((message, index) => {
+    const row = rows[index];
+    if (!row || row.sender_role !== activeAnonymousConsultation.role) return;
+    const read = counterpartReadAt && String(row.created_at || '') <= String(counterpartReadAt);
+    const state = document.createElement('small');
+    state.className = 'anonymous-read-state';
+    state.textContent = read ? '읽음' : '전송됨';
+    message.appendChild(state);
+  });
+  await apiJson(`/api/anonymous-consultations/${encodeURIComponent(activeAnonymousConsultation.id)}/read`, { method: 'POST', showLoading: false, silent: true, body: JSON.stringify({ role: activeAnonymousConsultation.role }) });
+  list.scrollTop = list.scrollHeight;
+}
+
 async function findSellerAccountFromServer(payload) {
   return apiJson("/api/seller-account-find", {
     method: "POST",
@@ -873,7 +958,9 @@ function normalizeQuoteRequest(request) {
 
 async function syncCustomerQuotesFromServer(options = {}) {
   const showLoading = options.showLoading !== false;
-  const result = await apiJson("/api/customer-quotes", {
+  const params = new URLSearchParams();
+  if (activeSellerId) params.set("sellerId", activeSellerId);
+  const result = await apiJson(`/api/customer-quotes${params.toString() ? `?${params}` : ""}`, {
     showLoading,
     loadingTitle: "고객님 견적을 불러오는 중입니다.",
     loadingText: "서버에 저장된 견적 정보를 확인하고 있습니다.",
@@ -890,7 +977,9 @@ function replaceBids(rows) {
 
 async function syncBidsFromServer(options = {}) {
   const showLoading = options.showLoading !== false;
-  const result = await apiJson("/api/bids", {
+  const params = new URLSearchParams();
+  if (activeSellerId) params.set("sellerId", activeSellerId);
+  const result = await apiJson(`/api/bids${params.toString() ? `?${params}` : ""}`, {
     showLoading,
     loadingTitle: "판매자 제안을 불러오는 중입니다.",
     loadingText: "서버에 저장된 제안 금액과 순위를 확인하고 있습니다.",
@@ -948,6 +1037,7 @@ async function syncSellerDashboardData(options = {}) {
       syncCustomerQuotesFromServer({ showLoading: false }),
       syncBidsFromServer({ showLoading: false }),
       syncReviewsFromServer({ showLoading: false }),
+      loadSellerChatRooms(),
     ]);
 
     syncResults.forEach((result, index) => {
@@ -972,6 +1062,26 @@ async function syncSellerDashboardData(options = {}) {
   } finally {
     if (showLoading) hideServerLoading(true);
   }
+}
+
+async function loadSellerChatRooms() {
+  if (!activeSellerId || !canUseApiServer()) return;
+  const result = await apiJson(`/api/anonymous-consultations?sellerId=${encodeURIComponent(activeSellerId)}`, { showLoading: false, silent: true });
+  if (!result?.ok || !Array.isArray(result.rooms)) return;
+  sellerChatRooms = result.rooms;
+  const count = sellerChatRooms.reduce((sum, room) => sum + Number(room.customerMessageCount || 0), 0);
+  const badge = document.querySelector('#sellerChatTabBadge');
+  if (badge) { badge.textContent = count > 99 ? '99+' : String(count); badge.hidden = count === 0; }
+  if (activeSellerTab === 'chat') renderRequests();
+}
+
+function renderSellerChatRooms() {
+  requestList.innerHTML = sellerChatRooms.length ? sellerChatRooms.map((room) => `
+    <button class="seller-chat-room" type="button" data-chat-room-id="${escapeHTML(room.id)}" data-request-id="${escapeHTML(room.quoteId)}" data-bid-id="${escapeHTML(room.bidId)}">
+      <span class="seller-chat-room-top"><strong>${escapeHTML(room.items)}</strong>${Number(room.customerMessageCount || 0) ? `<b class="anonymous-chat-badge">${room.customerMessageCount > 99 ? '99+' : room.customerMessageCount}</b>` : ''}</span>
+      <span>${escapeHTML(room.region || '설치 지역 미입력')} · 견적번호 ${escapeHTML(room.quoteNumber || '-')}</span>
+      <small>${escapeHTML(room.lastMessage)}</small>
+    </button>`).join('') : `<div class="empty-state compact-empty"><strong>진행 중인 익명상담이 없습니다.</strong><p>고객이 질문을 시작하면 이곳에 채팅방이 표시됩니다.</p></div>`;
 }
 
 async function saveReviewToServer(review) {
@@ -1005,6 +1115,22 @@ async function lookupCustomerQuotesFromServer(customer, phone, quoteNumber = "")
   }
 
   return { ok: true, rows: result.rows };
+}
+
+async function syncLookupBidsFromServer(quoteRows) {
+  const quoteIds = [...new Set((quoteRows || []).map((row) => String(row?.id || "").trim()).filter(Boolean))];
+  if (!quoteIds.length) {
+    replaceBids([]);
+    return;
+  }
+
+  const results = await Promise.all(
+    quoteIds.map((quoteId) => apiJson(`/api/bids?quoteId=${encodeURIComponent(quoteId)}`, { showLoading: false, silent: true }))
+  );
+  const rows = results
+    .filter((result) => result?.ok && Array.isArray(result.rows))
+    .flatMap((result) => result.rows);
+  replaceBids(rows);
 }
 
 async function saveCustomerQuoteToServer(quote) {
@@ -2045,6 +2171,7 @@ function renderBidCards(request) {
             }" data-bid-id="${bid.id}" ${isLockedBySelection && !isSelected ? "disabled" : ""}>
               ${isSelected ? "선택 완료" : isLockedBySelection ? "선택 변경 불가" : "이 제안 선택"}
             </button>
+            ${!isSelected && !isLockedBySelection ? `<button class="secondary-btn full anonymous-consult-btn" type="button" data-request-id="${request.id}" data-bid-id="${bid.id}">궁금한 점 물어보기 <span class="anonymous-chat-badge" data-anonymous-chat-badge data-request-id="${request.id}" hidden>0</span></button>` : ""}
             ${reviewArea}
           </div>
         </article>
@@ -2961,9 +3088,11 @@ lookupForm.addEventListener("submit", async (event) => {
   if (serverMatches.length && canUseApiServer()) {
     mergeRequests(serverMatches);
     await Promise.allSettled([
-      syncBidsFromServer(),
+      syncLookupBidsFromServer(serverMatches),
       syncReviewsFromServer({ showLoading: false }),
     ]);
+  } else if (!serverMatches.length && canUseApiServer()) {
+    replaceBids([]);
   }
   const matches = serverMatches.length
     ? serverMatches
@@ -2974,7 +3103,7 @@ lookupForm.addEventListener("submit", async (event) => {
   renderLookupResults(matches);
 });
 
-lookupResults.addEventListener("click", (event) => {
+lookupResults.addEventListener("click", async (event) => {
   const lookupImage = event.target.closest(".lookup-image img");
   if (lookupImage) {
     openQuoteImageModal(lookupImage.src, lookupImage.alt || "견적서 원본 이미지");
@@ -3006,6 +3135,14 @@ lookupResults.addEventListener("click", (event) => {
       return;
     }
     openQuoteCloseConfirmModal(request);
+    return;
+  }
+
+  const anonymousButton = event.target.closest(".anonymous-consult-btn");
+  if (anonymousButton) {
+    const request = requests.find((item) => sameId(item.id, anonymousButton.dataset.requestId));
+    const bid = bids.find((item) => sameId(item.id, anonymousButton.dataset.bidId));
+    if (request && bid) await openAnonymousConsultation(request, bid, "customer");
     return;
   }
 
@@ -3075,7 +3212,22 @@ lookupResults.addEventListener("submit", async (event) => {
   renderLookupResults([request]);
 });
 
-sellerQuoteWorkspace.addEventListener("click", (event) => {
+sellerQuoteWorkspace.addEventListener("click", async (event) => {
+  const chatRoom = event.target.closest('.seller-chat-room');
+  if (chatRoom) {
+    const room = sellerChatRooms.find((item) => String(item.id) === String(chatRoom.dataset.chatRoomId));
+    const request = requests.find((item) => sameId(item.id, chatRoom.dataset.requestId));
+    const bid = bids.find((item) => sameId(item.id, chatRoom.dataset.bidId));
+    if (room && request && bid) await openAnonymousConsultation(request, bid, 'seller');
+    return;
+  }
+  const anonymousButton = event.target.closest(".seller-anonymous-consult-btn");
+  if (anonymousButton) {
+    const request = requests.find((item) => sameId(item.id, anonymousButton.dataset.requestId));
+    const bid = bids.find((item) => sameId(item.id, anonymousButton.dataset.bidId));
+    if (request && bid) openAnonymousConsultation(request, bid, "seller");
+    return;
+  }
   const button = event.target.closest(".sale-complete-btn");
   if (!button || button.disabled) return;
 
@@ -3393,6 +3545,12 @@ regionChangeForm.addEventListener("submit", async (event) => {
 });
 
 document.addEventListener("keydown", (event) => {
+  const anonymousModal = document.querySelector("#anonymousConsultationModal");
+  if (event.key === "Escape" && anonymousModal && !anonymousModal.hidden) {
+    closeAnonymousConsultation();
+    return;
+  }
+
   if (event.key === "Escape" && !privacyConsentModal.hidden) {
     closeConsentModal();
     return;
@@ -3448,10 +3606,19 @@ window.addEventListener("afterprint", hideSecurityBlanket);
 
 function renderRequests() {
   const isRegionTab = activeSellerTab === "region";
+  const isChatTab = activeSellerTab === "chat";
   sellerQuoteWorkspace.hidden = isRegionTab;
   sellerRegionPanel.hidden = !isRegionTab;
   const filterHost = document.querySelector("#sellerFilterHost");
-  if (filterHost) filterHost.hidden = isRegionTab;
+  if (filterHost) filterHost.hidden = isRegionTab || isChatTab;
+
+  if (isChatTab) {
+    renderSellerChatRooms();
+    sellerTabs.forEach((tab) => tab.classList.toggle("is-active", tab.dataset.sellerTab === activeSellerTab));
+    setBidFormEnabled(false);
+    selectedInfo.innerHTML = '<div class="seller-chat-empty-detail"><strong>채팅방을 선택하세요.</strong><p>고객 질문이 시작된 익명상담을 왼쪽 목록에서 확인할 수 있습니다.</p></div>';
+    return;
+  }
 
   if (isRegionTab) {
     sellerTabs.forEach((tab) => {
@@ -3610,6 +3777,7 @@ function renderSelectedRequest() {
       <span>요청사항</span>
       <p>${safeMemo}</p>
     </div>
+    ${activeSellerBid ? `<button class="secondary-btn full seller-anonymous-consult-btn" type="button" data-request-id="${request.id}" data-bid-id="${activeSellerBid.id}">고객 질문 확인하기</button>` : ""}
     <p class="privacy-note">${
       isSaleCompleted
         ? `판매완료 처리되었습니다. 고객님 후기 요청 알림톡 발송 상태: ${
@@ -3639,6 +3807,8 @@ function renderSelectedRequest() {
         : ""
     }
   `;
+  const sellerChatButton = selectedInfo.querySelector('.seller-anonymous-consult-btn');
+  if (sellerChatButton) sellerChatButton.innerHTML = '익명상담 확인하기 <span class="anonymous-chat-badge" data-anonymous-chat-badge data-request-id="' + request.id + '" hidden>0</span>';
   sellerImage.innerHTML = isWithoutQuoteRequest(request)
     ? withoutQuoteItemsMarkup(request)
     : quoteImageMarkup(request, `${request.customer} 고객님이 올린 견적서`);

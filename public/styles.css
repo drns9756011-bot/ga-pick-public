@@ -7787,6 +7787,60 @@ html.is-mobile-device .header-ad-picture img {
   font-variant-numeric: tabular-nums;
 }
 
+.anonymous-consultation-panel { width: min(720px, calc(100vw - 32px)); padding: 0; overflow: hidden; border: 1px solid #d7e1ec; box-shadow: 0 24px 70px rgba(14, 39, 66, .2); }
+.anonymous-consultation-modal { position: fixed; inset: 0; z-index: 100001; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(8, 24, 42, .58); isolation: isolate; }
+.anonymous-consultation-modal[hidden] { display: none !important; }
+.anonymous-consultation-panel { position: relative; z-index: 1; max-height: min(760px, calc(100vh - 48px)); overflow-y: auto; background: #fff !important; opacity: 1 !important; isolation: isolate; }
+.anonymous-consultation-panel::before { content: none !important; }
+.anonymous-consultation-panel > .eyebrow, .anonymous-consultation-panel > h2 { display: none; }
+.anonymous-consultation-panel > .modal-close { display: none; }
+.anonymous-chat-header { display: grid; grid-template-columns: 46px minmax(0, 1fr) 36px; gap: 12px; align-items: center; padding: 20px 22px; background: #123f6b; color: #fff; }
+.anonymous-chat-avatar { width: 46px; height: 46px; display: grid; place-items: center; border-radius: 50%; background: #fff; overflow: hidden; }
+.anonymous-chat-avatar img { width: 30px; height: 30px; object-fit: contain; display: block; }
+.anonymous-chat-kicker { display: block; color: #bfd2e5; font-size: 12px; font-weight: 700; margin-bottom: 3px; }
+.anonymous-chat-header strong { display: block; font-size: 18px; }
+.anonymous-chat-header p { margin: 4px 0 0; color: #d9e7f4; font-size: 13px; }
+.anonymous-chat-header .modal-close { position: static; width: 36px; height: 36px; color: #fff; border-color: rgba(255,255,255,.55); background: transparent; }
+.anonymous-chat-policy { display: flex; align-items: center; gap: 10px; padding: 11px 22px; background: #f0f5fa; border-bottom: 1px solid #dce6ef; color: #526579; font-size: 12px; }
+.anonymous-consultation-panel > .anonymous-chat-header,
+.anonymous-consultation-panel > .anonymous-chat-policy,
+.anonymous-consultation-panel > .anonymous-consultation-notice,
+.anonymous-consultation-panel > .anonymous-message-list,
+.anonymous-consultation-panel > .anonymous-message-form { position: relative; z-index: 2; opacity: 1 !important; }
+.anonymous-chat-policy strong { color: #123f6b; white-space: nowrap; }
+.anonymous-chat-policy, .anonymous-chat-policy * { opacity: 1 !important; background-color: #f0f5fa; }
+.anonymous-consultation-notice { color: #526579; line-height: 1.6; }
+.anonymous-consultation-panel > .anonymous-consultation-notice { margin: 16px 22px 0; font-size: 13px; }
+.anonymous-consultation-panel > .anonymous-consultation-notice { background: #fff !important; color: #526579 !important; }
+.anonymous-message-list { position: relative; z-index: 1; display: grid; gap: 10px; max-height: 360px; overflow: auto; padding: 14px; background: #f4f7fb !important; border: 1px solid #d8e1eb; opacity: 1 !important; }
+.anonymous-message { max-width: 78%; padding: 11px 14px; background: #fff; border: 1px solid #d8e1eb; border-radius: 4px 14px 14px 14px; box-shadow: 0 2px 6px rgba(17, 44, 72, .04); }
+.anonymous-message.is-mine { justify-self: end; background: #e9f0f8; border-color: #b8cbe0; }
+.anonymous-message span { display: block; color: #526579; font-size: 12px; font-weight: 700; margin-bottom: 4px; }
+.anonymous-message p { margin: 0; color: #102b49; white-space: pre-wrap; overflow-wrap: anywhere; }
+.anonymous-read-state { display: block; margin-top: 5px; color: #7890a6; font-size: 10px; text-align: right; }
+.anonymous-message-form { display: grid; gap: 8px; margin: 0; padding: 14px 22px 18px; background: #fff; border-top: 1px solid #dce6ef; }
+.anonymous-message-form textarea { width: 100%; min-height: 88px; resize: vertical; border: 1px solid #b8cbe0; padding: 12px; }
+.anonymous-form-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.anonymous-form-actions small { color: #6b7b8d; }
+.anonymous-consult-btn, .seller-anonymous-consult-btn { margin-top: 8px; }
+.seller-anonymous-consult-btn { border-color: #123f6b; color: #123f6b; font-weight: 800; }
+.seller-chat-room { display: grid; gap: 7px; width: 100%; padding: 16px; border: 1px solid #d5e0eb; border-radius: 10px; background: #fff; color: #17324f; text-align: left; cursor: pointer; }
+.seller-chat-room + .seller-chat-room { margin-top: 8px; }
+.seller-chat-room:hover, .seller-chat-room:focus-visible { border-color: #123f6b; background: #f2f6fa; outline: none; }
+.seller-chat-room-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.seller-chat-room-top strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.seller-chat-room > span:not(.seller-chat-room-top) { color: #65778a; font-size: 12px; }
+.seller-chat-room small { overflow: hidden; color: #526579; text-overflow: ellipsis; white-space: nowrap; }
+.seller-chat-empty-detail { padding: 40px 20px; border: 1px dashed #c9d6e3; background: #fff; color: #526579; text-align: center; }
+.seller-chat-empty-detail strong { display: block; color: #123f6b; font-size: 18px; margin-bottom: 8px; }
+.seller-chat-empty-detail p { margin: 0; }
+.seller-chat-tab-badge { display: inline-grid; place-items: center; min-width: 19px; height: 19px; margin-left: 4px; padding: 0 5px; border-radius: 999px; background: #d53c45; color: #fff; font-size: 11px; font-weight: 900; }
+.seller-chat-tab-badge[hidden] { display: none; }
+.anonymous-chat-badge { display: inline-grid; place-items: center; min-width: 21px; height: 21px; margin-left: 6px; padding: 0 6px; border-radius: 999px; background: #d53c45; color: #fff; font-size: 12px; line-height: 1; font-weight: 900; vertical-align: middle; }
+.anonymous-chat-badge[hidden] { display: none; }
+@media (max-width: 560px) { .anonymous-chat-policy { align-items: flex-start; flex-direction: column; gap: 3px; } .anonymous-message { max-width: 88%; } .anonymous-form-actions { align-items: stretch; flex-direction: column; } .anonymous-form-actions button { width: 100%; } }
+@media (max-width: 560px) { .anonymous-consultation-modal { padding: 12px; } .anonymous-consultation-panel { width: 100%; max-height: calc(100vh - 24px); } }
+
 
 
 
