@@ -109,8 +109,13 @@ const confirmBidSelectBtn = document.querySelector("#confirmBidSelectBtn");
 const sellerRegisterCompleteModal = document.querySelector("#sellerRegisterCompleteModal");
 const closeSellerRegisterCompleteModal = document.querySelector("#closeSellerRegisterCompleteModal");
 const quoteImageModal = document.querySelector("#quoteImageModal");
-const quoteImageModalImg = document.querySelector("#quoteImageModalImg");
+const quoteImageModalImg = document.querySelector(".image-modal-viewport #quoteImageModalImg");
 const closeQuoteImageModal = document.querySelector("#closeQuoteImageModal");
+const quoteImageViewport = document.querySelector("#quoteImageViewport");
+const quoteImageZoomOut = document.querySelector("#quoteImageZoomOut");
+const quoteImageZoomReset = document.querySelector("#quoteImageZoomReset");
+const quoteImageZoomIn = document.querySelector("#quoteImageZoomIn");
+const quoteImageFit = document.querySelector("#quoteImageFit");
 const openSellerAccountModal = document.querySelector("#openSellerAccountModal");
 const sellerAccountModal = document.querySelector("#sellerAccountModal");
 const closeSellerAccountModal = document.querySelector("#closeSellerAccountModal");
@@ -2687,9 +2692,33 @@ function isQuoteImageModalOpen() {
   return quoteImageModal && !quoteImageModal.hidden;
 }
 
+let quoteImageZoom = 1;
+let quoteImagePanX = 0;
+let quoteImagePanY = 0;
+let quoteImageDragging = false;
+let quoteImageDragStartX = 0;
+let quoteImageDragStartY = 0;
+
+function applyQuoteImageTransform() {
+  if (!quoteImageModalImg) return;
+  quoteImageModalImg.style.transform = `translate(${quoteImagePanX}px, ${quoteImagePanY}px) scale(${quoteImageZoom})`;
+  quoteImageModalImg.classList.toggle("is-zoomed", quoteImageZoom > 1);
+  if (quoteImageZoomReset) quoteImageZoomReset.textContent = `${Math.round(quoteImageZoom * 100)}%`;
+}
+
+function setQuoteImageZoom(value, resetPan = true) {
+  quoteImageZoom = Math.min(4, Math.max(0.5, Number(value) || 1));
+  if (resetPan) {
+    quoteImagePanX = 0;
+    quoteImagePanY = 0;
+  }
+  applyQuoteImageTransform();
+}
+
 function openQuoteImageModal(src, alt) {
   quoteImageModalImg.src = src;
   quoteImageModalImg.alt = alt;
+  setQuoteImageZoom(1);
   quoteImageModal.hidden = false;
 
   if (!window.history?.state?.quoteImageModal) {
@@ -2708,6 +2737,7 @@ function openQuoteImageModal(src, alt) {
 function closeQuoteImagePreview(options = {}) {
   quoteImageModal.hidden = true;
   quoteImageModalImg.removeAttribute("src");
+  setQuoteImageZoom(1);
 
   if (options.fromHistory !== true && window.history?.state?.quoteImageModal) {
     window.history.back();
@@ -2905,6 +2935,43 @@ sellerImage.addEventListener("click", (event) => {
 });
 
 closeQuoteImageModal.addEventListener("click", closeQuoteImagePreview);
+
+quoteImageZoomOut?.addEventListener("click", () => setQuoteImageZoom(quoteImageZoom - 0.25));
+quoteImageZoomIn?.addEventListener("click", () => setQuoteImageZoom(quoteImageZoom + 0.25));
+quoteImageZoomReset?.addEventListener("click", () => setQuoteImageZoom(1));
+quoteImageFit?.addEventListener("click", () => setQuoteImageZoom(1));
+
+quoteImageViewport?.addEventListener("wheel", (event) => {
+  if (!isQuoteImageModalOpen()) return;
+  event.preventDefault();
+  setQuoteImageZoom(quoteImageZoom + (event.deltaY < 0 ? 0.2 : -0.2), false);
+}, { passive: false });
+
+quoteImageViewport?.addEventListener("pointerdown", (event) => {
+  if (quoteImageZoom <= 1) return;
+  quoteImageDragging = true;
+  quoteImageDragStartX = event.clientX - quoteImagePanX;
+  quoteImageDragStartY = event.clientY - quoteImagePanY;
+  quoteImageViewport.setPointerCapture?.(event.pointerId);
+  quoteImageViewport.classList.add("is-dragging");
+});
+
+quoteImageViewport?.addEventListener("pointermove", (event) => {
+  if (!quoteImageDragging) return;
+  quoteImagePanX = event.clientX - quoteImageDragStartX;
+  quoteImagePanY = event.clientY - quoteImageDragStartY;
+  applyQuoteImageTransform();
+});
+
+function stopQuoteImageDragging(event) {
+  if (!quoteImageDragging) return;
+  quoteImageDragging = false;
+  quoteImageViewport?.releasePointerCapture?.(event.pointerId);
+  quoteImageViewport?.classList.remove("is-dragging");
+}
+
+quoteImageViewport?.addEventListener("pointerup", stopQuoteImageDragging);
+quoteImageViewport?.addEventListener("pointercancel", stopQuoteImageDragging);
 
 quoteImageModal.addEventListener("click", (event) => {
   if (event.target === quoteImageModal) {
