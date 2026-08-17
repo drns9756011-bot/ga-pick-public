@@ -2457,6 +2457,11 @@ async function updateApprovedSeller(env, request, id) {
     values.push(String(body.memo || "").trim());
   }
 
+  if (Object.prototype.hasOwnProperty.call(body, "quoteAlimtalkOptOut")) {
+    updates.push("quote_alimtalk_opt_out = ?");
+    values.push(body.quoteAlimtalkOptOut ? 1 : 0);
+  }
+
   if (!updates.length) {
     return json({ ok: false, message: "변경할 정보가 없습니다." }, 400);
   }
