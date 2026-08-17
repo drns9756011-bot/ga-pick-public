@@ -8685,3 +8685,12 @@ body:has(#homePage.is-active) .pick-final-cta button {
   color: #ffffff;
   box-shadow: 0 10px 22px rgba(18, 59, 103, .18);
 }
+
+/* Keep the main hero description on one line on desktop. */
+@media (min-width: 768px) {
+  body:has(#homePage.is-active) .pick-trust-lead {
+    width: max-content;
+    max-width: none;
+    white-space: nowrap;
+  }
+}
