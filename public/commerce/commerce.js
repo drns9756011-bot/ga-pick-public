@@ -38,8 +38,7 @@ function formatWon(value) {
 }
 
 function productOptions(item) {
-  if (Array.isArray(item.options) && item.options.length) return item.options;
-  return [{
+  const options = Array.isArray(item.options) && item.options.length ? item.options : [{
     label: [item.careType, item.careDetail, item.visitCycle ? `${item.visitCycle} 주기` : ""].filter(Boolean).join(" · ") || item.model,
     model: item.model,
     installationType: "",
@@ -48,6 +47,10 @@ function productOptions(item) {
     visitCycle: item.visitCycle || "",
     monthlyFee72: Number(item.monthlyFee72 || 0),
   }];
+  return [...options].sort((a, b) =>
+    Number(a.monthlyFee72 || 0) - Number(b.monthlyFee72 || 0)
+      || String(a.label || "").localeCompare(String(b.label || ""), "ko")
+  );
 }
 
 function productImageMarkup(item, className = "") {
@@ -83,12 +86,18 @@ function closeProductModal() {
   document.body.classList.remove("has-commerce-modal");
 }
 
-function renderProductModal(item, optionIndex = 0) {
+function renderProductModal(item, optionIndex = 0, cardIndex = -1) {
   const modal = ensureProductModal();
   const options = productOptions(item);
   const selected = options[Math.max(0, Math.min(optionIndex, options.length - 1))];
   const care = [selected.installationType, selected.careType, selected.careDetail, selected.visitCycle ? `${selected.visitCycle} 주기` : ""].filter(Boolean).join(" · ") || "별도 관리 조건 없음";
   const maximum = Math.max(...affiliateCards.map((card) => card.benefit));
+  const maximumCardIndex = affiliateCards.findIndex((card) => card.benefit === maximum);
+  const activeCardIndex = cardIndex >= 0 && affiliateCards[cardIndex] ? cardIndex : maximumCardIndex;
+  const activeCard = affiliateCards[activeCardIndex];
+  const baseFee = Number(selected.monthlyFee72 || 0);
+  const appliedBenefit = Math.min(baseFee, Number(activeCard.benefit || 0));
+  const estimatedFee = Math.max(0, baseFee - appliedBenefit);
   modal.querySelector("#commerceProductModalContent").innerHTML = `
     <div class="commerce-detail-head">
       <div class="commerce-detail-image">${productImageMarkup(item, "commerce-detail-atlas")}</div>
@@ -97,16 +106,20 @@ function renderProductModal(item, optionIndex = 0) {
         <h2 id="commerceProductModalTitle">${escapeHtml(item.sourceCategory || item.name)}</h2>
         <strong class="commerce-detail-model">${escapeHtml(selected.model)}</strong>
         ${options.length > 1 ? `<label class="commerce-detail-option">옵션 선택<select id="commerceDetailOption">${options.map((option, index) => `<option value="${index}"${index === optionIndex ? " selected" : ""}>${escapeHtml(option.label)} · 월 ${formatWon(option.monthlyFee72)}</option>`).join("")}</select></label>` : ""}
-        <span class="commerce-contract-label">72개월 기준 월 구독료</span>
-        <strong class="commerce-detail-price">월 ${formatWon(selected.monthlyFee72)}</strong>
+        <div class="commerce-price-comparison" aria-label="제휴카드 적용 전후 월 구독료 비교">
+          <div><span>제휴카드 미적용</span><strong>월 ${formatWon(baseFee)}</strong><small>72개월 기준 기본 구독료</small></div>
+          <div class="is-applied"><span>제휴카드 적용 예상</span><strong>월 ${formatWon(estimatedFee)}</strong><small>${escapeHtml(activeCard.name)} 최대 혜택 -${formatWon(appliedBenefit)}</small></div>
+        </div>
+        <label class="commerce-affiliate-selector">적용할 제휴카드<select id="commerceAffiliateCard">${affiliateCards.map((card, index) => `<option value="${index}"${index === activeCardIndex ? " selected" : ""}>${escapeHtml(card.name)} · 최대 ${formatWon(card.benefit)} 할인</option>`).join("")}</select></label>
       </div>
     </div>
     <div class="commerce-detail-sections">
       <section><h3>기본 정보</h3><dl><div><dt>모델명</dt><dd>${escapeHtml(selected.model)}</dd></div><div><dt>계약 기간</dt><dd>72개월</dd></div><div><dt>관리·설치 옵션</dt><dd>${escapeHtml(care)}</dd></div></dl><a class="commerce-official-link" href="${officialProductUrl(selected.model)}" target="_blank" rel="noopener noreferrer">LG전자 공식 제품 정보 보기</a></section>
-      <section><div class="commerce-card-benefit-heading"><div><h3>제휴카드 최대 혜택</h3><p>월 최대 <strong>${formatWon(maximum)}</strong></p></div><span>최대 혜택</span></div><div class="commerce-card-benefits">${affiliateCards.map((card) => `<div><strong>${escapeHtml(card.name)}</strong><span>${escapeHtml(card.spend)}</span><b>월 ${formatWon(card.benefit)}</b></div>`).join("")}</div><p class="commerce-card-disclaimer">카드 발급, 전월 실적, 자동이체 등 적용 조건과 혜택은 카드사 정책에 따라 달라질 수 있습니다. 계약 전 최신 조건을 확인하세요.</p></section>
+      <section><div class="commerce-card-benefit-heading"><div><h3>제휴카드 최대 혜택</h3><p>월 최대 <strong>${formatWon(maximum)}</strong></p></div><span>최대 혜택</span></div><div class="commerce-card-benefits">${affiliateCards.map((card) => `<div><strong>${escapeHtml(card.name)}</strong><span>${escapeHtml(card.spend)}</span><b>월 ${formatWon(card.benefit)}</b></div>`).join("")}</div><p class="commerce-card-disclaimer">표시된 적용 금액은 카드별 최대 할인액을 단순 차감한 예상 금액입니다. 카드 발급, 전월 실적, 자동이체, 할인 한도 등 실제 적용 조건은 카드사 정책에 따라 달라질 수 있으므로 계약 전 최신 조건을 확인하세요.</p></section>
     </div>
     <div class="commerce-detail-actions"><a class="commerce-secondary" href="https://www.interbiz-portal.com/card-consulting" target="_blank" rel="noopener noreferrer">제휴카드 상담</a><a class="commerce-primary" href="https://pf.kakao.com/_PxlUfX" target="_blank" rel="noopener noreferrer">선택 옵션 상담하기</a></div>`;
-  modal.querySelector("#commerceDetailOption")?.addEventListener("change", (event) => renderProductModal(item, Number(event.target.value || 0)));
+  modal.querySelector("#commerceDetailOption")?.addEventListener("change", (event) => renderProductModal(item, Number(event.target.value || 0), activeCardIndex));
+  modal.querySelector("#commerceAffiliateCard")?.addEventListener("change", (event) => renderProductModal(item, optionIndex, Number(event.target.value || 0)));
   modal.hidden = false;
   document.body.classList.add("has-commerce-modal");
   modal.querySelector(".commerce-product-modal-close").focus();
@@ -192,9 +205,9 @@ function renderProducts() {
           <span class="commerce-product-meta">${escapeHtml(item.brand)} · ${escapeHtml(item.category)}</span>
           <h3>${escapeHtml(item.sourceCategory || item.name)}</h3>
           <strong class="commerce-product-model" data-card-model>${escapeHtml(selected.model)}</strong>
-          ${options.length > 1 ? `<label class="commerce-card-option"><span>옵션</span><select data-card-option>${options.map((option, index) => `<option value="${index}">${escapeHtml(option.label)}</option>`).join("")}</select></label>` : ""}
+          ${options.length > 1 ? `<label class="commerce-card-option"><span>옵션 · 월 구독료 낮은 순</span><select data-card-option>${options.map((option, index) => `<option value="${index}">${escapeHtml(option.label)}</option>`).join("")}</select></label>` : ""}
           <p data-card-care>${escapeHtml(care || "72개월 구독")}</p>
-          <span class="commerce-contract-label">72개월 기준 월 구독료</span>
+          <span class="commerce-contract-label">72개월 기준 월 구독료${options.length > 1 ? " · 최저 옵션 우선" : ""}</span>
           <strong class="commerce-product-price" data-card-price>월 ${formatWon(selected.monthlyFee72)}</strong>
           <span class="commerce-max-card-benefit">제휴카드 월 최대 42,000원 혜택</span>
           <button class="commerce-product-action" type="button" data-product-detail>상세보기</button>
