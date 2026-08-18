@@ -8694,3 +8694,54 @@ body:has(#homePage.is-active) .pick-final-cta button {
     white-space: nowrap;
   }
 }
+
+/* Coupang Partners carousel: desktop home only. */
+.pick-home-ad-slot.pick-coupang-ad-slot[hidden] {
+  display: none !important;
+}
+
+body:has(#homePage.is-active) .pick-home-ad-slot.pick-coupang-ad-slot {
+  position: relative;
+  display: flex;
+  min-height: 180px;
+  padding: 26px 20px 14px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid #d3dee8;
+  background: #ffffff;
+}
+
+.pick-coupang-ad-label {
+  position: absolute;
+  top: 9px;
+  left: 12px;
+  min-height: 18px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  color: #718295 !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+}
+
+.pick-coupang-ad-frame {
+  width: 680px;
+  height: 140px;
+  max-width: 100%;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.pick-coupang-ad-frame iframe {
+  display: block;
+  width: 680px;
+  height: 140px;
+  border: 0;
+  background: #ffffff;
+}
+
+@media (max-width: 900px) {
+  body:has(#homePage.is-active) .pick-home-ad-slot.pick-coupang-ad-slot {
+    display: none !important;
+  }
+}

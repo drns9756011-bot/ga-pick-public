@@ -3,7 +3,7 @@ import { onRequest, onScheduled } from "../functions/api/[[path]].js";
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    const routeVersion = "20260811-main-redesign-v21-worker";
+    const routeVersion = "20260817-subscription-catalog-v1";
 
     if (url.pathname === "/robots.txt") {
       return new Response("User-agent: *\nAllow: /\n\nSitemap: https://ga-pick.com/sitemap.xml\n", {
@@ -38,7 +38,19 @@ export default {
   </url>
   <url>
     <loc>https://ga-pick.com/brand</loc>
-    <lastmod>2026-08-07</lastmod>
+    <lastmod>2026-08-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://ga-pick.com/subscription</loc>
+    <lastmod>2026-08-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://ga-pick.com/shopping</loc>
+    <lastmod>2026-08-17</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -80,6 +92,12 @@ export default {
     const standaloneRoutes = new Map([
       ["/brand", "/brand/index.html"],
       ["/brand/index.html", "/brand/index.html"],
+      ["/subscription", "/subscription/index.html"],
+      ["/subscription/index.html", "/subscription/index.html"],
+      ["/shopping", "/shopping/index.html"],
+      ["/shopping/index.html", "/shopping/index.html"],
+      ["/products", "/shopping/index.html"],
+      ["/products/index.html", "/shopping/index.html"],
     ]);
     if (standaloneRoutes.has(normalizedPath)) {
       const assetUrl = new URL(request.url);

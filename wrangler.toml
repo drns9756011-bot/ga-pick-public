@@ -23,7 +23,7 @@ directory = "./public"
 binding = "ASSETS"
 html_handling = "none"
 not_found_handling = "none"
-run_worker_first = ["/", "/index.html", "/quote*", "/my-quote*", "/seller*", "/brand*", "/api/*"]
+run_worker_first = ["/", "/index.html", "/quote*", "/my-quote*", "/seller*", "/brand*", "/subscription*", "/shopping*", "/products*", "/api/*"]
 
 [[d1_databases]]
 binding = "DB"

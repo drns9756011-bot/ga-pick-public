@@ -203,6 +203,40 @@ CREATE TABLE IF NOT EXISTS lplan_quote_patterns (
 CREATE INDEX IF NOT EXISTS idx_lplan_quote_patterns_synced_at ON lplan_quote_patterns(synced_at);
 CREATE INDEX IF NOT EXISTS idx_lplan_quote_patterns_combo_key ON lplan_quote_patterns(combo_key);
 
+-- 가전 구독관: 파일 단위로 교체되는 72개월 구독 상품 목록
+CREATE TABLE IF NOT EXISTS subscription_product_sets (
+  id TEXT PRIMARY KEY,
+  status TEXT NOT NULL DEFAULT 'staging',
+  source_name TEXT NOT NULL DEFAULT '',
+  source_date TEXT NOT NULL DEFAULT '',
+  product_count INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL,
+  activated_at TEXT DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS subscription_products (
+  id TEXT PRIMARY KEY,
+  set_id TEXT NOT NULL,
+  brand TEXT NOT NULL,
+  category TEXT NOT NULL,
+  source_category TEXT NOT NULL DEFAULT '',
+  model TEXT NOT NULL,
+  name TEXT NOT NULL,
+  monthly_fee_72 INTEGER NOT NULL,
+  care_type TEXT DEFAULT '',
+  care_detail TEXT DEFAULT '',
+  visit_cycle TEXT DEFAULT '',
+  image_url TEXT DEFAULT '',
+  options_json TEXT NOT NULL DEFAULT '[]',
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL,
+  FOREIGN KEY (set_id) REFERENCES subscription_product_sets(id)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_subscription_products_set_model ON subscription_products(set_id, model);
+CREATE INDEX IF NOT EXISTS idx_subscription_products_set_category ON subscription_products(set_id, category, sort_order);
+CREATE INDEX IF NOT EXISTS idx_subscription_product_sets_status ON subscription_product_sets(status, activated_at DESC);
+
 CREATE TABLE IF NOT EXISTS site_visit_daily (
   visit_date TEXT PRIMARY KEY,
   page_views INTEGER NOT NULL DEFAULT 0,
