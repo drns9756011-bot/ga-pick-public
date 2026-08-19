@@ -2698,6 +2698,9 @@ let quoteImagePanY = 0;
 let quoteImageDragging = false;
 let quoteImageDragStartX = 0;
 let quoteImageDragStartY = 0;
+const quoteImagePointers = new Map();
+let quoteImagePinchStartDistance = 0;
+let quoteImagePinchStartZoom = 1;
 
 function applyQuoteImageTransform() {
   if (!quoteImageModalImg) return;
@@ -2716,6 +2719,7 @@ function setQuoteImageZoom(value, resetPan = true) {
 }
 
 function openQuoteImageModal(src, alt) {
+  if (!quoteImageModal || !quoteImageModalImg || !src) return;
   quoteImageModalImg.src = src;
   quoteImageModalImg.alt = alt;
   setQuoteImageZoom(1);
@@ -2735,6 +2739,7 @@ function openQuoteImageModal(src, alt) {
 }
 
 function closeQuoteImagePreview(options = {}) {
+  if (!quoteImageModal || !quoteImageModalImg) return;
   quoteImageModal.hidden = true;
   quoteImageModalImg.removeAttribute("src");
   setQuoteImageZoom(1);
@@ -2934,7 +2939,7 @@ sellerImage.addEventListener("click", (event) => {
   openQuoteImageModal(image.src, image.alt || "견적서 원본 이미지");
 });
 
-closeQuoteImageModal.addEventListener("click", closeQuoteImagePreview);
+closeQuoteImageModal?.addEventListener("click", closeQuoteImagePreview);
 
 quoteImageZoomOut?.addEventListener("click", () => setQuoteImageZoom(quoteImageZoom - 0.25));
 quoteImageZoomIn?.addEventListener("click", () => setQuoteImageZoom(quoteImageZoom + 0.25));
@@ -2948,15 +2953,33 @@ quoteImageViewport?.addEventListener("wheel", (event) => {
 }, { passive: false });
 
 quoteImageViewport?.addEventListener("pointerdown", (event) => {
-  if (quoteImageZoom <= 1) return;
-  quoteImageDragging = true;
-  quoteImageDragStartX = event.clientX - quoteImagePanX;
-  quoteImageDragStartY = event.clientY - quoteImagePanY;
+  quoteImagePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
   quoteImageViewport.setPointerCapture?.(event.pointerId);
-  quoteImageViewport.classList.add("is-dragging");
+  if (quoteImagePointers.size === 2) {
+    const [first, second] = [...quoteImagePointers.values()];
+    quoteImagePinchStartDistance = Math.hypot(second.x - first.x, second.y - first.y);
+    quoteImagePinchStartZoom = quoteImageZoom;
+    quoteImageDragging = false;
+    return;
+  }
+  if (quoteImageZoom > 1) {
+    quoteImageDragging = true;
+    quoteImageDragStartX = event.clientX - quoteImagePanX;
+    quoteImageDragStartY = event.clientY - quoteImagePanY;
+    quoteImageViewport.classList.add("is-dragging");
+  }
 });
 
 quoteImageViewport?.addEventListener("pointermove", (event) => {
+  if (quoteImagePointers.has(event.pointerId)) {
+    quoteImagePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+  }
+  if (quoteImagePointers.size === 2 && quoteImagePinchStartDistance > 0) {
+    const [first, second] = [...quoteImagePointers.values()];
+    const distance = Math.hypot(second.x - first.x, second.y - first.y);
+    setQuoteImageZoom(quoteImagePinchStartZoom * (distance / quoteImagePinchStartDistance), false);
+    return;
+  }
   if (!quoteImageDragging) return;
   quoteImagePanX = event.clientX - quoteImageDragStartX;
   quoteImagePanY = event.clientY - quoteImageDragStartY;
@@ -2964,7 +2987,8 @@ quoteImageViewport?.addEventListener("pointermove", (event) => {
 });
 
 function stopQuoteImageDragging(event) {
-  if (!quoteImageDragging) return;
+  quoteImagePointers.delete(event.pointerId);
+  quoteImagePinchStartDistance = 0;
   quoteImageDragging = false;
   quoteImageViewport?.releasePointerCapture?.(event.pointerId);
   quoteImageViewport?.classList.remove("is-dragging");
@@ -2973,7 +2997,7 @@ function stopQuoteImageDragging(event) {
 quoteImageViewport?.addEventListener("pointerup", stopQuoteImageDragging);
 quoteImageViewport?.addEventListener("pointercancel", stopQuoteImageDragging);
 
-quoteImageModal.addEventListener("click", (event) => {
+quoteImageModal?.addEventListener("click", (event) => {
   if (event.target === quoteImageModal) {
     closeQuoteImagePreview();
   }

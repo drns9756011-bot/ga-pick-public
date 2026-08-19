@@ -39,10 +39,10 @@ function solapiValue(env, key) {
   return runtimeValue || bundledValue;
 }
 
-function json(payload, status = 200) {
+function json(payload, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(payload), {
     status,
-    headers: jsonHeaders,
+    headers: { ...jsonHeaders, ...extraHeaders },
   });
 }
 
@@ -638,6 +638,7 @@ function normalizeMessage(row) {
     solapiMessageId: row.solapi_message_id || "",
     errorMessage: row.error_message || "",
     solapiResponse: parseJson(row.solapi_response_json, null),
+    scheduledAt: row.scheduled_at || "",
     createdAt: row.created_at || "",
     sentAt: row.sent_at || "",
     canceledAt: row.canceled_at || "",
@@ -663,6 +664,7 @@ async function ensureAlimtalkColumns(env) {
         solapi_message_id TEXT DEFAULT '',
         error_message TEXT DEFAULT '',
         solapi_response_json TEXT DEFAULT '',
+        scheduled_at TEXT DEFAULT '',
         created_at TEXT NOT NULL,
         sent_at TEXT DEFAULT '',
         canceled_at TEXT DEFAULT ''
@@ -679,6 +681,8 @@ async function ensureAlimtalkColumns(env) {
     "ALTER TABLE alimtalk_queue ADD COLUMN solapi_message_id TEXT DEFAULT ''",
     "ALTER TABLE alimtalk_queue ADD COLUMN error_message TEXT DEFAULT ''",
     "ALTER TABLE alimtalk_queue ADD COLUMN solapi_response_json TEXT DEFAULT ''",
+    "ALTER TABLE alimtalk_queue ADD COLUMN scheduled_at TEXT DEFAULT ''",
+    "CREATE INDEX IF NOT EXISTS idx_alimtalk_queue_scheduled ON alimtalk_queue(status, scheduled_at)",
   ];
 
   for (const statement of statements) {
@@ -708,6 +712,7 @@ async function insertAlimtalkRow(env, row) {
     solapi_message_id: "",
     error_message: "",
     solapi_response_json: "",
+    scheduled_at: row.scheduledAt || "",
     created_at: row.createdAt,
     sent_at: "",
     canceled_at: "",
@@ -1713,9 +1718,11 @@ async function queueAlimtalk(env, message) {
   const id = createId("talk");
   const templateId = message.templateId || getSolapiTemplateId(env, message.type || "notice");
   const variablesJson = JSON.stringify(message.variables || {});
+  const requestedSchedule = String(message.scheduledAt || "").trim();
+  const scheduledAt = requestedSchedule && new Date(requestedSchedule).getTime() > Date.now() ? requestedSchedule : "";
   await insertAlimtalkRow(env, {
     id,
-    status: message.status || "ready",
+    status: scheduledAt ? "scheduled" : message.status || "ready",
     type: message.type || "notice",
     targetRole: message.targetRole || "",
     targetName: message.targetName || "",
@@ -1725,8 +1732,13 @@ async function queueAlimtalk(env, message) {
     relatedId: message.relatedId || "",
     templateId,
     variablesJson,
+    scheduledAt,
     createdAt: now,
   });
+
+  if (scheduledAt) {
+    return { id, ok: true, scheduled: true, queueStatus: "scheduled", scheduledAt };
+  }
 
   let result;
   try {
@@ -1740,6 +1752,70 @@ async function queueAlimtalk(env, message) {
   await updateAlimtalkDeliveryResult(env, id, result);
 
   return { id, ...result };
+}
+
+export function calculateSellerQuoteAlimtalkScheduleAt(nowInput = new Date()) {
+  const now = new Date(nowInput);
+  if (Number.isNaN(now.getTime())) return "";
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Seoul",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      hourCycle: "h23",
+    }).formatToParts(now).filter((part) => part.type !== "literal").map((part) => [part.type, part.value])
+  );
+  const hour = Number(parts.hour || 0);
+  if (hour >= 9 && hour < 20) return "";
+  const target = new Date(Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day), 0, 0, 0));
+  if (hour >= 20) target.setUTCDate(target.getUTCDate() + 1);
+  return target.toISOString();
+}
+
+async function processScheduledSellerQuoteAlimtalks(env) {
+  await ensureAlimtalkColumns(env);
+  const now = new Date().toISOString();
+  const result = await env.DB.prepare(
+    `SELECT * FROM alimtalk_queue
+      WHERE type = 'seller-quote-registered'
+        AND status = 'scheduled'
+        AND scheduled_at != ''
+        AND scheduled_at <= ?
+      ORDER BY scheduled_at ASC, created_at ASC
+      LIMIT 500`
+  ).bind(now).all();
+  let sent = 0;
+  let failed = 0;
+  for (const row of result.results || []) {
+    const claim = await env.DB.prepare(
+      "UPDATE alimtalk_queue SET status = 'processing' WHERE id = ? AND status = 'scheduled'"
+    ).bind(row.id).run();
+    if (Number(claim.meta?.changes || 0) !== 1) continue;
+    const message = {
+      type: row.type,
+      targetRole: row.target_role || "seller",
+      targetName: row.target_name || "매니저",
+      targetPhone: row.target_phone || "",
+      title: row.title || "새로운 견적이 등록되었습니다",
+      body: row.body || "",
+      relatedId: row.related_id || "",
+      templateId: row.template_id || getSolapiTemplateId(env, row.type),
+      variables: parseJson(row.variables_json, {}),
+      allowDuplicates: true,
+    };
+    let delivery;
+    try {
+      delivery = await sendSolapiAlimtalk(env, message, message.templateId);
+    } catch (error) {
+      delivery = { ok: false, error: error?.message || "예약 알림톡 발송 중 오류가 발생했습니다." };
+    }
+    await updateAlimtalkDeliveryResult(env, row.id, delivery);
+    if (delivery.ok) sent += 1;
+    else failed += 1;
+  }
+  return { due: (result.results || []).length, sent, failed };
 }
 
 async function queueTextMessage(env, message) {
@@ -1901,8 +1977,10 @@ async function queueSellerQuoteRegisteredAlerts(env, quote) {
     "#{브랜드}": String(quote.desiredBrand || "비교견적"),
   };
   let sent = 0;
+  let scheduled = 0;
   let failed = 0;
   const errors = [];
+  const scheduledAt = calculateSellerQuoteAlimtalkScheduleAt(new Date());
 
   // 외부 발송 요청이 한꺼번에 몰리지 않도록 5명씩 나누어 처리합니다.
   for (let offset = 0; offset < recipients.length; offset += 5) {
@@ -1919,6 +1997,7 @@ async function queueSellerQuoteRegisteredAlerts(env, quote) {
           body: `새로운 견적이 등록되었습니다. 견적번호: ${quote.quoteNumber}`,
           templateId,
           allowDuplicates: true,
+          scheduledAt,
           variables,
         })
       )
@@ -1926,7 +2005,8 @@ async function queueSellerQuoteRegisteredAlerts(env, quote) {
 
     results.forEach((item, index) => {
       if (item.status === "fulfilled" && item.value?.ok) {
-        sent += 1;
+        if (item.value.scheduled) scheduled += 1;
+        else sent += 1;
         return;
       }
       failed += 1;
@@ -1942,6 +2022,8 @@ async function queueSellerQuoteRegisteredAlerts(env, quote) {
     ok: failed === 0,
     total: recipients.length,
     sent,
+    scheduled,
+    scheduledAt,
     failed,
     errors: errors.slice(0, 20),
   };
@@ -3269,6 +3351,17 @@ async function resendAlimtalk(env, id) {
     await env.DB.prepare("SELECT * FROM alimtalk_queue WHERE id = ?").bind(id).first()
   );
   if (!row) return json({ ok: false, message: "알림톡 정보를 찾을 수 없습니다." }, 404);
+  if (
+    row.status === "scheduled" &&
+    row.scheduledAt &&
+    new Date(row.scheduledAt).getTime() > Date.now()
+  ) {
+    return json({
+      ok: false,
+      message: "오전 9시 예약 발송 전에는 재발송할 수 없습니다.",
+      scheduledAt: row.scheduledAt,
+    }, 409);
+  }
 
   const templateId = row.templateId || getSolapiTemplateId(env, row.type || "notice");
   const isTextMessage = String(row.type || "").includes("sms");
@@ -4639,6 +4732,7 @@ async function reviewAnonymousPolicyCase(env, request, caseId) {
 }
 
 let subscriptionProductSchemaReady = false;
+let subscriptionProductResponseCache = null;
 
 async function ensureSubscriptionProductSchema(env) {
   if (subscriptionProductSchemaReady) return;
@@ -4773,6 +4867,16 @@ async function ensureInitialSubscriptionCatalog(env) {
 }
 
 async function getSubscriptionProducts(env) {
+  const nowMs = Date.now();
+  if (subscriptionProductResponseCache?.body && subscriptionProductResponseCache.expiresAt > nowMs) {
+    return new Response(subscriptionProductResponseCache.body, {
+      status: 200,
+      headers: { ...jsonHeaders,
+      "Cache-Control": "public, max-age=60, s-maxage=60, stale-while-revalidate=300",
+      "X-Pickquote-Cache": "worker-hit",
+      },
+    });
+  }
   await ensureSubscriptionProductSchema(env);
   let activeSet = await env.DB.prepare(
     "SELECT * FROM subscription_product_sets WHERE status = 'active' ORDER BY activated_at DESC LIMIT 1"
@@ -4782,20 +4886,17 @@ async function getSubscriptionProducts(env) {
   }
   if (!activeSet) return json({ ok: true, source: null, count: 0, items: [] });
 
-  const rows = [];
-  for (let offset = 0; offset < 5000; offset += 500) {
-    const result = await env.DB.prepare(
-      `SELECT * FROM subscription_products
-        WHERE set_id = ?
-        ORDER BY category ASC, source_category ASC, sort_order ASC, model ASC
-        LIMIT 500 OFFSET ?`
-    ).bind(activeSet.id, offset).all();
-    const page = result.results || [];
-    rows.push(...page);
-    if (page.length < 500) break;
-  }
+  const result = await env.DB.prepare(
+    `SELECT id, brand, category, source_category, model, name, monthly_fee_72,
+            care_type, care_detail, visit_cycle, image_url, options_json
+       FROM subscription_products
+      WHERE set_id = ?
+      ORDER BY category ASC, source_category ASC, sort_order ASC, model ASC
+      LIMIT 3000`
+  ).bind(activeSet.id).all();
+  const rows = result.results || [];
   const items = rows.map(normalizeSubscriptionProduct);
-  return json({
+  const payload = {
     ok: true,
     source: {
       name: "구독 상품 데이터",
@@ -4806,6 +4907,15 @@ async function getSubscriptionProducts(env) {
     },
     count: items.length,
     items,
+  };
+  const body = JSON.stringify(payload);
+  subscriptionProductResponseCache = { body, expiresAt: nowMs + 60 * 1000 };
+  return new Response(body, {
+    status: 200,
+    headers: { ...jsonHeaders,
+      "Cache-Control": "public, max-age=60, s-maxage=60, stale-while-revalidate=300",
+      "X-Pickquote-Cache": "worker-miss",
+    },
   });
 }
 
@@ -4898,6 +5008,7 @@ async function replaceSubscriptionProducts(env, request) {
     await env.DB.prepare("DELETE FROM subscription_products WHERE set_id = ?").bind(row.id).run();
     await env.DB.prepare("DELETE FROM subscription_product_sets WHERE id = ?").bind(row.id).run();
   }
+  subscriptionProductResponseCache = null;
   return json({ ok: true, setId, count: items.length, activatedAt: now });
 }
 
@@ -5088,6 +5199,7 @@ export async function onRequest(context) {
 export async function onScheduled(context) {
   const { env } = context;
   if (!env.DB) return;
+  await processScheduledSellerQuoteAlimtalks(env);
   await closeExpiredQuotes(env);
   await cleanupExpiredStoredData(env);
   await cleanupExpiredAnonymousConsultations(env);

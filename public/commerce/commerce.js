@@ -9,6 +9,8 @@ let commerceItems = [];
 let sourceInfo = null;
 let activeCategory = "전체";
 let visibleCount = 24;
+const subscriptionCacheKey = "pickquoteSubscriptionCatalogV1";
+const subscriptionCacheMaxAgeMs = 6 * 60 * 60 * 1000;
 
 const categoryGrid = document.querySelector("#commerceCategories");
 const productGrid = document.querySelector("#commerceProductGrid");
@@ -35,6 +37,32 @@ function escapeHtml(value) {
 
 function formatWon(value) {
   return `${Number(value || 0).toLocaleString("ko-KR")}원`;
+}
+
+function applySubscriptionPayload(payload) {
+  if (!payload?.ok || !Array.isArray(payload.items) || !payload.items.length) return false;
+  commerceItems = payload.items;
+  sourceInfo = payload.source || null;
+  sortCommerceItems();
+  return true;
+}
+
+function readSubscriptionCache() {
+  try {
+    const cached = JSON.parse(sessionStorage.getItem(subscriptionCacheKey) || "null");
+    if (!cached || Date.now() - Number(cached.savedAt || 0) > subscriptionCacheMaxAgeMs) return null;
+    return cached.payload || null;
+  } catch {
+    return null;
+  }
+}
+
+function writeSubscriptionCache(payload) {
+  try {
+    sessionStorage.setItem(subscriptionCacheKey, JSON.stringify({ savedAt: Date.now(), payload }));
+  } catch {
+    // 저장 공간이 제한된 환경에서는 서버 데이터만 사용합니다.
+  }
 }
 
 function productOptions(item) {
@@ -272,13 +300,11 @@ function updateCatalogMeta(shown, total) {
 }
 
 async function loadSubscriptionProducts() {
-  const response = await fetch("/api/subscription-products", { headers: { Accept: "application/json" }, cache: "no-store" });
+  const response = await fetch("/api/subscription-products", { headers: { Accept: "application/json" }, cache: "default" });
   if (!response.ok) throw new Error("subscription api unavailable");
   const payload = await response.json();
-  if (!payload.ok || !Array.isArray(payload.items) || !payload.items.length) throw new Error("subscription data empty");
-  commerceItems = payload.items;
-  sourceInfo = payload.source || null;
-  sortCommerceItems();
+  if (!applySubscriptionPayload(payload)) throw new Error("subscription data empty");
+  writeSubscriptionCache(payload);
 }
 
 categoryGrid?.addEventListener("click", (event) => {
@@ -296,11 +322,19 @@ brandFilter?.addEventListener("change", () => { visibleCount = 24; renderProduct
 async function initCommerce() {
   renderCategories();
   if (commercePage === "subscription") {
+    const cachedPayload = readSubscriptionCache();
+    const hasCachedCatalog = applySubscriptionPayload(cachedPayload);
+    if (hasCachedCatalog) {
+      renderCategories();
+      renderProducts();
+    }
     try {
       await loadSubscriptionProducts();
     } catch (error) {
-      commerceItems = [];
-      sourceInfo = null;
+      if (!hasCachedCatalog) {
+        commerceItems = [];
+        sourceInfo = null;
+      }
     }
   }
   renderCategories();
