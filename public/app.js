@@ -688,6 +688,43 @@ function persistSellerFilterState() {
   }
 }
 
+function resetSellerFilterState() {
+  activeSellerBrandFilter = "all";
+  activeSellerRegionFilter = "all";
+  persistSellerFilterState();
+}
+
+function reconcileSellerFilterState() {
+  if (!activeSellerId) return;
+  const tabRequests = getSellerTabRequests();
+  let changed = false;
+
+  activeSellerBrandFilter = normalizeSellerBrandFilter(activeSellerBrandFilter);
+  if (
+    activeSellerBrandFilter !== "all" &&
+    !tabRequests.some((request) => getSellerBrandValue(request) === activeSellerBrandFilter)
+  ) {
+    activeSellerBrandFilter = "all";
+    activeSellerRegionFilter = "all";
+    changed = true;
+  }
+
+  const brandScopedRequests = activeSellerBrandFilter === "all"
+    ? tabRequests
+    : tabRequests.filter((request) => getSellerBrandValue(request) === activeSellerBrandFilter);
+  if (
+    activeSellerRegionFilter !== "all" &&
+    !brandScopedRequests.some(
+      (request) => normalizeSellerRegionCategory(request.region) === activeSellerRegionFilter
+    )
+  ) {
+    activeSellerRegionFilter = "all";
+    changed = true;
+  }
+
+  if (changed) persistSellerFilterState();
+}
+
 function canUseApiServer() {
   return window.location.protocol !== "file:";
 }
@@ -903,6 +940,7 @@ async function resetSellerPasswordOnServer(payload) {
 
 function replaceRequests(rows) {
   requests.splice(0, requests.length, ...rows.map(normalizeQuoteRequest));
+  reconcileSellerFilterState();
   renderHomeFeeds();
 }
 
@@ -3420,6 +3458,7 @@ sellerLoginForm.addEventListener("submit", async (event) => {
     activeSellerId = loginId;
     writeActiveSellerSession(loginId);
     activeSellerTab = "all";
+    resetSellerFilterState();
     setSellerLoginMessage("");
     setBidFormMessage("");
     sellerLoginForm.reset();
