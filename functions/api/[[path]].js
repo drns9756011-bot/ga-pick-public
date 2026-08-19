@@ -32,7 +32,7 @@ const SOLAPI_DEFAULTS = {
   SOLAPI_TEMPLATE_SELLER_QUOTE_REGISTERED: "KA01TP260805074550965Bb2zfMAs16w",
 };
 
-const PUBLIC_API_VERSION = "20260819-subscription-image-recovery-v2";
+const PUBLIC_API_VERSION = "20260819-quote-submission-audit-v1";
 const QUOTE_DURATION_HOURS = 72;
 const QUOTE_DURATION_POLICY_KEY = "quote-duration-hours";
 const NAVER_SHOPPING_CLIENT_ID_DEFAULT = "x1CsXB5ZCYULxcGnclGq";
@@ -121,6 +121,26 @@ async function sha256Hex(value) {
   return Array.from(new Uint8Array(digest))
     .map((byte) => byte.toString(16).padStart(2, "0"))
     .join("");
+}
+
+function bytesToBase64(bytes) {
+  let binary = "";
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary);
+}
+
+async function encryptQuoteAuditValue(env, value) {
+  const secret = String(env.QUOTE_AUDIT_ENCRYPTION_KEY || env.ADMIN_API_TOKEN || "").trim();
+  if (!secret || !value || value === "unknown") return "";
+  const keyBytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(secret));
+  const key = await crypto.subtle.importKey("raw", keyBytes, { name: "AES-GCM" }, false, ["encrypt"]);
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const encrypted = await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv },
+    key,
+    new TextEncoder().encode(String(value))
+  );
+  return `v1.${bytesToBase64(iv)}.${bytesToBase64(new Uint8Array(encrypted))}`;
 }
 
 function bytesToHex(bytes) {
@@ -1024,6 +1044,20 @@ async function ensureCustomerQuoteColumns(env) {
     "ALTER TABLE customer_quotes ADD COLUMN previous_lowest_price INTEGER DEFAULT 0",
     "ALTER TABLE customer_quotes ADD COLUMN rank_notice_queued_at TEXT DEFAULT ''",
     "ALTER TABLE customer_quotes ADD COLUMN sale_completed_at TEXT DEFAULT ''",
+    "ALTER TABLE customer_quotes ADD COLUMN submission_ip_masked TEXT DEFAULT ''",
+    "ALTER TABLE customer_quotes ADD COLUMN submission_ip_hash TEXT DEFAULT ''",
+    "ALTER TABLE customer_quotes ADD COLUMN submission_ip_encrypted TEXT DEFAULT ''",
+    "ALTER TABLE customer_quotes ADD COLUMN submission_country TEXT DEFAULT ''",
+    "ALTER TABLE customer_quotes ADD COLUMN submission_region TEXT DEFAULT ''",
+    "ALTER TABLE customer_quotes ADD COLUMN submission_city TEXT DEFAULT ''",
+    "ALTER TABLE customer_quotes ADD COLUMN submission_user_agent TEXT DEFAULT ''",
+    "ALTER TABLE customer_quotes ADD COLUMN submission_device_type TEXT DEFAULT ''",
+    "ALTER TABLE customer_quotes ADD COLUMN submission_browser_name TEXT DEFAULT ''",
+    "ALTER TABLE customer_quotes ADD COLUMN submission_cf_ray TEXT DEFAULT ''",
+    "ALTER TABLE customer_quotes ADD COLUMN submission_consent_version TEXT DEFAULT ''",
+    "ALTER TABLE customer_quotes ADD COLUMN submission_consented_at TEXT DEFAULT ''",
+    "ALTER TABLE customer_quotes ADD COLUMN submission_recorded_at TEXT DEFAULT ''",
+    "ALTER TABLE customer_quotes ADD COLUMN submission_phone_verified INTEGER NOT NULL DEFAULT 0",
     "ALTER TABLE quote_images ADD COLUMN image_type TEXT DEFAULT 'full'",
     "ALTER TABLE quote_images ADD COLUMN expires_at TEXT DEFAULT ''",
   ];
@@ -2260,6 +2294,29 @@ function sellerAccessBrowser(userAgent) {
   return '기타';
 }
 
+async function createQuoteSubmissionAudit(env, request, consent = {}) {
+  const ip = getClientIp(request);
+  const userAgent = String(request.headers.get("User-Agent") || "").slice(0, 500);
+  const salt = String(env.QUOTE_AUDIT_HASH_SALT || env.ADMIN_API_TOKEN || "ga-pick-quote-audit-v1");
+  const cf = request.cf || {};
+  return {
+    ipMasked: maskClientIp(ip),
+    ipHash: await sha256Hex(`${salt}|${ip}`),
+    ipEncrypted: await encryptQuoteAuditValue(env, ip),
+    country: String(cf.country || request.headers.get("CF-IPCountry") || "").slice(0, 12),
+    region: String(cf.region || "").slice(0, 100),
+    city: String(cf.city || "").slice(0, 100),
+    userAgent,
+    deviceType: sellerAccessDevice(userAgent),
+    browserName: sellerAccessBrowser(userAgent),
+    cfRay: String(request.headers.get("CF-Ray") || "").slice(0, 100),
+    consentVersion: String(consent?.consentVersion || consent?.version || "").slice(0, 100),
+    consentedAt: String(consent?.agreedAt || "").slice(0, 50),
+    recordedAt: new Date().toISOString(),
+    phoneVerified: consent?.phoneVerified === true ? 1 : 0,
+  };
+}
+
 async function recordSellerAccess(env, request, sellerRow, accessType = 'login') {
   await ensureSellerAccessTables(env);
   const sellerId = String(sellerRow?.seller_id || sellerRow?.sellerId || '').trim();
@@ -2786,6 +2843,7 @@ async function createCustomerQuote(env, request, executionContext) {
   const fullImagesExpiresAt = addDays(createdAt, 7);
   const personalExpiresAt = addDays(createdAt, 365);
   const previousStats = await getPreviousQuoteStats(env, String(body.customer || "").trim(), body.phone);
+  const submissionAudit = await createQuoteSubmissionAudit(env, request, body.consent || {});
 
   if (images.length && !env.FILES) {
     return json({ ok: false, message: "견적서 이미지 저장소가 연결되지 않았습니다. 잠시 후 다시 시도해주세요." }, 500);
@@ -2836,8 +2894,13 @@ async function createCustomerQuote(env, request, executionContext) {
       (id, quote_number, customer, phone, items, quote_type, purchase_purpose, desired_brand, price, region, install_date, memo, status,
        selected_bid_id, contact_release_scope, contact_released_bid_ids, submission_count, previous_lowest_price,
        rank_notice_queued_at, sale_completed_at, thumbnail_image, thumbnail_image_key, quote_expires_at,
-       full_images_expires_at, personal_expires_at, created_at, consent_json)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+       full_images_expires_at, personal_expires_at, created_at, consent_json,
+       submission_ip_masked, submission_ip_hash, submission_ip_encrypted, submission_country,
+       submission_region, submission_city, submission_user_agent, submission_device_type,
+       submission_browser_name, submission_cf_ray, submission_consent_version,
+       submission_consented_at, submission_recorded_at, submission_phone_verified)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   )
     .bind(
       id,
@@ -2866,7 +2929,21 @@ async function createCustomerQuote(env, request, executionContext) {
       fullImagesExpiresAt,
       personalExpiresAt,
       createdAt,
-      JSON.stringify(body.consent || {})
+      JSON.stringify(body.consent || {}),
+      submissionAudit.ipMasked,
+      submissionAudit.ipHash,
+      submissionAudit.ipEncrypted,
+      submissionAudit.country,
+      submissionAudit.region,
+      submissionAudit.city,
+      submissionAudit.userAgent,
+      submissionAudit.deviceType,
+      submissionAudit.browserName,
+      submissionAudit.cfRay,
+      submissionAudit.consentVersion,
+      submissionAudit.consentedAt,
+      submissionAudit.recordedAt,
+      submissionAudit.phoneVerified
     )
     .run();
 

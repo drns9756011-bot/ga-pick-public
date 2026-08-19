@@ -3,7 +3,7 @@ import { onRequest, onScheduled } from "../functions/api/[[path]].js";
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    const routeVersion = "20260819-subscription-image-recovery-v2";
+    const routeVersion = "20260819-quote-submission-audit-v1";
 
     if (url.pathname === "/robots.txt") {
       return new Response("User-agent: *\nAllow: /\n\nSitemap: https://ga-pick.com/sitemap.xml\n", {

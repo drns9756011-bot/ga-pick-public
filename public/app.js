@@ -2374,7 +2374,7 @@ async function createCustomerRequest(formData) {
       thirdPartyProvision: true,
       serviceNoticeAlimtalk: true,
       customerMarketing: Boolean(customerMarketingConsent?.checked),
-      consentVersion: "20260813-consent-v1",
+      consentVersion: "20260819-quote-audit-v2",
       agreedAt: new Date().toISOString(),
       retention: {
         fullQuoteImagesDays: 7,
