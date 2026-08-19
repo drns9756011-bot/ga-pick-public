@@ -9,7 +9,7 @@ let commerceItems = [];
 let sourceInfo = null;
 let activeCategory = "전체";
 let visibleCount = 24;
-const subscriptionCacheKey = "pickquoteSubscriptionCatalogV1";
+const subscriptionCacheKey = "pickquoteSubscriptionCatalogV2Images";
 const subscriptionCacheMaxAgeMs = 6 * 60 * 60 * 1000;
 
 const categoryGrid = document.querySelector("#commerceCategories");
@@ -300,7 +300,7 @@ function updateCatalogMeta(shown, total) {
 }
 
 async function loadSubscriptionProducts() {
-  const response = await fetch("/api/subscription-products", { headers: { Accept: "application/json" }, cache: "default" });
+  const response = await fetch("/api/subscription-products?v=20260819-image-recovery", { headers: { Accept: "application/json" }, cache: "reload" });
   if (!response.ok) throw new Error("subscription api unavailable");
   const payload = await response.json();
   if (!applySubscriptionPayload(payload)) throw new Error("subscription data empty");

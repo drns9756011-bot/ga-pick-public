@@ -8,6 +8,16 @@ const jsonHeaders = {
 
 import initialSubscriptionCatalog from "../data/subscription-products-initial.js";
 
+const initialSubscriptionImageMap = new Map();
+for (const item of initialSubscriptionCatalog?.items || []) {
+  const imageUrl = String(item?.imageUrl || "");
+  if (!imageUrl) continue;
+  if (item?.model) initialSubscriptionImageMap.set(String(item.model).toUpperCase(), imageUrl);
+  for (const option of item?.options || []) {
+    if (option?.model) initialSubscriptionImageMap.set(String(option.model).toUpperCase(), imageUrl);
+  }
+}
+
 const SOLAPI_DEFAULTS = {
   SOLAPI_CHANNEL_ID: "KA01PF260720091629575EzVmd2YRyU7",
   SOLAPI_FROM: "01066312323",
@@ -22,7 +32,7 @@ const SOLAPI_DEFAULTS = {
   SOLAPI_TEMPLATE_SELLER_QUOTE_REGISTERED: "KA01TP260805074550965Bb2zfMAs16w",
 };
 
-const PUBLIC_API_VERSION = "20260817-subscription-catalog-v1";
+const PUBLIC_API_VERSION = "20260819-subscription-image-recovery-v2";
 const QUOTE_DURATION_HOURS = 72;
 const QUOTE_DURATION_POLICY_KEY = "quote-duration-hours";
 const NAVER_SHOPPING_CLIENT_ID_DEFAULT = "x1CsXB5ZCYULxcGnclGq";
@@ -4785,6 +4795,9 @@ function normalizeSubscriptionProduct(row) {
     const parsed = JSON.parse(row.options_json || "[]");
     if (Array.isArray(parsed)) options = parsed;
   } catch (_) {}
+  const fallbackImage = initialSubscriptionImageMap.get(String(row.model || "").toUpperCase())
+    || options.map((option) => initialSubscriptionImageMap.get(String(option?.model || "").toUpperCase())).find(Boolean)
+    || "";
   return {
     id: row.id,
     brand: row.brand,
@@ -4796,7 +4809,7 @@ function normalizeSubscriptionProduct(row) {
     careType: row.care_type || "",
     careDetail: row.care_detail || "",
     visitCycle: row.visit_cycle || "",
-    imageUrl: row.image_url || "",
+    imageUrl: row.image_url || fallbackImage,
     options,
   };
 }
