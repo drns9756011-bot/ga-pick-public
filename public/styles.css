@@ -15,6 +15,84 @@
   --font-main: "Pretendard Variable", Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+/* Quote phone verification */
+.wizard-phone-verification {
+  display: grid;
+  align-content: start;
+  gap: 9px;
+  min-width: 0;
+}
+
+.wizard-phone-verification > label {
+  display: grid;
+  gap: 8px;
+}
+
+.wizard-phone-request-row,
+.wizard-phone-code-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 132px;
+  gap: 8px;
+}
+
+.wizard-phone-request,
+.wizard-phone-confirm {
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid #173f68;
+  border-radius: 7px;
+  background: #173f68;
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.wizard-phone-request:hover,
+.wizard-phone-confirm:hover {
+  background: #0f3154;
+}
+
+.wizard-phone-request:disabled,
+.wizard-phone-confirm:disabled {
+  border-color: #cbd7e2;
+  background: #e8eef4;
+  color: #718397;
+  cursor: not-allowed;
+}
+
+.wizard-phone-code-row input {
+  min-width: 0;
+  letter-spacing: 0;
+}
+
+.wizard-phone-status {
+  min-height: 20px;
+  margin: 0;
+  color: #60758a;
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.45;
+}
+
+.wizard-phone-status.is-verified {
+  color: #165b89;
+}
+
+@media (max-width: 560px) {
+  .wizard-phone-request-row,
+  .wizard-phone-code-row {
+    grid-template-columns: minmax(0, 1fr) 112px;
+  }
+
+  .wizard-phone-request,
+  .wizard-phone-confirm {
+    padding: 0 10px;
+    font-size: 12px;
+  }
+}
+
 * {
   box-sizing: border-box;
 }

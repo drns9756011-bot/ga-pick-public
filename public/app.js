@@ -2369,13 +2369,17 @@ async function createCustomerRequest(formData) {
     saleCompletedAt: "",
     saleCompletedBidId: null,
     reviewNotificationSentAt: "",
+    phoneVerificationId: String(formData.get("phoneVerificationId") || ""),
+    phoneVerificationToken: String(formData.get("phoneVerificationToken") || ""),
     consent: {
       collectionUse: true,
       thirdPartyProvision: true,
       serviceNoticeAlimtalk: true,
       customerMarketing: Boolean(customerMarketingConsent?.checked),
-      consentVersion: "20260819-quote-audit-v2",
+      consentVersion: "20260819-phone-verification-v3",
       agreedAt: new Date().toISOString(),
+      phoneVerified: true,
+      phoneVerifiedAt: String(formData.get("phoneVerifiedAt") || ""),
       retention: {
         fullQuoteImagesDays: 7,
         representativeImageDays: 365,

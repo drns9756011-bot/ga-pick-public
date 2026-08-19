@@ -17,6 +17,9 @@
     image: field("quoteImage"),
     customer: field("customer"),
     phone: field("phone"),
+    phoneVerificationId: ensureHiddenField("phoneVerificationId"),
+    phoneVerificationToken: ensureHiddenField("phoneVerificationToken"),
+    phoneVerifiedAt: ensureHiddenField("phoneVerifiedAt"),
     purpose: field("purchasePurpose"),
     brand: field("desiredBrand"),
     price: field("price"),
@@ -49,6 +52,11 @@
     recommendationGroups: [],
     recommending: false,
     recommendationMode: "",
+    phoneVerificationId: "",
+    verificationPhone: "",
+    verifiedPhone: "",
+    phoneVerificationBusy: false,
+    phoneResendAvailableAt: 0,
   };
 
   async function fetchWithTimeout(path, options = {}, timeoutMs = 16000) {
@@ -549,9 +557,17 @@
     state.recommendationGroups = [];
     state.recommending = false;
     state.recommendationMode = "";
+    state.phoneVerificationId = "";
+    state.verificationPhone = "";
+    state.verifiedPhone = "";
+    state.phoneVerificationBusy = false;
+    state.phoneResendAvailableAt = 0;
     form._wizardSubmitAllowed = false;
     fields.aiModelRecommendations.value = "";
     fields.recommendationMode.value = "";
+    fields.phoneVerificationId.value = "";
+    fields.phoneVerificationToken.value = "";
+    fields.phoneVerifiedAt.value = "";
     fields.price.value = "0";
     syncAllFields();
     render();
@@ -714,10 +730,10 @@
     return ok;
   }
 
-  function setMessage(text) {
+  function setMessage(text, type = "error") {
     if (!message) return;
     message.textContent = text;
-    message.dataset.type = text ? "error" : "";
+    message.dataset.type = text ? type : "";
   }
 
   function clearMessage() {
@@ -750,14 +766,127 @@
   }
 
   function renderPersonal() {
+    const phoneDigits = onlyDigits(fields.phone.value);
+    const isVerified = Boolean(state.verifiedPhone && state.verifiedPhone === phoneDigits && fields.phoneVerificationToken.value);
+    const hasRequest = Boolean(state.phoneVerificationId && state.verificationPhone === phoneDigits);
+    const resendWaiting = Date.now() < Number(state.phoneResendAvailableAt || 0);
     return `
       <h3>고객님 정보를 입력해주세요.</h3>
-      <p>내 견적 확인과 알림 안내에 필요한 최소 정보만 받습니다.</p>
+      <p>내 견적 확인과 안전한 등록을 위해 휴대전화 인증이 필요합니다.</p>
       <div class="wizard-field-grid">
         <label>고객님 성함<input type="text" data-wizard-field="customer" value="${escapeHtml(fields.customer.value)}" placeholder="예: 홍길동" /></label>
-        <label>연락처<input type="text" data-wizard-field="phone" value="${escapeHtml(fields.phone.value)}" placeholder="010-0000-0000" /></label>
+        <div class="wizard-phone-verification">
+          <label>연락처
+            <span class="wizard-phone-request-row">
+              <input type="text" inputmode="tel" autocomplete="tel" data-wizard-field="phone" value="${escapeHtml(fields.phone.value)}" placeholder="010-0000-0000" />
+              <button type="button" class="wizard-phone-request" data-phone-verification-request ${state.phoneVerificationBusy || isVerified || resendWaiting ? "disabled" : ""}>${isVerified ? "인증 완료" : resendWaiting ? "잠시 후 재요청" : hasRequest ? "다시 받기" : "인증번호 받기"}</button>
+            </span>
+          </label>
+          ${hasRequest && !isVerified ? `
+            <div class="wizard-phone-code-row">
+              <input type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" data-phone-verification-code placeholder="인증번호 6자리" />
+              <button type="button" class="wizard-phone-confirm" data-phone-verification-confirm ${state.phoneVerificationBusy ? "disabled" : ""}>확인</button>
+            </div>
+          ` : ""}
+          <p class="wizard-phone-status ${isVerified ? "is-verified" : ""}" data-phone-verification-status>
+            ${isVerified ? "휴대전화 인증이 완료되었습니다." : hasRequest ? "알림톡으로 받은 인증번호를 5분 안에 입력해주세요." : "견적 등록 전에 본인 휴대전화 인증을 완료해주세요."}
+          </p>
+        </div>
       </div>
     `;
+  }
+
+  function clearPhoneVerification() {
+    state.phoneVerificationId = "";
+    state.verificationPhone = "";
+    state.verifiedPhone = "";
+    state.phoneResendAvailableAt = 0;
+    fields.phoneVerificationId.value = "";
+    fields.phoneVerificationToken.value = "";
+    fields.phoneVerifiedAt.value = "";
+  }
+
+  async function requestPhoneVerification() {
+    const phone = onlyDigits(fields.phone.value);
+    if (!/^01[016789]\d{7,8}$/.test(phone)) {
+      setMessage("휴대전화번호를 정확히 입력해주세요.");
+      return;
+    }
+    if (state.phoneVerificationBusy || Date.now() < Number(state.phoneResendAvailableAt || 0)) return;
+
+    clearPhoneVerification();
+    state.phoneVerificationBusy = true;
+    render();
+    try {
+      const response = await fetchWithTimeout("/api/quote-phone-verifications/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result?.ok) {
+        setMessage(result?.message || "인증번호를 발송하지 못했습니다. 잠시 후 다시 시도해주세요.");
+        return;
+      }
+      state.phoneVerificationId = String(result.verificationId || "");
+      state.verificationPhone = phone;
+      fields.phoneVerificationId.value = state.phoneVerificationId;
+      const retryAfter = Math.max(1, Number(result.retryAfter || 60));
+      state.phoneResendAvailableAt = Date.now() + retryAfter * 1000;
+      window.setTimeout(() => {
+        if (currentStep()?.key === "personal" && Date.now() >= state.phoneResendAvailableAt) render();
+      }, retryAfter * 1000 + 100);
+      setMessage(result.message || "인증번호를 알림톡으로 발송했습니다.", "normal");
+    } catch (error) {
+      setMessage("인증번호 발송 요청에 실패했습니다. 네트워크 상태를 확인해주세요.");
+    } finally {
+      state.phoneVerificationBusy = false;
+      render();
+    }
+  }
+
+  async function confirmPhoneVerification(codeInput) {
+    const phone = onlyDigits(fields.phone.value);
+    const code = onlyDigits(codeInput).slice(0, 6);
+    if (!state.phoneVerificationId || state.verificationPhone !== phone) {
+      setMessage("인증번호를 다시 요청해주세요.");
+      return;
+    }
+    if (code.length !== 6) {
+      setMessage("인증번호 6자리를 입력해주세요.");
+      return;
+    }
+    if (state.phoneVerificationBusy) return;
+
+    state.phoneVerificationBusy = true;
+    const confirmButton = form.querySelector("[data-phone-verification-confirm]");
+    if (confirmButton) confirmButton.disabled = true;
+    try {
+      const response = await fetchWithTimeout("/api/quote-phone-verifications/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          verificationId: state.phoneVerificationId,
+          phone,
+          code,
+        }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result?.ok) {
+        setMessage(result?.message || "인증번호를 확인하지 못했습니다.");
+        return;
+      }
+      state.verifiedPhone = phone;
+      fields.phoneVerificationId.value = String(result.verificationId || state.phoneVerificationId);
+      fields.phoneVerificationToken.value = String(result.verificationToken || "");
+      fields.phoneVerifiedAt.value = String(result.verifiedAt || "");
+      setMessage(result.message || "휴대전화 인증이 완료되었습니다.", "normal");
+    } catch (error) {
+      setMessage("인증번호 확인 요청에 실패했습니다. 네트워크 상태를 확인해주세요.");
+    } finally {
+      state.phoneVerificationBusy = false;
+      render();
+    }
   }
 
   function renderPurpose() {
@@ -1020,6 +1149,18 @@
         if (input.dataset.wizardField === "phone") {
           target.value = formatPhoneInput(input.value);
           input.value = target.value;
+          const phone = onlyDigits(target.value);
+          if (
+            (state.verificationPhone && state.verificationPhone !== phone) ||
+            (state.verifiedPhone && state.verifiedPhone !== phone)
+          ) {
+            clearPhoneVerification();
+            const status = root.querySelector("[data-phone-verification-status]");
+            if (status) {
+              status.textContent = "전화번호가 변경되어 다시 인증해야 합니다.";
+              status.classList.remove("is-verified");
+            }
+          }
         } else if (input.dataset.wizardField === "price") {
           const digits = onlyDigits(input.value).slice(0, 8);
           target.value = digits;
@@ -1035,6 +1176,23 @@
         }
         updatePreview();
       });
+    });
+
+    root.querySelector("[data-phone-verification-request]")?.addEventListener("click", () => {
+      requestPhoneVerification();
+    });
+
+    const verificationCode = root.querySelector("[data-phone-verification-code]");
+    verificationCode?.addEventListener("input", () => {
+      verificationCode.value = onlyDigits(verificationCode.value).slice(0, 6);
+    });
+    verificationCode?.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      confirmPhoneVerification(verificationCode.value);
+    });
+    root.querySelector("[data-phone-verification-confirm]")?.addEventListener("click", () => {
+      confirmPhoneVerification(verificationCode?.value || "");
     });
 
     root.querySelectorAll(".wizard-product-card").forEach((button) => {
@@ -1524,6 +1682,14 @@ function validateQuoteType() {
     }
     if (onlyDigits(fields.phone.value).length < 9) {
       setMessage("연락처를 정확히 입력해주세요.");
+      return false;
+    }
+    if (
+      !fields.phoneVerificationToken.value ||
+      !state.verifiedPhone ||
+      state.verifiedPhone !== onlyDigits(fields.phone.value)
+    ) {
+      setMessage("휴대전화 인증을 완료해주세요.");
       return false;
     }
     return true;

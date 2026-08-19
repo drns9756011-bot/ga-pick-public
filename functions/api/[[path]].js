@@ -30,11 +30,17 @@ const SOLAPI_DEFAULTS = {
   SOLAPI_TEMPLATE_SELLER_APPROVED: "KA01TP260725101616235ziVJkZImZ9O",
   SOLAPI_TEMPLATE_SELLER_REJECTED: "KA01TP260725102900428RYxfTGV9SoG",
   SOLAPI_TEMPLATE_SELLER_QUOTE_REGISTERED: "KA01TP260805074550965Bb2zfMAs16w",
+  SOLAPI_TEMPLATE_PHONE_VERIFICATION: "KA01TP221027002252645FPwAcO9SguY",
 };
 
-const PUBLIC_API_VERSION = "20260819-quote-submission-audit-v1";
+const PUBLIC_API_VERSION = "20260819-quote-phone-verification-v1";
 const QUOTE_DURATION_HOURS = 72;
 const QUOTE_DURATION_POLICY_KEY = "quote-duration-hours";
+const PHONE_VERIFICATION_CODE_TTL_MS = 5 * 60 * 1000;
+const PHONE_VERIFICATION_TOKEN_TTL_MS = 20 * 60 * 1000;
+const PHONE_VERIFICATION_RESEND_MS = 60 * 1000;
+const PHONE_VERIFICATION_MAX_ATTEMPTS = 5;
+const PHONE_VERIFICATION_HOURLY_LIMIT = 5;
 const NAVER_SHOPPING_CLIENT_ID_DEFAULT = "x1CsXB5ZCYULxcGnclGq";
 const LPLAN_SYNC_TOKEN_DEFAULT = "pickquote-lplan-sync-v1";
 const MASTER_SELLER_ID = "pickgj";
@@ -1058,6 +1064,8 @@ async function ensureCustomerQuoteColumns(env) {
     "ALTER TABLE customer_quotes ADD COLUMN submission_consented_at TEXT DEFAULT ''",
     "ALTER TABLE customer_quotes ADD COLUMN submission_recorded_at TEXT DEFAULT ''",
     "ALTER TABLE customer_quotes ADD COLUMN submission_phone_verified INTEGER NOT NULL DEFAULT 0",
+    "ALTER TABLE customer_quotes ADD COLUMN submission_phone_verification_id TEXT DEFAULT ''",
+    "ALTER TABLE customer_quotes ADD COLUMN submission_phone_verified_at TEXT DEFAULT ''",
     "ALTER TABLE quote_images ADD COLUMN image_type TEXT DEFAULT 'full'",
     "ALTER TABLE quote_images ADD COLUMN expires_at TEXT DEFAULT ''",
   ];
@@ -1444,7 +1452,16 @@ async function runMaintenance(env) {
   await closeExpiredQuotes(env);
   const cleanup = await cleanupExpiredStoredData(env);
   const passwordMigration = await migrateLegacySellerPasswords(env);
-  return json({ ok: true, cleanup, passwordMigration });
+  await ensureQuotePhoneVerificationTable(env);
+  const verificationCleanup = await env.DB.prepare(
+    "DELETE FROM quote_phone_verifications WHERE requested_at < ?"
+  ).bind(new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()).run();
+  return json({
+    ok: true,
+    cleanup,
+    passwordMigration,
+    phoneVerificationsDeleted: Number(verificationCleanup?.meta?.changes || 0),
+  });
 }
 
 async function ensureGuideDismissalTable(env) {
@@ -1579,6 +1596,7 @@ function getSolapiTemplateId(env, type) {
     "seller-rejected": solapiValue(env, "SOLAPI_TEMPLATE_SELLER_REJECTED"),
     "seller-application-received": solapiValue(env, "SOLAPI_TEMPLATE_ADMIN_SELLER_APPLICATION"),
     "seller-quote-registered": solapiValue(env, "SOLAPI_TEMPLATE_SELLER_QUOTE_REGISTERED"),
+    "customer-phone-verification": solapiValue(env, "SOLAPI_TEMPLATE_PHONE_VERIFICATION"),
   };
   return templates[type] || "";
 }
@@ -1741,7 +1759,7 @@ async function sendSolapiTextMessage(env, message) {
     body: JSON.stringify({
       messages: [
         {
-          type: "LMS",
+          type: message.messageType || "LMS",
           to: normalizePhone(message.targetPhone),
           from: config.from,
           text: message.body,
@@ -1754,6 +1772,245 @@ async function sendSolapiTextMessage(env, message) {
   });
   const payload = await response.json().catch(() => ({}));
   return parseSolapiSendResult(response, payload);
+}
+
+async function ensureQuotePhoneVerificationTable(env) {
+  await env.DB.batch([
+    env.DB.prepare(`CREATE TABLE IF NOT EXISTS quote_phone_verifications (
+      id TEXT PRIMARY KEY,
+      phone_hash TEXT NOT NULL,
+      phone_masked TEXT NOT NULL,
+      code_hash TEXT NOT NULL,
+      token_hash TEXT DEFAULT '',
+      request_ip_hash TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending',
+      attempts INTEGER NOT NULL DEFAULT 0,
+      expires_at TEXT NOT NULL,
+      token_expires_at TEXT DEFAULT '',
+      requested_at TEXT NOT NULL,
+      verified_at TEXT DEFAULT '',
+      consumed_at TEXT DEFAULT ''
+    )`),
+    env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_quote_phone_verifications_phone_time ON quote_phone_verifications(phone_hash, requested_at DESC)"),
+    env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_quote_phone_verifications_ip_time ON quote_phone_verifications(request_ip_hash, requested_at DESC)"),
+    env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_quote_phone_verifications_status_expiry ON quote_phone_verifications(status, expires_at)"),
+  ]);
+}
+
+function getPhoneVerificationSecret(env) {
+  return String(
+    env.PHONE_VERIFICATION_SECRET ||
+      env.ADMIN_API_TOKEN ||
+      env.SOLAPI_API_SECRET ||
+      "pickquote-phone-verification-v1"
+  ).trim();
+}
+
+async function hashPhoneVerificationValue(env, purpose, value) {
+  return sha256Hex(`${getPhoneVerificationSecret(env)}|${purpose}|${String(value || "")}`);
+}
+
+function maskVerificationPhone(phone) {
+  const digits = normalizePhone(phone);
+  if (digits.length < 7) return "***";
+  return `${digits.slice(0, 3)}-****-${digits.slice(-4)}`;
+}
+
+function createPhoneVerificationCode() {
+  const random = crypto.getRandomValues(new Uint32Array(1))[0] % 1000000;
+  return String(random).padStart(6, "0");
+}
+
+function createPhoneVerificationToken() {
+  return bytesToHex(crypto.getRandomValues(new Uint8Array(32)));
+}
+
+function verificationHashEqual(left, right) {
+  const a = String(left || "");
+  const b = String(right || "");
+  if (!a || !b || a.length !== b.length || a.length % 2 !== 0) return false;
+  return constantTimeEqual(hexToBytes(a), hexToBytes(b));
+}
+
+async function requestQuotePhoneVerification(env, request) {
+  await ensureQuotePhoneVerificationTable(env);
+  const body = await request.json().catch(() => ({}));
+  const phone = normalizePhone(body.phone);
+  if (!/^01[016789]\d{7,8}$/.test(phone)) {
+    return json({ ok: false, message: "휴대전화번호를 정확히 입력해주세요." }, 400);
+  }
+
+  const now = new Date();
+  const nowIso = now.toISOString();
+  const phoneHash = await hashPhoneVerificationValue(env, "phone", phone);
+  const requesterIp = getClientIp(request);
+  const requestIpHash = await hashPhoneVerificationValue(env, "ip", requesterIp);
+  const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000).toISOString();
+  const cleanupBefore = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString();
+  await env.DB.prepare("DELETE FROM quote_phone_verifications WHERE requested_at < ?")
+    .bind(cleanupBefore)
+    .run();
+
+  const latest = await env.DB.prepare(
+    "SELECT requested_at FROM quote_phone_verifications WHERE phone_hash = ? ORDER BY requested_at DESC LIMIT 1"
+  ).bind(phoneHash).first();
+  if (latest?.requested_at) {
+    const elapsed = now.getTime() - new Date(latest.requested_at).getTime();
+    if (Number.isFinite(elapsed) && elapsed < PHONE_VERIFICATION_RESEND_MS) {
+      const retryAfter = Math.max(1, Math.ceil((PHONE_VERIFICATION_RESEND_MS - elapsed) / 1000));
+      return json({ ok: false, message: `${retryAfter}초 후 인증번호를 다시 요청해주세요.`, retryAfter }, 429);
+    }
+  }
+
+  const [phoneCount, ipCount] = await Promise.all([
+    env.DB.prepare(
+      "SELECT COUNT(*) AS total FROM quote_phone_verifications WHERE phone_hash = ? AND requested_at >= ?"
+    ).bind(phoneHash, oneHourAgo).first(),
+    env.DB.prepare(
+      "SELECT COUNT(*) AS total FROM quote_phone_verifications WHERE request_ip_hash = ? AND requested_at >= ?"
+    ).bind(requestIpHash, oneHourAgo).first(),
+  ]);
+  if (
+    Number(phoneCount?.total || 0) >= PHONE_VERIFICATION_HOURLY_LIMIT ||
+    Number(ipCount?.total || 0) >= PHONE_VERIFICATION_HOURLY_LIMIT
+  ) {
+    return json({ ok: false, message: "인증번호 요청 횟수를 초과했습니다. 1시간 후 다시 시도해주세요." }, 429);
+  }
+
+  const id = createId("phone-verify");
+  const code = createPhoneVerificationCode();
+  const codeHash = await hashPhoneVerificationValue(env, "code", `${id}|${code}`);
+  const expiresAt = new Date(now.getTime() + PHONE_VERIFICATION_CODE_TTL_MS).toISOString();
+  await env.DB.prepare(
+    `INSERT INTO quote_phone_verifications
+      (id, phone_hash, phone_masked, code_hash, token_hash, request_ip_hash, status, attempts,
+       expires_at, token_expires_at, requested_at, verified_at, consumed_at)
+     VALUES (?, ?, ?, ?, '', ?, 'pending', 0, ?, '', ?, '', '')`
+  ).bind(id, phoneHash, maskVerificationPhone(phone), codeHash, requestIpHash, expiresAt, nowIso).run();
+
+  const verificationTemplateId = getSolapiTemplateId(env, "customer-phone-verification");
+  const delivery = await sendSolapiAlimtalk(
+    env,
+    {
+      targetPhone: phone,
+      variables: { "#{인증번호}": code },
+      allowDuplicates: true,
+    },
+    verificationTemplateId
+  ).catch((error) => ({ ok: false, error: error?.message || "인증번호 알림톡 발송에 실패했습니다." }));
+
+  if (!delivery?.ok) {
+    await env.DB.prepare("DELETE FROM quote_phone_verifications WHERE id = ?").bind(id).run();
+    return json({ ok: false, message: delivery?.error || "인증번호 알림톡을 발송하지 못했습니다." }, 502);
+  }
+
+  return json(
+    {
+      ok: true,
+      verificationId: id,
+      phoneMasked: maskVerificationPhone(phone),
+      expiresIn: Math.floor(PHONE_VERIFICATION_CODE_TTL_MS / 1000),
+      retryAfter: Math.floor(PHONE_VERIFICATION_RESEND_MS / 1000),
+      message: "인증번호를 알림톡으로 발송했습니다.",
+    },
+    201
+  );
+}
+
+async function verifyQuotePhoneCode(env, request) {
+  await ensureQuotePhoneVerificationTable(env);
+  const body = await request.json().catch(() => ({}));
+  const verificationId = String(body.verificationId || "").trim();
+  const phone = normalizePhone(body.phone);
+  const code = String(body.code || "").replace(/\D/g, "").slice(0, 6);
+  if (!verificationId || !/^01[016789]\d{7,8}$/.test(phone) || code.length !== 6) {
+    return json({ ok: false, message: "인증번호 6자리와 휴대전화번호를 확인해주세요." }, 400);
+  }
+
+  const row = await env.DB.prepare(
+    "SELECT * FROM quote_phone_verifications WHERE id = ? LIMIT 1"
+  ).bind(verificationId).first();
+  if (!row) return json({ ok: false, message: "인증 요청을 찾을 수 없습니다. 다시 요청해주세요." }, 404);
+  if (row.status === "locked" || Number(row.attempts || 0) >= PHONE_VERIFICATION_MAX_ATTEMPTS) {
+    return json({ ok: false, message: "인증번호 입력 횟수를 초과했습니다. 새 인증번호를 요청해주세요." }, 423);
+  }
+  if (row.status !== "pending") {
+    return json({ ok: false, message: "이미 사용했거나 완료된 인증 요청입니다. 다시 요청해주세요." }, 409);
+  }
+  if (new Date(row.expires_at).getTime() < Date.now()) {
+    await env.DB.prepare("UPDATE quote_phone_verifications SET status = 'expired' WHERE id = ?")
+      .bind(verificationId)
+      .run();
+    return json({ ok: false, message: "인증번호 유효시간이 지났습니다. 다시 요청해주세요." }, 410);
+  }
+
+  const phoneHash = await hashPhoneVerificationValue(env, "phone", phone);
+  const codeHash = await hashPhoneVerificationValue(env, "code", `${verificationId}|${code}`);
+  if (!verificationHashEqual(row.phone_hash, phoneHash) || !verificationHashEqual(row.code_hash, codeHash)) {
+    const attempts = Number(row.attempts || 0) + 1;
+    const locked = attempts >= PHONE_VERIFICATION_MAX_ATTEMPTS;
+    await env.DB.prepare(
+      "UPDATE quote_phone_verifications SET attempts = ?, status = ? WHERE id = ?"
+    ).bind(attempts, locked ? "locked" : "pending", verificationId).run();
+    return json(
+      {
+        ok: false,
+        message: locked
+          ? "인증번호 입력 횟수를 초과했습니다. 새 인증번호를 요청해주세요."
+          : `인증번호가 일치하지 않습니다. 남은 횟수 ${PHONE_VERIFICATION_MAX_ATTEMPTS - attempts}회`,
+        remainingAttempts: Math.max(0, PHONE_VERIFICATION_MAX_ATTEMPTS - attempts),
+      },
+      locked ? 423 : 400
+    );
+  }
+
+  const token = createPhoneVerificationToken();
+  const tokenHash = await hashPhoneVerificationValue(env, "token", token);
+  const verifiedAt = new Date().toISOString();
+  const tokenExpiresAt = new Date(Date.now() + PHONE_VERIFICATION_TOKEN_TTL_MS).toISOString();
+  await env.DB.prepare(
+    `UPDATE quote_phone_verifications
+        SET status = 'verified', token_hash = ?, verified_at = ?, token_expires_at = ?
+      WHERE id = ? AND status = 'pending'`
+  ).bind(tokenHash, verifiedAt, tokenExpiresAt, verificationId).run();
+
+  return json({
+    ok: true,
+    verificationId,
+    verificationToken: token,
+    phoneMasked: row.phone_masked || maskVerificationPhone(phone),
+    verifiedAt,
+    tokenExpiresIn: Math.floor(PHONE_VERIFICATION_TOKEN_TTL_MS / 1000),
+    message: "휴대전화 인증이 완료되었습니다.",
+  });
+}
+
+async function validateQuotePhoneVerification(env, phoneInput, verificationIdInput, tokenInput) {
+  await ensureQuotePhoneVerificationTable(env);
+  const phone = normalizePhone(phoneInput);
+  const verificationId = String(verificationIdInput || "").trim();
+  const token = String(tokenInput || "").trim();
+  if (!verificationId || !token) {
+    return { ok: false, response: json({ ok: false, message: "휴대전화 인증을 완료해주세요." }, 403) };
+  }
+  const row = await env.DB.prepare(
+    "SELECT * FROM quote_phone_verifications WHERE id = ? LIMIT 1"
+  ).bind(verificationId).first();
+  if (!row || row.status !== "verified" || row.consumed_at) {
+    return { ok: false, response: json({ ok: false, message: "유효한 휴대전화 인증정보가 없습니다. 다시 인증해주세요." }, 403) };
+  }
+  if (!row.token_expires_at || new Date(row.token_expires_at).getTime() < Date.now()) {
+    await env.DB.prepare("UPDATE quote_phone_verifications SET status = 'expired' WHERE id = ?")
+      .bind(verificationId)
+      .run();
+    return { ok: false, response: json({ ok: false, message: "휴대전화 인증 유효시간이 지났습니다. 다시 인증해주세요." }, 403) };
+  }
+  const phoneHash = await hashPhoneVerificationValue(env, "phone", phone);
+  const tokenHash = await hashPhoneVerificationValue(env, "token", token);
+  if (!verificationHashEqual(row.phone_hash, phoneHash) || !verificationHashEqual(row.token_hash, tokenHash)) {
+    return { ok: false, response: json({ ok: false, message: "인증한 휴대전화번호와 견적 연락처가 일치하지 않습니다." }, 403) };
+  }
+  return { ok: true, row, tokenHash };
 }
 
 async function queueAlimtalk(env, message) {
@@ -2294,7 +2551,7 @@ function sellerAccessBrowser(userAgent) {
   return '기타';
 }
 
-async function createQuoteSubmissionAudit(env, request, consent = {}) {
+async function createQuoteSubmissionAudit(env, request, consent = {}, phoneVerification = null) {
   const ip = getClientIp(request);
   const userAgent = String(request.headers.get("User-Agent") || "").slice(0, 500);
   const salt = String(env.QUOTE_AUDIT_HASH_SALT || env.ADMIN_API_TOKEN || "ga-pick-quote-audit-v1");
@@ -2313,7 +2570,9 @@ async function createQuoteSubmissionAudit(env, request, consent = {}) {
     consentVersion: String(consent?.consentVersion || consent?.version || "").slice(0, 100),
     consentedAt: String(consent?.agreedAt || "").slice(0, 50),
     recordedAt: new Date().toISOString(),
-    phoneVerified: consent?.phoneVerified === true ? 1 : 0,
+    phoneVerified: phoneVerification ? 1 : 0,
+    phoneVerificationId: String(phoneVerification?.id || "").slice(0, 100),
+    phoneVerifiedAt: String(phoneVerification?.verified_at || "").slice(0, 50),
   };
 }
 
@@ -2836,6 +3095,14 @@ async function createCustomerQuote(env, request, executionContext) {
     return json({ ok: false, message: "고객명, 연락처, 품목 정보가 필요합니다." }, 400);
   }
 
+  const phoneVerification = await validateQuotePhoneVerification(
+    env,
+    body.phone,
+    body.phoneVerificationId,
+    body.phoneVerificationToken
+  );
+  if (!phoneVerification.ok) return phoneVerification.response;
+
   const id = body.id || createId("quote");
   const createdAt = body.createdAt || new Date().toISOString();
   const quoteNumber = await createUniqueQuoteNumber(env, body.quoteNumber);
@@ -2843,7 +3110,12 @@ async function createCustomerQuote(env, request, executionContext) {
   const fullImagesExpiresAt = addDays(createdAt, 7);
   const personalExpiresAt = addDays(createdAt, 365);
   const previousStats = await getPreviousQuoteStats(env, String(body.customer || "").trim(), body.phone);
-  const submissionAudit = await createQuoteSubmissionAudit(env, request, body.consent || {});
+  const submissionAudit = await createQuoteSubmissionAudit(
+    env,
+    request,
+    body.consent || {},
+    phoneVerification.row
+  );
 
   if (images.length && !env.FILES) {
     return json({ ok: false, message: "견적서 이미지 저장소가 연결되지 않았습니다. 잠시 후 다시 시도해주세요." }, 500);
@@ -2898,9 +3170,10 @@ async function createCustomerQuote(env, request, executionContext) {
        submission_ip_masked, submission_ip_hash, submission_ip_encrypted, submission_country,
        submission_region, submission_city, submission_user_agent, submission_device_type,
        submission_browser_name, submission_cf_ray, submission_consent_version,
-       submission_consented_at, submission_recorded_at, submission_phone_verified)
+       submission_consented_at, submission_recorded_at, submission_phone_verified,
+       submission_phone_verification_id, submission_phone_verified_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   )
     .bind(
       id,
@@ -2943,7 +3216,9 @@ async function createCustomerQuote(env, request, executionContext) {
       submissionAudit.consentVersion,
       submissionAudit.consentedAt,
       submissionAudit.recordedAt,
-      submissionAudit.phoneVerified
+      submissionAudit.phoneVerified,
+      submissionAudit.phoneVerificationId,
+      submissionAudit.phoneVerifiedAt
     )
     .run();
 
@@ -2973,6 +3248,16 @@ async function createCustomerQuote(env, request, executionContext) {
         createdAt
       )
       .run();
+  }
+
+  const consumedAt = new Date().toISOString();
+  const consumed = await env.DB.prepare(
+    `UPDATE quote_phone_verifications
+        SET status = 'consumed', consumed_at = ?
+      WHERE id = ? AND status = 'verified' AND consumed_at = '' AND token_hash = ?`
+  ).bind(consumedAt, phoneVerification.row.id, phoneVerification.tokenHash).run();
+  if (Number(consumed?.meta?.changes || 0) !== 1) {
+    throw new Error("휴대전화 인증정보가 이미 사용되었습니다. 다시 인증해주세요.");
   }
 
   } catch (error) {
@@ -3615,6 +3900,7 @@ function getSolapiHealth(env) {
     sellerApproved: solapiValue(env, "SOLAPI_TEMPLATE_SELLER_APPROVED"),
     sellerRejected: solapiValue(env, "SOLAPI_TEMPLATE_SELLER_REJECTED"),
     sellerQuoteRegistered: solapiValue(env, "SOLAPI_TEMPLATE_SELLER_QUOTE_REGISTERED"),
+    phoneVerification: solapiValue(env, "SOLAPI_TEMPLATE_PHONE_VERIFICATION"),
   };
   return json({
     ok: true,
@@ -3638,6 +3924,7 @@ function getSolapiHealth(env) {
       !templates.sellerApproved && "SOLAPI_TEMPLATE_SELLER_APPROVED",
       !templates.sellerRejected && "SOLAPI_TEMPLATE_SELLER_REJECTED",
       !templates.sellerQuoteRegistered && "SOLAPI_TEMPLATE_SELLER_QUOTE_REGISTERED",
+      !templates.phoneVerification && "SOLAPI_TEMPLATE_PHONE_VERIFICATION",
     ].filter(Boolean),
   });
 }
@@ -5195,6 +5482,12 @@ export async function onRequest(context) {
     const denied = requireAdmin(request, env);
     if (denied) return denied;
     return getDeletedQuoteLogs(env);
+  }
+  if (path === "quote-phone-verifications/request" && method === "POST") {
+    return requestQuotePhoneVerification(env, request);
+  }
+  if (path === "quote-phone-verifications/verify" && method === "POST") {
+    return verifyQuotePhoneCode(env, request);
   }
   if (path.startsWith("customer-quotes/") && method === "PATCH") {
     const denied = requireAdmin(request, env);
