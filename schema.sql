@@ -278,6 +278,34 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_subscription_products_set_model ON subscri
 CREATE INDEX IF NOT EXISTS idx_subscription_products_set_category ON subscription_products(set_id, category, sort_order);
 CREATE INDEX IF NOT EXISTS idx_subscription_product_sets_status ON subscription_product_sets(status, activated_at DESC);
 
+CREATE TABLE IF NOT EXISTS subscription_consultations (
+  id TEXT PRIMARY KEY,
+  product_model TEXT DEFAULT '',
+  product_name TEXT DEFAULT '',
+  option_model TEXT DEFAULT '',
+  option_label TEXT DEFAULT '',
+  monthly_fee_72 INTEGER DEFAULT 0,
+  customer_name TEXT NOT NULL,
+  customer_phone TEXT NOT NULL,
+  customer_region TEXT DEFAULT '',
+  preferred_time TEXT DEFAULT '',
+  memo TEXT DEFAULT '',
+  partner_name TEXT NOT NULL,
+  consent_version TEXT NOT NULL,
+  collection_consent_json TEXT NOT NULL DEFAULT '{}',
+  third_party_consent_json TEXT NOT NULL DEFAULT '{}',
+  consented_at TEXT NOT NULL,
+  phone_verification_id TEXT NOT NULL,
+  phone_verified_at TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'new',
+  delivery_status TEXT NOT NULL DEFAULT 'pending',
+  delivery_error TEXT DEFAULT '',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_subscription_consultations_created ON subscription_consultations(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_subscription_consultations_phone ON subscription_consultations(customer_phone, created_at DESC);
+
 CREATE TABLE IF NOT EXISTS site_visit_daily (
   visit_date TEXT PRIMARY KEY,
   page_views INTEGER NOT NULL DEFAULT 0,

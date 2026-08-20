@@ -33,7 +33,9 @@ const SOLAPI_DEFAULTS = {
   SOLAPI_TEMPLATE_PHONE_VERIFICATION: "KA01TP221027002252645FPwAcO9SguY",
 };
 
-const PUBLIC_API_VERSION = "20260819-quote-phone-verification-v1";
+const PUBLIC_API_VERSION = "20260820-subscription-consultation-v1";
+const SUBSCRIPTION_CONSENT_VERSION = "20260820-subscription-partner-v1";
+const SUBSCRIPTION_PARTNER_DEFAULT = "전자랜드(상담 배정 지점)";
 const QUOTE_DURATION_HOURS = 72;
 const QUOTE_DURATION_POLICY_KEY = "quote-duration-hours";
 const PHONE_VERIFICATION_CODE_TTL_MS = 5 * 60 * 1000;
@@ -2013,6 +2015,16 @@ async function validateQuotePhoneVerification(env, phoneInput, verificationIdInp
   return { ok: true, row, tokenHash };
 }
 
+async function consumePhoneVerification(env, phoneVerification) {
+  const consumedAt = new Date().toISOString();
+  const consumed = await env.DB.prepare(
+    `UPDATE quote_phone_verifications
+        SET status = 'consumed', consumed_at = ?
+      WHERE id = ? AND status = 'verified' AND consumed_at = '' AND token_hash = ?`
+  ).bind(consumedAt, phoneVerification.row.id, phoneVerification.tokenHash).run();
+  return Number(consumed?.meta?.changes || 0) === 1;
+}
+
 async function queueAlimtalk(env, message) {
   await ensureAlimtalkColumns(env);
   const now = new Date().toISOString();
@@ -3312,13 +3324,7 @@ async function createCustomerQuote(env, request, executionContext) {
       .run();
   }
 
-  const consumedAt = new Date().toISOString();
-  const consumed = await env.DB.prepare(
-    `UPDATE quote_phone_verifications
-        SET status = 'consumed', consumed_at = ?
-      WHERE id = ? AND status = 'verified' AND consumed_at = '' AND token_hash = ?`
-  ).bind(consumedAt, phoneVerification.row.id, phoneVerification.tokenHash).run();
-  if (Number(consumed?.meta?.changes || 0) !== 1) {
+  if (!(await consumePhoneVerification(env, phoneVerification))) {
     throw new Error("휴대전화 인증정보가 이미 사용되었습니다. 다시 인증해주세요.");
   }
 
@@ -5172,6 +5178,139 @@ async function reviewAnonymousPolicyCase(env, request, caseId) {
 let subscriptionProductSchemaReady = false;
 let subscriptionProductResponseCache = null;
 
+function getSubscriptionConsultationPartnerName(env) {
+  return String(env.SUBSCRIPTION_CONSULTATION_PARTNER_NAME || SUBSCRIPTION_PARTNER_DEFAULT).trim();
+}
+
+async function ensureSubscriptionConsultationTable(env) {
+  await env.DB.prepare(
+    `CREATE TABLE IF NOT EXISTS subscription_consultations (
+      id TEXT PRIMARY KEY,
+      product_model TEXT DEFAULT '', product_name TEXT DEFAULT '', option_model TEXT DEFAULT '',
+      option_label TEXT DEFAULT '', monthly_fee_72 INTEGER DEFAULT 0,
+      customer_name TEXT NOT NULL, customer_phone TEXT NOT NULL, customer_region TEXT DEFAULT '',
+      preferred_time TEXT DEFAULT '', memo TEXT DEFAULT '', partner_name TEXT NOT NULL,
+      consent_version TEXT NOT NULL, collection_consent_json TEXT NOT NULL DEFAULT '{}',
+      third_party_consent_json TEXT NOT NULL DEFAULT '{}', consented_at TEXT NOT NULL,
+      phone_verification_id TEXT NOT NULL, phone_verified_at TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'new', delivery_status TEXT NOT NULL DEFAULT 'pending',
+      delivery_error TEXT DEFAULT '', created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+    )`
+  ).run();
+  await Promise.all([
+    env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_subscription_consultations_created ON subscription_consultations(created_at DESC)").run(),
+    env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_subscription_consultations_phone ON subscription_consultations(customer_phone, created_at DESC)").run(),
+  ]);
+}
+
+async function createSubscriptionConsultation(env, request) {
+  await ensureSubscriptionConsultationTable(env);
+  const body = await request.json().catch(() => ({}));
+  if (String(body.website || "").trim()) return json({ ok: true, message: "상담 신청이 접수되었습니다." });
+
+  const customerName = String(body.customerName || "").trim().slice(0, 30);
+  const customerPhone = normalizePhone(body.customerPhone || "");
+  const customerRegion = String(body.customerRegion || "").trim().slice(0, 80);
+  const preferredTime = String(body.preferredTime || "").trim().slice(0, 80);
+  const memo = String(body.memo || "").trim().slice(0, 600);
+  const productModel = String(body.productModel || "").trim().slice(0, 80);
+  const productName = String(body.productName || "가전 구독 상품").trim().slice(0, 160);
+  const optionModel = String(body.optionModel || productModel).trim().slice(0, 80);
+  const optionLabel = String(body.optionLabel || "").trim().slice(0, 200);
+  const monthlyFee72 = Math.max(0, Math.round(Number(body.monthlyFee72 || 0)));
+  const partnerName = getSubscriptionConsultationPartnerName(env);
+  const consent = body.consent || {};
+
+  if (!customerName || customerPhone.length < 10 || !customerRegion || !preferredTime || !productName) {
+    return json({ ok: false, message: "이름, 인증할 휴대전화, 지역, 상담 희망 시간과 관심 제품을 입력해주세요." }, 400);
+  }
+  if (
+    body.consentVersion !== SUBSCRIPTION_CONSENT_VERSION ||
+    !consent.collection || !consent.thirdParty || String(consent.partnerName || "") !== partnerName
+  ) {
+    return json({ ok: false, message: "개인정보 수집·이용 및 제3자 제공 동의를 각각 확인해주세요." }, 400);
+  }
+
+  const phoneVerification = await validateQuotePhoneVerification(
+    env,
+    customerPhone,
+    body.phoneVerificationId,
+    body.phoneVerificationToken
+  );
+  if (!phoneVerification.ok) return phoneVerification.response;
+
+  const duplicateSince = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+  const duplicate = await env.DB.prepare(
+    `SELECT id FROM subscription_consultations
+      WHERE customer_phone = ? AND option_model = ? AND created_at >= ? LIMIT 1`
+  ).bind(customerPhone, optionModel, duplicateSince).first();
+  if (duplicate?.id) {
+    return json({ ok: true, id: duplicate.id, message: "이미 동일한 상담 신청이 접수되었습니다." });
+  }
+
+  const now = new Date().toISOString();
+  const id = createId("subscription-consult");
+  const collectionConsent = {
+    agreed: true,
+    purpose: "가전 구독 상담 접수, 휴대전화 본인확인, 상담 연결 및 민원 처리",
+    items: ["이름", "휴대전화번호", "지역", "관심 제품·모델·옵션", "상담 희망 시간", "문의 내용"],
+    retention: "상담 접수일로부터 90일 또는 동의 철회 시까지. 관계 법령상 보존 의무가 있는 경우 해당 기간",
+    refusal: "동의를 거부할 수 있으나 필수 정보이므로 구독 상담 신청이 제한됩니다.",
+  };
+  const thirdPartyConsent = {
+    agreed: true,
+    recipient: partnerName,
+    purpose: "가전 구독 상품 상담, 견적 안내, 계약 체결, 배송·설치 및 계약 관련 고객 응대",
+    items: ["이름", "휴대전화번호", "지역", "관심 제품·모델·옵션", "상담 희망 시간", "문의 내용"],
+    retention: "상담 미진행 시 제공일로부터 30일. 계약 체결 시 계약 및 관계 법령상 의무 이행에 필요한 기간",
+    refusal: "동의를 거부할 수 있으나 제휴업체 상담 및 계약 연결이 제한됩니다.",
+  };
+
+  await env.DB.prepare(
+    `INSERT INTO subscription_consultations
+      (id, product_model, product_name, option_model, option_label, monthly_fee_72,
+       customer_name, customer_phone, customer_region, preferred_time, memo, partner_name,
+       consent_version, collection_consent_json, third_party_consent_json, consented_at,
+       phone_verification_id, phone_verified_at, status, delivery_status, delivery_error, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', 'saved', '', ?, ?)`
+  ).bind(
+    id, productModel, productName, optionModel, optionLabel, monthlyFee72,
+    customerName, customerPhone, customerRegion, preferredTime, memo, partnerName,
+    SUBSCRIPTION_CONSENT_VERSION, JSON.stringify(collectionConsent), JSON.stringify(thirdPartyConsent), now,
+    phoneVerification.row.id, phoneVerification.row.verified_at || now, now, now
+  ).run();
+
+  if (!(await consumePhoneVerification(env, phoneVerification))) {
+    await env.DB.prepare("DELETE FROM subscription_consultations WHERE id = ?").bind(id).run();
+    return json({ ok: false, message: "휴대전화 인증정보가 이미 사용되었습니다. 다시 인증해주세요." }, 409);
+  }
+
+  const adminPhone = normalizePhone(solapiValue(env, "SOLAPI_ADMIN_PHONE") || "");
+  let deliveryStatus = "saved";
+  let deliveryError = "";
+  if (adminPhone) {
+    const message = [
+      "[픽견적 가전 구독 신규 상담]",
+      `${customerName} 고객님 · ${formatPhoneNumber(customerPhone)}`,
+      `제품: ${productName} ${optionModel}`.trim(),
+      monthlyFee72 ? `72개월 월 구독료: ${monthlyFee72.toLocaleString("ko-KR")}원` : "",
+      `지역: ${customerRegion}`,
+      `희망 시간: ${preferredTime}`,
+      `제공 예정 업체: ${partnerName}`,
+      memo ? `문의: ${memo}` : "",
+    ].filter(Boolean).join("\n");
+    const sent = await sendSolapiTextMessage(env, { targetPhone: adminPhone, body: message, allowDuplicates: true })
+      .catch((error) => ({ ok: false, error: String(error?.message || error || "관리자 알림 실패") }));
+    if (sent?.ok) deliveryStatus = "admin_notified";
+    else deliveryError = String(sent?.error || "관리자 알림 실패").slice(0, 500);
+  }
+  await env.DB.prepare(
+    "UPDATE subscription_consultations SET delivery_status = ?, delivery_error = ?, updated_at = ? WHERE id = ?"
+  ).bind(deliveryStatus, deliveryError, new Date().toISOString(), id).run();
+
+  return json({ ok: true, id, message: "구독 상담 신청이 정상적으로 접수되었습니다." });
+}
+
 async function ensureSubscriptionProductSchema(env) {
   if (subscriptionProductSchemaReady) return;
   await env.DB.prepare(
@@ -5401,6 +5540,8 @@ async function getSubscriptionProducts(env) {
       contractMonths: 72,
       pricePolicy: "72개월·결합없음·기본요금",
       popularityPolicy: "엘플랜 저장 견적별 모델 포함 횟수",
+      consultationPartner: getSubscriptionConsultationPartnerName(env),
+      consultationConsentVersion: SUBSCRIPTION_CONSENT_VERSION,
     },
     count: items.length,
     items,
@@ -5572,6 +5713,7 @@ export async function onRequest(context) {
   if (path === "brand-packages" && method === "GET") return apiBoundary(() => getPublicBrandPackages(env, request), "브랜드관 패키지를 불러오지 못했습니다.");
   if (path === "brand-consultations" && method === "POST") return apiBoundary(() => createBrandConsultation(env, request), "브랜드관 상담 요청 처리 중 오류가 발생했습니다.");
   if (path === "subscription-products" && method === "GET") return apiBoundary(() => getSubscriptionProducts(env), "구독 상품을 불러오지 못했습니다.");
+  if (path === "subscription-consultations" && method === "POST") return apiBoundary(() => createSubscriptionConsultation(env, request), "구독 상담 신청을 접수하지 못했습니다.");
   if (path === "subscription-product-image" && method === "GET") return getSubscriptionProductImage(env, request);
   if (path === "subscription-products/replace" && method === "POST") return apiBoundary(() => replaceSubscriptionProducts(env, request), "구독 상품 목록을 교체하지 못했습니다.");
 

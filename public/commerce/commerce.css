@@ -169,6 +169,56 @@ body.has-commerce-modal { overflow: hidden; }
 .commerce-card-benefits b { color: var(--commerce-navy-dark); }
 .commerce-card-disclaimer { min-height: 0 !important; margin: 14px 0 0 !important; color: #728293 !important; font-size: 11px !important; line-height: 1.55 !important; }
 .commerce-detail-actions { padding: 20px 34px 34px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.commerce-detail-actions button { border: 0; cursor: pointer; }
+
+.subscription-consultation-modal[hidden] { display: none !important; }
+.subscription-consultation-modal { position: fixed; inset: 0; z-index: 21000; display: grid; place-items: center; padding: 24px; }
+.subscription-consultation-backdrop { position: absolute; inset: 0; background: rgba(6, 22, 39, .74); backdrop-filter: blur(3px); }
+.subscription-consultation-dialog { position: relative; z-index: 1; width: min(780px, 100%); max-height: calc(100vh - 48px); overflow: auto; background: #fff; border: 1px solid #c7d5e2; border-radius: 8px; box-shadow: 0 28px 80px rgba(4, 18, 32, .34); }
+.subscription-consultation-head { position: sticky; top: 0; z-index: 4; min-height: 92px; padding: 20px 72px 20px 26px; display: flex; align-items: center; background: var(--commerce-navy-dark); color: #fff; }
+.subscription-consultation-head span { color: #b9d2e8; font-size: 12px; font-weight: 850; }
+.subscription-consultation-head h2 { margin: 5px 0 0; font-size: 22px; }
+.subscription-consultation-close { position: absolute; top: 24px; right: 22px; width: 42px; height: 42px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.5); border-radius: 50%; background: transparent; color: #fff; font-size: 25px; cursor: pointer; }
+#subscriptionConsultationForm { padding: 26px; }
+.subscription-selected-product { padding: 16px 18px; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 7px 14px; background: #edf3f9; border-left: 4px solid var(--commerce-navy); }
+.subscription-selected-product span { grid-column: 1 / -1; color: #617487; font-size: 11px; font-weight: 850; }
+.subscription-selected-product strong { color: var(--commerce-navy-dark); font-size: 17px; }
+.subscription-selected-product b { color: #435b70; font-size: 13px; overflow-wrap: anywhere; }
+.subscription-selected-product small { grid-column: 1 / -1; color: var(--commerce-navy); font-weight: 800; }
+.subscription-consultation-fields { margin-top: 22px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.subscription-consultation-fields > label { min-width: 0; display: block; }
+.subscription-consultation-fields label > span { display: block; margin-bottom: 7px; color: #43596d; font-size: 13px; font-weight: 850; }
+.subscription-consultation-fields input, .subscription-consultation-fields select, .subscription-consultation-fields textarea { width: 100%; min-width: 0; height: 46px; padding: 0 12px; border: 1px solid #bdccda; border-radius: 5px; background: #fff; color: var(--commerce-ink); outline: none; }
+.subscription-consultation-fields textarea { height: 90px; padding-top: 12px; resize: vertical; }
+.subscription-consultation-fields input:focus, .subscription-consultation-fields select:focus, .subscription-consultation-fields textarea:focus { border-color: var(--commerce-navy); box-shadow: 0 0 0 3px rgba(18,59,103,.1); }
+.subscription-phone-field, .subscription-code-field, .subscription-consultation-memo { grid-column: 1 / -1; }
+.subscription-phone-field > div, .subscription-code-field > div { display: grid; grid-template-columns: minmax(0, 1fr) 150px; gap: 8px; }
+.subscription-phone-field button, .subscription-code-field button { border: 0; border-radius: 5px; background: var(--commerce-navy); color: #fff; font-weight: 850; cursor: pointer; }
+.subscription-phone-field button:disabled, .subscription-code-field button:disabled { background: #9aabba; cursor: wait; }
+.subscription-honeypot { position: absolute !important; left: -9999px !important; width: 1px !important; height: 1px !important; opacity: 0 !important; }
+.subscription-verification-status { margin: 12px 0 0; color: #6b7e90; font-size: 12px; font-weight: 750; }
+.subscription-verification-status[data-verified="true"] { color: #123b67; }
+.subscription-consent-box { margin-top: 22px; border-top: 1px solid var(--commerce-line); }
+.subscription-consent-all { min-height: 54px; display: flex; align-items: center; gap: 10px; color: var(--commerce-navy-dark); font-weight: 900; }
+.subscription-consent-box input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--commerce-navy); }
+.subscription-consent-box details { border-top: 1px solid #e5ebf0; }
+.subscription-consent-box summary { min-height: 50px; display: flex; align-items: center; cursor: pointer; }
+.subscription-consent-box summary label { display: flex; align-items: center; gap: 9px; color: #263d52; font-size: 13px; font-weight: 850; }
+.subscription-consent-box dl { margin: 0 0 14px; padding: 14px 16px; background: #f5f7f9; }
+.subscription-consent-box dl div { display: grid; grid-template-columns: 92px 1fr; gap: 12px; padding: 5px 0; font-size: 11px; line-height: 1.55; }
+.subscription-consent-note { min-height: 0 !important; margin: 12px 0 0 !important; color: #52677b !important; font-size: 11px !important; line-height: 1.55 !important; }
+.subscription-consent-box dt { color: #52687c; font-weight: 850; }
+.subscription-consent-box dd { margin: 0; color: #66798b; }
+.subscription-consultation-message { min-height: 20px; margin: 14px 0 0; color: #536a7f; font-size: 13px; font-weight: 750; }
+.subscription-consultation-message[data-type="error"] { color: #b33a35; }
+.subscription-consultation-message[data-type="success"] { color: #123b67; }
+.subscription-consultation-submit { width: 100%; margin-top: 10px; border: 0; cursor: pointer; }
+.subscription-consultation-submit:disabled { background: #9aa9b7; cursor: not-allowed; box-shadow: none; }
+.subscription-consultation-success { padding: 42px 12px 18px; text-align: center; }
+.subscription-consultation-success > b { display: inline-flex; padding: 6px 10px; border-radius: 4px; background: #e8f0f8; color: var(--commerce-navy); font-size: 12px; }
+.subscription-consultation-success h3 { margin: 16px 0 8px; color: var(--commerce-navy-dark); font-size: 22px; }
+.subscription-consultation-success p { margin: 0; color: #637689; line-height: 1.65; }
+.subscription-consultation-success button { margin-top: 24px; border: 0; cursor: pointer; }
 
 @media (max-width: 980px) {
   .commerce-topbar { grid-template-columns: 150px 1fr; }
@@ -202,7 +252,21 @@ body.has-commerce-modal { overflow: hidden; }
   .commerce-category { min-height: 102px; }
   .commerce-catalog { margin-top: 48px; }
   .commerce-tools { grid-template-columns: 1fr; }
-  .commerce-product-grid { grid-template-columns: 1fr; }
+  .commerce-product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .commerce-product-card { border-radius: 6px; }
+  .commerce-product-image { aspect-ratio: 1 / 1; }
+  .commerce-product-body { padding: 12px 10px; }
+  .commerce-product-meta { font-size: 10px; }
+  .commerce-product-card h3 { margin: 7px 0 6px; font-size: 15px; line-height: 1.35; }
+  .commerce-product-model { min-height: 34px; font-size: 11px; line-height: 1.45; }
+  .commerce-card-option { margin-top: 9px; font-size: 10px; }
+  .commerce-card-option select { height: 38px; padding-left: 7px; font-size: 10px; }
+  .commerce-product-card p { min-height: 42px; margin-top: 7px; font-size: 10px; line-height: 1.5; }
+  .commerce-contract-label { margin-top: 10px; font-size: 10px; line-height: 1.45; }
+  .commerce-product-price { margin-top: 10px; font-size: 17px; white-space: nowrap; }
+  .commerce-max-card-benefit, .commerce-best-proof { font-size: 9px; line-height: 1.4; }
+  .commerce-product-action { min-height: 42px; margin-top: 12px; font-size: 12px; }
+  .commerce-best-badge { top: 8px; left: 8px; min-width: 48px; height: 26px; padding: 0 8px; font-size: 10px; }
   .commerce-catalog-meta { align-items: stretch; flex-direction: column; }
   .commerce-catalog-meta button { width: 100%; }
   .commerce-empty { min-height: 260px; }
@@ -229,4 +293,16 @@ body.has-commerce-modal { overflow: hidden; }
   .commerce-card-benefits > div { grid-template-columns: 1fr auto; padding: 8px 0; }
   .commerce-card-benefits span { grid-column: 1 / -1; grid-row: 2; }
   .commerce-detail-actions { padding: 16px; grid-template-columns: 1fr; }
+  .subscription-consultation-modal { padding: 0; align-items: end; }
+  .subscription-consultation-dialog { width: 100%; max-height: 96vh; border-radius: 8px 8px 0 0; }
+  .subscription-consultation-head { min-height: 82px; padding: 17px 66px 17px 20px; }
+  .subscription-consultation-head h2 { font-size: 18px; }
+  .subscription-consultation-close { top: 20px; right: 16px; }
+  #subscriptionConsultationForm { padding: 20px 16px calc(24px + env(safe-area-inset-bottom)); }
+  .subscription-selected-product { grid-template-columns: 1fr; }
+  .subscription-consultation-fields { grid-template-columns: 1fr; }
+  .subscription-phone-field, .subscription-code-field, .subscription-consultation-memo { grid-column: auto; }
+  .subscription-phone-field > div, .subscription-code-field > div { grid-template-columns: minmax(0, 1fr) 112px; }
+  .subscription-phone-field button, .subscription-code-field button { padding: 0 8px; font-size: 12px; }
+  .subscription-consent-box dl div { grid-template-columns: 1fr; gap: 2px; }
 }
