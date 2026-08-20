@@ -1,3 +1,5 @@
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css");
+
 :root {
   --commerce-navy: #123b67;
   --commerce-navy-dark: #0b2747;
@@ -17,10 +19,14 @@ body.commerce-body {
   margin: 0;
   background: var(--commerce-bg);
   color: var(--commerce-ink);
-  font-family: "Pretendard Variable", Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+  font-family: "Pretendard Variable", Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-weight: 450;
   letter-spacing: 0;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-synthesis-weight: none;
 }
-button, input, select { font: inherit; }
+button, input, select, textarea { font: inherit; font-family: inherit; font-synthesis-weight: none; }
 a { color: inherit; }
 
 .commerce-topbar {
@@ -46,9 +52,9 @@ a { color: inherit; }
 .commerce-section-nav a.is-current { border-bottom-color: var(--commerce-navy); color: var(--commerce-navy-dark); }
 
 .commerce-hero { background: #eaf1f8; overflow: hidden; }
-.commerce-hero-inner { width: min(1180px, calc(100% - 40px)); min-height: 460px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr) minmax(420px, .92fr); align-items: center; gap: 36px; }
+.commerce-hero-inner { width: min(1440px, calc(100% - 40px)); min-height: 460px; margin: 0 auto; display: grid; grid-template-columns: minmax(760px, 1fr) minmax(300px, .55fr); align-items: center; gap: 28px; }
 .commerce-kicker { display: block; margin-bottom: 14px; color: var(--commerce-navy); font-size: 13px; font-weight: 850; }
-.commerce-hero h1 { margin: 0; max-width: 680px; color: var(--commerce-navy-dark); font-size: clamp(42px, 5vw, 68px); line-height: 1.12; font-weight: 850; }
+.commerce-hero h1 { margin: 0; max-width: none; color: var(--commerce-navy-dark); font-size: 42px; line-height: 1.12; font-weight: 720; white-space: nowrap; }
 .commerce-hero p { margin: 22px 0 0; max-width: 610px; color: #435b70; font-size: 18px; line-height: 1.75; }
 .commerce-hero-actions { display: flex; gap: 10px; margin-top: 30px; }
 .commerce-primary, .commerce-secondary { min-height: 52px; padding: 0 22px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--commerce-navy); border-radius: 6px; font-weight: 850; text-decoration: none; }
@@ -218,6 +224,11 @@ body.has-commerce-modal { overflow: hidden; }
 .subscription-consultation-success h3 { margin: 16px 0 8px; color: var(--commerce-navy-dark); font-size: 22px; }
 .subscription-consultation-success p { margin: 0; color: #637689; line-height: 1.65; }
 .subscription-consultation-success button { margin-top: 24px; border: 0; cursor: pointer; }
+
+@media (max-width: 1180px) {
+  .commerce-hero-inner { width: min(1180px, calc(100% - 40px)); grid-template-columns: minmax(0, 1fr) 360px; }
+  .commerce-hero h1 { white-space: normal; }
+}
 
 @media (max-width: 980px) {
   .commerce-topbar { grid-template-columns: 150px 1fr; }
