@@ -2908,6 +2908,62 @@ async function getQuoteImages(env, quoteId, includeFull = true) {
   return result.results || [];
 }
 
+function chunkValues(values, size = 75) {
+  const chunks = [];
+  for (let index = 0; index < values.length; index += size) {
+    chunks.push(values.slice(index, index + size));
+  }
+  return chunks;
+}
+
+async function getQuoteImagesMap(env, quoteIds) {
+  const ids = [...new Set((quoteIds || []).map((id) => String(id || "").trim()).filter(Boolean))];
+  const imageMap = new Map();
+  if (!ids.length) return imageMap;
+
+  const now = new Date().toISOString();
+  for (const chunk of chunkValues(ids)) {
+    const placeholders = chunk.map(() => "?").join(", ");
+    const result = await env.DB.prepare(
+      `SELECT * FROM quote_images
+       WHERE quote_id IN (${placeholders})
+         AND (expires_at = '' OR expires_at >= ?)
+       ORDER BY quote_id ASC, sort_order ASC`
+    ).bind(...chunk, now).all();
+
+    for (const image of result.results || []) {
+      const quoteId = String(image.quote_id || "");
+      if (!imageMap.has(quoteId)) imageMap.set(quoteId, []);
+      imageMap.get(quoteId).push(image);
+    }
+  }
+
+  return imageMap;
+}
+
+async function getQuoteBidsMap(env, quoteIds) {
+  const ids = [...new Set((quoteIds || []).map((id) => String(id || "").trim()).filter(Boolean))];
+  const bidMap = new Map();
+  if (!ids.length) return bidMap;
+
+  for (const chunk of chunkValues(ids)) {
+    const placeholders = chunk.map(() => "?").join(", ");
+    const result = await env.DB.prepare(
+      `SELECT * FROM bids
+       WHERE quote_id IN (${placeholders})
+       ORDER BY quote_id ASC, price ASC, created_at ASC`
+    ).bind(...chunk).all();
+
+    for (const row of result.results || []) {
+      const quoteId = String(row.quote_id || "");
+      if (!bidMap.has(quoteId)) bidMap.set(quoteId, []);
+      bidMap.get(quoteId).push(normalizeBid(row));
+    }
+  }
+
+  return bidMap;
+}
+
 async function ensureDeletedQuoteLogTable(env) {
   await env.DB.prepare(
     `CREATE TABLE IF NOT EXISTS deleted_quote_logs (
@@ -3074,11 +3130,17 @@ async function getCustomerQuotes(env, request) {
     rows = result.results || [];
   }
 
+  const quoteIds = rows.map((row) => row.id);
+  const imageMap = await getQuoteImagesMap(env, quoteIds);
+  const bidMap = isAdminView ? await getQuoteBidsMap(env, quoteIds) : new Map();
   const normalized = [];
   for (const row of rows) {
     const includeFull = isAdminView || scope === "lookup" || (row.full_images_expires_at && row.full_images_expires_at >= now);
-    const images = await getQuoteImages(env, row.id, includeFull);
-    const bids = isAdminView ? await getBidsForQuote(env, row.id) : [];
+    const storedImages = imageMap.get(String(row.id)) || [];
+    const images = includeFull
+      ? storedImages
+      : storedImages.filter((image) => image.image_type === "thumbnail");
+    const bids = bidMap.get(String(row.id)) || [];
     const quote = normalizeCustomerQuote({ ...row, bid_count: bids.length, bids }, images);
     normalized.push(scope === "lookup" ? hideSellerOnlyQuoteFields(quote) : quote);
   }
