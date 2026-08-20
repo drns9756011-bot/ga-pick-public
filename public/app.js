@@ -10,6 +10,7 @@ let activeSellerTab = "all";
 let sellerChatRooms = [];
 let activeSellerBrandFilter = "all";
 let activeSellerRegionFilter = "all";
+let activeSellerSort = "deadline";
 let pendingQuoteFormData = null;
 let quoteSubmitInFlight = false;
 let pendingBidSelection = null;
@@ -29,6 +30,7 @@ const STORAGE_KEYS = {
   activeSellerId: "pickquoteActiveSellerId",
   sellerBrandFilter: "pickquoteSellerBrandFilter",
   sellerRegionFilter: "pickquoteSellerRegionFilter",
+  sellerSort: "pickquoteSellerSort",
 };
 const registeredSellerPhones = new Set();
 const sellerAccounts = new Map();
@@ -673,9 +675,11 @@ function restoreSellerFilterState() {
       sessionStorage.getItem(STORAGE_KEYS.sellerBrandFilter) || "all"
     );
     activeSellerRegionFilter = sessionStorage.getItem(STORAGE_KEYS.sellerRegionFilter) || "all";
+    activeSellerSort = sessionStorage.getItem(STORAGE_KEYS.sellerSort) === "latest" ? "latest" : "deadline";
   } catch (error) {
     activeSellerBrandFilter = "all";
     activeSellerRegionFilter = "all";
+    activeSellerSort = "deadline";
   }
 }
 
@@ -683,6 +687,7 @@ function persistSellerFilterState() {
   try {
     sessionStorage.setItem(STORAGE_KEYS.sellerBrandFilter, activeSellerBrandFilter || "all");
     sessionStorage.setItem(STORAGE_KEYS.sellerRegionFilter, activeSellerRegionFilter || "all");
+    sessionStorage.setItem(STORAGE_KEYS.sellerSort, activeSellerSort || "deadline");
   } catch (error) {
     // 세션 저장이 제한된 환경에서도 필터는 현재 화면에서 계속 유지합니다.
   }
@@ -691,6 +696,7 @@ function persistSellerFilterState() {
 function resetSellerFilterState() {
   activeSellerBrandFilter = "all";
   activeSellerRegionFilter = "all";
+  activeSellerSort = "deadline";
   persistSellerFilterState();
 }
 
@@ -1986,29 +1992,31 @@ function isSaleCompletedForBid(request, bid) {
 }
 
 function getSellerTabRequests() {
-  const sortByDeadline = (rows, closed = false) => [...rows].sort((a, b) => {
-    const aTime = new Date(a.quoteExpiresAt || a.createdAt || 0).getTime();
-    const bTime = new Date(b.quoteExpiresAt || b.createdAt || 0).getTime();
+  const sortSellerRows = (rows, closed = false) => [...rows].sort((a, b) => {
+    const useLatest = activeSellerSort === "latest";
+    const aTime = new Date(useLatest ? a.createdAt : (a.quoteExpiresAt || a.createdAt || 0)).getTime();
+    const bTime = new Date(useLatest ? b.createdAt : (b.quoteExpiresAt || b.createdAt || 0)).getTime();
     const safeA = Number.isFinite(aTime) ? aTime : Number.MAX_SAFE_INTEGER;
     const safeB = Number.isFinite(bTime) ? bTime : Number.MAX_SAFE_INTEGER;
-    return closed ? safeB - safeA : safeA - safeB;
+    if (useLatest || closed) return safeB - safeA;
+    return safeA - safeB;
   });
 
   if (activeSellerTab === "proposed") {
-    return sortByDeadline(requests.filter(
+    return sortSellerRows(requests.filter(
       (request) => !isQuoteClosed(request) && getActiveSellerBid(request) && !isActiveSellerSelectedRequest(request)
     ));
   }
 
   if (activeSellerTab === "selected") {
-    return sortByDeadline(requests.filter((request) => isActiveSellerSelectedRequest(request)));
+    return sortSellerRows(requests.filter((request) => isActiveSellerSelectedRequest(request)));
   }
 
   if (activeSellerTab === "closed") {
-    return sortByDeadline(requests.filter((request) => isQuoteClosed(request)), true);
+    return sortSellerRows(requests.filter((request) => isQuoteClosed(request)), true);
   }
 
-  return sortByDeadline(requests.filter((request) => !isQuoteClosed(request) && canActiveSellerBidRequest(request)));
+  return sortSellerRows(requests.filter((request) => !isQuoteClosed(request) && canActiveSellerBidRequest(request)));
 }
 
 function getAvailableSellerBrands(baseRequests = getSellerTabRequests()) {
@@ -2091,6 +2099,10 @@ function renderSellerFilterBar() {
     <div class="seller-filter-group">
       <span>지역</span>
       <div>${makeButtons(regionOptions, activeSellerRegionFilter, "region")}</div>
+    </div>
+    <div class="seller-filter-group">
+      <span>정렬</span>
+      <div>${makeButtons([["deadline", "종료 임박순"], ["latest", "등록 최신순"]], activeSellerSort, "sort")}</div>
     </div>
   `;
 }
@@ -2914,6 +2926,10 @@ document.addEventListener("click", (event) => {
 
   if (filterType === "region") {
     activeSellerRegionFilter = filterValue;
+  }
+
+  if (filterType === "sort") {
+    activeSellerSort = filterValue === "latest" ? "latest" : "deadline";
   }
 
   persistSellerFilterState();
@@ -3872,6 +3888,7 @@ function renderRequests() {
           : `<span>${getRequestPriceLabel(request)} ${formatPrice(request.price)}</span>`
       }
       ${!isClosedTab && sellerBid ? `<span>내 제안 ${formatPrice(sellerBid.price)}</span>` : ""}
+      ${sellerBid ? `<span class="request-badge bid">입찰한 견적</span>` : ""}
       ${isClosedTab ? `<span class="request-badge done">종료</span>` : ""}
       ${!isClosedTab && isSelectedByCustomer ? `<span class="request-badge">선택받음</span>` : ""}
       ${isSaleCompleted ? `<span class="request-badge done">판매완료</span>` : ""}

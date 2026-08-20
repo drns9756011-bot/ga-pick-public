@@ -3462,6 +3462,11 @@ select {
   color: #2156a3 !important;
 }
 
+.request-badge.bid {
+  background: #123b67;
+  color: #fff !important;
+}
+
 .deadline-live {
   color: #123b67 !important;
   font-weight: 900;
