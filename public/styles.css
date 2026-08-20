@@ -339,6 +339,22 @@ button:disabled {
   font-size: 18px;
 }
 
+.quote-subscription-ad {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid #c9d8e6;
+  border-radius: 8px;
+  background: #eef4fa;
+  box-shadow: 0 14px 34px rgba(12, 48, 82, 0.1);
+}
+
+.quote-subscription-ad img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
 .back-btn {
   display: inline-flex;
   margin-bottom: 22px;
@@ -6309,6 +6325,25 @@ td strong {
   .page-head p:not(.eyebrow) {
     max-width: 100%;
     font-size: 16px;
+  }
+
+  #customerPage .page-head {
+    padding-top: 28px;
+    padding-bottom: 20px;
+  }
+
+  #customerPage .back-btn {
+    margin-bottom: 14px;
+  }
+
+  .quote-subscription-ad {
+    height: 180px;
+  }
+
+  .quote-subscription-ad img {
+    width: auto;
+    max-width: none;
+    height: 100%;
   }
 
   .workflow,
