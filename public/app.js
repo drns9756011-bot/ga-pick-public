@@ -1986,21 +1986,29 @@ function isSaleCompletedForBid(request, bid) {
 }
 
 function getSellerTabRequests() {
+  const sortByDeadline = (rows, closed = false) => [...rows].sort((a, b) => {
+    const aTime = new Date(a.quoteExpiresAt || a.createdAt || 0).getTime();
+    const bTime = new Date(b.quoteExpiresAt || b.createdAt || 0).getTime();
+    const safeA = Number.isFinite(aTime) ? aTime : Number.MAX_SAFE_INTEGER;
+    const safeB = Number.isFinite(bTime) ? bTime : Number.MAX_SAFE_INTEGER;
+    return closed ? safeB - safeA : safeA - safeB;
+  });
+
   if (activeSellerTab === "proposed") {
-    return requests.filter(
+    return sortByDeadline(requests.filter(
       (request) => !isQuoteClosed(request) && getActiveSellerBid(request) && !isActiveSellerSelectedRequest(request)
-    );
+    ));
   }
 
   if (activeSellerTab === "selected") {
-    return requests.filter((request) => isActiveSellerSelectedRequest(request));
+    return sortByDeadline(requests.filter((request) => isActiveSellerSelectedRequest(request)));
   }
 
   if (activeSellerTab === "closed") {
-    return requests.filter((request) => isQuoteClosed(request));
+    return sortByDeadline(requests.filter((request) => isQuoteClosed(request)), true);
   }
 
-  return requests.filter((request) => !isQuoteClosed(request) && canActiveSellerBidRequest(request));
+  return sortByDeadline(requests.filter((request) => !isQuoteClosed(request) && canActiveSellerBidRequest(request)));
 }
 
 function getAvailableSellerBrands(baseRequests = getSellerTabRequests()) {

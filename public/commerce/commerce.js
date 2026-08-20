@@ -8,14 +8,16 @@ const defaultCategories = {
 let commerceItems = [];
 let sourceInfo = null;
 let activeCategory = "전체";
+let activeSort = "recommended";
 let visibleCount = 24;
-const subscriptionCacheKey = "pickquoteSubscriptionCatalogV2Images";
+const subscriptionCacheKey = "pickquoteSubscriptionCatalogV3Popularity";
 const subscriptionCacheMaxAgeMs = 6 * 60 * 60 * 1000;
 
 const categoryGrid = document.querySelector("#commerceCategories");
 const productGrid = document.querySelector("#commerceProductGrid");
 const searchInput = document.querySelector("#commerceSearch");
 const brandFilter = document.querySelector("#commerceBrand");
+const sortFilter = document.querySelector("#commerceSort");
 const catalogSection = document.querySelector("#commerceCatalog");
 
 const affiliateCards = [
@@ -37,6 +39,10 @@ function escapeHtml(value) {
 
 function formatWon(value) {
   return `${Number(value || 0).toLocaleString("ko-KR")}원`;
+}
+
+function minimumMonthlyFee(item) {
+  return Number(productOptions(item)[0]?.monthlyFee72 || item?.monthlyFee72 || 0);
 }
 
 function applySubscriptionPayload(payload) {
@@ -182,6 +188,7 @@ function renderCategories() {
     <button class="commerce-category${category === activeCategory ? " is-active" : ""}" type="button" data-category="${escapeHtml(category)}">
       <b>${String(index + 1).padStart(2, "0")}</b>
       <strong>${escapeHtml(category)}</strong>
+      <small>${(category === "전체" ? commerceItems.length : commerceItems.filter((item) => item.category === category).length).toLocaleString("ko-KR")}개 상품</small>
     </button>
   `).join("");
 }
@@ -189,12 +196,26 @@ function renderCategories() {
 function filteredItems() {
   const query = (searchInput?.value || "").trim().toLowerCase();
   const brand = brandFilter?.value || "";
-  return commerceItems.filter((item) => {
+  const filtered = commerceItems.filter((item) => {
     const categoryMatches = activeCategory === "전체" || item.category === activeCategory;
     const brandMatches = !brand || item.brand === brand;
     const searchMatches = !query || `${item.brand} ${item.name} ${item.sourceCategory || ""} ${item.model || ""}`.toLowerCase().includes(query);
     return categoryMatches && brandMatches && searchMatches;
   });
+
+  if (activeSort === "price-asc") {
+    return filtered.sort((a, b) => minimumMonthlyFee(a) - minimumMonthlyFee(b));
+  }
+  if (activeSort === "price-desc") {
+    return filtered.sort((a, b) => minimumMonthlyFee(b) - minimumMonthlyFee(a));
+  }
+  if (activeSort === "best") {
+    return filtered.sort((a, b) =>
+      Number(b.quoteInclusionCount || 0) - Number(a.quoteInclusionCount || 0)
+        || minimumMonthlyFee(a) - minimumMonthlyFee(b)
+    );
+  }
+  return filtered;
 }
 
 function renderEmpty(isSubscription, message = "") {
@@ -228,7 +249,7 @@ function renderProducts() {
     const care = [selected.installationType, selected.careType, selected.careDetail, selected.visitCycle ? `${selected.visitCycle} 주기` : ""].filter(Boolean).join(" · ");
     return `
       <article class="commerce-product-card" data-product-index="${itemIndex}">
-        <button class="commerce-product-image" type="button" data-product-detail aria-label="${escapeHtml(item.sourceCategory || item.name)} 상세보기">${productImageMarkup(item)}</button>
+        <button class="commerce-product-image" type="button" data-product-detail aria-label="${escapeHtml(item.sourceCategory || item.name)} 상세보기">${item.isBest ? '<span class="commerce-best-badge">BEST</span>' : ""}${productImageMarkup(item)}</button>
         <div class="commerce-product-body">
           <span class="commerce-product-meta">${escapeHtml(item.brand)} · ${escapeHtml(item.category)}</span>
           <h3>${escapeHtml(item.sourceCategory || item.name)}</h3>
@@ -238,6 +259,7 @@ function renderProducts() {
           <span class="commerce-contract-label">72개월 기준 월 구독료${options.length > 1 ? " · 최저 옵션 우선" : ""}</span>
           <strong class="commerce-product-price" data-card-price>월 ${formatWon(selected.monthlyFee72)}</strong>
           <span class="commerce-max-card-benefit">제휴카드 월 최대 42,000원 혜택</span>
+          ${item.isBest ? `<span class="commerce-best-proof">${Number(item.quoteInclusionCount || 0) > 0 ? `엘플랜 견적 ${Number(item.quoteInclusionCount || 0).toLocaleString("ko-KR")}건 포함` : "카테고리 대표 상품"}</span>` : ""}
           <button class="commerce-product-action" type="button" data-product-detail>상세보기</button>
         </div>
       </article>`;
@@ -300,7 +322,7 @@ function updateCatalogMeta(shown, total) {
 }
 
 async function loadSubscriptionProducts() {
-  const response = await fetch("/api/subscription-products?v=20260819-image-recovery", { headers: { Accept: "application/json" }, cache: "reload" });
+  const response = await fetch("/api/subscription-products?v=20260820-lplan-best", { headers: { Accept: "application/json" }, cache: "reload" });
   if (!response.ok) throw new Error("subscription api unavailable");
   const payload = await response.json();
   if (!applySubscriptionPayload(payload)) throw new Error("subscription data empty");
@@ -318,6 +340,11 @@ categoryGrid?.addEventListener("click", (event) => {
 });
 searchInput?.addEventListener("input", () => { visibleCount = 24; renderProducts(); });
 brandFilter?.addEventListener("change", () => { visibleCount = 24; renderProducts(); });
+sortFilter?.addEventListener("change", () => {
+  activeSort = sortFilter.value || "recommended";
+  visibleCount = 24;
+  renderProducts();
+});
 
 async function initCommerce() {
   renderCategories();

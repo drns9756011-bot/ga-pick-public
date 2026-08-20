@@ -4372,6 +4372,8 @@ async function saveLplanTrainingQuote(env, request) {
     )
     .run();
 
+  subscriptionProductResponseCache = null;
+
   return json({ ok: true, id, savedRows: rows.length, syncedAt: now });
 }
 
@@ -5240,6 +5242,30 @@ function normalizeSubscriptionProduct(row) {
   };
 }
 
+function normalizeSubscriptionPopularityModel(value, category = "") {
+  let model = normalizeModelCode(String(value || "").split(".")[0]);
+  const categoryText = normalizeSearchText(category);
+  if (categoryText.includes("TV") && /[SW]$/.test(model)) model = model.slice(0, -1);
+  return model;
+}
+
+async function getSubscriptionModelPopularity(env) {
+  await ensureLplanTrainingTable(env);
+  const result = await env.DB.prepare("SELECT rows_json FROM lplan_quote_patterns").all();
+  const counts = new Map();
+
+  for (const pattern of result.results || []) {
+    const quoteModels = new Set();
+    for (const row of parseJson(pattern.rows_json, [])) {
+      const key = normalizeSubscriptionPopularityModel(row?.model, row?.product);
+      if (key) quoteModels.add(key);
+    }
+    for (const key of quoteModels) counts.set(key, Number(counts.get(key) || 0) + 1);
+  }
+
+  return counts;
+}
+
 async function ensureInitialSubscriptionCatalog(env) {
   const existingActive = await env.DB.prepare(
     "SELECT * FROM subscription_product_sets WHERE status = 'active' ORDER BY activated_at DESC LIMIT 1"
@@ -5334,7 +5360,38 @@ async function getSubscriptionProducts(env) {
       LIMIT 3000`
   ).bind(activeSet.id).all();
   const rows = result.results || [];
-  const items = rows.map(normalizeSubscriptionProduct);
+  const popularity = await getSubscriptionModelPopularity(env);
+  const items = rows.map(normalizeSubscriptionProduct).map((item) => {
+    const modelKeys = new Set([
+      normalizeSubscriptionPopularityModel(item.model, item.category),
+      ...(Array.isArray(item.options) ? item.options : []).map((option) =>
+        normalizeSubscriptionPopularityModel(option?.model, item.category)
+      ),
+    ].filter(Boolean));
+    const quoteInclusionCount = Math.max(0, ...[...modelKeys].map((key) => Number(popularity.get(key) || 0)));
+    return { ...item, quoteInclusionCount };
+  });
+  const categoryBestCounts = new Map();
+  for (const item of items) {
+    const category = String(item.category || "기타");
+    categoryBestCounts.set(
+      category,
+      Math.max(Number(categoryBestCounts.get(category) || 0), Number(item.quoteInclusionCount || 0))
+    );
+  }
+  const fallbackBestCategories = new Set();
+  for (const item of items) {
+    const category = String(item.category || "기타");
+    const bestCount = Number(categoryBestCounts.get(category) || 0);
+    if (bestCount > 0) {
+      item.isBest = Number(item.quoteInclusionCount || 0) === bestCount;
+      item.bestBasis = item.isBest ? "lplan-category-most-included" : "";
+      continue;
+    }
+    item.isBest = !fallbackBestCategories.has(category);
+    item.bestBasis = item.isBest ? "category-representative-fallback" : "";
+    if (item.isBest) fallbackBestCategories.add(category);
+  }
   const payload = {
     ok: true,
     source: {
@@ -5343,6 +5400,7 @@ async function getSubscriptionProducts(env) {
       activatedAt: activeSet.activated_at,
       contractMonths: 72,
       pricePolicy: "72개월·결합없음·기본요금",
+      popularityPolicy: "엘플랜 저장 견적별 모델 포함 횟수",
     },
     count: items.length,
     items,
