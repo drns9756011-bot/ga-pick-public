@@ -315,6 +315,13 @@ body.brand-server-is-loading { cursor: wait; }
 .brand-showcase-intro { margin:2px 0 18px; display:flex; align-items:flex-end; justify-content:space-between; gap:18px; }
 .brand-showcase-intro > strong { max-width:360px; font-size:1.48rem; line-height:1.2; font-weight:700; letter-spacing: 0; color:#17272d; }
 .brand-showcase-intro > span { max-width:290px; color:#6f7d79; font-size:.78rem; line-height:1.55; font-weight:500; text-align:right; }
+
+@media (min-width: 1181px) {
+  .brand-showcase-intro > strong {
+    max-width: none;
+    white-space: nowrap;
+  }
+}
 .brand-showcase-stack { display:grid; gap:13px; }
 .brand-showcase-card { position:relative; width:100%; min-height:198px; overflow:hidden; border:1px solid #dce7e3; border-radius:23px; background:rgba(255,255,255,.92); padding:0; cursor:pointer; box-shadow:0 13px 34px rgba(25,72,61,.075); text-align:left; transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
 .brand-showcase-card:hover { transform:translateY(-2px); border-color:#bfd9d2; box-shadow:0 18px 42px rgba(25,72,61,.12); }

@@ -160,7 +160,7 @@ function ensureConsultationModal() {
         <div class="subscription-consultation-fields">
           <label><span>고객명</span><input name="customerName" maxlength="30" autocomplete="name" required /></label>
           <label class="subscription-phone-field"><span>휴대전화</span><div><input name="customerPhone" inputmode="tel" autocomplete="tel" placeholder="010-0000-0000" required /><button type="button" data-request-consultation-code>인증번호 받기</button></div></label>
-          <label class="subscription-code-field" hidden><span>인증번호</span><div><input name="verificationCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6자리" /><button type="button" data-verify-consultation-code>인증 확인</button></div></label>
+          <label class="subscription-code-field" hidden><span>인증번호</span><div><input name="verificationCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6자리" /><button type="button" data-verify-consultation-code>인증 확인</button></div><p class="subscription-code-status" role="status" aria-live="polite">인증번호를 입력하고 확인해주세요.</p></label>
           <label><span>거주·설치 지역</span><input name="customerRegion" maxlength="80" placeholder="예: 서울 송파구" required /></label>
           <label><span>상담 희망 시간</span><select name="preferredTime" required><option value="">선택해주세요</option><option>오전 9시~12시</option><option>오후 12시~3시</option><option>오후 3시~6시</option><option>오후 6시~8시</option><option>시간 무관</option></select></label>
           <label class="subscription-consultation-memo"><span>추가 요청사항 <small>선택</small></span><textarea name="memo" maxlength="600" placeholder="설치 환경이나 연락 시 참고할 내용만 적어주세요."></textarea></label>
@@ -198,6 +198,13 @@ function setConsultationMessage(message, type = "") {
   node.dataset.type = type;
 }
 
+function setConsultationCodeStatus(message, type = "") {
+  const node = document.querySelector(".subscription-code-status");
+  if (!node) return;
+  node.textContent = message;
+  node.dataset.type = type;
+}
+
 function updateConsultationSubmitState() {
   const modal = document.querySelector("#subscriptionConsultationModal");
   const form = modal?.querySelector("form");
@@ -208,6 +215,20 @@ function updateConsultationSubmitState() {
   const status = modal.querySelector("#subscriptionVerificationStatus");
   status.textContent = verified ? "휴대전화 인증이 완료되었습니다." : "휴대전화 인증이 필요합니다.";
   status.dataset.verified = verified ? "true" : "false";
+  const codeStatus = modal.querySelector(".subscription-code-status");
+  const verifyButton = modal.querySelector("[data-verify-consultation-code]");
+  const verificationInput = form.elements.verificationCode;
+  if (codeStatus) {
+    codeStatus.textContent = verified ? "휴대전화 인증이 완료되었습니다." : "인증번호를 입력하고 확인해주세요.";
+    codeStatus.dataset.verified = verified ? "true" : "false";
+    codeStatus.dataset.type = verified ? "success" : "";
+  }
+  if (verifyButton) {
+    verifyButton.textContent = verified ? "인증 완료" : "인증 확인";
+    verifyButton.classList.toggle("is-verified", verified);
+    verifyButton.disabled = verified;
+  }
+  if (verificationInput) verificationInput.readOnly = verified;
 }
 
 function handleConsultationFormChange(event) {
@@ -240,6 +261,8 @@ async function requestConsultationCode() {
     consultationState.verificationToken = "";
     consultationState.verifiedPhone = "";
     modal.querySelector(".subscription-code-field").hidden = false;
+    updateConsultationSubmitState();
+    setConsultationCodeStatus("인증번호를 발송했습니다. 5분 안에 입력해주세요.", "success");
     setConsultationMessage("인증번호를 발송했습니다. 5분 안에 입력해주세요.", "success");
     window.setTimeout(() => { button.disabled = false; button.textContent = "인증번호 다시 받기"; }, 60000);
   } catch (error) {
@@ -251,20 +274,28 @@ async function requestConsultationCode() {
 async function verifyConsultationCode() {
   const modal = ensureConsultationModal();
   const form = modal.querySelector("form");
+  const phone = normalizedConsultationPhone(form);
   const code = String(new FormData(form).get("verificationCode") || "").replace(/\D/g, "");
-  if (!consultationState.verificationId || code.length !== 6) return setConsultationMessage("6자리 인증번호를 입력해주세요.", "error");
+  if (!consultationState.verificationId || code.length !== 6) {
+    setConsultationCodeStatus("6자리 인증번호를 입력해주세요.", "error");
+    return setConsultationMessage("6자리 인증번호를 입력해주세요.", "error");
+  }
   const button = modal.querySelector("[data-verify-consultation-code]");
   button.disabled = true;
+  setConsultationCodeStatus("인증번호를 확인하고 있습니다.");
   try {
-    const result = await consultationApi("/api/quote-phone-verifications/verify", { verificationId: consultationState.verificationId, code });
+    const result = await consultationApi("/api/quote-phone-verifications/verify", { verificationId: consultationState.verificationId, phone, code });
     consultationState.verificationToken = result.verificationToken;
     consultationState.verifiedPhone = normalizedConsultationPhone(form);
     setConsultationMessage("휴대전화 인증이 완료되었습니다.", "success");
     updateConsultationSubmitState();
+    form.elements.verificationCode.blur();
+    modal.querySelector(".subscription-code-status")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   } catch (error) {
+    setConsultationCodeStatus(error.message, "error");
     setConsultationMessage(error.message, "error");
   } finally {
-    button.disabled = false;
+    if (!consultationState.verificationToken) button.disabled = false;
   }
 }
 

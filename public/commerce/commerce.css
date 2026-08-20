@@ -200,6 +200,11 @@ body.has-commerce-modal { overflow: hidden; }
 .subscription-phone-field > div, .subscription-code-field > div { display: grid; grid-template-columns: minmax(0, 1fr) 150px; gap: 8px; }
 .subscription-phone-field button, .subscription-code-field button { border: 0; border-radius: 5px; background: var(--commerce-navy); color: #fff; font-weight: 850; cursor: pointer; }
 .subscription-phone-field button:disabled, .subscription-code-field button:disabled { background: #9aabba; cursor: wait; }
+.subscription-code-field button.is-verified:disabled { background: var(--commerce-navy); color: #fff; cursor: default; }
+.subscription-code-status { min-height: 38px; margin: 8px 0 0; padding: 10px 12px; display: flex; align-items: center; border: 1px solid #d6e1eb; border-radius: 5px; background: #f5f8fb; color: #617487; font-size: 12px; font-weight: 750; line-height: 1.45; }
+.subscription-code-status[data-verified="true"] { border-color: #9ebbd5; background: #eaf2f9; color: var(--commerce-navy); font-weight: 850; }
+.subscription-code-status[data-verified="true"]::before { content: "✓"; width: 20px; height: 20px; margin-right: 7px; display: inline-grid; place-items: center; border-radius: 50%; background: var(--commerce-navy); color: #fff; font-size: 11px; }
+.subscription-code-status[data-type="error"] { border-color: #e2b0ac; background: #fff3f2; color: #b33a35; }
 .subscription-honeypot { position: absolute !important; left: -9999px !important; width: 1px !important; height: 1px !important; opacity: 0 !important; }
 .subscription-verification-status { margin: 12px 0 0; color: #6b7e90; font-size: 12px; font-weight: 750; }
 .subscription-verification-status[data-verified="true"] { color: #123b67; }
@@ -314,5 +319,6 @@ body.has-commerce-modal { overflow: hidden; }
   .subscription-phone-field, .subscription-code-field, .subscription-consultation-memo { grid-column: auto; }
   .subscription-phone-field > div, .subscription-code-field > div { grid-template-columns: minmax(0, 1fr) 112px; }
   .subscription-phone-field button, .subscription-code-field button { padding: 0 8px; font-size: 12px; }
+  .subscription-code-status { min-height: 44px; font-size: 13px; }
   .subscription-consent-box dl div { grid-template-columns: 1fr; gap: 2px; }
 }

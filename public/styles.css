@@ -339,6 +339,29 @@ button:disabled {
   font-size: 18px;
 }
 
+@media (min-width: 1181px) {
+  body:has(#homePage.is-active) .pick-hero-center {
+    width: min(1080px, 100%);
+  }
+
+  body:has(#homePage.is-active) .pick-hero-center h1,
+  .hero-copy h1,
+  .page-head h1,
+  .page-head h2 {
+    max-width: none;
+    white-space: nowrap;
+  }
+
+  body:has(#homePage.is-active) .pick-hero-center h1 {
+    font-size: 48px;
+  }
+
+  .page-head h1,
+  .page-head h2 {
+    font-size: 40px;
+  }
+}
+
 .quote-subscription-ad {
   display: block;
   width: 100%;
