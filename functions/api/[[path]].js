@@ -33,7 +33,7 @@ const SOLAPI_DEFAULTS = {
   SOLAPI_TEMPLATE_PHONE_VERIFICATION: "KA01TP221027002252645FPwAcO9SguY",
 };
 
-const PUBLIC_API_VERSION = "20260820-subscription-consultation-v1";
+const PUBLIC_API_VERSION = "20260820-complete-quote-deletion-v1";
 const SUBSCRIPTION_CONSENT_VERSION = "20260820-subscription-partner-v1";
 const SUBSCRIPTION_PARTNER_DEFAULT = "전자랜드(상담 배정 지점)";
 const QUOTE_DURATION_HOURS = 72;
@@ -2976,38 +2976,25 @@ async function getQuoteBidsMap(env, quoteIds) {
   return bidMap;
 }
 
-async function ensureDeletedQuoteLogTable(env) {
-  await env.DB.prepare(
-    `CREATE TABLE IF NOT EXISTS deleted_quote_logs (
-      id TEXT PRIMARY KEY,
-      quote_id TEXT DEFAULT '',
-      quote_number TEXT DEFAULT '',
-      customer TEXT DEFAULT '',
-      phone TEXT DEFAULT '',
-      reason TEXT DEFAULT '',
-      deleted_at TEXT NOT NULL
-    )`
-  ).run();
+async function purgeDeletedQuoteLogStorage(env) {
+  await env.DB.prepare("DROP TABLE IF EXISTS deleted_quote_logs").run();
 }
 
-function normalizeDeletedQuoteLog(row) {
-  return {
-    id: row.id,
-    quoteId: row.quote_id || "",
-    quoteNumber: row.quote_number || "",
-    customer: row.customer || "",
-    phone: row.phone || "",
-    reason: row.reason || "",
-    deletedAt: row.deleted_at || "",
-  };
+async function ensureQuoteDeletionAuditTable(env) {
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS quote_audit_access_logs (
+    id TEXT PRIMARY KEY,
+    quote_id TEXT NOT NULL,
+    reason TEXT NOT NULL,
+    admin_token_hash TEXT NOT NULL,
+    requester_ip_masked TEXT DEFAULT '',
+    requester_ip_hash TEXT DEFAULT '',
+    viewed_at TEXT NOT NULL
+  )`).run();
 }
 
 async function getDeletedQuoteLogs(env) {
-  await ensureDeletedQuoteLogTable(env);
-  const result = await env.DB.prepare(
-    "SELECT * FROM deleted_quote_logs ORDER BY deleted_at DESC LIMIT 300"
-  ).all();
-  return json({ ok: true, rows: (result.results || []).map(normalizeDeletedQuoteLog) });
+  await purgeDeletedQuoteLogStorage(env);
+  return json({ ok: true, rows: [] });
 }
 
 async function updateCustomerQuote(env, request, id) {
@@ -3063,39 +3050,44 @@ async function updateCustomerQuote(env, request, id) {
 
 async function deleteCustomerQuote(env, request, id) {
   await ensureCustomerQuoteColumns(env);
-  await ensureDeletedQuoteLogTable(env);
-  const body = await request.json().catch(() => ({}));
-  const reason = String(body.reason || "").trim();
-  if (!reason) return json({ ok: false, message: "삭제 사유를 입력해주세요." }, 400);
+  await ensureReviewsTable(env);
+  await ensureQuotePhoneVerificationTable(env);
+  await ensureLplanTrainingTable(env);
+  await ensureAnonymousConsultationTables(env);
+  await ensureQuoteDeletionAuditTable(env);
+  await purgeDeletedQuoteLogStorage(env);
 
   const quote = await env.DB.prepare("SELECT * FROM customer_quotes WHERE id = ?").bind(id).first();
   if (!quote) return json({ ok: false, message: "고객 견적을 찾을 수 없습니다." }, 404);
 
   const images = await env.DB.prepare("SELECT object_key FROM quote_images WHERE quote_id = ?").bind(id).all();
-  for (const image of images.results || []) {
-    await deleteR2Object(env, image.object_key);
+  const objectKeys = [...new Set([
+    quote.thumbnail_image_key || "",
+    ...(images.results || []).map((image) => image.object_key || ""),
+  ].filter(Boolean))];
+  if (objectKeys.length && !env.FILES) {
+    return json({ ok: false, message: "견적 이미지 저장소에 연결할 수 없어 삭제를 중단했습니다." }, 503);
   }
+  for (const key of objectKeys) await env.FILES.delete(key);
 
-  await env.DB.prepare("DELETE FROM quote_images WHERE quote_id = ?").bind(id).run();
-  await env.DB.prepare("DELETE FROM bids WHERE quote_id = ?").bind(id).run();
-  await env.DB.prepare("DELETE FROM reviews WHERE quote_id = ?").bind(id).run().catch(() => {});
-  await env.DB.prepare("DELETE FROM customer_quotes WHERE id = ?").bind(id).run();
-  await env.DB.prepare(
-    `INSERT INTO deleted_quote_logs (id, quote_id, quote_number, customer, phone, reason, deleted_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`
-  )
-    .bind(
-      createId("deleted-quote"),
-      id,
-      quote.quote_number || "",
-      quote.customer || "",
-      quote.phone || "",
-      reason,
-      new Date().toISOString()
-    )
-    .run();
+  const verificationId = String(quote.submission_phone_verification_id || "").trim();
+  await env.DB.batch([
+    env.DB.prepare("UPDATE anonymous_seller_restrictions SET last_case_id = '' WHERE last_case_id IN (SELECT id FROM anonymous_policy_cases WHERE quote_id = ?)").bind(id),
+    env.DB.prepare("DELETE FROM anonymous_audit_logs WHERE case_id IN (SELECT id FROM anonymous_policy_cases WHERE quote_id = ?) OR consultation_id IN (SELECT id FROM anonymous_consultations WHERE quote_id = ?)").bind(id, id),
+    env.DB.prepare("DELETE FROM anonymous_consultation_messages WHERE consultation_id IN (SELECT id FROM anonymous_consultations WHERE quote_id = ?)").bind(id),
+    env.DB.prepare("DELETE FROM anonymous_policy_cases WHERE quote_id = ?").bind(id),
+    env.DB.prepare("DELETE FROM anonymous_consultations WHERE quote_id = ?").bind(id),
+    env.DB.prepare("DELETE FROM reviews WHERE quote_id = ?").bind(id),
+    env.DB.prepare("DELETE FROM bids WHERE quote_id = ?").bind(id),
+    env.DB.prepare("DELETE FROM quote_images WHERE quote_id = ?").bind(id),
+    env.DB.prepare("DELETE FROM quote_audit_access_logs WHERE quote_id = ?").bind(id),
+    env.DB.prepare("DELETE FROM alimtalk_queue WHERE related_id = ?").bind(id),
+    env.DB.prepare("DELETE FROM lplan_quote_patterns WHERE source_quote_id = ?").bind(id),
+    env.DB.prepare("DELETE FROM quote_phone_verifications WHERE id = ?").bind(verificationId),
+    env.DB.prepare("DELETE FROM customer_quotes WHERE id = ?").bind(id),
+  ]);
 
-  return json({ ok: true, id });
+  return json({ ok: true, id, permanentlyDeleted: true });
 }
 
 async function getCustomerQuotes(env, request) {
