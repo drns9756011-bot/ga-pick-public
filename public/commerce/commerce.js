@@ -378,7 +378,7 @@ function renderProductModal(item, optionIndex = 0, cardIndex = -1) {
       <section><h3>기본 정보</h3><dl><div><dt>모델명</dt><dd>${escapeHtml(selected.model)}</dd></div><div><dt>계약 기간</dt><dd>72개월</dd></div><div><dt>관리·설치 옵션</dt><dd>${escapeHtml(care)}</dd></div></dl><a class="commerce-official-link" href="${officialProductUrl(selected.model)}" target="_blank" rel="noopener noreferrer">LG전자 공식 제품 정보 보기</a></section>
       <section><div class="commerce-card-benefit-heading"><div><h3>제휴카드 최대 혜택</h3><p>월 최대 <strong>${formatWon(maximum)}</strong></p></div><span>최대 혜택</span></div><div class="commerce-card-benefits">${affiliateCards.map((card) => `<div><strong>${escapeHtml(card.name)}</strong><span>${escapeHtml(card.spend)}</span><b>월 ${formatWon(card.benefit)}</b></div>`).join("")}</div><p class="commerce-card-disclaimer">표시된 적용 금액은 카드별 최대 할인액을 단순 차감한 예상 금액입니다. 카드 발급, 전월 실적, 자동이체, 할인 한도 등 실제 적용 조건은 카드사 정책에 따라 달라질 수 있으므로 계약 전 최신 조건을 확인하세요.</p></section>
     </div>
-    <div class="commerce-detail-actions"><a class="commerce-secondary" href="https://www.interbiz-portal.com/card-consulting" target="_blank" rel="noopener noreferrer">제휴카드 상담</a><button class="commerce-primary" type="button" data-subscription-consult-modal>선택 옵션 상담 신청</button></div>`;
+    <div class="commerce-detail-actions"><button class="commerce-primary" type="button" data-subscription-consult-modal>선택 옵션 상담 신청</button></div>`;
   modal.querySelector("#commerceDetailOption")?.addEventListener("change", (event) => renderProductModal(item, Number(event.target.value || 0), activeCardIndex));
   modal.querySelector("#commerceAffiliateCard")?.addEventListener("change", (event) => renderProductModal(item, optionIndex, Number(event.target.value || 0)));
   modal.querySelector("[data-subscription-consult-modal]")?.addEventListener("click", () => openSubscriptionConsultation(item, selected));
@@ -487,7 +487,6 @@ function renderProducts() {
           <span class="commerce-contract-label">72개월 기준 월 구독료${options.length > 1 ? " · 최저 옵션 우선" : ""}</span>
           <strong class="commerce-product-price" data-card-price>월 ${formatWon(selected.monthlyFee72)}</strong>
           <span class="commerce-max-card-benefit">제휴카드 월 최대 42,000원 혜택</span>
-          ${item.isBest ? `<span class="commerce-best-proof">${Number(item.quoteInclusionCount || 0) > 0 ? `엘플랜 견적 ${Number(item.quoteInclusionCount || 0).toLocaleString("ko-KR")}건 포함` : "카테고리 대표 상품"}</span>` : ""}
           <button class="commerce-product-action" type="button" data-product-detail>상세보기</button>
         </div>
       </article>`;

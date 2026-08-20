@@ -33,7 +33,7 @@ const SOLAPI_DEFAULTS = {
   SOLAPI_TEMPLATE_PHONE_VERIFICATION: "KA01TP221027002252645FPwAcO9SguY",
 };
 
-const PUBLIC_API_VERSION = "20260820-subscription-consult-admin-v2";
+const PUBLIC_API_VERSION = "20260820-subscription-best-copy-v3";
 const SUBSCRIPTION_CONSENT_VERSION = "20260820-subscription-lg-partner-v2";
 const SUBSCRIPTION_PARTNER_DEFAULT = "픽견적 제휴 상담업체 및 LG전자";
 const QUOTE_DURATION_HOURS = 72;
