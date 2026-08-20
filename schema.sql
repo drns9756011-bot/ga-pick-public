@@ -300,6 +300,11 @@ CREATE TABLE IF NOT EXISTS subscription_consultations (
   status TEXT NOT NULL DEFAULT 'new',
   delivery_status TEXT NOT NULL DEFAULT 'pending',
   delivery_error TEXT DEFAULT '',
+  contract_amount INTEGER DEFAULT 0,
+  commission_amount INTEGER DEFAULT 0,
+  settlement_status TEXT DEFAULT 'unsettled',
+  admin_memo TEXT DEFAULT '',
+  settled_at TEXT DEFAULT '',
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );

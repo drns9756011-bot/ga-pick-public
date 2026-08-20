@@ -3,7 +3,7 @@ import { onRequest, onScheduled } from "../functions/api/[[path]].js";
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    const routeVersion = "20260820-complete-quote-deletion-v1";
+    const routeVersion = "20260820-subscription-consult-admin-v2";
 
     if (url.pathname === "/robots.txt") {
       return new Response("User-agent: *\nAllow: /\n\nSitemap: https://ga-pick.com/sitemap.xml\n", {

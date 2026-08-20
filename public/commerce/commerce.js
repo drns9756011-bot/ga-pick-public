@@ -122,11 +122,11 @@ function closeProductModal() {
 }
 
 function consultationPartnerName() {
-  return String(sourceInfo?.consultationPartner || "전자랜드(상담 배정 지점)");
+  return String(sourceInfo?.consultationPartner || "픽견적 제휴 상담업체 및 LG전자");
 }
 
 function consultationConsentVersion() {
-  return String(sourceInfo?.consultationConsentVersion || "20260820-subscription-partner-v1");
+  return String(sourceInfo?.consultationConsentVersion || "20260820-subscription-lg-partner-v2");
 }
 
 async function consultationApi(path, body) {
@@ -159,18 +159,17 @@ function ensureConsultationModal() {
         <input class="subscription-honeypot" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" />
         <div class="subscription-consultation-fields">
           <label><span>고객명</span><input name="customerName" maxlength="30" autocomplete="name" required /></label>
-          <label class="subscription-interest-field" hidden><span>관심 제품</span><input name="interestProduct" maxlength="160" placeholder="예: TV, 냉장고, 정수기" /></label>
           <label class="subscription-phone-field"><span>휴대전화</span><div><input name="customerPhone" inputmode="tel" autocomplete="tel" placeholder="010-0000-0000" required /><button type="button" data-request-consultation-code>인증번호 받기</button></div></label>
           <label class="subscription-code-field" hidden><span>인증번호</span><div><input name="verificationCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6자리" /><button type="button" data-verify-consultation-code>인증 확인</button></div></label>
           <label><span>거주·설치 지역</span><input name="customerRegion" maxlength="80" placeholder="예: 서울 송파구" required /></label>
           <label><span>상담 희망 시간</span><select name="preferredTime" required><option value="">선택해주세요</option><option>오전 9시~12시</option><option>오후 12시~3시</option><option>오후 3시~6시</option><option>오후 6시~8시</option><option>시간 무관</option></select></label>
-          <label class="subscription-consultation-memo"><span>문의 내용 <small>선택</small></span><textarea name="memo" maxlength="600" placeholder="설치 환경이나 궁금한 조건을 적어주세요."></textarea></label>
+          <label class="subscription-consultation-memo"><span>추가 요청사항 <small>선택</small></span><textarea name="memo" maxlength="600" placeholder="설치 환경이나 연락 시 참고할 내용만 적어주세요."></textarea></label>
         </div>
         <p class="subscription-verification-status" id="subscriptionVerificationStatus">휴대전화 인증이 필요합니다.</p>
         <div class="subscription-consent-box">
           <label class="subscription-consent-all"><input type="checkbox" data-consultation-consent-all /><span>필수 동의 전체 선택</span></label>
-          <details open><summary><label><input type="checkbox" name="collectionConsent" required /><span>[필수] 개인정보 수집·이용 동의</span></label></summary><dl><div><dt>목적</dt><dd>가전 구독 상담 접수, 휴대전화 본인확인, 상담 연결 및 민원 처리</dd></div><div><dt>항목</dt><dd>이름, 휴대전화번호, 지역, 관심 제품·모델·옵션, 상담 희망 시간, 문의 내용</dd></div><div><dt>보유기간</dt><dd>상담 접수일로부터 90일 또는 동의 철회 시까지. 관계 법령상 보존 의무가 있는 경우 해당 기간</dd></div><div><dt>거부권</dt><dd>동의를 거부할 수 있으나 필수 정보이므로 구독 상담 신청이 제한됩니다.</dd></div></dl></details>
-          <details open><summary><label><input type="checkbox" name="thirdPartyConsent" required /><span>[필수] 개인정보 제3자 제공 동의</span></label></summary><dl><div><dt>제공받는 자</dt><dd data-consultation-partner></dd></div><div><dt>제공 목적</dt><dd>가전 구독 상품 상담, 견적 안내, 계약 체결, 배송·설치 및 계약 관련 고객 응대</dd></div><div><dt>제공 항목</dt><dd>이름, 휴대전화번호, 지역, 관심 제품·모델·옵션, 상담 희망 시간, 문의 내용</dd></div><div><dt>보유기간</dt><dd>상담 미진행 시 제공일로부터 30일. 계약 체결 시 계약 및 관계 법령상 의무 이행에 필요한 기간</dd></div><div><dt>거부권</dt><dd>동의를 거부할 수 있으나 제휴업체 상담 및 계약 연결이 제한됩니다.</dd></div></dl></details>
+          <details open><summary><label><input type="checkbox" name="collectionConsent" required /><span>[필수] 개인정보 수집·이용 동의</span></label></summary><dl><div><dt>목적</dt><dd>가전 구독 상담 접수, 휴대전화 본인확인, 상담 연결 및 민원 처리</dd></div><div><dt>항목</dt><dd>이름, 휴대전화번호, 지역, 선택 제품·모델·옵션, 상담 희망 시간, 추가 요청사항</dd></div><div><dt>보유기간</dt><dd>상담 접수일로부터 90일 또는 동의 철회 시까지. 관계 법령상 보존 의무가 있는 경우 해당 기간</dd></div><div><dt>거부권</dt><dd>동의를 거부할 수 있으나 필수 정보이므로 구독 상담 신청이 제한됩니다.</dd></div></dl></details>
+          <details open><summary><label><input type="checkbox" name="thirdPartyConsent" required /><span>[필수] 개인정보 제3자 제공 동의</span></label></summary><dl><div><dt>제공받는 자</dt><dd data-consultation-partner></dd></div><div><dt>제공 목적</dt><dd>제휴 상담업체의 구독 상담 연결, LG전자 구독 계약 체결, 배송·설치 및 계약 관련 고객 응대</dd></div><div><dt>제공 항목</dt><dd>이름, 휴대전화번호, 지역, 선택 제품·모델·옵션, 상담 희망 시간, 추가 요청사항</dd></div><div><dt>보유기간</dt><dd>상담 미진행 시 제공일로부터 30일. LG전자 구독 계약 체결 시 계약 및 관계 법령상 의무 이행에 필요한 기간</dd></div><div><dt>거부권</dt><dd>동의를 거부할 수 있으나 제휴 상담업체 연결 및 LG전자 구독 계약 진행이 제한됩니다.</dd></div></dl></details>
           <p class="subscription-consent-note">각 동의는 구독 상담에 필요한 필수 동의이며, 광고성 정보 수신 동의에는 사용되지 않습니다.</p>
         </div>
         <p class="subscription-consultation-message" id="subscriptionConsultationMessage" role="status"></p>
@@ -270,6 +269,16 @@ async function verifyConsultationCode() {
 }
 
 function openSubscriptionConsultation(item = null, option = null) {
+  if (!item) {
+    activeCategory = "전체";
+    activeSort = "recommended";
+    if (searchInput) searchInput.value = "";
+    if (brandFilter) brandFilter.value = "";
+    renderCategories();
+    renderProducts();
+    catalogSection?.scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
   closeProductModal();
   const modal = ensureConsultationModal();
   const form = modal.querySelector("form");
@@ -278,11 +287,8 @@ function openSubscriptionConsultation(item = null, option = null) {
   const selected = option || (item ? productOptions(item)[0] : null);
   consultationState.option = selected;
   modal.querySelector("[data-consultation-partner]").textContent = consultationPartnerName();
-  modal.querySelector(".subscription-interest-field").hidden = Boolean(item);
-  form.elements.interestProduct.required = !item;
-  modal.querySelector("#subscriptionConsultationProduct").innerHTML = item ? `
-    <div class="subscription-selected-product"><span>선택한 상품</span><strong>${escapeHtml(item.sourceCategory || item.name)}</strong><b>${escapeHtml(selected?.model || item.model)}</b><small>${selected?.monthlyFee72 ? `72개월 기준 월 ${formatWon(selected.monthlyFee72)}` : ""}</small></div>` :
-    '<div class="subscription-selected-product"><span>관심 제품</span><strong>상담받을 제품을 입력해주세요.</strong></div>';
+  modal.querySelector("#subscriptionConsultationProduct").innerHTML = `
+    <div class="subscription-selected-product"><span>선택한 상품</span><strong>${escapeHtml(item.sourceCategory || item.name)}</strong><b>${escapeHtml(selected?.model || item.model)}</b><small>${selected?.monthlyFee72 ? `72개월 기준 월 ${formatWon(selected.monthlyFee72)}` : ""}</small></div>`;
   modal.querySelector(".subscription-code-field").hidden = true;
   modal.querySelector("[data-request-consultation-code]").disabled = false;
   modal.querySelector("[data-request-consultation-code]").textContent = "인증번호 받기";
@@ -318,7 +324,7 @@ async function submitSubscriptionConsultation(event) {
     const result = await consultationApi("/api/subscription-consultations", {
       website: data.get("website"),
       productModel: item?.model || "",
-      productName: item ? (item.sourceCategory || item.name) : data.get("interestProduct"),
+      productName: item.sourceCategory || item.name,
       optionModel: option?.model || "",
       optionLabel: option?.label || "",
       monthlyFee72: Number(option?.monthlyFee72 || 0),
@@ -447,7 +453,7 @@ function renderEmpty(isSubscription, message = "") {
         <span class="commerce-empty-mark">P</span>
         <h3>${message || (isSubscription ? "조건에 맞는 구독 상품이 없습니다." : "쇼핑 상품을 준비하고 있습니다.")}</h3>
         <p>${isSubscription ? "다른 품목이나 모델명으로 다시 검색해보세요." : "공식 상품 정보와 쿠팡 파트너스 링크가 확인된 제품부터 순차적으로 공개합니다."}</p>
-        ${isSubscription ? '<button class="commerce-primary" type="button" data-subscription-consult>구독 상담 신청</button>' : '<a class="commerce-primary" href="/quote">가전 견적 비교하기</a>'}
+        ${isSubscription ? '<button class="commerce-primary" type="button" data-subscription-consult>전체 상품 보기</button>' : '<a class="commerce-primary" href="/quote">가전 견적 비교하기</a>'}
       </div>
     </div>`;
 }

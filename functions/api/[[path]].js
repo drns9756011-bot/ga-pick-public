@@ -33,9 +33,9 @@ const SOLAPI_DEFAULTS = {
   SOLAPI_TEMPLATE_PHONE_VERIFICATION: "KA01TP221027002252645FPwAcO9SguY",
 };
 
-const PUBLIC_API_VERSION = "20260820-complete-quote-deletion-v1";
-const SUBSCRIPTION_CONSENT_VERSION = "20260820-subscription-partner-v1";
-const SUBSCRIPTION_PARTNER_DEFAULT = "전자랜드(상담 배정 지점)";
+const PUBLIC_API_VERSION = "20260820-subscription-consult-admin-v2";
+const SUBSCRIPTION_CONSENT_VERSION = "20260820-subscription-lg-partner-v2";
+const SUBSCRIPTION_PARTNER_DEFAULT = "픽견적 제휴 상담업체 및 LG전자";
 const QUOTE_DURATION_HOURS = 72;
 const QUOTE_DURATION_POLICY_KEY = "quote-duration-hours";
 const PHONE_VERIFICATION_CODE_TTL_MS = 5 * 60 * 1000;
@@ -5186,12 +5186,20 @@ async function ensureSubscriptionConsultationTable(env) {
       third_party_consent_json TEXT NOT NULL DEFAULT '{}', consented_at TEXT NOT NULL,
       phone_verification_id TEXT NOT NULL, phone_verified_at TEXT NOT NULL,
       status TEXT NOT NULL DEFAULT 'new', delivery_status TEXT NOT NULL DEFAULT 'pending',
-      delivery_error TEXT DEFAULT '', created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+      delivery_error TEXT DEFAULT '', contract_amount INTEGER DEFAULT 0,
+      commission_amount INTEGER DEFAULT 0, settlement_status TEXT DEFAULT 'unsettled',
+      admin_memo TEXT DEFAULT '', settled_at TEXT DEFAULT '',
+      created_at TEXT NOT NULL, updated_at TEXT NOT NULL
     )`
   ).run();
   await Promise.all([
     env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_subscription_consultations_created ON subscription_consultations(created_at DESC)").run(),
     env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_subscription_consultations_phone ON subscription_consultations(customer_phone, created_at DESC)").run(),
+    env.DB.prepare("ALTER TABLE subscription_consultations ADD COLUMN contract_amount INTEGER DEFAULT 0").run().catch(() => {}),
+    env.DB.prepare("ALTER TABLE subscription_consultations ADD COLUMN commission_amount INTEGER DEFAULT 0").run().catch(() => {}),
+    env.DB.prepare("ALTER TABLE subscription_consultations ADD COLUMN settlement_status TEXT DEFAULT 'unsettled'").run().catch(() => {}),
+    env.DB.prepare("ALTER TABLE subscription_consultations ADD COLUMN admin_memo TEXT DEFAULT ''").run().catch(() => {}),
+    env.DB.prepare("ALTER TABLE subscription_consultations ADD COLUMN settled_at TEXT DEFAULT ''").run().catch(() => {}),
   ]);
 }
 
@@ -5214,7 +5222,7 @@ async function createSubscriptionConsultation(env, request) {
   const consent = body.consent || {};
 
   if (!customerName || customerPhone.length < 10 || !customerRegion || !preferredTime || !productName) {
-    return json({ ok: false, message: "이름, 인증할 휴대전화, 지역, 상담 희망 시간과 관심 제품을 입력해주세요." }, 400);
+    return json({ ok: false, message: "선택한 제품 정보와 이름, 인증할 휴대전화, 지역, 상담 희망 시간을 확인해주세요." }, 400);
   }
   if (
     body.consentVersion !== SUBSCRIPTION_CONSENT_VERSION ||
@@ -5245,17 +5253,17 @@ async function createSubscriptionConsultation(env, request) {
   const collectionConsent = {
     agreed: true,
     purpose: "가전 구독 상담 접수, 휴대전화 본인확인, 상담 연결 및 민원 처리",
-    items: ["이름", "휴대전화번호", "지역", "관심 제품·모델·옵션", "상담 희망 시간", "문의 내용"],
+    items: ["이름", "휴대전화번호", "지역", "선택 제품·모델·옵션", "상담 희망 시간", "추가 요청사항"],
     retention: "상담 접수일로부터 90일 또는 동의 철회 시까지. 관계 법령상 보존 의무가 있는 경우 해당 기간",
     refusal: "동의를 거부할 수 있으나 필수 정보이므로 구독 상담 신청이 제한됩니다.",
   };
   const thirdPartyConsent = {
     agreed: true,
     recipient: partnerName,
-    purpose: "가전 구독 상품 상담, 견적 안내, 계약 체결, 배송·설치 및 계약 관련 고객 응대",
-    items: ["이름", "휴대전화번호", "지역", "관심 제품·모델·옵션", "상담 희망 시간", "문의 내용"],
+    purpose: "제휴 상담업체의 구독 상담 연결, LG전자 구독 계약 체결, 배송·설치 및 계약 관련 고객 응대",
+    items: ["이름", "휴대전화번호", "지역", "선택 제품·모델·옵션", "상담 희망 시간", "추가 요청사항"],
     retention: "상담 미진행 시 제공일로부터 30일. 계약 체결 시 계약 및 관계 법령상 의무 이행에 필요한 기간",
-    refusal: "동의를 거부할 수 있으나 제휴업체 상담 및 계약 연결이 제한됩니다.",
+    refusal: "동의를 거부할 수 있으나 제휴 상담업체 연결 및 LG전자 구독 계약 진행이 제한됩니다.",
   };
 
   await env.DB.prepare(
@@ -5288,7 +5296,7 @@ async function createSubscriptionConsultation(env, request) {
       monthlyFee72 ? `72개월 월 구독료: ${monthlyFee72.toLocaleString("ko-KR")}원` : "",
       `지역: ${customerRegion}`,
       `희망 시간: ${preferredTime}`,
-      `제공 예정 업체: ${partnerName}`,
+      `개인정보 제공 대상: ${partnerName}`,
       memo ? `문의: ${memo}` : "",
     ].filter(Boolean).join("\n");
     const sent = await sendSolapiTextMessage(env, { targetPhone: adminPhone, body: message, allowDuplicates: true })
