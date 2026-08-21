@@ -1,6 +1,0 @@
-/quote /index.html 200
-/quote/* /index.html 200
-/my-quote /index.html 200
-/my-quote/* /index.html 200
-/seller /index.html 200
-/seller/* /index.html 200
