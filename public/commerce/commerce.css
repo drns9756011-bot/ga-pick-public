@@ -230,16 +230,6 @@ body.has-commerce-modal { overflow: hidden; }
 .subscription-consultation-success p { margin: 0; color: #637689; line-height: 1.65; }
 .subscription-consultation-success button { margin-top: 24px; border: 0; cursor: pointer; }
 
-/* Desktop commerce hero: keep the one-line copy intentional without wasting the visual area. */
-@media (min-width: 1320px) {
-  .commerce-hero-inner { width: min(1400px, calc(100% - 72px)); min-height: 390px; grid-template-columns: minmax(0, 1fr) 380px; gap: 48px; }
-  .commerce-hero-copy { min-width: 0; padding: 42px 0; }
-  .commerce-hero h1 { font-size: 42px; }
-  .commerce-hero p { max-width: none; margin-top: 16px; font-size: 16px; line-height: 1.55; white-space: nowrap; }
-  .commerce-hero-actions { margin-top: 26px; }
-  .commerce-hero-media img { width: 100%; max-height: 310px; }
-}
-
 @media (max-width: 1180px) {
   .commerce-hero-inner { width: min(1180px, calc(100% - 40px)); grid-template-columns: minmax(0, 1fr) 360px; }
   .commerce-hero h1 { white-space: normal; }

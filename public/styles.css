@@ -6805,10 +6805,10 @@ html.is-mobile-device .mobile-flow-nav {
   bottom: 0;
   z-index: 1200;
   margin: 0;
-  padding: 8px 8px calc(9px + env(safe-area-inset-bottom));
+  padding: 8px 8px calc(11px + env(safe-area-inset-bottom));
   background: rgba(255, 255, 255, 0.98);
   border-top: 1px solid var(--line);
-  box-shadow: 0 -16px 30px rgba(15, 23, 42, 0.1);
+  box-shadow: 0 -12px 28px rgba(15, 23, 42, 0.1);
 }
 
 html.is-mobile-device .mobile-flow-nav button,
@@ -8837,17 +8837,6 @@ body:has(#homePage.is-active) .pick-final-cta button {
 }
 
 /* Coupang Partners carousel: desktop home only. */
-.privacy-standalone-page { min-height: 100vh; margin: 0; background: #f3f7fb; color: #102b49; }
-.privacy-standalone-shell { width: min(980px, calc(100% - 40px)); margin: 0 auto; padding: 54px 0; }
-.privacy-standalone-logo { display: inline-block; width: 164px; }
-.privacy-standalone-logo img { display: block; width: 100%; height: auto; }
-.privacy-standalone-card { margin-top: 34px; padding: 34px; border: 1px solid #d5e0eb; background: #fff; }
-.privacy-standalone-card > span { color: #123b67; font-size: 12px; font-weight: 850; }
-.privacy-standalone-card h1 { margin: 10px 0 8px; color: #0b2747; font-size: 32px; }
-.privacy-standalone-card p { margin: 0; color: #526b82; }
-.privacy-standalone-card button { min-height: 44px; margin-top: 20px; padding: 0 18px; border: 1px solid #123b67; border-radius: 5px; background: #123b67; color: #fff; font-weight: 850; cursor: pointer; }
-@media (max-width: 700px) { .privacy-standalone-shell { width: calc(100% - 32px); padding: 28px 0; } .privacy-standalone-card { margin-top: 24px; padding: 24px 20px; } .privacy-standalone-card h1 { font-size: 27px; } }
-
 .pick-home-ad-slot.pick-coupang-ad-slot[hidden] {
   display: none !important;
 }

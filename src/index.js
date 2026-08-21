@@ -54,12 +54,6 @@ export default {
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
-  <url>
-    <loc>https://ga-pick.com/privacy</loc>
-    <lastmod>2026-08-21</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.3</priority>
-  </url>
 </urlset>`,
         {
           headers: {
@@ -99,8 +93,6 @@ export default {
       ["/shopping/index.html", "/shopping/index.html"],
       ["/products", "/shopping/index.html"],
       ["/products/index.html", "/shopping/index.html"],
-      ["/privacy", "/privacy/index.html"],
-      ["/privacy/index.html", "/privacy/index.html"],
     ]);
     if (standaloneRoutes.has(normalizedPath)) {
       const assetUrl = new URL(request.url);
