@@ -244,7 +244,7 @@ body.has-commerce-modal { overflow: hidden; }
 }
 
 @media (max-width: 700px) {
-  body.commerce-body { padding-bottom: 70px; }
+  body.commerce-body { padding-bottom: calc(92px + env(safe-area-inset-bottom)); }
   .commerce-topbar { min-height: 66px; padding: 10px 16px; grid-template-columns: 126px 1fr; }
   .commerce-logo { width: 126px; }
   .commerce-quote-link { min-height: 40px; padding: 0 13px; font-size: 13px; }
@@ -289,11 +289,15 @@ body.has-commerce-modal { overflow: hidden; }
   .commerce-guide-grid { grid-template-columns: 1fr; gap: 22px; }
   .commerce-footer { padding: 28px 20px; }
   .commerce-footer-top { display: block; }
-  .commerce-mobile-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 1000; height: 66px; display: grid; grid-template-columns: repeat(5, 1fr); background: #fff; border-top: 1px solid var(--commerce-line); }
-  .commerce-mobile-nav a { min-width: 0; display: grid; place-items: center; align-content: center; gap: 4px; color: #617487; font-size: 11px; font-weight: 750; text-decoration: none; }
+  .commerce-mobile-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 1000; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); padding: 8px 8px calc(11px + env(safe-area-inset-bottom)); background: rgba(255,255,255,.98); border-top: 1px solid var(--commerce-line); box-shadow: 0 -12px 28px rgba(15,23,42,.1); }
+  .commerce-mobile-nav a { min-width: 0; min-height: 60px; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; color: #556b80; font-size: 11px; font-weight: 800; line-height: 1.1; text-decoration: none; }
+  .commerce-mobile-icon { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 12px; background: #edf3f8; color: #1c2b35; }
+  .commerce-mobile-icon svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2; }
   .commerce-mobile-nav a.is-current { color: var(--commerce-navy); }
-  .commerce-mobile-nav b { width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; background: #eaf1f8; color: var(--commerce-navy); font-size: 11px; }
-  .commerce-mobile-nav .commerce-home b { width: 38px; height: 38px; background: var(--commerce-navy); color: #fff; }
+  .commerce-mobile-nav a.is-current .commerce-mobile-icon { background: #e2edf8; color: var(--commerce-navy); }
+  .commerce-mobile-nav .commerce-home { transform: translateY(-7px); color: var(--commerce-navy); }
+  .commerce-mobile-logo { width: 44px; height: 44px; display: grid; place-items: center; overflow: hidden; border-radius: 14px; background: #fff; padding: 4px; box-shadow: 0 12px 24px rgba(18,59,103,.18); }
+  .commerce-mobile-logo img { display: block; width: 100%; height: 100%; object-fit: contain; }
   .commerce-product-modal { padding: 0; align-items: end; }
   .commerce-product-dialog { width: 100%; max-height: 94vh; border-radius: 8px 8px 0 0; }
   .commerce-product-modal-close { top: 10px; right: 10px; }
