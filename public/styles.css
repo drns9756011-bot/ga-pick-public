@@ -1633,6 +1633,7 @@ h3 {
 }
 
 .pick-brand-grid img { grid-row: 1 / 3; display: block; width: 156px; height: 112px; object-fit: contain; }
+.pick-brand-grid img.brand-entry-logo { height: 58px; padding: 10px 0; }
 .pick-brand-grid strong { align-self: end; font-size: 20px; }
 .pick-brand-grid span { align-self: start; margin-top: 5px; color: var(--home-muted); font-size: 14px; }
 
@@ -1730,6 +1731,7 @@ h3 {
   .pick-case-bid-list li { grid-template-columns: 58px 1fr auto; padding: 10px 12px; }
   .pick-brand-grid a { grid-template-columns: 96px 1fr; padding: 14px; }
   .pick-brand-grid img { width: 96px; height: 76px; }
+  .pick-brand-grid img.brand-entry-logo { height: 42px; padding: 6px 0; }
   .pick-brand-grid strong { font-size: 16px; }
   .pick-brand-grid span { font-size: 12px; }
   .wizard-brand-guide { grid-template-columns: 1fr; padding: 16px; }
@@ -8760,6 +8762,24 @@ body:has(#homePage.is-active) .pick-home-heading > div > span {
 
 body:has(#homePage.is-active) .pick-trust-hero {
   background: #f5f8fb;
+}
+
+/* The customer home headline is intentionally a two-line statement. */
+body:has(#homePage.is-active) .pick-hero-center #pickHomeTitle {
+  white-space: normal;
+  line-height: 1.16;
+}
+
+body:has(#homePage.is-active) .pick-hero-center #pickHomeTitle > span {
+  display: block;
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  body:has(#homePage.is-active) .pick-hero-center #pickHomeTitle {
+    font-size: 28px;
+    line-height: 1.24;
+  }
 }
 
 /* 2026-08-13: unify public-home flow and closing sections with the navy brand. */
