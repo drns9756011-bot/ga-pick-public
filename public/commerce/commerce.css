@@ -232,6 +232,11 @@ body.has-commerce-modal { overflow: hidden; }
 .subscription-consultation-success p { margin: 0; color: #637689; line-height: 1.65; }
 .subscription-consultation-success button { margin-top: 24px; border: 0; cursor: pointer; }
 
+.subscription-video-section { margin: 0 0 64px; }
+.subscription-video-heading { margin-bottom: 20px; }
+.subscription-video-frame { overflow: hidden; aspect-ratio: 16 / 9; background: #071d33; border: 1px solid #c7d5e2; border-radius: 8px; box-shadow: 0 14px 34px rgba(18, 59, 103, .12); }
+.subscription-video { width: 100%; height: 100%; display: block; background: #071d33; object-fit: contain; }
+
 @media (max-width: 1180px) {
   .commerce-hero-inner { width: min(1180px, calc(100% - 40px)); grid-template-columns: minmax(0, 1fr) 360px; }
   .commerce-hero h1 { white-space: normal; }
@@ -264,6 +269,9 @@ body.has-commerce-modal { overflow: hidden; }
   .commerce-trust-inner { width: 100%; grid-template-columns: 1fr; }
   .commerce-trust-inner > div, .commerce-trust-inner > div:first-child { min-height: 74px; padding: 14px 20px; border-left: 0; border-right: 0; border-bottom: 1px solid var(--commerce-line); }
   .commerce-main { width: calc(100% - 32px); padding: 42px 0 62px; }
+  .subscription-video-section { margin-bottom: 48px; }
+  .subscription-video-heading { margin-bottom: 14px; }
+  .subscription-video-frame { border-radius: 6px; }
   .commerce-heading { display: block; }
   .commerce-heading h2 { font-size: 26px; }
   .commerce-heading p { margin-top: 8px; line-height: 1.55; }
