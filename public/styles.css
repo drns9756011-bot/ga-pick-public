@@ -1660,7 +1660,8 @@ h3 {
   .pick-trust-hero { grid-template-columns: 1fr; gap: 26px; min-height: 0; padding: 34px; }
   .pick-trust-copy h1 { font-size: 48px; }
   .pick-trust-visual { max-width: 560px; }
-  .pick-privacy-steps, .pick-flow-list { grid-template-columns: 1fr; }
+  .pick-privacy-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .pick-flow-list { grid-template-columns: 1fr; }
   .pick-live-board, .pick-review-grid { grid-template-columns: 1fr 1fr; }
   .pick-case-content article {
     flex-basis: min(76vw, 560px);
@@ -1705,9 +1706,14 @@ h3 {
   .pick-home-heading { margin-bottom: 20px; }
   .pick-home-heading.is-row { align-items: flex-start; }
   .pick-home-heading h2, .pick-final-cta h2 { font-size: 27px; }
-  .pick-privacy-steps li, .pick-flow-list li { padding: 18px; }
-  .pick-privacy-steps strong, .pick-flow-list strong { font-size: 16px; }
-  .pick-privacy-steps p, .pick-flow-list p { font-size: 14px; }
+  .pick-privacy-steps { gap: 6px; }
+  .pick-privacy-steps li { align-items: flex-start; gap: 6px; padding: 12px 8px; }
+  .pick-privacy-steps > li > span { width: 26px; height: 26px; flex-basis: 26px; font-size: 10px; }
+  .pick-privacy-steps strong { font-size: 13px; line-height: 1.35; }
+  .pick-privacy-steps p { margin-top: 4px; font-size: 11px; line-height: 1.4; }
+  .pick-flow-list li { padding: 18px; }
+  .pick-flow-list strong { font-size: 16px; }
+  .pick-flow-list p { font-size: 14px; }
   .pick-privacy-emphasis { font-size: 15px; }
   .pick-approved-note { display: grid; gap: 7px; }
   .pick-heading-link { display: none; }
