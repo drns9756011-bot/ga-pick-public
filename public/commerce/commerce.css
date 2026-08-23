@@ -267,8 +267,33 @@ body.has-commerce-modal { overflow: hidden; }
   .commerce-heading { display: block; }
   .commerce-heading h2 { font-size: 26px; }
   .commerce-heading p { margin-top: 8px; line-height: 1.55; }
-  .commerce-category-grid { grid-template-columns: repeat(2, 1fr); }
-  .commerce-category { min-height: 102px; }
+  .commerce-category-grid {
+    display: flex;
+    grid-template-columns: none;
+    gap: 8px;
+    margin-top: 16px;
+    padding: 0 0 6px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+  }
+  .commerce-category-grid::-webkit-scrollbar { display: none; }
+  .commerce-category {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    padding: 0 14px;
+    border-radius: 999px;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .commerce-category b,
+  .commerce-category small { display: none; }
+  .commerce-category strong { margin: 0; font-size: 13px; }
+  .commerce-category.is-active { background: var(--commerce-navy); border-color: var(--commerce-navy); box-shadow: none; }
+  .commerce-category.is-active strong { color: #fff; }
   .commerce-catalog { margin-top: 48px; }
   .commerce-tools { grid-template-columns: 1fr; }
   .commerce-product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
