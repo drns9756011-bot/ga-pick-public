@@ -8777,8 +8777,13 @@ body:has(#homePage.is-active) .pick-hero-center #pickHomeTitle > span {
 
 @media (max-width: 720px) {
   body:has(#homePage.is-active) .pick-hero-center #pickHomeTitle {
-    font-size: 28px;
+    font-size: 29px;
     line-height: 1.24;
+  }
+
+  .lookup-page-title > span {
+    display: block;
+    white-space: nowrap;
   }
 }
 
