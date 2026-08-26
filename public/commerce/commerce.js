@@ -42,6 +42,15 @@ function formatWon(value) {
   return `${Number(value || 0).toLocaleString("ko-KR")}원`;
 }
 
+function subscriptionAdditionalBenefit(monthlyFee) {
+  const calculated = Number(monthlyFee || 0) * 6.5 / 2;
+  return Math.floor(calculated / 10000) * 10000;
+}
+
+function formatSubscriptionAdditionalBenefit(monthlyFee) {
+  return `${Math.floor(subscriptionAdditionalBenefit(monthlyFee) / 10000).toLocaleString("ko-KR")}만원`;
+}
+
 function minimumMonthlyFee(item) {
   return Number(productOptions(item)[0]?.monthlyFee72 || item?.monthlyFee72 || 0);
 }
@@ -388,6 +397,7 @@ function renderProductModal(item, optionIndex = 0, cardIndex = -1) {
   const activeCardIndex = cardIndex >= 0 && affiliateCards[cardIndex] ? cardIndex : maximumCardIndex;
   const activeCard = affiliateCards[activeCardIndex];
   const baseFee = Number(selected.monthlyFee72 || 0);
+  const minimumFee = minimumMonthlyFee(item);
   const appliedBenefit = Math.min(baseFee, Number(activeCard.benefit || 0));
   const estimatedFee = Math.max(0, baseFee - appliedBenefit);
   modal.querySelector("#commerceProductModalContent").innerHTML = `
@@ -402,6 +412,7 @@ function renderProductModal(item, optionIndex = 0, cardIndex = -1) {
           <div><span>제휴카드 미적용</span><strong>월 ${formatWon(baseFee)}</strong><small>72개월 기준 기본 구독료</small></div>
           <div class="is-applied"><span>제휴카드 적용 예상</span><strong>월 ${formatWon(estimatedFee)}</strong><small>${escapeHtml(activeCard.name)} 최대 혜택 -${formatWon(appliedBenefit)}</small></div>
         </div>
+        ${commercePage === "subscription" ? `<p class="commerce-detail-additional-benefit">추가 혜택 약 <strong>${formatSubscriptionAdditionalBenefit(minimumFee)}</strong><span>최저 월 구독료 기준 예상 혜택</span></p>` : ""}
         <label class="commerce-affiliate-selector">적용할 제휴카드<select id="commerceAffiliateCard">${affiliateCards.map((card, index) => `<option value="${index}"${index === activeCardIndex ? " selected" : ""}>${escapeHtml(card.name)} · 최대 ${formatWon(card.benefit)} 할인</option>`).join("")}</select></label>
       </div>
     </div>
@@ -517,6 +528,7 @@ function renderProducts() {
           <p data-card-care>${escapeHtml(care || "72개월 구독")}</p>
           <span class="commerce-contract-label">72개월 기준 월 구독료${options.length > 1 ? " · 최저 옵션 우선" : ""}</span>
           <strong class="commerce-product-price" data-card-price>월 ${formatWon(selected.monthlyFee72)}</strong>
+          ${isSubscription ? `<span class="commerce-additional-benefit" data-card-additional-benefit>추가 혜택 약 ${formatSubscriptionAdditionalBenefit(selected.monthlyFee72)}</span>` : ""}
           <span class="commerce-max-card-benefit">제휴카드 월 최대 42,000원 혜택</span>
           <button class="commerce-product-action" type="button" data-product-detail>상세보기</button>
         </div>
