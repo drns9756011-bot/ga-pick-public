@@ -412,7 +412,7 @@ function renderProductModal(item, optionIndex = 0, cardIndex = -1) {
           <div><span>제휴카드 미적용</span><strong>월 ${formatWon(baseFee)}</strong><small>72개월 기준 기본 구독료</small></div>
           <div class="is-applied"><span>제휴카드 적용 예상</span><strong>월 ${formatWon(estimatedFee)}</strong><small>${escapeHtml(activeCard.name)} 최대 혜택 -${formatWon(appliedBenefit)}</small></div>
         </div>
-        ${commercePage === "subscription" ? `<p class="commerce-detail-additional-benefit">추가 혜택 약 <strong>${formatSubscriptionAdditionalBenefit(minimumFee)}</strong><span>최저 월 구독료 기준 예상 혜택</span></p>` : ""}
+        ${commercePage === "subscription" ? `<p class="commerce-detail-additional-benefit">추가 혜택 약 <strong>${formatSubscriptionAdditionalBenefit(minimumFee)}</strong></p>` : ""}
         <label class="commerce-affiliate-selector">적용할 제휴카드<select id="commerceAffiliateCard">${affiliateCards.map((card, index) => `<option value="${index}"${index === activeCardIndex ? " selected" : ""}>${escapeHtml(card.name)} · 최대 ${formatWon(card.benefit)} 할인</option>`).join("")}</select></label>
       </div>
     </div>
@@ -526,9 +526,9 @@ function renderProducts() {
           <strong class="commerce-product-model" data-card-model>${escapeHtml(selected.model)}</strong>
           ${options.length > 1 ? `<label class="commerce-card-option"><span>옵션 · 월 구독료 낮은 순</span><select data-card-option>${options.map((option, index) => `<option value="${index}">${escapeHtml(option.label)}</option>`).join("")}</select></label>` : ""}
           <p data-card-care>${escapeHtml(care || "72개월 구독")}</p>
-          <span class="commerce-contract-label">72개월 기준 월 구독료${options.length > 1 ? " · 최저 옵션 우선" : ""}</span>
+          <span class="commerce-contract-label">72개월 기준 월 구독료</span>
           <strong class="commerce-product-price" data-card-price>월 ${formatWon(selected.monthlyFee72)}</strong>
-          ${isSubscription ? `<span class="commerce-additional-benefit" data-card-additional-benefit>추가 혜택 약 ${formatSubscriptionAdditionalBenefit(selected.monthlyFee72)}</span>` : ""}
+          ${isSubscription ? `<span class="commerce-additional-benefit" data-card-additional-benefit>추가 혜택 약 ${formatSubscriptionAdditionalBenefit(minimumMonthlyFee(item))}</span>` : ""}
           <span class="commerce-max-card-benefit">제휴카드 월 최대 42,000원 혜택</span>
           <button class="commerce-product-action" type="button" data-product-detail>상세보기</button>
         </div>
@@ -587,12 +587,14 @@ function ensureCatalogMeta() {
 }
 
 function updateCatalogMeta(shown, total) {
-  const meta = ensureCatalogMeta();
+  const existing = document.querySelector("#commerceCatalogMeta");
+  if (shown >= total) {
+    existing?.remove();
+    return;
+  }
+  const meta = existing || ensureCatalogMeta();
   if (!meta) return;
-  const sourceDate = sourceInfo?.date ? ` · ${escapeHtml(sourceInfo.date)} 기준` : "";
-  meta.innerHTML = `
-    <p><strong>${total.toLocaleString("ko-KR")}개</strong> 상품 중 ${shown.toLocaleString("ko-KR")}개 표시${sourceDate}</p>
-    ${shown < total ? '<button type="button" id="commerceLoadMore">상품 더 보기</button>' : ""}`;
+  meta.innerHTML = '<button type="button" id="commerceLoadMore">상품 더 보기</button>';
   meta.querySelector("#commerceLoadMore")?.addEventListener("click", () => {
     visibleCount += 24;
     renderProducts();

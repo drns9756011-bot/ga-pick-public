@@ -113,7 +113,7 @@ body[data-commerce-page="shopping"] .commerce-hero h1 { font-size: 34px; }
 .commerce-empty h3 { margin: 18px 0 8px; color: var(--commerce-navy-dark); font-size: 22px; }
 .commerce-empty p { margin: 0; color: var(--commerce-muted); line-height: 1.7; }
 .commerce-empty a { margin-top: 20px; }
-.commerce-catalog-meta { margin-top: 22px; display: flex; align-items: center; justify-content: space-between; gap: 16px; color: var(--commerce-muted); font-size: 13px; }
+.commerce-catalog-meta { margin-top: 22px; display: flex; align-items: center; justify-content: center; gap: 16px; color: var(--commerce-muted); font-size: 13px; }
 .commerce-catalog-meta p { margin: 0; }
 .commerce-catalog-meta strong { color: var(--commerce-navy-dark); }
 .commerce-catalog-meta button { min-height: 44px; padding: 0 24px; border: 1px solid var(--commerce-navy); border-radius: 5px; background: #fff; color: var(--commerce-navy); font-weight: 850; cursor: pointer; }
@@ -129,11 +129,16 @@ body[data-commerce-page="shopping"] .commerce-hero h1 { font-size: 34px; }
 .commerce-disclosure { margin: 18px 0 0; color: #718295; font-size: 12px; line-height: 1.6; }
 
 .commerce-footer { padding: 34px max(24px, calc((100vw - 1180px) / 2)); background: #fff; border-top: 1px solid var(--commerce-line); color: #637487; }
-.commerce-footer-top { display: flex; justify-content: space-between; gap: 24px; }
+.commerce-footer-brand { display: flex; flex-direction: column; gap: 5px; }
 .commerce-footer strong { color: var(--commerce-navy-dark); }
+.commerce-footer-brand span { font-size: 13px; line-height: 1.55; }
 .commerce-footer nav { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 18px; }
 .commerce-footer a { font-size: 13px; }
-.commerce-footer p { margin: 16px 0 0; font-size: 12px; line-height: 1.7; }
+.commerce-footer-company { margin-top: 20px; }
+.commerce-footer-company > strong { display: block; }
+.commerce-footer-company p { margin: 8px 0 0; font-size: 12px; line-height: 1.7; }
+.commerce-footer-company p span + span { margin-left: 12px; }
+.commerce-footer-disclaimer { max-width: 920px; }
 .commerce-mobile-nav { display: none; }
 
 body.has-commerce-modal { overflow: hidden; }
@@ -159,7 +164,6 @@ body.has-commerce-modal { overflow: hidden; }
 .commerce-price-comparison .is-applied strong { color: var(--commerce-navy); }
 .commerce-detail-additional-benefit { min-height: 0; margin: 12px 0 0; padding: 10px 12px; border-left: 3px solid var(--commerce-navy); background: #edf4fa; color: #435c72; font-size: 12px; font-weight: 800; }
 .commerce-detail-additional-benefit strong { margin-left: 4px; color: var(--commerce-navy-dark); font-size: 16px; }
-.commerce-detail-additional-benefit span { display: block; margin-top: 4px; color: #677c8f; font-size: 11px; font-weight: 700; }
 .commerce-affiliate-selector { display: block; margin-top: 12px; color: #506478; font-size: 12px; font-weight: 800; }
 .commerce-affiliate-selector select { width: 100%; height: 46px; margin-top: 6px; padding: 0 36px 0 11px; border: 1px solid #bfcfdd; border-radius: 5px; background: #fff; color: var(--commerce-ink); font-size: 12px; }
 .commerce-detail-sections { padding: 30px 34px 10px; display: grid; grid-template-columns: .9fr 1.1fr; gap: 18px; }
@@ -330,7 +334,9 @@ body.has-commerce-modal { overflow: hidden; }
   .commerce-guide { margin: 52px -16px 0; padding: 30px 20px; }
   .commerce-guide-grid { grid-template-columns: 1fr; gap: 22px; }
   .commerce-footer { padding: 28px 20px; }
-  .commerce-footer-top { display: block; }
+  .commerce-footer-brand span { font-size: 12px; }
+  .commerce-footer-company p span { display: inline; }
+  .commerce-footer-company p span + span { margin-left: 8px; }
   .commerce-mobile-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 1000; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); padding: 8px 8px calc(11px + env(safe-area-inset-bottom)); background: rgba(255,255,255,.98); border-top: 1px solid var(--commerce-line); box-shadow: 0 -12px 28px rgba(15,23,42,.1); }
   .commerce-mobile-nav a { min-width: 0; min-height: 60px; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; color: #556b80; font-size: 11px; font-weight: 800; line-height: 1.1; text-decoration: none; }
   .commerce-mobile-icon { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 12px; background: #edf3f8; color: #1c2b35; }
