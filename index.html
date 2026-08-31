@@ -40,16 +40,16 @@
       content="가전 견적서를 올리면 LG·삼성 판매자 제안을 받아 가격, 배송, 설치, 카드 혜택을 한곳에서 비교할 수 있습니다."
     />
     <meta property="og:url" content="https://ga-pick.com/" />
-    <meta property="og:image" content="https://ga-pick.com/assets/pickquote-share-preview.png?v=20260822-logo-preview" />
-    <meta property="og:image:secure_url" content="https://ga-pick.com/assets/pickquote-share-preview.png?v=20260822-logo-preview" />
-    <meta property="og:image:alt" content="픽견적 가전 견적 비교 플랫폼 로고" />
+    <meta property="og:image" content="https://ga-pick.com/assets/pickquote-main-comparison-20260729.png" />
+    <meta property="og:image:secure_url" content="https://ga-pick.com/assets/pickquote-main-comparison-20260729.png" />
+    <meta property="og:image:alt" content="고객님이 가전 견적서를 확인하고 여러 제안을 비교하는 모습" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="픽견적 | 혼수·입주 가전 견적 비교" />
     <meta
       name="twitter:description"
       content="가전 견적서를 올리면 LG·삼성 판매자 제안을 받아 가격, 배송, 설치, 카드 혜택을 한곳에서 비교할 수 있습니다."
     />
-    <meta name="twitter:image" content="https://ga-pick.com/assets/pickquote-share-preview.png?v=20260822-logo-preview" />
+    <meta name="twitter:image" content="https://ga-pick.com/assets/pickquote-main-comparison-20260729.png" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -161,18 +161,17 @@
         display: block;
       }
     </style>
-  <link rel="stylesheet" href="/styles.css?v=20260831-customer-ui-integrated-v3" />
+  <link rel="stylesheet" href="/styles.css?v=20260831-customer-clean-home-v1" />
     <script defer src="/privacy-policy.js?v=20260811-privacy-policy-v19"></script>
-  <script defer src="/app.js?v=20260826-seller-portal-isolation-v1"></script>
+  <script defer src="/app.js?v=20260820-seller-sort-v6"></script>
     <script defer src="/customer-wizard.js?v=20260819-phone-verification-v4"></script>
-    <script defer src="/page-guide.js?v=20260831-customer-banner-first-v1"></script>
+    <script defer src="/page-guide.js?v=20260731-mobile-modal-safe-area"></script>
   </head>
   <body>
     <header class="topbar">
       <button class="brand nav-button" type="button" data-view="home" aria-label="픽견적 홈">
         <img class="brand-logo-image" src="/assets/pickquote-official-logo-navy.png?v=20260813-navy-brand" alt="픽견적 가전 견적 비교 플랫폼" />
       </button>
-      <span class="seller-portal-label" aria-hidden="true">판매자 업무</span>
       <a
         class="header-ad-slot is-image-banner"
         href="https://open.kakao.com/o/sE77Bzfi"
@@ -198,6 +197,7 @@
         <button type="button" data-view="customer">견적올리기</button>
         <a class="pick-top-link" href="/brand">브랜드관</a>
         <button type="button" data-view="lookup">내 견적 확인</button>
+        <button type="button" data-view="sellerLogin">판매자</button>
       </nav>
     </header>
 
@@ -207,11 +207,8 @@
           <div class="pick-home-shell">
             <section class="pick-trust-hero" aria-labelledby="pickHomeTitle">
               <div class="pick-hero-center">
-                <div class="pick-home-logo-wrap">
-                  <img class="pick-home-logo" src="/assets/pickquote-main-logo-navy.png?v=20260813-navy-brand" alt="픽견적 가전 견적 비교 플랫폼" />
-                </div>
                 <span class="pick-zero-fee">가전 견적 비교, 이제 한 곳에서</span>
-                <h1 id="pickHomeTitle"><span>견적서 올리면,</span><span>좋은 조건을 찾아드려요.</span></h1>
+                <h1 id="pickHomeTitle">견적서 올리면,<br />좋은 조건 찾아드려요.</h1>
                 <p class="pick-trust-lead">견적서가 있어도, 없어도 괜찮아요. 여러 판매자의 가격과 배송·설치 혜택을 한 번에 비교하세요.</p>
                 <div class="pick-start-panel">
                   <div class="pick-start-panel-head"><strong>어떤 견적을 비교해볼까요?</strong><span>고객 이용료 0원</span></div>
@@ -314,8 +311,8 @@
                 <div><span>브랜드관</span><h2 id="pickBrandTitle">견적 전, 우리 집에 맞는 제품부터 살펴보세요.</h2><p>LG전자·삼성전자 제품과 패키지를 비교한 뒤 바로 견적을 요청할 수 있습니다.</p></div>
               </div>
               <div class="pick-brand-grid">
-                <a href="/brand" aria-label="LG전자 브랜드관"><img class="brand-entry-logo" src="/assets/lg-electronics-logo.svg" alt="LG전자" /><strong>LG전자 브랜드관</strong><span>인기 제품과 패키지 보기</span></a>
-                <a href="/brand" aria-label="삼성전자 브랜드관"><img class="brand-entry-logo" src="/assets/samsung-electronics-logo.svg" alt="삼성전자" /><strong>삼성전자 브랜드관</strong><span>인기 제품과 패키지 보기</span></a>
+                <a href="/brand" aria-label="LG전자 브랜드관"><img src="/assets/brand-hero-lg-products.png" alt="LG전자 가전 제품" /><strong>LG전자 브랜드관</strong><span>인기 제품과 패키지 보기</span></a>
+                <a href="/brand" aria-label="삼성전자 브랜드관"><img src="/assets/brand-hero-samsung-products.png" alt="삼성전자 가전 제품" /><strong>삼성전자 브랜드관</strong><span>인기 제품과 패키지 보기</span></a>
                 <a href="/subscription" aria-label="가전 구독관"><img src="/assets/brand-hero-lg-products.png" alt="가전 구독 상품" /><strong>가전 구독관</strong><span>월 구독료와 계약 조건 비교</span></a>
                 <a href="/shopping" aria-label="가전 쇼핑관"><img src="/assets/brand-hero-samsung-products.png" alt="쇼핑 가능한 가전 제품" /><strong>가전 쇼핑관</strong><span>필요한 제품만 골라서 구매</span></a>
               </div>
@@ -433,7 +430,7 @@
         <div class="page-head">
           <button class="back-btn" type="button" data-view="home">← 첫 화면</button>
           <p class="eyebrow">내 견적 확인</p>
-          <h2 class="lookup-page-title"><span>성함과 휴대전화로</span><span>내가 올린 견적을 확인하세요.</span></h2>
+          <h2>성함과 휴대전화로 내가 올린 견적을 확인하세요.</h2>
           <p>
             견적 등록 시 인증을 완료한 고객님은 이후 성함과 휴대전화로 견적 내용,
             견적서 이미지, 판매자 제안을 다시 볼 수 있습니다.
@@ -469,6 +466,7 @@
 
       <section class="page seller-login-page" id="sellerLoginPage" data-page="sellerLogin">
         <div class="page-head">
+          <button class="back-btn" type="button" data-view="home">← 첫 화면</button>
           <p class="eyebrow">판매자 로그인</p>
           <h2>판매자 등록 승인 계정으로 로그인하세요.</h2>
           <p>
@@ -520,6 +518,7 @@
 
       <section class="page seller-page" id="sellerPage" data-page="seller">
         <div class="page-head">
+          <button class="back-btn" type="button" data-view="home">← 첫 화면</button>
           <p class="eyebrow">판매자 페이지</p>
           <h2>고객님이 올린 견적 내용과 사진을 확인하고 제안하세요.</h2>
           <p>
@@ -660,6 +659,7 @@
 
       <section class="page seller-register-page" id="sellerRegisterPage" data-page="sellerRegister">
         <div class="page-head">
+          <button class="back-btn" type="button" data-view="home">← 첫 화면</button>
           <p class="eyebrow">판매자 등록</p>
           <h2>판매자로 등록할 지점 정보를 입력해주세요.</h2>
           <p>
@@ -842,7 +842,7 @@
         </span>
         <span>내 견적</span>
       </button>
-      <button class="mobile-flow-home is-current" type="button" data-view="home" aria-label="픽견적 홈" aria-current="page">
+      <button class="mobile-flow-home" type="button" data-view="home" aria-label="픽견적 홈">
         <span class="mobile-flow-logo" aria-hidden="true"><img src="/assets/pickquote-official-symbol-navy.png?v=20260813-symbol-cutout" alt="" /></span>
         <span>홈</span>
       </button>
@@ -855,15 +855,15 @@
         </span>
         <span>브랜드관</span>
       </a>
-      <a href="/subscription">
+      <button type="button" data-view="sellerLogin">
         <span class="mobile-flow-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" focusable="false">
-            <path d="M5 4h14v16H5z" />
-            <path d="M8 8h8M8 12h8M8 16h5" />
+            <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" />
+            <path d="M4 21a8 8 0 0 1 16 0" />
           </svg>
         </span>
-        <span>구독관</span>
-      </a>
+        <span>판매자</span>
+      </button>
     </nav>
 
     <footer class="footer">
@@ -872,6 +872,7 @@
           <strong>픽견적</strong>
           <span>고객님이 올린 견적서를 기준으로 여러 판매자 제안을 비교하는 가전 견적 서비스</span>
         </div>
+        <button class="footer-register-btn" type="button" data-view="sellerRegister">판매자 등록</button>
       </div>
       <nav class="footer-seo-links" aria-label="픽견적 주요 링크">
         <a href="https://ga-pick.com/" data-view="home">픽견적 홈</a>
@@ -880,6 +881,8 @@
         <a href="https://ga-pick.com/subscription">가전 구독관</a>
         <a href="https://ga-pick.com/shopping">가전 쇼핑관</a>
         <a href="https://ga-pick.com/my-quote" data-view="lookup">내 견적 확인</a>
+        <a href="https://ga-pick.com/seller" data-view="sellerLogin">판매자 페이지</a>
+        <a href="https://ga-pick.com/seller/register" data-view="sellerRegister">판매자 등록</a>
       </nav>
       <div class="footer-company">
         <strong>픽브릿지</strong>
@@ -1219,4 +1222,3 @@
     <div class="security-blanket" id="securityBlanket" aria-hidden="true"></div>
   </body>
 </html>
-

@@ -1621,7 +1621,7 @@ h3 {
 
 .pick-brand-grid a {
   display: grid;
-  grid-template-columns: 124px 1fr;
+  grid-template-columns: 156px 1fr;
   grid-template-rows: auto auto;
   align-items: center;
   column-gap: 20px;
@@ -1632,16 +1632,7 @@ h3 {
   text-decoration: none;
 }
 
-.pick-brand-grid img {
-  grid-row: 1 / 3;
-  display: block;
-  width: 124px;
-  height: 124px;
-  aspect-ratio: 1;
-  object-fit: contain;
-  object-position: center;
-}
-.pick-brand-grid img.brand-entry-logo { height: 124px; padding: 20px; }
+.pick-brand-grid img { grid-row: 1 / 3; display: block; width: 156px; height: 112px; object-fit: contain; }
 .pick-brand-grid strong { align-self: end; font-size: 20px; }
 .pick-brand-grid span { align-self: start; margin-top: 5px; color: var(--home-muted); font-size: 14px; }
 
@@ -1668,8 +1659,7 @@ h3 {
   .pick-trust-hero { grid-template-columns: 1fr; gap: 26px; min-height: 0; padding: 34px; }
   .pick-trust-copy h1 { font-size: 48px; }
   .pick-trust-visual { max-width: 560px; }
-  .pick-privacy-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .pick-flow-list { grid-template-columns: 1fr; }
+  .pick-privacy-steps, .pick-flow-list { grid-template-columns: 1fr; }
   .pick-live-board, .pick-review-grid { grid-template-columns: 1fr 1fr; }
   .pick-case-content article {
     flex-basis: min(76vw, 560px);
@@ -1714,14 +1704,9 @@ h3 {
   .pick-home-heading { margin-bottom: 20px; }
   .pick-home-heading.is-row { align-items: flex-start; }
   .pick-home-heading h2, .pick-final-cta h2 { font-size: 27px; }
-  .pick-privacy-steps { gap: 6px; }
-  .pick-privacy-steps li { align-items: flex-start; gap: 6px; padding: 12px 8px; }
-  .pick-privacy-steps > li > span { width: 26px; height: 26px; flex-basis: 26px; font-size: 10px; }
-  .pick-privacy-steps strong { font-size: 13px; line-height: 1.35; }
-  .pick-privacy-steps p { margin-top: 4px; font-size: 11px; line-height: 1.4; }
-  .pick-flow-list li { padding: 18px; }
-  .pick-flow-list strong { font-size: 16px; }
-  .pick-flow-list p { font-size: 14px; }
+  .pick-privacy-steps li, .pick-flow-list li { padding: 18px; }
+  .pick-privacy-steps strong, .pick-flow-list strong { font-size: 16px; }
+  .pick-privacy-steps p, .pick-flow-list p { font-size: 14px; }
   .pick-privacy-emphasis { font-size: 15px; }
   .pick-approved-note { display: grid; gap: 7px; }
   .pick-heading-link { display: none; }
@@ -1743,9 +1728,8 @@ h3 {
   .pick-case-content h3 { font-size: 20px; }
   .pick-case-content article { flex-basis: min(88vw, 360px); }
   .pick-case-bid-list li { grid-template-columns: 58px 1fr auto; padding: 10px 12px; }
-  .pick-brand-grid a { grid-template-columns: 84px 1fr; padding: 14px; }
-  .pick-brand-grid img { width: 84px; height: 84px; aspect-ratio: 1; }
-  .pick-brand-grid img.brand-entry-logo { height: 84px; padding: 12px; }
+  .pick-brand-grid a { grid-template-columns: 96px 1fr; padding: 14px; }
+  .pick-brand-grid img { width: 96px; height: 76px; }
   .pick-brand-grid strong { font-size: 16px; }
   .pick-brand-grid span { font-size: 12px; }
   .wizard-brand-guide { grid-template-columns: 1fr; padding: 16px; }
@@ -6376,13 +6360,13 @@ td strong {
   }
 
   .quote-subscription-ad {
-    height: auto;
+    height: 180px;
   }
 
   .quote-subscription-ad img {
-    width: 100%;
-    max-width: 100%;
-    height: auto;
+    width: auto;
+    max-width: none;
+    height: 100%;
   }
 
   .workflow,
@@ -6821,10 +6805,10 @@ html.is-mobile-device .mobile-flow-nav {
   bottom: 0;
   z-index: 1200;
   margin: 0;
-  padding: 8px 8px calc(11px + env(safe-area-inset-bottom));
+  padding: 8px 8px calc(9px + env(safe-area-inset-bottom));
   background: rgba(255, 255, 255, 0.98);
   border-top: 1px solid var(--line);
-  box-shadow: 0 -12px 28px rgba(15, 23, 42, 0.1);
+  box-shadow: 0 -16px 30px rgba(15, 23, 42, 0.1);
 }
 
 html.is-mobile-device .mobile-flow-nav button,
@@ -8778,29 +8762,6 @@ body:has(#homePage.is-active) .pick-trust-hero {
   background: #f5f8fb;
 }
 
-/* The customer home headline is intentionally a two-line statement. */
-body:has(#homePage.is-active) .pick-hero-center #pickHomeTitle {
-  white-space: normal;
-  line-height: 1.16;
-}
-
-body:has(#homePage.is-active) .pick-hero-center #pickHomeTitle > span {
-  display: block;
-  white-space: nowrap;
-}
-
-@media (max-width: 720px) {
-  body:has(#homePage.is-active) .pick-hero-center #pickHomeTitle {
-    font-size: 29px;
-    line-height: 1.24;
-  }
-
-  .lookup-page-title > span {
-    display: block;
-    white-space: nowrap;
-  }
-}
-
 /* 2026-08-13: unify public-home flow and closing sections with the navy brand. */
 body:has(#homePage.is-active) .pick-flow-home,
 body:has(#homePage.is-active) .pick-privacy-home,
@@ -8925,210 +8886,237 @@ body:has(#homePage.is-active) .pick-home-ad-slot.pick-coupang-ad-slot {
     display: none !important;
   }
 }
-/* Customer deployment: seller entry points live on partner.ga-pick.com. */
-.mobile-flow-nav [data-view="sellerLogin"],
-.mobile-flow-nav a[href="/seller"] {
-  display: none !important;
-}
 
-/* Seller routes are a separate work portal, not a variation of the customer site. */
-.seller-portal-label {
-  display: none;
-}
-
-body.is-seller-portal .topbar {
-  min-height: 72px;
-  padding-block: 12px;
-  border-bottom: 1px solid #dbe5ee;
+/* Customer home: reduce decorative treatment and focus on the quote start action. */
+body:has(#homePage.is-active) .pick-app-home {
+  padding: 0 0 72px;
   background: #ffffff;
 }
 
-body.is-seller-portal .topbar .brand {
-  cursor: pointer;
+body:has(#homePage.is-active) .pick-home-shell {
+  width: 100%;
 }
 
-body.is-seller-portal .topbar .header-ad-slot,
-body.is-seller-portal .topbar .nav,
-body.is-seller-portal .mobile-flow-nav,
-body.is-seller-portal .footer,
-body.is-seller-portal .kakao-floating-btn {
-  display: none !important;
+body:has(#homePage.is-active) .pick-trust-hero {
+  min-height: 580px;
+  padding: 72px max(32px, calc((100vw - 1120px) / 2));
+  background: #f5f8fb;
+  border-bottom: 1px solid #dce5ee;
 }
 
-html[data-initial-view="sellerLogin"] .topbar .header-ad-slot,
-html[data-initial-view="sellerLogin"] .topbar .nav,
-html[data-initial-view="sellerLogin"] .mobile-flow-nav,
-html[data-initial-view="sellerLogin"] .footer,
-html[data-initial-view="sellerLogin"] .kakao-floating-btn,
-html[data-initial-view="sellerRegister"] .topbar .header-ad-slot,
-html[data-initial-view="sellerRegister"] .topbar .nav,
-html[data-initial-view="sellerRegister"] .mobile-flow-nav,
-html[data-initial-view="sellerRegister"] .footer,
-html[data-initial-view="sellerRegister"] .kakao-floating-btn {
-  display: none !important;
-}
-
-body.is-seller-portal .seller-portal-label {
-  display: inline-flex;
+body:has(#homePage.is-active) .pick-hero-center {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 430px);
+  width: min(1120px, 100%);
   align-items: center;
-  min-height: 30px;
-  margin-left: 12px;
-  padding: 0 11px;
-  border: 1px solid #cbd9e7;
-  border-radius: 4px;
-  background: #f3f7fb;
-  color: #234f7c;
-  font-size: 13px;
+  column-gap: clamp(56px, 8vw, 118px);
+  text-align: left;
+}
+
+body:has(#homePage.is-active) .pick-home-logo-wrap {
+  grid-column: 1;
+  width: 176px;
+  margin: 0 0 26px;
+}
+
+body:has(#homePage.is-active) .pick-zero-fee {
+  grid-column: 1;
+  order: 1;
+  margin: 0 0 12px;
+  color: #123b67;
+  font-size: 14px;
   font-weight: 800;
 }
 
-body.is-seller-portal main {
-  min-height: calc(100vh - 72px);
+body:has(#homePage.is-active) .pick-hero-center h1 {
+  grid-column: 1;
+  order: 2;
+  margin: 0;
+  color: #102d4c;
+  font-size: clamp(44px, 4.4vw, 62px);
+  font-weight: 800;
+  line-height: 1.16;
+  letter-spacing: 0;
+  white-space: nowrap;
 }
 
-/* Customer UI polish: consistent mobile hierarchy, density, and safe-area spacing. */
-body:not(.is-seller-portal) .topbar {
-  box-shadow: none;
+body:has(#homePage.is-active) .pick-trust-lead {
+  grid-column: 1;
+  order: 3;
+  width: auto;
+  max-width: 540px;
+  margin: 22px 0 0;
+  color: #607286;
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.65;
+  white-space: normal;
 }
 
 body:has(#homePage.is-active) .pick-start-panel {
+  grid-column: 2;
+  grid-row: 1 / span 5;
+  align-self: center;
+  margin: 0;
+  padding: 28px;
+  border: 1px solid #d4e0ea;
   border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 18px 38px rgba(23, 48, 76, .08);
 }
 
-/* The quote flow has one dedicated subscription banner. Do not stack unrelated ads or floating controls over its inputs. */
-body:has(#customerPage.is-active) .header-ad-slot,
-body:has(#customerPage.is-active) .kakao-floating-btn {
-  display: none !important;
+body:has(#homePage.is-active) .pick-start-panel-head {
+  margin-bottom: 20px;
+}
+
+body:has(#homePage.is-active) .pick-start-panel-head strong {
+  color: #102d4c;
+  font-size: 20px;
+}
+
+body:has(#homePage.is-active) .pick-start-panel-actions {
+  grid-template-columns: 1fr;
+  gap: 10px;
 }
 
 body:has(#homePage.is-active) .pick-upload-cta,
 body:has(#homePage.is-active) .pick-no-quote-cta {
+  min-height: 58px;
   border-radius: 5px;
+  font-size: 16px;
+}
+
+body:has(#homePage.is-active) .pick-upload-cta {
+  background: #123b67;
+  box-shadow: none;
+}
+
+body:has(#homePage.is-active) .pick-no-quote-cta {
+  border-color: #b8c8d7;
+  color: #1a436d;
+}
+
+body:has(#homePage.is-active) .pick-start-panel > p {
+  margin: 16px 0 0;
+  text-align: center;
+  color: #718193;
+  font-size: 13px;
+}
+
+body:has(#homePage.is-active) .pick-lookup-line,
+body:has(#homePage.is-active) .pick-privacy-note {
+  grid-column: 1;
+}
+
+body:has(#homePage.is-active) .pick-lookup-line {
+  order: 4;
+  margin: 28px 0 0;
+  justify-content: flex-start;
+}
+
+body:has(#homePage.is-active) .pick-privacy-note {
+  order: 5;
+  margin: 20px 0 0;
+  justify-content: flex-start;
+  color: #647689;
+}
+
+body:has(#homePage.is-active) .pick-home-shortcuts {
+  width: min(1120px, calc(100% - 40px));
+  margin: 0 auto;
+  border: 0;
+  background: #ffffff;
+}
+
+body:has(#homePage.is-active) .pick-home-shortcuts > div {
+  min-height: 128px;
+  padding: 28px 22px;
+  border: 0;
+  border-right: 1px solid #e2e9f0;
+  background: transparent;
+}
+
+body:has(#homePage.is-active) .pick-home-shortcuts > div:last-child {
+  border-right: 0;
 }
 
 @media (max-width: 760px) {
-  html.is-mobile-device .topbar {
-    min-height: calc(58px + env(safe-area-inset-top));
-    padding: calc(8px + env(safe-area-inset-top)) 16px 8px;
-  }
-
-  html.is-mobile-device .brand-logo-image {
-    width: 116px;
-    max-height: 36px;
+  body:has(#homePage.is-active) .pick-app-home {
+    padding-bottom: 42px;
   }
 
   body:has(#homePage.is-active) .pick-trust-hero {
-    padding: 24px 20px 28px;
+    min-height: 0;
+    padding: 38px 20px 32px;
+  }
+
+  body:has(#homePage.is-active) .pick-hero-center {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
   }
 
   body:has(#homePage.is-active) .pick-home-logo-wrap {
-    width: min(218px, 62vw);
-    margin: 0 auto 20px;
+    width: 142px;
+    margin: 0 0 28px;
   }
 
-  body:has(#homePage.is-active) .pick-hero-center #pickHomeTitle {
-    font-size: clamp(31px, 8.8vw, 36px);
-    line-height: 1.18;
+  body:has(#homePage.is-active) .pick-zero-fee {
+    margin-bottom: 10px;
+    font-size: 13px;
+  }
+
+  body:has(#homePage.is-active) .pick-hero-center h1 {
+    font-size: clamp(24px, 7.8vw, 30px);
+    line-height: 1.2;
   }
 
   body:has(#homePage.is-active) .pick-trust-lead {
-    max-width: 340px;
-    margin: 16px auto 0;
-    color: #456078;
+    margin-top: 16px;
     font-size: 15px;
-    line-height: 1.65;
-    text-align: center;
   }
 
   body:has(#homePage.is-active) .pick-start-panel {
-    gap: 11px;
-    margin-top: 26px;
-    padding: 20px 16px 18px;
-    box-shadow: 0 14px 28px rgba(18, 59, 103, .09);
-  }
-
-  body:has(#homePage.is-active) .pick-start-panel-head {
-    min-height: 25px;
+    order: 4;
+    width: 100%;
+    margin-top: 28px;
+    padding: 22px 18px;
+    box-shadow: none;
   }
 
   body:has(#homePage.is-active) .pick-start-panel-head strong {
     font-size: 18px;
   }
 
-  body:has(#homePage.is-active) .pick-start-panel-head span,
-  body:has(#homePage.is-active) .pick-start-panel > p,
-  body:has(#homePage.is-active) .pick-lookup-line,
-  body:has(#homePage.is-active) .pick-privacy-note {
-    font-size: 12px;
-  }
-
   body:has(#homePage.is-active) .pick-upload-cta,
   body:has(#homePage.is-active) .pick-no-quote-cta {
-    min-height: 50px;
+    min-height: 54px;
     font-size: 15px;
   }
 
-  body:has(#homePage.is-active) .pick-privacy-steps {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 7px;
+  body:has(#homePage.is-active) .pick-lookup-line {
+    order: 5;
+    margin-top: 20px;
   }
 
-  body:has(#homePage.is-active) .pick-approved-note {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px;
+  body:has(#homePage.is-active) .pick-privacy-note {
+    order: 6;
+    margin-top: 18px;
+    font-size: 13px;
   }
 
-  body:has(#homePage.is-active) .pick-approved-note span {
-    min-width: 0;
-    font-size: 11px;
-    line-height: 1.45;
+  body:has(#homePage.is-active) .pick-home-shortcuts {
+    display: grid;
+    width: 100%;
+    margin: 0;
+    padding: 0 20px;
   }
 
-  html.is-mobile-device .kakao-floating-btn {
-    right: 14px;
-    bottom: calc(100px + env(safe-area-inset-bottom));
-    min-height: 50px;
-    padding: 6px 12px 6px 6px;
-  }
-
-  html.is-mobile-device .kakao-floating-icon {
-    width: 38px;
-    height: 38px;
-  }
-
-  html.is-mobile-device .kakao-floating-text {
-    font-size: 12px;
-  }
-
-  html.is-mobile-device .mobile-flow-nav {
-    min-height: calc(76px + env(safe-area-inset-bottom));
-    padding-top: 6px;
-    box-shadow: 0 -8px 24px rgba(15, 31, 49, .09);
-  }
-
-  html.is-mobile-device .mobile-flow-nav button,
-  html.is-mobile-device .mobile-flow-nav a {
-    min-height: 56px;
-    gap: 4px;
-    font-size: 11px;
-  }
-}
-
-@media (max-width: 760px) {
-  body.is-seller-portal .topbar {
-    min-height: calc(62px + env(safe-area-inset-top));
-    padding-top: calc(10px + env(safe-area-inset-top));
-    padding-bottom: 10px;
-  }
-
-  body.is-seller-portal .seller-portal-label {
-    margin-left: 8px;
-    padding-inline: 9px;
-    font-size: 12px;
-  }
-
-  body.is-seller-portal main {
-    min-height: calc(100vh - 62px - env(safe-area-inset-top));
-    padding-bottom: env(safe-area-inset-bottom);
+  body:has(#homePage.is-active) .pick-home-shortcuts > div {
+    min-height: 0;
+    padding: 20px 0;
+    border-right: 0;
+    border-bottom: 1px solid #e2e9f0;
   }
 }
