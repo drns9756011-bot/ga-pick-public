@@ -9120,3 +9120,160 @@ body:has(#homePage.is-active) .pick-home-shortcuts > div:last-child {
     border-bottom: 1px solid #e2e9f0;
   }
 }
+
+/* Customer home content hierarchy: one trust block, one process block, no repeated CTAs. */
+body:has(#homePage.is-active) .pick-privacy-home,
+body:has(#homePage.is-active) .pick-live-home,
+body:has(#homePage.is-active) .pick-flow-home,
+body:has(#homePage.is-active) .pick-faq-home,
+body:has(#homePage.is-active) .pick-brand-home {
+  width: min(1120px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 72px 0;
+  border-bottom: 1px solid #dfe7ee;
+}
+
+body:has(#homePage.is-active) .pick-home-heading {
+  margin-bottom: 26px;
+}
+
+body:has(#homePage.is-active) .pick-home-heading h2 {
+  margin: 0;
+  color: #102d4c;
+  font-size: clamp(27px, 3vw, 38px);
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+body:has(#homePage.is-active) .pick-privacy-steps,
+body:has(#homePage.is-active) .pick-flow-list {
+  gap: 0;
+  border-top: 1px solid #dfe7ee;
+  border-bottom: 1px solid #dfe7ee;
+}
+
+body:has(#homePage.is-active) .pick-privacy-steps li,
+body:has(#homePage.is-active) .pick-flow-list li {
+  min-height: 132px;
+  padding: 24px;
+  border: 0;
+  border-right: 1px solid #dfe7ee;
+  border-radius: 0;
+  background: transparent;
+}
+
+body:has(#homePage.is-active) .pick-privacy-steps li:last-child,
+body:has(#homePage.is-active) .pick-flow-list li:last-child {
+  border-right: 0;
+}
+
+body:has(#homePage.is-active) .pick-privacy-steps > li > span,
+body:has(#homePage.is-active) .pick-flow-icon {
+  width: 32px;
+  height: 32px;
+  flex-basis: 32px;
+  border-radius: 50%;
+  background: #edf3f9;
+  color: #123b67;
+}
+
+body:has(#homePage.is-active) .pick-privacy-steps strong,
+body:has(#homePage.is-active) .pick-flow-list strong {
+  color: #1a314a;
+  font-size: 17px;
+}
+
+body:has(#homePage.is-active) .pick-privacy-steps p,
+body:has(#homePage.is-active) .pick-flow-list p {
+  color: #687b8f;
+  font-size: 14px;
+}
+
+body:has(#homePage.is-active) .pick-privacy-emphasis {
+  margin: 0;
+  padding: 18px 20px;
+  border: 0;
+  border-bottom: 1px solid #dfe7ee;
+  background: #f5f8fb;
+  color: #294b6d;
+  font-size: 15px;
+}
+
+body:has(#homePage.is-active) .pick-approved-note {
+  justify-content: flex-start;
+  margin-top: 16px;
+  color: #66798c;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+body:has(#homePage.is-active) .pick-flow-time {
+  margin: 18px 0 0;
+  color: #58718a;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+body:has(#homePage.is-active) .pick-live-board article,
+body:has(#homePage.is-active) .pick-faq-list details,
+body:has(#homePage.is-active) .pick-brand-grid a {
+  border-radius: 6px;
+  box-shadow: none;
+}
+
+@media (max-width: 760px) {
+  body:has(#homePage.is-active) .pick-privacy-home,
+  body:has(#homePage.is-active) .pick-live-home,
+  body:has(#homePage.is-active) .pick-flow-home,
+  body:has(#homePage.is-active) .pick-faq-home,
+  body:has(#homePage.is-active) .pick-brand-home {
+    width: 100%;
+    padding: 46px 20px;
+  }
+
+  body:has(#homePage.is-active) .pick-home-heading h2 {
+    font-size: 26px;
+  }
+
+  body:has(#homePage.is-active) .pick-privacy-steps {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  body:has(#homePage.is-active) .pick-privacy-steps li {
+    display: grid;
+    gap: 10px;
+    min-height: 124px;
+    padding: 16px 10px;
+  }
+
+  body:has(#homePage.is-active) .pick-privacy-steps li > div {
+    min-width: 0;
+  }
+
+  body:has(#homePage.is-active) .pick-privacy-steps strong {
+    font-size: 14px;
+    white-space: nowrap;
+  }
+
+  body:has(#homePage.is-active) .pick-privacy-steps p {
+    margin-top: 3px;
+    font-size: 11px;
+    line-height: 1.4;
+    word-break: keep-all;
+  }
+
+  body:has(#homePage.is-active) .pick-flow-list {
+    grid-template-columns: 1fr;
+  }
+
+  body:has(#homePage.is-active) .pick-flow-list li {
+    min-height: 0;
+    padding: 18px 0;
+    border-right: 0;
+    border-bottom: 1px solid #dfe7ee;
+  }
+
+  body:has(#homePage.is-active) .pick-flow-list li:last-child {
+    border-bottom: 0;
+  }
+}
