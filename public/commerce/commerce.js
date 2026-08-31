@@ -524,7 +524,7 @@ function renderProducts() {
           <span class="commerce-product-meta">${escapeHtml(item.brand)} · ${escapeHtml(item.category)}</span>
           <h3>${escapeHtml(item.sourceCategory || item.name)}</h3>
           <strong class="commerce-product-model" data-card-model>${escapeHtml(selected.model)}</strong>
-          ${options.length > 1 ? `<label class="commerce-card-option"><span>옵션 · 월 구독료 낮은 순</span><select data-card-option>${options.map((option, index) => `<option value="${index}">${escapeHtml(option.label)}</option>`).join("")}</select></label>` : ""}
+          ${options.length > 1 ? `<label class="commerce-card-option"><span>옵션 선택</span><select data-card-option>${options.map((option, index) => `<option value="${index}">${escapeHtml(option.label)}</option>`).join("")}</select></label>` : ""}
           <p data-card-care>${escapeHtml(care || "72개월 구독")}</p>
           <span class="commerce-contract-label">72개월 기준 월 구독료</span>
           <strong class="commerce-product-price" data-card-price>월 ${formatWon(selected.monthlyFee72)}</strong>

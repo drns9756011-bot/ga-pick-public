@@ -18,20 +18,19 @@
   <link rel="icon" href="/favicon-48x48-navy.png?v=20260813-navy-brand" type="image/png" sizes="48x48" />
   <link rel="apple-touch-icon" href="/apple-touch-icon-navy.png?v=20260813-navy-brand" sizes="180x180" />
   <meta name="theme-color" content="#123b67" />
-  <link rel="stylesheet" href="/commerce/commerce.css?v=20260826-public-copy-unified-v22" />
-  <script defer src="/commerce/commerce.js?v=20260826-public-copy-unified-v19"></script>
+  <link rel="stylesheet" href="/commerce/commerce.css?v=20260831-live-baseline-clean-v1" />
+  <script defer src="/commerce/commerce.js?v=20260831-live-baseline-clean-v1"></script>
   </head>
 <body class="commerce-body" data-commerce-page="subscription">
   <header class="commerce-topbar">
     <a class="commerce-logo" href="/" aria-label="픽견적 홈"><img src="/assets/pickquote-official-logo-navy.png?v=20260813-navy-brand" alt="픽견적 가전 견적 비교 플랫폼" /></a>
     <nav class="commerce-desktop-nav" aria-label="주요 메뉴"><a href="/quote">견적올리기</a><a href="/brand">브랜드관</a><a href="/my-quote">내 견적 확인</a></nav>
-    <a class="commerce-quote-link" href="/quote">무료 견적 비교</a>
   </header>
   <nav class="commerce-section-nav" aria-label="브랜드관 메뉴"><div class="commerce-section-nav-inner"><a href="/brand">브랜드 패키지</a><a class="is-current" href="/subscription" aria-current="page">가전 구독관</a><a href="/shopping">가전 쇼핑관</a></div></nav>
 
   <section class="commerce-hero">
     <div class="commerce-hero-inner">
-      <div><span class="commerce-kicker">PICK SUBSCRIPTION</span><h1><span>필요한 가전,</span><span>부담은 나누어 구독하세요.</span></h1><p>월 구독료뿐 아니라 계약 기간, 방문 관리, 소유권 이전 조건까지 확인한 뒤 우리 집에 맞는 상품을 선택하세요.</p><div class="commerce-hero-actions"><a class="commerce-primary" href="#commerceCatalog">구독 상품 보기</a><button class="commerce-secondary" type="button" data-subscription-consult>구독 상담 신청</button></div></div>
+      <div><h1><span>필요한 가전,</span><span>부담은 나누어 구독하세요.</span></h1><p>월 구독료뿐 아니라 계약 기간, 방문 관리, 소유권 이전 조건까지 확인한 뒤 우리 집에 맞는 상품을 선택하세요.</p><div class="commerce-hero-actions"><a class="commerce-primary" href="#commerceCatalog">구독 상품 보기</a><button class="commerce-secondary" type="button" data-subscription-consult>구독 상담 신청</button></div></div>
       <div class="commerce-hero-media"><img src="/assets/brand-hero-lg-products.png?v=20260809-brand-polish-v11" alt="TV, 냉장고, 세탁기 등 구독 가능한 가전 제품" /></div>
     </div>
   </section>
@@ -39,8 +38,7 @@
   <main class="commerce-main">
     <section class="subscription-video-section" aria-labelledby="subscriptionVideoTitle">
       <div class="commerce-heading subscription-video-heading">
-        <div><span class="commerce-kicker">SUBSCRIPTION GUIDE</span><h2 id="subscriptionVideoTitle">가전 구독관을 영상으로 확인하세요.</h2></div>
-        <p>구독 가능한 가전과 이용 방법을 영상으로 안내합니다.</p>
+        <div><h2 id="subscriptionVideoTitle">가전 구독관</h2></div>
       </div>
       <div class="subscription-video-frame">
         <video class="subscription-video" controls playsinline preload="metadata" poster="/assets/subscription/pickquote-subscription-guide-poster.jpg?v=20260823" aria-label="픽견적 가전 구독관 안내 영상">
@@ -49,8 +47,8 @@
         </video>
       </div>
     </section>
-    <section aria-labelledby="subscriptionCategoryTitle"><div class="commerce-heading"><div><span class="commerce-kicker">CATEGORY</span><h2 id="subscriptionCategoryTitle">어떤 가전을 구독할까요?</h2></div><p>관심 품목을 선택하면 해당 상품만 확인할 수 있습니다.</p></div><div class="commerce-category-grid" id="commerceCategories"></div></section>
-    <section class="commerce-catalog" id="commerceCatalog" aria-labelledby="subscriptionCatalogTitle"><div class="commerce-heading"><div><span class="commerce-kicker">SUBSCRIPTION PRODUCTS</span><h2 id="subscriptionCatalogTitle">가전 구독 상품</h2></div><p>확인된 계약 조건을 기준으로 노출합니다.</p></div><div class="commerce-tools"><input id="commerceSearch" type="search" placeholder="상품명 또는 모델명 검색" aria-label="구독 상품 검색" /><select id="commerceBrand" aria-label="브랜드 선택"><option value="">전체 브랜드</option><option value="LG전자">LG전자</option><option value="삼성전자">삼성전자</option><option value="기타">기타</option></select><select id="commerceSort" aria-label="상품 정렬"><option value="recommended">기본 순</option><option value="best">BEST 순</option><option value="price-asc">구독료 낮은 순</option><option value="price-desc">구독료 높은 순</option></select></div><div class="commerce-product-grid" id="commerceProductGrid" aria-live="polite"></div></section>
+    <section aria-labelledby="subscriptionCategoryTitle"><div class="commerce-heading"><div><h2 id="subscriptionCategoryTitle">어떤 가전을 구독할까요?</h2></div><p>관심 품목을 선택하면 해당 상품만 확인할 수 있습니다.</p></div><div class="commerce-category-grid" id="commerceCategories"></div></section>
+    <section class="commerce-catalog" id="commerceCatalog" aria-labelledby="subscriptionCatalogTitle"><div class="commerce-heading"><div><h2 id="subscriptionCatalogTitle">가전 구독 상품</h2></div><p>확인된 계약 조건을 기준으로 노출합니다.</p></div><div class="commerce-tools"><input id="commerceSearch" type="search" placeholder="상품명 또는 모델명 검색" aria-label="구독 상품 검색" /><select id="commerceBrand" aria-label="브랜드 선택"><option value="">전체 브랜드</option><option value="LG전자">LG전자</option><option value="삼성전자">삼성전자</option><option value="기타">기타</option></select><select id="commerceSort" aria-label="상품 정렬"><option value="recommended">기본 순</option><option value="best">BEST 순</option><option value="price-asc">구독료 낮은 순</option><option value="price-desc">구독료 높은 순</option></select></div><div class="commerce-product-grid" id="commerceProductGrid" aria-live="polite"></div></section>
   </main>
 
   <nav class="commerce-mobile-nav" aria-label="모바일 메뉴">
