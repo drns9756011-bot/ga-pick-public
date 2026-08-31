@@ -265,13 +265,13 @@ body.has-commerce-modal { overflow: hidden; }
   .commerce-section-nav-inner::-webkit-scrollbar { display: none; }
   .commerce-section-nav a { flex: 0 0 auto; padding: 13px 12px 11px; font-size: 13px; }
   .commerce-hero-inner { width: 100%; min-height: 0; padding: 38px 20px 0; grid-template-columns: 1fr; gap: 20px; }
-  .commerce-hero h1 { font-size: 23px; line-height: 1.32; white-space: normal; }
+  .commerce-hero h1 { font-size: clamp(25px, 7vw, 29px); line-height: 1.2; white-space: normal; }
   .commerce-hero h1 > span { display: block; white-space: nowrap; }
   body[data-commerce-page="shopping"] .commerce-hero h1 { font-size: 23px; }
-  .commerce-hero p { font-size: 16px; line-height: 1.65; }
+  .commerce-hero p { margin-top: 16px; font-size: 15px; line-height: 1.65; }
   .commerce-hero-actions { display: grid; grid-template-columns: 1fr 1fr; }
   .commerce-primary, .commerce-secondary { min-height: 50px; padding: 0 12px; font-size: 14px; }
-  .commerce-hero-media img { max-height: 230px; }
+  .commerce-hero-media img { max-height: 210px; }
   .commerce-trust-inner { width: 100%; grid-template-columns: 1fr; }
   .commerce-trust-inner > div, .commerce-trust-inner > div:first-child { min-height: 74px; padding: 14px 20px; border-left: 0; border-right: 0; border-bottom: 1px solid var(--commerce-line); }
   .commerce-main { width: calc(100% - 32px); padding: 42px 0 62px; }
@@ -286,7 +286,7 @@ body.has-commerce-modal { overflow: hidden; }
     grid-template-columns: none;
     gap: 8px;
     margin-top: 16px;
-    padding: 0 0 6px;
+    padding: 0 0 8px;
     overflow-x: auto;
     overscroll-behavior-x: contain;
     scrollbar-width: none;
@@ -297,8 +297,8 @@ body.has-commerce-modal { overflow: hidden; }
     flex: 0 0 auto;
     align-items: center;
     justify-content: center;
-    min-height: 42px;
-    padding: 0 14px;
+    min-height: 40px;
+    padding: 0 13px;
     border-radius: 999px;
     text-align: center;
     white-space: nowrap;
@@ -308,7 +308,7 @@ body.has-commerce-modal { overflow: hidden; }
   .commerce-category strong { margin: 0; font-size: 13px; }
   .commerce-category.is-active { background: var(--commerce-navy); border-color: var(--commerce-navy); box-shadow: none; }
   .commerce-category.is-active strong { color: #fff; }
-  .commerce-catalog { margin-top: 48px; }
+  .commerce-catalog { margin-top: 36px; }
   .commerce-tools { grid-template-columns: 1fr; }
   .commerce-product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .commerce-product-card { border-radius: 6px; }
@@ -335,8 +335,8 @@ body.has-commerce-modal { overflow: hidden; }
   .commerce-footer-brand span { font-size: 12px; }
   .commerce-footer-company p span { display: inline; }
   .commerce-footer-company p span + span { margin-left: 8px; }
-  .commerce-mobile-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 1000; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); padding: 8px 8px calc(11px + env(safe-area-inset-bottom)); background: rgba(255,255,255,.98); border-top: 1px solid var(--commerce-line); box-shadow: 0 -12px 28px rgba(15,23,42,.1); }
-  .commerce-mobile-nav a { min-width: 0; min-height: 60px; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; color: #556b80; font-size: 11px; font-weight: 800; line-height: 1.1; text-decoration: none; }
+  .commerce-mobile-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 1000; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); padding: 6px 8px calc(9px + env(safe-area-inset-bottom)); background: rgba(255,255,255,.98); border-top: 1px solid var(--commerce-line); box-shadow: 0 -8px 24px rgba(15,23,42,.1); }
+  .commerce-mobile-nav a { min-width: 0; min-height: 56px; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: #556b80; font-size: 10px; font-weight: 800; line-height: 1.1; text-decoration: none; }
   .commerce-mobile-icon { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 12px; background: #edf3f8; color: #1c2b35; }
   .commerce-mobile-icon svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2; }
   .commerce-mobile-nav a.is-current { color: var(--commerce-navy); }
