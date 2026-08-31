@@ -1621,7 +1621,7 @@ h3 {
 
 .pick-brand-grid a {
   display: grid;
-  grid-template-columns: 156px 1fr;
+  grid-template-columns: 124px 1fr;
   grid-template-rows: auto auto;
   align-items: center;
   column-gap: 20px;
@@ -1632,8 +1632,16 @@ h3 {
   text-decoration: none;
 }
 
-.pick-brand-grid img { grid-row: 1 / 3; display: block; width: 156px; height: 112px; object-fit: contain; }
-.pick-brand-grid img.brand-entry-logo { height: 58px; padding: 10px 0; }
+.pick-brand-grid img {
+  grid-row: 1 / 3;
+  display: block;
+  width: 124px;
+  height: 124px;
+  aspect-ratio: 1;
+  object-fit: contain;
+  object-position: center;
+}
+.pick-brand-grid img.brand-entry-logo { height: 124px; padding: 20px; }
 .pick-brand-grid strong { align-self: end; font-size: 20px; }
 .pick-brand-grid span { align-self: start; margin-top: 5px; color: var(--home-muted); font-size: 14px; }
 
@@ -1735,9 +1743,9 @@ h3 {
   .pick-case-content h3 { font-size: 20px; }
   .pick-case-content article { flex-basis: min(88vw, 360px); }
   .pick-case-bid-list li { grid-template-columns: 58px 1fr auto; padding: 10px 12px; }
-  .pick-brand-grid a { grid-template-columns: 96px 1fr; padding: 14px; }
-  .pick-brand-grid img { width: 96px; height: 76px; }
-  .pick-brand-grid img.brand-entry-logo { height: 42px; padding: 6px 0; }
+  .pick-brand-grid a { grid-template-columns: 84px 1fr; padding: 14px; }
+  .pick-brand-grid img { width: 84px; height: 84px; aspect-ratio: 1; }
+  .pick-brand-grid img.brand-entry-logo { height: 84px; padding: 12px; }
   .pick-brand-grid strong { font-size: 16px; }
   .pick-brand-grid span { font-size: 12px; }
   .wizard-brand-guide { grid-template-columns: 1fr; padding: 16px; }
@@ -6368,13 +6376,13 @@ td strong {
   }
 
   .quote-subscription-ad {
-    height: 180px;
+    height: auto;
   }
 
   .quote-subscription-ad img {
-    width: auto;
-    max-width: none;
-    height: 100%;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
   }
 
   .workflow,
@@ -8985,6 +8993,12 @@ body:not(.is-seller-portal) .topbar {
 
 body:has(#homePage.is-active) .pick-start-panel {
   border-radius: 8px;
+}
+
+/* The quote flow has one dedicated subscription banner. Do not stack unrelated ads or floating controls over its inputs. */
+body:has(#customerPage.is-active) .header-ad-slot,
+body:has(#customerPage.is-active) .kakao-floating-btn {
+  display: none !important;
 }
 
 body:has(#homePage.is-active) .pick-upload-cta,
