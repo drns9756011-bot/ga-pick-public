@@ -1,7 +1,26 @@
+@font-face {
+  font-family: "SUIT Variable";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("https://cdn.jsdelivr.net/gh/sun-typeface/SUIT@2/fonts/variable/woff2/SUIT-Variable.woff2") format("woff2");
+}
 :root { --pick-navy: #123b67; --pick-navy-dark: #0b2747; --pick-surface: #f0f4f8; --pick-line: #d5e0ea; --pick-muted: #64717c; }
 /* Customer-facing layout shared by the application and product halls. */
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
-body.customer-refresh { background: #fff; color: #20252b; letter-spacing: 0; }
+body.customer-refresh {
+  --font-main: "SUIT Variable", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  background: #fff; color: #20252b; letter-spacing: 0;
+  font-family: var(--font-main); font-weight: 450; line-height: 1.65;
+  -webkit-font-smoothing: antialiased; font-synthesis: none;
+}
+body.customer-refresh :is(button, input, select, textarea) { font-family: var(--font-main); }
+body.customer-refresh :is(h1, h2, h3, h4) { letter-spacing: 0; word-break: keep-all; overflow-wrap: anywhere; }
+body.customer-refresh #homePage :is(.pick-home-heading h2, .pick-case-home h2) { font-weight: 700; line-height: 1.4; }
+body.customer-refresh #homePage .pick-case-content h3 { font-size: 22px; font-weight: 650; line-height: 1.45; }
+body.customer-refresh #homePage .pick-case-prices strong { font-weight: 700; font-variant-numeric: tabular-nums; }
+body.customer-refresh #homePage :is(.pick-flow-list strong, .pick-privacy-steps strong, .pick-brand-grid strong) { font-weight: 650; }
+body.customer-refresh #homePage .pick-faq-list summary { font-weight: 600; }
 body.customer-refresh button, body.customer-refresh a { -webkit-tap-highlight-color: transparent; }
 body.customer-refresh :is(a, button, summary):focus-visible { outline: 3px solid #257be8; outline-offset: 4px; }
 body.customer-refresh .topbar,
@@ -25,9 +44,9 @@ body.customer-refresh #homePage .pick-app-home,
 body.customer-refresh #homePage .pick-home-shell { width: 100%; max-width: none; margin: 0; padding: 0; background: white; }
 .customer-hero { text-align: center; padding: 62px 24px 0; background: #f4f7f9; overflow: hidden; }
 .customer-eyebrow { margin: 0 0 20px; color: #536575; font-size: 15px; font-weight: 600; }
-body.customer-refresh .customer-hero h1 { width: 100%; max-width: none; margin: 0 auto; text-align: center; color: #192d41; font-size: 54px; line-height: 1.25; font-weight: 750; letter-spacing: 0; }
+body.customer-refresh .customer-hero h1 { width: 100%; max-width: none; margin: 0 auto; text-align: center; color: #123b67; font-size: 52px; line-height: 1.32; font-weight: 700; letter-spacing: 0; }
 .customer-hero h1 span { display: block; }
-.customer-hero-lead { margin: 22px 0 26px; color: #64707d; font-size: 18px; line-height: 1.65; }
+.customer-hero-lead { margin: 22px auto 28px; max-width: 640px; color: #64707d; font-size: 18px; line-height: 1.75; word-break: keep-all; }
 .customer-hero-actions { display: flex; flex-direction: column; align-items: center; gap: 16px; }
 body.customer-refresh .customer-primary {
   position: relative; display: flex; justify-content: center; align-items: center; width: 320px; max-width: 100%; text-align: center;
