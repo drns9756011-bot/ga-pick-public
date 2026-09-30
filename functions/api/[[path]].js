@@ -1,3 +1,5 @@
+import { getHomeCases } from "../home-cases.js";
+
 const jsonHeaders = {
   "Content-Type": "application/json; charset=utf-8",
   "Access-Control-Allow-Origin": "*",
@@ -5671,6 +5673,9 @@ export async function onRequest(context) {
 
   if (method === "OPTIONS") return new Response(null, { status: 204, headers: jsonHeaders });
   if (!env.DB) return json({ ok: false, message: "D1 DB 바인딩(DB)이 필요합니다." }, 500);
+  if (path === "home-cases" && method === "GET") {
+    return apiBoundary(() => getHomeCases(request, env, context.ctx || context), "비교 사례를 불러오지 못했습니다.");
+  }
   if (path.startsWith('anonymous-consultations') || path.startsWith('anonymous-policy-cases')) {
     await cleanupExpiredAnonymousConsultations(env).catch(() => {});
   }

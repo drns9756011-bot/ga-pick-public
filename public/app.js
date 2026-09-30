@@ -1516,6 +1516,10 @@ async function refreshCurrentViewFromServer() {
   showServerLoading("새로고침 중입니다.", "최신 견적과 제안 정보를 다시 불러오고 있습니다.");
 
   try {
+    if (view === "home") {
+      await loadPublicHomeCases();
+      return;
+    }
     if (view === "seller" || view === "sellerLogin" || view === "sellerRegister") {
       await syncApprovedSellersFromServer({ showLoading: false });
     }
@@ -1823,6 +1827,24 @@ function startHomeCaseRelay() {
   }, 4600);
 }
 
+let publicHomeCases = null;
+async function loadPublicHomeCases() {
+  try {
+    const cached = JSON.parse(sessionStorage.getItem("pickPublicHomeCasesV1") || "null");
+    if (cached && Date.now() - cached.at < 60000 && Array.isArray(cached.cases)) {
+      publicHomeCases = cached.cases;
+      renderHomeFeeds();
+    }
+  } catch {}
+  const result = await apiJson("/api/home-cases", { showLoading: false, cache: "default", timeoutMs: 8000 });
+  if (!result?.ok || !Array.isArray(result.cases)) return;
+  publicHomeCases = result.cases;
+  renderHomeFeeds();
+  try {
+    sessionStorage.setItem("pickPublicHomeCasesV1", JSON.stringify({ at: Date.now(), cases: publicHomeCases }));
+  } catch {}
+}
+
 function renderHomeFeeds() {
   if (homeLiveBoard) {
     stopHomeLiveRelay();
@@ -1901,7 +1923,7 @@ function renderHomeFeeds() {
 
   if (homeCaseStudy && homeCaseContent) {
     stopHomeCaseRelay();
-    const caseRows = requests
+    const caseRows = publicHomeCases ?? requests
       .map((request) => {
         const sellerBids = new Map();
         bids
@@ -1939,7 +1961,7 @@ function renderHomeFeeds() {
     } else {
       homeCaseStudy.hidden = false;
       homeCaseContent.innerHTML = caseRows
-        .map(({ request, quoteBids }) => {
+        .map(({ request, quoteBids, bidCount }) => {
           const originalPrice = Number(request.price) || 0;
           const region = String(request.region || request.installRegion || "지역 비공개").trim();
           const purpose = String(request.purchasePurpose || "가전 견적 비교").trim();
@@ -1954,7 +1976,7 @@ function renderHomeFeeds() {
               </div>
               <div class="pick-case-prices">
                 <div><span>기존 견적</span><strong>${escapeHTML(formatPrice(originalPrice))}</strong></div>
-                <div class="pick-case-summary"><span>받은 제안</span><strong>${escapeHTML(`${quoteBids.length}건 비교`)}</strong></div>
+                <div class="pick-case-summary"><span>받은 제안</span><strong>${escapeHTML(`${bidCount ?? quoteBids.length}건 비교`)}</strong></div>
                 <ol class="pick-case-bid-list" aria-label="실제 판매자 제안 금액">
                   ${comparedBids.map((bid, index) => `
                     <li class="${index === 0 ? "is-lowest" : ""}">
@@ -4049,11 +4071,8 @@ async function bootApplication() {
 
   if (canUseApiServer()) {
     if (isHomePath) {
-      await Promise.all([
-        syncCustomerQuotesFromServer({ showLoading: false }),
-        syncBidsFromServer({ showLoading: false }),
-        syncReviewsFromServer({ showLoading: false }),
-      ]);
+      void loadPublicHomeCases();
+      void syncReviewsFromServer({ showLoading: false });
     }
 
     if (isSellerPath) {
