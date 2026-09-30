@@ -76,13 +76,13 @@
     {
       value: "with_quote",
       title: "견적서가 있어요",
-      text: "받은 견적서 사진을 올려 판매자 제안가와 혜택을 비교합니다.",
-      badge: "정확한 견적 가능",
+      text: "사진으로 가격과 혜택을 비교해요.",
+      badge: "",
     },
     {
       value: "without_quote",
       title: "견적서가 없어요",
-      text: "품목과 옵션을 선택해 비교 요청합니다. LG·삼성 단일 브랜드는 AI 모델 추천을 지원합니다.",
+      text: "필요한 가전부터 골라볼게요.",
       badge: "",
     },
   ];
@@ -655,10 +655,10 @@
     const wizard = form.querySelector(".customer-wizard");
     const busyAttr = state.recommending ? "disabled aria-disabled=\"true\"" : "";
     wizard.innerHTML = `
-      <div class="wizard-progress" style="--wizard-step-count:${list.length}" aria-label="견적 등록 진행 단계">
+      <div class="wizard-progress" style="--wizard-step-count:${list.length}" role="progressbar" aria-valuemin="1" aria-valuemax="${list.length}" aria-valuenow="${state.stepIndex + 1}" aria-label="견적 등록 진행 단계">
         ${list.map((_, index) => `<span class="${index <= state.stepIndex ? "is-active" : ""}"></span>`).join("")}
       </div>
-      <div class="wizard-step-label">Step ${state.stepIndex + 1}</div>
+      <div class="wizard-step-label"><span>견적 등록</span><span>${state.stepIndex + 1} / ${list.length}</span></div>
       <div class="wizard-step" data-step="${step.key}">${step.render()}</div>
       <div class="wizard-actions">
         ${state.stepIndex > 0 ? '<button type="button" class="wizard-back">이전</button>' : ""}
@@ -757,8 +757,7 @@
       `
       : "";
     return `
-      <h3>견적서가 있는지 먼저 선택해주세요.</h3>
-      <p>견적서 유무에 따라 필요한 입력 단계가 달라집니다.</p>
+      <h3>받아둔 견적서가 있나요?</h3>
       <div class="wizard-choice-grid wizard-choice-grid-two">
         ${quoteTypes.map((item) => choiceCard(item, "wizardQuoteTypeProxy", fields.quoteType.value)).join("")}
       </div>
