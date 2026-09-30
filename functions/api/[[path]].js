@@ -2357,19 +2357,30 @@ async function createSellerApplication(env, request) {
 
   const id = body.id || createId("seller");
   const now = body.requestedAt || new Date().toISOString();
+  const phone = normalizePhone(body.phone);
+  // Approval history remains after account deletion; only live accounts block reapplication.
+  const registered = await env.DB.prepare(
+    "SELECT id FROM approved_sellers WHERE seller_id = ? OR REPLACE(REPLACE(REPLACE(phone, '-', ''), ' ', ''), '+82', '0') = ? LIMIT 1"
+  )
+    .bind(body.sellerId, phone)
+    .first();
+  if (registered) {
+    return json({ ok: false, message: "이미 등록된 판매자 계정입니다. 로그인 또는 계정 찾기를 이용해주세요." }, 409);
+  }
+
+  const duplicate = await env.DB.prepare(
+    "SELECT id FROM seller_applications WHERE (seller_id = ? OR REPLACE(REPLACE(REPLACE(phone, '-', ''), ' ', ''), '+82', '0') = ?) AND status = 'pending' LIMIT 1"
+  )
+    .bind(body.sellerId, phone)
+    .first();
+
+  if (duplicate) {
+    return json({ ok: false, message: "이미 승인 대기 중인 신청입니다. 관리자 검토 후 안내됩니다." }, 409);
+  }
+
   const savedCard = await saveDataUrlToR2(env, body.cardImage, "seller-cards", id);
   const cardImage = savedCard.url || body.cardImage || "";
   const cardImageKey = savedCard.key || body.cardImageKey || "";
-
-  const duplicate = await env.DB.prepare(
-    "SELECT id FROM seller_applications WHERE (seller_id = ? OR phone = ?) AND status IN ('pending', 'approved') LIMIT 1"
-  )
-    .bind(body.sellerId, body.phone)
-    .first();
-
-  if (duplicate && duplicate.id !== id) {
-    return json({ ok: false, message: "이미 접수된 판매자 신청입니다." }, 409);
-  }
 
   await env.DB.prepare(
     `INSERT OR REPLACE INTO seller_applications
