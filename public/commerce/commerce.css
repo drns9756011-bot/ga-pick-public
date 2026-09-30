@@ -1,14 +1,19 @@
 @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css");
 
 :root {
+  --pick-navy: #123b67;
+  --pick-navy-dark: #0b2747;
+  --pick-surface: #f0f4f8;
+  --pick-line: #d5e0ea;
+  --pick-muted: #64717c;
   --commerce-navy: #123b67;
   --commerce-navy-dark: #0b2747;
   --commerce-ink: #152536;
   --commerce-muted: #5f7183;
   --commerce-line: #d5e0ea;
   --commerce-bg: #f4f7fa;
-  --commerce-mint: #e8f5f1;
-  --commerce-mint-ink: #176b59;
+  --commerce-mint: var(--pick-surface);
+  --commerce-mint-ink: var(--pick-navy);
   --commerce-warm: #fff3db;
   --commerce-warm-ink: #875b08;
 }
