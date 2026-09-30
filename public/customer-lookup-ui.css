@@ -1,0 +1,71 @@
+/* Quote lookup shares the customer typography without changing verification. */
+body.customer-refresh #lookupPage { background: #fff; padding-bottom: 100px; min-height: calc(100dvh - 80px); }
+body.customer-refresh #lookupPage > .page-head { max-width: 460px; padding: 36px 20px 0; margin: auto; text-align: left; border: 0; }
+body.customer-refresh #lookupPage .back-btn { min-height: 32px; padding: 0; margin-bottom: 20px; background: none; border: 0; border-radius: 0; color: #65717c; font-size: 13px; box-shadow: none; }
+body.customer-refresh #lookupPage .lookup-page-title { margin: 0 0 12px; color: #202b36; font-size: 30px; line-height: 1.35; font-weight: 750; }
+body.customer-refresh #lookupPage .page-head > p { font-size: 15px; line-height: 1.65; color: #65717c; margin: 0; }
+body.customer-refresh #lookupPage .lookup-layout { display: block; max-width: 460px; padding: 28px 20px 0; margin: auto; }
+body.customer-refresh #lookupPage .lookup-form { padding: 0; border: 0; background: transparent; border-radius: 0; box-shadow: none; gap: 24px; min-width: 0; }
+body.customer-refresh #lookupPage .lookup-form .form-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+body.customer-refresh #lookupPage .lookup-form label { font-size: 14px; font-weight: 650; gap: 8px; color: #364452; }
+body.customer-refresh #lookupPage .lookup-form input { min-width: 0; min-height: 52px; padding: 12px 14px; font-size: 16px; border: 1px solid #d5dde5; border-radius: 6px; background: #fff; }
+body.customer-refresh #lookupPage .lookup-form input::placeholder { color: #89939e; }
+body.customer-refresh #lookupPage .primary-btn { min-height: 50px; border-radius: 6px; background: #123b67; border-color: #123b67; font-size: 15px; box-shadow: none; }
+body.customer-refresh #lookupPage .secondary-btn { min-height: 44px; border-radius: 6px; font-size: 14px; box-shadow: none; }
+body.customer-refresh #lookupResults { display: grid; min-width: 0; gap: 32px; margin-top: 24px; }
+body.customer-refresh #lookupResults:empty { margin: 0; }
+body.customer-refresh #lookupResults > .empty-state { padding: 24px 0; border: 0; border-top: 1px solid #e5e9ee; border-radius: 0; background: transparent; text-align: left; box-shadow: none; }
+body.customer-refresh #lookupResults > .empty-state strong { font-size: 17px; color: #364452; }
+body.customer-refresh #lookupResults > .empty-state p { margin: 10px 0 0; font-size: 14px; line-height: 1.7; color: #65717c; }
+body.customer-refresh #lookupPage:has(.lookup-card) > .page-head { max-width: 1160px; }
+body.customer-refresh #lookupPage .lookup-layout:has(.lookup-card) { display: grid; grid-template-columns: 260px minmax(0, 1fr); align-items: start; max-width: 1160px; gap: 40px; }
+body.customer-refresh #lookupPage .lookup-layout:has(.lookup-card) #lookupResults { margin: 0; padding-left: 32px; border-left: 1px solid #e5e9ee; }
+body.customer-refresh #lookupPage .lookup-card { display: block; border: 0; border-bottom: 1px solid #e5e9ee; padding: 0 0 32px; border-radius: 0; box-shadow: none; background: transparent; min-width: 0; }
+body.customer-refresh #lookupPage .lookup-image { min-height: 96px; max-height: 180px; overflow: auto; padding: 12px; background: #f7f9fb; border: 1px solid #e5e9ee; border-radius: 6px; }
+body.customer-refresh #lookupPage .lookup-image img { max-height: 156px; object-fit: contain; }
+body.customer-refresh #lookupPage .lookup-body { padding: 24px 0 0; }
+body.customer-refresh #lookupPage .lookup-body > .status { width: max-content; justify-self: start; background: #f0f4f8; color: #123b67; }
+body.customer-refresh #lookupPage .bid-card-top .status { background: #f0f4f8; color: #123b67; }
+body.customer-refresh #lookupPage .lookup-body > h2 { font-size: 23px; line-height: 1.5; margin: 12px 0 20px; }
+body.customer-refresh #lookupPage .quote-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 20px; margin: 0 0 28px; }
+body.customer-refresh #lookupPage .quote-summary > div { padding: 12px 0; border: 0; border-bottom: 1px solid #e5e9ee; border-radius: 0; background: none; min-width: 0; }
+body.customer-refresh #lookupPage .quote-summary > div:last-child { grid-column: 1 / -1; }
+body.customer-refresh #lookupPage .quote-summary dt { color: #74808c; font-size: 12px; font-weight: 500; }
+body.customer-refresh #lookupPage .quote-summary dd { font-size: 14px; font-weight: 600; line-height: 1.65; overflow-wrap: anywhere; }
+body.customer-refresh #lookupPage .bid-card-toolbar { margin: 28px 0 14px; padding: 0; }
+body.customer-refresh #lookupPage .bid-card-toolbar strong { font-size: 19px; }
+body.customer-refresh #lookupPage .seller-bid-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+body.customer-refresh #lookupPage .seller-bid-card { border: 1px solid #dfe5eb; border-radius: 6px; background: #fff; box-shadow: none; overflow: hidden; min-width: 0; }
+body.customer-refresh #lookupPage .seller-bid-card.is-selected { border-color: #123b67; }
+body.customer-refresh #lookupPage .bid-card-visual { padding: 16px; background: #f4f7fa; }
+body.customer-refresh #lookupPage .bid-card-thumb { min-height: 0; padding: 0; border: 0; background: none; box-shadow: none; }
+body.customer-refresh #lookupPage .manager-card-placeholder { min-height: 80px; padding: 8px; background: none; border: 0; box-shadow: none; }
+body.customer-refresh #lookupPage .manager-card-placeholder strong { font-size: 12px; }
+body.customer-refresh #lookupPage .bid-card-body { padding: 18px; }
+body.customer-refresh #lookupPage .bid-card-body h3 { font-size: 18px; line-height: 1.5; }
+body.customer-refresh #lookupPage .bid-price { font-size: 26px; color: #123b67; font-weight: 750; }
+body.customer-refresh #lookupPage .bid-benefits { font-size: 14px; line-height: 1.7; color: #364452; overflow-wrap: anywhere; }
+body.customer-refresh #lookupPage .bid-tags span { background: #f0f4f8; color: #51687f; border-color: #dfe5eb; font-size: 11px; border-radius: 4px; }
+body.customer-refresh #lookupPage .lookup-close-panel { margin-top: 28px; padding: 20px 0 0; border: 0; border-top: 1px solid #e5e9ee; border-radius: 0; background: none; }
+body.customer-refresh #lookupPage .lookup-close-panel p { font-size: 13px; line-height: 1.7; color: #74808c; }
+body.customer-refresh:has(:is(#homePage, #lookupPage).is-active) .kakao-floating-btn { position: static; display: flex; width: max-content; margin: 20px auto 100px; transform: none; }
+@media (max-width: 900px) {
+  body.customer-refresh #lookupPage .lookup-layout:has(.lookup-card) { grid-template-columns: minmax(0, 1fr); max-width: 740px; gap: 32px; }
+  body.customer-refresh #lookupPage:has(.lookup-card) > .page-head { max-width: 740px; }
+  body.customer-refresh #lookupPage .lookup-layout:has(.lookup-card) #lookupResults { padding: 24px 0 0; border-left: 0; border-top: 1px solid #e5e9ee; }
+}
+@media (max-width: 760px) {
+  body.customer-refresh #lookupPage > .page-head { padding-top: 20px; }
+  body.customer-refresh #lookupPage .lookup-page-title { font-size: 26px; }
+  body.customer-refresh #lookupPage .lookup-layout { padding-top: 24px; }
+  body.customer-refresh #lookupPage .quote-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }
+  body.customer-refresh #lookupPage .seller-bid-grid { grid-template-columns: minmax(0, 1fr); }
+  body.customer-refresh #lookupPage .lookup-body > h2 { font-size: 21px; }
+}
+@media (max-width: 760px) and (max-height: 740px) {
+  .customer-hero { padding-top: 16px; padding-bottom: 12px; }
+  .customer-hero-products { height: 72px; margin: 12px auto; }
+  body.customer-refresh .customer-primary { min-height: 50px; padding-block: 12px; }
+  body.customer-refresh .customer-return-link { margin-top: 4px; }
+  body.customer-refresh #homePage .pick-flow-home { padding-top: 24px; }
+}

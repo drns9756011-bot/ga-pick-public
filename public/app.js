@@ -2675,12 +2675,7 @@ function renderLookupResults(matches, label = "내 견적") {
   setLookupActionMessage("");
   activeLookupRequestIds = lookupAccessGranted ? matches.map((request) => request.id) : [];
   if (!lookupAccessGranted) {
-    lookupResults.innerHTML = `
-      <div class="empty-state">
-        <strong>성함과 휴대전화로 내 견적을 조회하세요.</strong>
-        <p>개인정보 보호를 위해 견적 등록 시 입력한 성함과 휴대전화가 일치해야 견적 내용과 판매자 제안을 확인할 수 있습니다.</p>
-      </div>
-    `;
+    lookupResults.innerHTML = "";
     return;
   }
 

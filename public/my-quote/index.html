@@ -163,11 +163,12 @@
     </style>
   <link rel="stylesheet" href="/styles.css?v=20260930-navy-unified" />
     <script defer src="/privacy-policy.js?v=20260811-privacy-policy-v19"></script>
-  <script defer src="/app.js?v=20260930-fast-home-cases"></script>
+  <script defer src="/app.js?v=20260930-lookup-ui"></script>
     <script defer src="/customer-wizard.js?v=20260930-quote-ui"></script>
     <script defer src="/page-guide.js?v=20260731-mobile-modal-safe-area"></script>
     <link rel="preload" href="https://cdn.jsdelivr.net/gh/sun-typeface/SUIT@2/fonts/variable/woff2/SUIT-Variable.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="stylesheet" href="/customer-ui.css?v=20260930-suit-type" />
+    <link rel="stylesheet" href="/customer-ui.css?v=20260930-home-identity" />
+    <link rel="stylesheet" href="/customer-lookup-ui.css?v=20260930-1" />
 </head>
   <body class="customer-refresh">
     <header class="topbar">
@@ -187,31 +188,21 @@
         <section class="pick-app-home" aria-label="픽견적 홈">
           <div class="pick-home-shell">
             <section class="customer-hero" aria-labelledby="pickHomeTitle">
-              <p class="customer-eyebrow">혼수부터 입주까지, 가전 견적 비교</p>
-              <h1 id="pickHomeTitle"><span>견적서 올리면,</span><span>좋은 조건 찾아드려요.</span></h1>
-              <p class="customer-hero-lead">가격부터 배송·설치 혜택까지<br />여러 판매자의 제안을 한곳에서 비교하세요.</p>
-              <div class="customer-hero-actions">
-                <button type="button" class="customer-primary" data-view="customer">무료로 견적 비교하기 <span aria-hidden="true">→</span></button>
-                <button type="button" class="customer-text-link" data-view="customer">견적서 없이 시작하기</button>
+              <div class="customer-hero-copy">
+                <h1 id="pickHomeTitle">가전 견적 비교</h1>
+                <p class="customer-hero-promise">가격도 혜택도 한 번에.</p>
+                <p class="customer-hero-lead">여러 판매자의 제안을 받아<br />가격·배송·설치 조건을 비교하세요.</p>
               </div>
               <img class="customer-hero-products" src="/assets/brand-hero-lg-products.png" width="960" height="380" alt="냉장고, TV, 세탁기 등 비교 가능한 가전제품" fetchpriority="high" />
+              <div class="customer-hero-actions">
+                <button type="button" class="customer-primary" data-view="customer">무료로 견적 비교하기 <span aria-hidden="true">→</span></button>
+                <p class="customer-hero-start-note">견적서가 없어도 시작할 수 있어요.</p>
+              </div>
               <div class="customer-hero-foot"><span>고객 이용료 <strong>0원</strong></span><span>판매자 선택 전 <strong>연락처 비공개</strong></span></div>
+              <button type="button" class="customer-text-link customer-return-link" data-view="lookup">이미 등록했다면, 내 견적 확인</button>
             </section>
 
-            <section class="pick-privacy-home" aria-labelledby="pickPrivacyTitle">
-              <div class="pick-home-heading">
-                <h2 id="pickPrivacyTitle">내 정보는 선택 전까지 공개되지 않습니다.</h2>
-              </div>
-              <ol class="pick-privacy-steps">
-                <li><span>01</span><div><strong>견적 등록</strong><p>연락처 비공개</p></div></li>
-                <li><span>02</span><div><strong>제안 비교</strong><p>연락처 비공개</p></div></li>
-                <li><span>03</span><div><strong>판매자 선택</strong><p>선택한 판매자에게만 공개</p></div></li>
-              </ol>
-              <p class="pick-privacy-emphasis">여러 판매업체에서 동시에 전화가 오는 방식이 아닙니다.</p>
-              <div class="pick-approved-note" aria-label="판매자 확인 기준">
-                <span>승인된 판매자만 제안 가능</span><span>지점·매니저 정보 확인</span><span>선택한 판매자만 연락 가능</span>
-              </div>
-            </section>
+
 
             <section class="pick-flow-home" aria-labelledby="pickFlowTitle">
               <div class="pick-home-heading">
@@ -222,7 +213,7 @@
                   <li>
                     <span class="journey-number">1</span>
                     <h3>견적 등록</h3>
-                    <p>견적서 사진 한 장으로<br />없다면 필요한 가전만</p>
+                    <p>견적서 또는<br />필요한 가전 등록</p>
                     <div class="journey-preview" aria-label="견적 등록 화면 예시">
                       <span class="journey-preview-label">필요한 가전</span>
                       <img src="/assets/brand-hero-lg-products.png" alt="" loading="lazy" width="210" height="95" />
@@ -233,7 +224,7 @@
                   <li>
                     <span class="journey-number">2</span>
                     <h3>제안 비교</h3>
-                    <p>최대 72시간 동안<br />가격부터 설치 조건까지</p>
+                    <p>가격·배송·설치<br />조건을 한눈에</p>
                     <div class="journey-preview" aria-label="제안 비교 화면 예시">
                       <span class="journey-preview-label">도착한 제안</span>
                       <div class="journey-preview-line"><span>제안 A</span><b>가격 비교</b></div>
@@ -245,7 +236,7 @@
                   <li>
                     <span class="journey-number">3</span>
                     <h3>판매자 선택</h3>
-                    <p>마음에 드는 제안을 고르고<br />선택한 판매자와 상담</p>
+                    <p>원하는 제안을 골라<br />판매자와 상담</p>
                     <div class="journey-preview" aria-label="판매자 선택 화면 예시">
                       <span class="journey-preview-label">내가 고른 제안</span>
                       <img class="journey-symbol" src="/assets/pickquote-official-symbol-navy.png" alt="" loading="lazy" width="48" height="48" />
@@ -263,6 +254,21 @@
                 </div>
               </div>
               <p class="journey-example-note">이용 과정의 이해를 돕기 위한 화면 예시입니다.</p>
+            </section>
+
+            <section class="pick-privacy-home" aria-labelledby="pickPrivacyTitle">
+              <div class="pick-home-heading">
+                <h2 id="pickPrivacyTitle">연락처 공개는 판매자를 고른 뒤에.</h2>
+              </div>
+              <ol class="pick-privacy-steps">
+                <li><span>01</span><div><strong>견적 등록</strong><p>연락처 비공개</p></div></li>
+                <li><span>02</span><div><strong>제안 비교</strong><p>연락처 비공개</p></div></li>
+                <li><span>03</span><div><strong>판매자 선택</strong><p>선택한 판매자에게만 공개</p></div></li>
+              </ol>
+              <p class="pick-privacy-emphasis">여러 판매업체에서 동시에 전화가 오는 방식이 아닙니다.</p>
+              <div class="pick-approved-note" aria-label="판매자 확인 기준">
+                <span>승인된 판매자만 제안 가능</span><span>지점·매니저 정보 확인</span><span>선택한 판매자만 연락 가능</span>
+              </div>
             </section>
 
             <section class="pick-faq-home" aria-labelledby="pickFaqTitle">
@@ -409,38 +415,24 @@
       <section class="page lookup-page" id="lookupPage" data-page="lookup">
         <div class="page-head">
           <button class="back-btn" type="button" data-view="home">← 첫 화면</button>
-          <p class="eyebrow">내 견적 확인</p>
-          <h2 class="lookup-page-title"><span>성함과 휴대전화로</span><span>내가 올린 견적을 확인하세요.</span></h2>
-          <p>
-            견적 등록 시 인증을 완료한 고객님은 이후 성함과 휴대전화로 견적 내용,
-            견적서 이미지, 판매자 제안을 다시 볼 수 있습니다.
-          </p>
+          <h2 class="lookup-page-title">내 견적 확인</h2>
+          <p>등록할 때 입력한 성함과 휴대전화로 조회하세요.</p>
         </div>
-
         <div class="lookup-layout">
           <form class="request-form lookup-form" id="lookupForm">
             <div class="form-row">
               <label>
-                고객님 성함
-                <input type="text" name="lookupCustomer" placeholder="예: 홍길동" required />
+                성함
+                <input type="text" name="lookupCustomer" placeholder="성함" autocomplete="name" required />
               </label>
               <label>
-                연락처
-                <input type="text" name="lookupPhone" data-phone-input placeholder="010-0000-0000" required />
+                휴대전화
+                <input type="tel" name="lookupPhone" data-phone-input placeholder="010-0000-0000" inputmode="tel" autocomplete="tel" required />
               </label>
             </div>
-            <button class="primary-btn full" type="submit">내 견적 조회</button>
-            <p class="helper-text">
-              견적 등록 시 입력한 성함과 휴대전화가 일치하는 견적만 확인할 수 있습니다.
-            </p>
+            <button class="primary-btn full" type="submit">내 견적 확인하기</button>
           </form>
-
-          <section class="lookup-results" id="lookupResults">
-            <div class="empty-state">
-              <strong>성함과 휴대전화로 내 견적을 조회하세요.</strong>
-              <p>고객님 개인정보 보호를 위해 등록 당시 입력한 성함과 휴대전화가 일치해야 견적 내용과 판매자 제안을 확인할 수 있습니다.</p>
-            </div>
-          </section>
+          <section class="lookup-results" id="lookupResults" aria-label="내 견적 조회 결과" aria-live="polite"></section>
         </div>
       </section>
 
