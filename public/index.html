@@ -166,9 +166,7 @@
   <script defer src="/app.js?v=20260930-seller-privacy"></script>
     <script defer src="/customer-wizard.js?v=20260930-cleaner-options"></script>
     <script defer src="/page-guide.js?v=20260731-mobile-modal-safe-area"></script>
-    <link rel="preload" href="https://cdn.jsdelivr.net/gh/sun-typeface/SUIT@2/fonts/variable/woff2/SUIT-Variable.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="stylesheet" href="/customer-ui.css?v=20260930-home-identity" />
-    <link rel="stylesheet" href="/customer-lookup-ui.css?v=20260930-2" />
+    <link rel="stylesheet" href="/customer-ui.css?v=20260930-customer-refresh" />
 </head>
   <body class="customer-refresh">
     <header class="topbar">
@@ -188,72 +186,15 @@
         <section class="pick-app-home" aria-label="픽견적 홈">
           <div class="pick-home-shell">
             <section class="customer-hero" aria-labelledby="pickHomeTitle">
-              <div class="customer-hero-copy">
-                <h1 id="pickHomeTitle">가전 견적 비교</h1>
-                <p class="customer-hero-promise">가격도 혜택도 한 번에.</p>
-                <p class="customer-hero-lead">여러 판매자의 제안을 받아<br />가격·배송·설치 조건을 비교하세요.</p>
-              </div>
-              <img class="customer-hero-products" src="/assets/brand-hero-lg-products.png" width="960" height="380" alt="냉장고, TV, 세탁기 등 비교 가능한 가전제품" fetchpriority="high" />
+              <p class="customer-eyebrow">혼수부터 입주까지, 가전 견적 비교</p>
+              <h1 id="pickHomeTitle"><span>견적서 올리면,</span><span>좋은 조건 찾아드려요.</span></h1>
+              <p class="customer-hero-lead">가격부터 배송·설치 혜택까지<br />여러 판매자의 제안을 한곳에서 비교하세요.</p>
               <div class="customer-hero-actions">
                 <button type="button" class="customer-primary" data-view="customer">무료로 견적 비교하기 <span aria-hidden="true">→</span></button>
-                <p class="customer-hero-start-note">견적서가 없어도 시작할 수 있어요.</p>
+                <button type="button" class="customer-text-link" data-view="customer">견적서 없이 시작하기</button>
               </div>
+              <img class="customer-hero-products" src="/assets/brand-hero-lg-products.png" width="960" height="380" alt="냉장고, TV, 세탁기 등 비교 가능한 가전제품" fetchpriority="high" />
               <div class="customer-hero-foot"><span>고객 이용료 <strong>0원</strong></span><span>판매자 선택 전 <strong>연락처 비공개</strong></span></div>
-              <button type="button" class="customer-text-link customer-return-link" data-view="lookup">이미 등록했다면, 내 견적 확인</button>
-            </section>
-
-
-
-            <section class="pick-flow-home" aria-labelledby="pickFlowTitle">
-              <div class="pick-home-heading">
-                <h2 id="pickFlowTitle">등록부터 상담까지 간단하게</h2>
-              </div>
-              <div class="customer-journey">
-                <ol class="customer-journey-steps">
-                  <li>
-                    <span class="journey-number">1</span>
-                    <h3>견적 등록</h3>
-                    <p>견적서 또는<br />필요한 가전 등록</p>
-                    <div class="journey-preview" aria-label="견적 등록 화면 예시">
-                      <span class="journey-preview-label">필요한 가전</span>
-                      <img src="/assets/brand-hero-lg-products.png" alt="" loading="lazy" width="210" height="95" />
-                      <div class="journey-preview-line"><span>냉장고 · 세탁기</span><span>선택</span></div>
-                      <span class="journey-preview-action">견적 등록하기</span>
-                    </div>
-                  </li>
-                  <li>
-                    <span class="journey-number">2</span>
-                    <h3>제안 비교</h3>
-                    <p>가격·배송·설치<br />조건을 한눈에</p>
-                    <div class="journey-preview" aria-label="제안 비교 화면 예시">
-                      <span class="journey-preview-label">도착한 제안</span>
-                      <div class="journey-preview-line"><span>제안 A</span><b>가격 비교</b></div>
-                      <div class="journey-preview-line"><span>제안 B</span><b>배송 확인</b></div>
-                      <div class="journey-preview-line"><span>제안 C</span><b>설치 확인</b></div>
-                      <span class="journey-preview-caption">가격 · 배송 · 설치</span>
-                    </div>
-                  </li>
-                  <li>
-                    <span class="journey-number">3</span>
-                    <h3>판매자 선택</h3>
-                    <p>원하는 제안을 골라<br />판매자와 상담</p>
-                    <div class="journey-preview" aria-label="판매자 선택 화면 예시">
-                      <span class="journey-preview-label">내가 고른 제안</span>
-                      <img class="journey-symbol" src="/assets/pickquote-official-symbol-navy.png" alt="" loading="lazy" width="48" height="48" />
-                      <b class="journey-preview-title">이 판매자와 상담할게요</b>
-                      <span class="journey-preview-caption">선택한 판매자에게만 연락처 공개</span>
-                      <span class="journey-preview-action">판매자 선택</span>
-                    </div>
-                  </li>
-                </ol>
-                <div class="journey-free">
-                  <span>고객 이용료</span>
-                  <strong>0<span>원</span></strong>
-                  <h3>비교는 무료로,<br />선택은 여유롭게.</h3>
-                  <p>견적 등록부터 제안 비교까지</p>
-                </div>
-              </div>
-              <p class="journey-example-note">이용 과정의 이해를 돕기 위한 화면 예시입니다.</p>
             </section>
 
             <section class="pick-privacy-home" aria-labelledby="pickPrivacyTitle">
