@@ -5034,6 +5034,14 @@ function normalizeAnonymousMessage(value) {
 }
 function scanAnonymousMessage(body, role, history = []) {
   const current = normalizeAnonymousMessage(body);
+  // Match store-identification requests regardless of spacing or question wording.
+  const identityText = current.replace(/[\s\p{P}\p{S}]+/gu, '');
+  const storeIdentity = /(지점|매장)(명|이름|위치|주소)|(?:어디|어느|무슨|어떤)(?:어디|어느)?(?:쪽|지역|동네)?(?:지점|매장|점)|(?:지점|매장)(?:은|는|이|가|의)?(?:어디|어느|무슨)|몇호점/;
+  const namedStoreQuestion = /([가-힣a-z0-9]+점)(?:인가|이에|이예|맞|이신|이죠|이세요|입니까|이야|이니|이실|요)/g;
+  const identifiesNamedStore = [...identityText.matchAll(namedStoreQuestion)].some((match) =>
+    !/(?:장점|단점|차이점|공통점|차별점|개선점|문제점|특이점|유의점|주의점|중요점|초점|시점|관점|접점|소수점|만점|평점|학점)$/.test(match[1])
+  );
+  if (storeIdentity.test(identityText) || identifiesNamedStore) return { blocked: true, type: role === 'seller' ? 'SELLER_IDENTITY' : 'CONTACT_ROUTE', reason: '선택 전에는 판매자의 지점명이나 매장 위치를 공유하거나 요청할 수 없습니다.' };
   const combined = [...history.slice(-3).map(normalizeAnonymousMessage), current].join(' ');
   const compact = combined.replace(/[\s().,/_\\-]+/g, '');
   if (/01[016789]\d{7,8}/.test(compact)) return { blocked: true, type: 'PHONE_CONTACT', reason: '전화번호 또는 분할된 연락처가 감지되었습니다.' };
