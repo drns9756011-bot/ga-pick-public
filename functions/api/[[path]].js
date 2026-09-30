@@ -992,8 +992,8 @@ function hideBidIdentityBeforeSelection(bid) {
     ...bid,
     seller: channel,
     channel,
-    branch: maskSellerBranchName(bid.branch),
-    manager: maskSellerManagerName(bid.manager),
+    branch: "",
+    manager: "",
     managerPosition: "",
     phone: "",
     cardImage: "",
@@ -3441,7 +3441,11 @@ async function getReviews(env, request) {
   bindings.push(limit);
 
   const result = await env.DB.prepare(sql).bind(...bindings).all();
-  return json({ ok: true, rows: (result.results || []).map(normalizeReview) });
+  const isAdminView = hasValidAdminToken(request, env);
+  return json({ ok: true, rows: (result.results || []).map((row) => {
+    const review = normalizeReview(row);
+    return isAdminView ? review : { ...review, seller: "", manager: "" };
+  }) });
 }
 
 async function createReview(env, request) {
@@ -5034,14 +5038,7 @@ function normalizeAnonymousMessage(value) {
 }
 function scanAnonymousMessage(body, role, history = []) {
   const current = normalizeAnonymousMessage(body);
-  // Match store-identification requests regardless of spacing or question wording.
-  const identityText = current.replace(/[\s\p{P}\p{S}]+/gu, '');
-  const storeIdentity = /(지점|매장)(명|이름|위치|주소)|(?:어디|어느|무슨|어떤)(?:어디|어느)?(?:쪽|지역|동네)?(?:지점|매장|점)|(?:지점|매장)(?:은|는|이|가|의)?(?:어디|어느|무슨)|몇호점/;
-  const namedStoreQuestion = /([가-힣a-z0-9]+점)(?:인가|이에|이예|맞|이신|이죠|이세요|입니까|이야|이니|이실|요)/g;
-  const identifiesNamedStore = [...identityText.matchAll(namedStoreQuestion)].some((match) =>
-    !/(?:장점|단점|차이점|공통점|차별점|개선점|문제점|특이점|유의점|주의점|중요점|초점|시점|관점|접점|소수점|만점|평점|학점)$/.test(match[1])
-  );
-  if (storeIdentity.test(identityText) || identifiesNamedStore) return { blocked: true, type: role === 'seller' ? 'SELLER_IDENTITY' : 'CONTACT_ROUTE', reason: '선택 전에는 판매자의 지점명이나 매장 위치를 공유하거나 요청할 수 없습니다.' };
+  if (isStoreIdentityQuestion(current)) return { blocked: true, type: role === 'seller' ? 'SELLER_IDENTITY' : 'CONTACT_ROUTE', reason: '선택 전에는 판매자의 지점명이나 매장 위치를 공유하거나 요청할 수 없습니다.' };
   const combined = [...history.slice(-3).map(normalizeAnonymousMessage), current].join(' ');
   const compact = combined.replace(/[\s().,/_\\-]+/g, '');
   if (/01[016789]\d{7,8}/.test(compact)) return { blocked: true, type: 'PHONE_CONTACT', reason: '전화번호 또는 분할된 연락처가 감지되었습니다.' };
@@ -5051,6 +5048,30 @@ function scanAnonymousMessage(body, role, history = []) {
   if (route.test(current) || route.test(combined)) return { blocked: true, type: role === 'seller' ? 'SELLER_IDENTITY' : 'CONTACT_ROUTE', reason: '전화번호, 링크, 메신저, 매장·담당자 식별정보 공유 또는 요청이 감지되었습니다.' };
   if (identity.test(current)) return { blocked: true, type: role === 'seller' ? 'SELLER_IDENTITY' : 'CUSTOMER_PERSONAL_INFO', reason: '선택 전에는 고객과 판매자의 식별정보를 공유하거나 요청할 수 없습니다.' };
   return { blocked: false, type: '', reason: '' };
+}
+function isStoreIdentityQuestion(body) {
+  const current = normalizeAnonymousMessage(body);
+  // Match store-identification requests regardless of spacing or question wording.
+  const identityText = current.replace(/[\s\p{P}\p{S}]+/gu, '');
+  const storeIdentity = /(지점|매장)(명|이름|위치|주소)|(?:어디|어느|무슨|어떤)(?:어디|어느)?(?:쪽|지역|동네)?(?:지점|매장|점)|(?:지점|매장)(?:은|는|이|가|의)?(?:어디|어느|무슨)|몇호점/;
+  const namedStoreQuestion = /([가-힣a-z0-9]+점)(?:인가|이에|이예|맞|이신|이죠|이세요|입니까|이야|이니|이실|요)/g;
+  const identifiesNamedStore = [...identityText.matchAll(namedStoreQuestion)].some((match) =>
+    !/(?:장점|단점|차이점|공통점|차별점|개선점|문제점|특이점|유의점|주의점|중요점|초점|시점|관점|접점|소수점|만점|평점|학점)$/.test(match[1])
+  );
+  return storeIdentity.test(identityText) || identifiesNamedStore;
+}
+async function blockPastStoreIdentityQuestions(env, { consultationId = '', sellerId = '' } = {}) {
+  const filter = consultationId ? 'm.consultation_id = ?' : 'c.seller_id = ?';
+  const id = consultationId || sellerId;
+  if (!id) return;
+  const result = await env.DB.prepare(`SELECT m.id, m.body FROM anonymous_consultation_messages m
+    JOIN anonymous_consultations c ON c.id = m.consultation_id
+    WHERE ${filter} AND m.blocked = 0 AND (m.body LIKE '%점%' OR m.body LIKE '%매장%')`).bind(id).all();
+  for (const row of result.results || []) {
+    if (!isStoreIdentityQuestion(row.body)) continue;
+    await env.DB.prepare('UPDATE anonymous_consultation_messages SET blocked = 1, block_reason = ? WHERE id = ? AND blocked = 0')
+      .bind('선택 전에는 판매자의 지점명이나 매장 위치를 공유하거나 요청할 수 없습니다.', row.id).run();
+  }
 }
 function anonymousSafeBlockMessage() { return '픽견적 안전정책에 따라 해당 메시지가 전송되지 않았습니다. 선택 전에는 전화번호, 링크, 메신저 등 연락처와 식별정보를 공유할 수 없습니다.'; }
 async function getAnonymousContext(env, body) {
@@ -5081,8 +5102,9 @@ async function getAnonymousConsultation(env, request) {
   const url = new URL(request.url);
   const sellerId = String(url.searchParams.get('sellerId') || '').trim();
   if (sellerId && !url.searchParams.get('id') && !url.searchParams.get('quoteId')) {
+    await blockPastStoreIdentityQuestions(env, { sellerId });
     const rooms = await env.DB.prepare(`SELECT c.*, q.items, q.quote_number, q.region, b.price,
-      (SELECT body FROM anonymous_consultation_messages m WHERE m.consultation_id = c.id ORDER BY m.created_at DESC LIMIT 1) AS last_message,
+      (SELECT CASE WHEN m.blocked = 1 THEN '개인정보 보호 정책에 의해 내용이 가려졌습니다.' ELSE m.body END FROM anonymous_consultation_messages m WHERE m.consultation_id = c.id ORDER BY m.created_at DESC LIMIT 1) AS last_message,
       (SELECT COUNT(*) FROM anonymous_consultation_messages m WHERE m.consultation_id = c.id AND m.sender_role = 'customer' AND m.blocked = 0 AND m.created_at > COALESCE(c.seller_read_at, '')) AS customer_message_count
       FROM anonymous_consultations c
       LEFT JOIN customer_quotes q ON q.id = c.quote_id
@@ -5107,6 +5129,7 @@ async function getAnonymousConsultation(env, request) {
   if (!id) return json({ ok: false, message: '상담 정보가 필요합니다.' }, 400);
   const consultation = await env.DB.prepare('SELECT * FROM anonymous_consultations WHERE id = ? LIMIT 1').bind(id).first();
   if (!consultation) return json({ ok: false, message: '익명상담을 찾을 수 없습니다.' }, 404);
+  await blockPastStoreIdentityQuestions(env, { consultationId: id });
   const rows = await env.DB.prepare('SELECT id, sender_role, body, blocked, block_reason, created_at FROM anonymous_consultation_messages WHERE consultation_id = ? ORDER BY created_at ASC').bind(id).all();
   const safeRows = (rows.results || []).map((row) => ({
     ...row,

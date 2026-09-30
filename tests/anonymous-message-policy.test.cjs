@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const { readFileSync } = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const { DatabaseSync } = require('node:sqlite');
 
 const source = readFileSync(path.join(__dirname, '../functions/api/[[path]].js'), 'utf8');
 const context = vm.createContext({});
@@ -41,4 +42,28 @@ test('existing contact protections still apply', () => {
   for (const message of ['010-0000-0000', 'https://example.com', 'test@example.com', '카톡으로 연락해주세요']) {
     assert.equal(context.scanAnonymousMessage(message, 'customer').blocked, true);
   }
+});
+
+test('previously sent store question is blocked in its room and seller list', async () => {
+  const db = new DatabaseSync(':memory:');
+  try {
+    db.exec(`CREATE TABLE anonymous_consultations (id TEXT PRIMARY KEY, seller_id TEXT);
+      CREATE TABLE anonymous_consultation_messages (id TEXT PRIMARY KEY, consultation_id TEXT, body TEXT, blocked INTEGER DEFAULT 0, block_reason TEXT DEFAULT '');
+      INSERT INTO anonymous_consultations VALUES ('room', 'seller');
+      INSERT INTO anonymous_consultation_messages VALUES ('store', 'room', '경산점 인가요?', 0, '');
+      INSERT INTO anonymous_consultation_messages VALUES ('product', 'room', '배송 시점인가요?', 0, '');`);
+    const env = { DB: { prepare(sql) {
+      return { bind(...values) {
+        return {
+          all: async () => ({ results: db.prepare(sql).all(...values) }),
+          run: async () => db.prepare(sql).run(...values),
+        };
+      } };
+    } } };
+    await context.blockPastStoreIdentityQuestions(env, { consultationId: 'room' });
+    assert.equal(db.prepare("SELECT blocked FROM anonymous_consultation_messages WHERE id = 'store'").get().blocked, 1);
+    assert.equal(db.prepare("SELECT blocked FROM anonymous_consultation_messages WHERE id = 'product'").get().blocked, 0);
+    await context.blockPastStoreIdentityQuestions(env, { sellerId: 'seller' });
+    assert.equal(db.prepare("SELECT COUNT(*) AS total FROM anonymous_consultation_messages WHERE blocked = 1").get().total, 1);
+  } finally { db.close(); }
 });

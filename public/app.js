@@ -483,12 +483,8 @@ function canCustomerSeeBidIdentity(request, bid) {
 function getCustomerBidIdentity(request, bid) {
   const isRevealed = canCustomerSeeBidIdentity(request, bid);
   const channel = String(bid?.channel || "판매 채널").trim() || "판매 채널";
-  const branch = isRevealed
-    ? String(bid?.branch || "등록 지점").trim() || "등록 지점"
-    : maskBranchDisplayName(bid?.branch);
-  const manager = isRevealed
-    ? String(bid?.manager || "담당 매니저").trim() || "담당 매니저"
-    : maskManagerDisplayName(bid?.manager);
+  const branch = isRevealed ? String(bid?.branch || "등록 지점").trim() || "등록 지점" : "";
+  const manager = isRevealed ? String(bid?.manager || "담당 매니저").trim() || "담당 매니저" : "";
   const position = isRevealed ? String(bid?.managerPosition || "").trim() : "";
   return {
     isRevealed,
@@ -497,7 +493,7 @@ function getCustomerBidIdentity(request, bid) {
     manager,
     position,
     sellerDisplayName: isRevealed ? formatSellerDisplayName(channel, branch) : channel,
-    managerDisplayName: formatManagerDisplayName(manager, position),
+    managerDisplayName: isRevealed ? formatManagerDisplayName(manager, position) : "",
   };
 }
 
@@ -525,7 +521,7 @@ function openManagerReviewModal(bidId) {
   const safeSeller = escapeHTML(sellerDisplayName);
   const safeManager = escapeHTML(managerDisplayName);
   const reviews = getReviewsForBid(bid);
-  managerReviewTitle.textContent = `${sellerDisplayName} · ${managerDisplayName}`;
+  managerReviewTitle.textContent = identity.isRevealed ? `${sellerDisplayName} · ${managerDisplayName}` : sellerDisplayName;
   managerReviewList.innerHTML = reviews.length
     ? reviews
         .map((review) => {
@@ -544,7 +540,7 @@ function openManagerReviewModal(bidId) {
     : `
       <div class="empty-state compact-empty">
         <strong>아직 등록된 후기가 없습니다.</strong>
-        <p>${safeSeller} ${safeManager}의 첫 후기를 기다리고 있습니다.</p>
+        <p>${safeSeller}의 첫 후기를 기다리고 있습니다.</p>
       </div>
     `;
   managerReviewModal.hidden = false;
@@ -2260,9 +2256,9 @@ function renderBidCards(request) {
             <button class="heart-btn" type="button" aria-label="관심 제안">♡</button>
             <div class="bid-card-thumb${identity.isRevealed ? "" : " is-private-card"}">
               <div class="manager-card-placeholder">
-                <strong>${identity.isRevealed ? "명함 확인 가능" : "선택 후 지점·매니저 공개"}</strong>
+                <strong>${identity.isRevealed ? "명함 확인 가능" : "판매 채널"}</strong>
                 <span>${identity.isRevealed ? safeManager : safeChannel}</span>
-                <small>${identity.isRevealed ? safeSeller : `${safeBranch} · ${safeManager}`}</small>
+                ${identity.isRevealed ? `<small>${safeSeller}</small>` : ""}
               </div>
               ${cardButton}
             </div>
@@ -2273,7 +2269,7 @@ function renderBidCards(request) {
               <span class="saving-text">${formatPrice(saving)} 절감</span>
             </div>
             <h3>${safeSeller}</h3>
-            <p class="manager-line">${identity.isRevealed ? safeManager : `지점 ${safeBranch} · 매니저 ${safeManager}`}</p>
+            ${identity.isRevealed ? `<p class="manager-line">${safeManager}</p>` : ""}
             <button class="review-summary-btn" type="button" data-review-bid-id="${bid.id}">
               <span class="review-stars">${reviews.length ? starText(Math.round(averageRating)) : "☆☆☆☆☆"}</span>
               <strong>${reviews.length ? averageRating.toFixed(1) : "0.0"}</strong>
@@ -2483,8 +2479,6 @@ function openBidSelectConfirmModal(request, bid) {
   }
   bidSelectConfirmSummary.innerHTML = `
     <div><span>판매 채널</span><strong>${escapeHTML(identity.channel)}</strong></div>
-    <div><span>지점</span><strong>${escapeHTML(identity.branch)}</strong></div>
-    <div><span>매니저</span><strong>${escapeHTML(managerDisplayName)}</strong></div>
     <div><span>현재 순위</span><strong>${rankInfo.rank ? `${rankInfo.rank}위 / ${rankInfo.total}개 제안` : "순위 확인중"}</strong></div>
     <div><span>제안 금액</span><strong>${formatPrice(bid.price)}</strong></div>
   `;
