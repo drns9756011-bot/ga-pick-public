@@ -230,16 +230,14 @@
         { mode: "singleBy", key: "quantity", label: "수량", dependsOn: "type", optionsByValue: { "천장형": ["2", "3", "4", "5", "6"] } },
       ],
       "청소기": [
-        { mode: "single", key: "type", label: "구분", options: ["무선 청소기", "로봇 청소기", "유선 청소기"] },
+        { mode: "multi", key: "type", label: "청소기 종류", options: ["무선 청소기", "로봇 청소기", "유선 청소기"] },
         {
-          mode: "singleBy",
-          key: "detail",
-          label: "구분",
-          dependsOn: "type",
-          optionsByValue: {
-            "무선 청소기": ["기본형", "먼지흡입", "프리이미엄"],
-            "로봇 청소기": ["프리스탠딩", "직배수형"],
-          },
+          mode: "singleBy", key: "cordlessDetail", label: "무선청소기 옵션", dependsOn: "type",
+          optionsByValue: { "무선 청소기": ["기본형","먼지흡입","프리미엄"] },
+        },
+        {
+          mode: "singleBy", key: "robotDetail", label: "로봇청소기 옵션", dependsOn: "type",
+          optionsByValue: { "로봇 청소기": ["프리스탠딩","직배수형"] },
         },
       ],
       "식기세척기": [
@@ -355,16 +353,14 @@
         { mode: "singleBy", key: "quantity", label: "수량", dependsOn: "type", optionsByValue: { "천장형": ["2", "3", "4", "5", "6"] } },
       ],
       "청소기": [
-        { mode: "single", key: "type", label: "구분", options: ["무선 청소기", "로봇 청소기", "유선 청소기"] },
+        { mode: "multi", key: "type", label: "청소기 종류", options: ["무선 청소기", "로봇 청소기", "유선 청소기"] },
         {
-          mode: "singleBy",
-          key: "detail",
-          label: "구분",
-          dependsOn: "type",
-          optionsByValue: {
-            "무선 청소기": ["제트 400W", "제트 Lite 280W", "제트 핏 180W"],
-            "로봇 청소기": ["일반", "자동급배수"],
-          },
+          mode: "singleBy", key: "cordlessDetail", label: "무선청소기 옵션", dependsOn: "type",
+          optionsByValue: { "무선 청소기": ["제트 400W","제트 Lite 280W","제트 핏 180W"] },
+        },
+        {
+          mode: "singleBy", key: "robotDetail", label: "로봇청소기 옵션", dependsOn: "type",
+          optionsByValue: { "로봇 청소기": ["일반","자동급배수"] },
         },
       ],
       "식기세척기": [
@@ -459,13 +455,14 @@
         { mode: "singleBy", key: "quantity", label: "수량", dependsOn: "type", optionsByValue: { "천장형": ["2", "3", "4", "5", "6"] } },
       ],
       "청소기": [
-        { mode: "single", key: "type", label: "구분", options: ["무선 청소기", "로봇 청소기", "유선 청소기"] },
+        { mode: "multi", key: "type", label: "청소기 종류", options: ["무선 청소기", "로봇 청소기", "유선 청소기"] },
         {
-          mode: "singleBy",
-          key: "detail",
-          label: "구분",
-          dependsOn: "type",
-          optionsByValue: { "로봇 청소기": ["일반", "자동급배수"] },
+          mode: "singleBy", key: "cordlessDetail", label: "무선청소기 옵션", dependsOn: "type",
+          optionsByValue: { "무선 청소기": ["기본형","프리미엄","상세 옵션 미입력"] },
+        },
+        {
+          mode: "singleBy", key: "robotDetail", label: "로봇청소기 옵션", dependsOn: "type",
+          optionsByValue: { "로봇 청소기": ["일반","자동급배수"] },
         },
       ],
       "식기세척기": [
@@ -1359,7 +1356,9 @@
               if (draftKey !== "optionBrand") delete draft[draftKey];
             });
           }
-          clearDependentOptionValues(schema, draft, key);
+          if (!(normalizeProductKey(product) === "청소기" && key === "type")) {
+            clearDependentOptionValues(schema, draft, key);
+          }
           clearAiRecommendation();
           rerender();
         });
@@ -1453,7 +1452,16 @@
   }
 
   function optionStateFor(product) {
-    return optionLookupAliases(product).reduce((found, key) => found || state.productOptions[key], null) || {};
+    const source = optionLookupAliases(product).reduce((found, key) => found || state.productOptions[key], null) || {};
+    if (normalizeProductKey(product) !== "청소기") return source;
+    const types = Array.isArray(source.type) ? [...source.type] : [source.type].filter(Boolean);
+    const options = { ...source, type: types };
+    // Keep earlier single-cleaner selections readable when reopening options.
+    if (types.length === 1 && source.detail) {
+      const key = types[0] === "무선 청소기" ? "cordlessDetail" : types[0] === "로봇 청소기" ? "robotDetail" : "";
+      if (key && !options[key]) options[key] = source.detail === "프리이미엄" ? "프리미엄" : source.detail;
+    }
+    return options;
   }
 
   function writeOptionState(product, value) {
@@ -1878,6 +1886,14 @@ function validateQuoteType() {
     const options = optionStateFor(product);
     const schema = optionSchemaFor(product, options);
     const parts = [];
+    if (normalizeProductKey(product) === "청소기") {
+      return (options.type || []).map((type) => {
+        const key = type === "무선 청소기" ? "cordlessDetail" : type === "로봇 청소기" ? "robotDetail" : "";
+        const section = schema.find((item) => item.key === key);
+        const detail = section && sectionValues(section, options).includes(options[key]) ? options[key] : "";
+        return detail && detail !== unknownOption ? `${type}: ${detail}` : type;
+      }).join(" / ");
+    }
     schema.forEach((section) => {
       const values = sectionValues(section, options);
       if (!values.length || section.key === "optionBrand") return;
@@ -1984,18 +2000,21 @@ function buildAiSummary() {
 
   async function buildAiModelRecommendations() {
     const [catalog] = await Promise.all([loadCatalog(), loadModelLearning()]);
-    const selectedProducts = state.selectedProducts.filter(Boolean);
-    const totalWeight = selectedProducts.reduce((sum, product) => sum + productBudgetWeight(product), 0) || 1;
+    const selectedProducts = state.selectedProducts.filter(Boolean).flatMap((product) => {
+      const types = normalizeProductKey(product) === "청소기" ? optionStateFor(product).type : [];
+      return types?.length ? types.map((type) => ({ product, type })) : [{ product, type: "" }];
+    });
+    const totalWeight = selectedProducts.reduce((sum, item) => sum + productBudgetWeight(item.product), 0) || 1;
     const budgetWon = parseBudgetWon(state.aiContext.budgetRange);
     const groups = [];
 
-    for (const product of selectedProducts) {
+    for (const { product, type } of selectedProducts) {
       const productKey = normalizeProductKey(product);
       const optionSource = optionStateFor(productKey);
       const optionBrand = optionBrandFor(optionSource);
       const models = Array.isArray(catalog?.[productKey]?.models) ? catalog[productKey].models : [];
       const brandModels = optionBrand ? models.filter((model) => modelMatchesOptionBrand(model, optionBrand)) : models;
-      const candidates = filterModelsByProductOptions(product, brandModels);
+      const candidates = filterModelsByProductOptions(product, brandModels, type);
       const targetPrice = budgetWon
         ? Math.round((budgetWon * productBudgetWeight(product)) / totalWeight)
         : defaultTargetPrice(product, candidates);
@@ -2019,8 +2038,10 @@ function buildAiSummary() {
 
       groups.push({
         product,
-        displayProduct: productDisplayTitle(product, optionSource),
-        optionSummary: productOptionSummary(product),
+        displayProduct: type || productDisplayTitle(product, optionSource),
+        optionSummary: type
+          ? (optionSource[type === "무선 청소기" ? "cordlessDetail" : type === "로봇 청소기" ? "robotDetail" : ""] || "")
+          : productOptionSummary(product),
         targetPrice,
         models: verifiedChosen ? [verifiedChosen] : [{ modelName: "판매자 상담 후 모델 확정", normalPrice: 0, naverLowestPrice: 0 }],
       });
@@ -2028,9 +2049,10 @@ function buildAiSummary() {
     return groups;
   }
 
-  function filterModelsByProductOptions(product, models) {
+  function filterModelsByProductOptions(product, models, selectedCleanerType = "") {
     const productKey = normalizeProductKey(product);
     const options = recommendationOptionState(productKey);
+    if (selectedCleanerType) options.type = selectedCleanerType;
     const normalized = models
       .filter((model) => model && model.modelName)
       .filter((model) => isAllowedRecommendationModel(productKey, model))
@@ -2120,9 +2142,9 @@ function buildAiSummary() {
           const selectedType = String(type || "");
           const text = modelSearchText(model);
           const body = modelBody(model);
-          if (/로봇/.test(selectedType)) return /로봇청소기|ROBOT/i.test(text) || /^(MO|B9|R9|VR)/i.test(body);
+          if (/로봇/.test(selectedType)) return /로봇\s*청소기|ROBOT/i.test(text) || /^(MO|B9|R9|VR)/i.test(body);
           if (/무선/.test(selectedType)) {
-            const isRobot = /로봇청소기|ROBOT/i.test(text) || /^(MO|B9|R9|VR)/i.test(body);
+            const isRobot = /로봇\s*청소기|ROBOT/i.test(text) || /^(MO|B9|R9|VR)/i.test(body);
             return !isRobot && (/무선|코드제로|제트/i.test(text) || /^(AS|A7|AI9|A9|AU|VS)/i.test(body));
           }
           if (/유선/.test(selectedType)) return /유선/i.test(text) || /^VC/i.test(body);
