@@ -127,18 +127,29 @@ body.customer-refresh #homePage .pick-flow-home { max-width: none; width: 100%; 
 #homePage .journey-free p { color: #d5e0ea; font-size: 12px; margin: 12px 0 0; }
 .journey-example-note { max-width: 1072px; margin: 16px auto 0; color: #64717c; font-size: 11px; text-align: right; }
 @media (max-width: 760px) {
-  .customer-journey { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  body.customer-refresh #homePage .pick-flow-home { padding: 36px 8px; }
+  .customer-journey { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
   .customer-journey-steps { display: contents; }
-  .customer-journey-steps > li, .journey-free { padding: 18px 12px 0; min-height: 300px; }
-  #homePage .customer-journey h3 { font-size: 18px; }
-  #homePage .customer-journey p { font-size: 12px; margin-bottom: 18px; }
-  .journey-preview { padding: 12px 7px; min-height: 210px; font-size: 10px; }
-  .journey-preview-title { font-size: 11px; }
-  .journey-preview-caption { font-size: 9px; }
-  .journey-free { padding: 18px 10px; }
-  .journey-free > strong { font-size: 52px; }
-  #homePage .journey-free p { font-size: 11px; margin: 12px 0 0; }
-  .journey-example-note { font-size: 10px; text-align: center; }
+  .customer-journey-steps > li, .journey-free { padding: 12px 5px 0; min-height: 230px; box-shadow: none; }
+  .journey-number { width: 16px; height: 16px; font-size: 10px; }
+  #homePage .customer-journey h3 { font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
+  #homePage .customer-journey p { font-size: 10px; line-height: 1.6; margin-bottom: 12px; word-break: normal; overflow-wrap: anywhere; }
+  .journey-preview { padding: 8px 3px; min-height: 142px; font-size: 8px; overflow-wrap: anywhere; }
+  .journey-preview-label { font-size: 8px; margin-bottom: 8px; }
+  .journey-preview img { height: 42px; }
+  .journey-preview-line { gap: 2px; padding: 7px 0; }
+  .journey-preview-line > * { min-width: 0; }
+  .journey-preview-action { padding: 6px 1px; margin-top: 8px; }
+  .journey-preview-title { font-size: 8px; }
+  .journey-preview-caption { font-size: 8px; margin-top: 8px; }
+  .journey-preview .journey-symbol { width: 28px; height: 28px; }
+  .journey-free { padding: 12px 5px; }
+  .journey-free > span { font-size: 10px; }
+  .journey-free > strong { font-size: 30px; }
+  .journey-free > strong span { font-size: 12px; margin-left: 1px; }
+  #homePage .journey-free h3 { font-size: 12px; }
+  #homePage .journey-free p { font-size: 9px; margin: 10px 0 0; }
+  .journey-example-note { font-size: 9px; text-align: center; }
 }
 body.customer-refresh .customer-text-link { padding: 4px; border: 0; background: none; color: #516371; font-size: 14px; text-decoration: underline; text-underline-offset: 5px; cursor: pointer; }
 .customer-hero-products { display: block; width: 540px; max-width: 90%; height: 180px; object-fit: contain; margin: 28px auto 14px; }
