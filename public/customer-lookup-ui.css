@@ -48,7 +48,6 @@ body.customer-refresh #lookupPage .bid-benefits { font-size: 14px; line-height: 
 body.customer-refresh #lookupPage .bid-tags span { background: #f0f4f8; color: #51687f; border-color: #dfe5eb; font-size: 11px; border-radius: 4px; }
 body.customer-refresh #lookupPage .lookup-close-panel { margin-top: 28px; padding: 20px 0 0; border: 0; border-top: 1px solid #e5e9ee; border-radius: 0; background: none; }
 body.customer-refresh #lookupPage .lookup-close-panel p { font-size: 13px; line-height: 1.7; color: #74808c; }
-body.customer-refresh:has(:is(#homePage, #lookupPage).is-active) .kakao-floating-btn { position: static; display: flex; width: max-content; margin: 20px auto 100px; transform: none; }
 @media (max-width: 900px) {
   body.customer-refresh #lookupPage .lookup-layout:has(.lookup-card) { grid-template-columns: minmax(0, 1fr); max-width: 740px; gap: 32px; }
   body.customer-refresh #lookupPage:has(.lookup-card) > .page-head { max-width: 740px; }
