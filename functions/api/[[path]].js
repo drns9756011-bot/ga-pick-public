@@ -1038,83 +1038,85 @@ async function ensureReviewsTable(env) {
   await env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_reviews_quote_id ON reviews(quote_id)").run();
 }
 
-async function ensureCustomerQuoteColumns(env) {
-  const statements = [
-    "ALTER TABLE customer_quotes ADD COLUMN thumbnail_image TEXT DEFAULT ''",
-    "ALTER TABLE customer_quotes ADD COLUMN thumbnail_image_key TEXT DEFAULT ''",
-    "ALTER TABLE customer_quotes ADD COLUMN quote_expires_at TEXT DEFAULT ''",
-    "ALTER TABLE customer_quotes ADD COLUMN full_images_expires_at TEXT DEFAULT ''",
-    "ALTER TABLE customer_quotes ADD COLUMN personal_expires_at TEXT DEFAULT ''",
-    "ALTER TABLE customer_quotes ADD COLUMN desired_brand TEXT DEFAULT ''",
-    "ALTER TABLE customer_quotes ADD COLUMN quote_type TEXT DEFAULT ''",
-    "ALTER TABLE customer_quotes ADD COLUMN install_date TEXT DEFAULT ''",
-    "ALTER TABLE customer_quotes ADD COLUMN contact_release_scope TEXT DEFAULT 'selected'",
-    "ALTER TABLE customer_quotes ADD COLUMN contact_released_bid_ids TEXT DEFAULT '[]'",
-    "ALTER TABLE customer_quotes ADD COLUMN submission_count INTEGER DEFAULT 1",
-    "ALTER TABLE customer_quotes ADD COLUMN previous_lowest_price INTEGER DEFAULT 0",
-    "ALTER TABLE customer_quotes ADD COLUMN rank_notice_queued_at TEXT DEFAULT ''",
-    "ALTER TABLE customer_quotes ADD COLUMN sale_completed_at TEXT DEFAULT ''",
-    "ALTER TABLE customer_quotes ADD COLUMN submission_ip_masked TEXT DEFAULT ''",
-    "ALTER TABLE customer_quotes ADD COLUMN submission_ip_hash TEXT DEFAULT ''",
-    "ALTER TABLE customer_quotes ADD COLUMN submission_ip_encrypted TEXT DEFAULT ''",
-    "ALTER TABLE customer_quotes ADD COLUMN submission_country TEXT DEFAULT ''",
-    "ALTER TABLE customer_quotes ADD COLUMN submission_region TEXT DEFAULT ''",
-    "ALTER TABLE customer_quotes ADD COLUMN submission_city TEXT DEFAULT ''",
-    "ALTER TABLE customer_quotes ADD COLUMN submission_user_agent TEXT DEFAULT ''",
-    "ALTER TABLE customer_quotes ADD COLUMN submission_device_type TEXT DEFAULT ''",
-    "ALTER TABLE customer_quotes ADD COLUMN submission_browser_name TEXT DEFAULT ''",
-    "ALTER TABLE customer_quotes ADD COLUMN submission_cf_ray TEXT DEFAULT ''",
-    "ALTER TABLE customer_quotes ADD COLUMN submission_consent_version TEXT DEFAULT ''",
-    "ALTER TABLE customer_quotes ADD COLUMN submission_consented_at TEXT DEFAULT ''",
-    "ALTER TABLE customer_quotes ADD COLUMN submission_recorded_at TEXT DEFAULT ''",
-    "ALTER TABLE customer_quotes ADD COLUMN submission_phone_verified INTEGER NOT NULL DEFAULT 0",
-    "ALTER TABLE customer_quotes ADD COLUMN submission_phone_verification_id TEXT DEFAULT ''",
-    "ALTER TABLE customer_quotes ADD COLUMN submission_phone_verified_at TEXT DEFAULT ''",
-    "ALTER TABLE quote_images ADD COLUMN image_type TEXT DEFAULT 'full'",
-    "ALTER TABLE quote_images ADD COLUMN expires_at TEXT DEFAULT ''",
-  ];
-
-  for (const statement of statements) {
+async function ensureColumns(env, table, columns) {
+  const result = await env.DB.prepare(`PRAGMA table_info(${table})`).all();
+  const existing = new Set((result.results || []).map((row) => row.name));
+  for (const [name, definition] of columns) {
+    if (existing.has(name)) continue;
     try {
-      await env.DB.prepare(statement).run();
+      await env.DB.prepare(`ALTER TABLE ${table} ADD COLUMN ${name} ${definition}`).run();
+      existing.add(name);
     } catch (error) {
-      // Column already exists on databases that were migrated earlier.
+      // Concurrent requests may have added the column after the schema check.
     }
   }
 }
 
-async function ensureSellerColumns(env) {
-  const statements = [
-    "ALTER TABLE seller_applications ADD COLUMN reviewed_at TEXT DEFAULT ''",
-    "ALTER TABLE seller_applications ADD COLUMN review_memo TEXT DEFAULT ''",
-    "ALTER TABLE seller_applications ADD COLUMN password TEXT DEFAULT ''",
-    "ALTER TABLE seller_applications ADD COLUMN channel TEXT DEFAULT ''",
-    "ALTER TABLE seller_applications ADD COLUMN branch_region TEXT DEFAULT ''",
-    "ALTER TABLE seller_applications ADD COLUMN manager_position TEXT DEFAULT ''",
-    "ALTER TABLE seller_applications ADD COLUMN card_image TEXT DEFAULT ''",
-    "ALTER TABLE seller_applications ADD COLUMN card_image_key TEXT DEFAULT ''",
-    "ALTER TABLE seller_applications ADD COLUMN memo TEXT DEFAULT ''",
-    "ALTER TABLE seller_applications ADD COLUMN consent_json TEXT DEFAULT '{}'",
-    "ALTER TABLE approved_sellers ADD COLUMN branch_region TEXT DEFAULT ''",
-    "ALTER TABLE approved_sellers ADD COLUMN manager_position TEXT DEFAULT ''",
-    "ALTER TABLE approved_sellers ADD COLUMN card_image TEXT DEFAULT ''",
-    "ALTER TABLE approved_sellers ADD COLUMN card_image_key TEXT DEFAULT ''",
-    "ALTER TABLE approved_sellers ADD COLUMN memo TEXT DEFAULT ''",
-    "ALTER TABLE approved_sellers ADD COLUMN consent_json TEXT DEFAULT '{}'",
-    "ALTER TABLE approved_sellers ADD COLUMN requested_at TEXT DEFAULT ''",
-    "ALTER TABLE approved_sellers ADD COLUMN reviewed_at TEXT DEFAULT ''",
-    "ALTER TABLE approved_sellers ADD COLUMN review_memo TEXT DEFAULT ''",
-    "ALTER TABLE approved_sellers ADD COLUMN approved_at TEXT DEFAULT ''",
-    "ALTER TABLE approved_sellers ADD COLUMN quote_alimtalk_opt_out INTEGER NOT NULL DEFAULT 0",
-  ];
+async function ensureCustomerQuoteColumns(env) {
+  await ensureColumns(env, "customer_quotes", [
+    ["thumbnail_image", "TEXT DEFAULT ''"],
+    ["thumbnail_image_key", "TEXT DEFAULT ''"],
+    ["quote_expires_at", "TEXT DEFAULT ''"],
+    ["full_images_expires_at", "TEXT DEFAULT ''"],
+    ["personal_expires_at", "TEXT DEFAULT ''"],
+    ["desired_brand", "TEXT DEFAULT ''"],
+    ["quote_type", "TEXT DEFAULT ''"],
+    ["install_date", "TEXT DEFAULT ''"],
+    ["contact_release_scope", "TEXT DEFAULT 'selected'"],
+    ["contact_released_bid_ids", "TEXT DEFAULT '[]'"],
+    ["submission_count", "INTEGER DEFAULT 1"],
+    ["previous_lowest_price", "INTEGER DEFAULT 0"],
+    ["rank_notice_queued_at", "TEXT DEFAULT ''"],
+    ["sale_completed_at", "TEXT DEFAULT ''"],
+    ["submission_ip_masked", "TEXT DEFAULT ''"],
+    ["submission_ip_hash", "TEXT DEFAULT ''"],
+    ["submission_ip_encrypted", "TEXT DEFAULT ''"],
+    ["submission_country", "TEXT DEFAULT ''"],
+    ["submission_region", "TEXT DEFAULT ''"],
+    ["submission_city", "TEXT DEFAULT ''"],
+    ["submission_user_agent", "TEXT DEFAULT ''"],
+    ["submission_device_type", "TEXT DEFAULT ''"],
+    ["submission_browser_name", "TEXT DEFAULT ''"],
+    ["submission_cf_ray", "TEXT DEFAULT ''"],
+    ["submission_consent_version", "TEXT DEFAULT ''"],
+    ["submission_consented_at", "TEXT DEFAULT ''"],
+    ["submission_recorded_at", "TEXT DEFAULT ''"],
+    ["submission_phone_verified", "INTEGER NOT NULL DEFAULT 0"],
+    ["submission_phone_verification_id", "TEXT DEFAULT ''"],
+    ["submission_phone_verified_at", "TEXT DEFAULT ''"],
+  ]);
+  await ensureColumns(env, "quote_images", [
+    ["image_type", "TEXT DEFAULT 'full'"],
+    ["expires_at", "TEXT DEFAULT ''"],
+  ]);
+}
 
-  for (const statement of statements) {
-    try {
-      await env.DB.prepare(statement).run();
-    } catch (error) {
-      // Column already exists on databases that were migrated earlier.
-    }
-  }
+async function ensureSellerColumns(env) {
+  await ensureColumns(env, "seller_applications", [
+    ["reviewed_at", "TEXT DEFAULT ''"],
+    ["review_memo", "TEXT DEFAULT ''"],
+    ["password", "TEXT DEFAULT ''"],
+    ["channel", "TEXT DEFAULT ''"],
+    ["branch_region", "TEXT DEFAULT ''"],
+    ["manager_position", "TEXT DEFAULT ''"],
+    ["card_image", "TEXT DEFAULT ''"],
+    ["card_image_key", "TEXT DEFAULT ''"],
+    ["memo", "TEXT DEFAULT ''"],
+    ["consent_json", "TEXT DEFAULT '{}'"],
+  ]);
+  await ensureColumns(env, "approved_sellers", [
+    ["branch_region", "TEXT DEFAULT ''"],
+    ["manager_position", "TEXT DEFAULT ''"],
+    ["card_image", "TEXT DEFAULT ''"],
+    ["card_image_key", "TEXT DEFAULT ''"],
+    ["memo", "TEXT DEFAULT ''"],
+    ["consent_json", "TEXT DEFAULT '{}'"],
+    ["requested_at", "TEXT DEFAULT ''"],
+    ["reviewed_at", "TEXT DEFAULT ''"],
+    ["review_memo", "TEXT DEFAULT ''"],
+    ["approved_at", "TEXT DEFAULT ''"],
+    ["quote_alimtalk_opt_out", "INTEGER NOT NULL DEFAULT 0"],
+  ]);
 }
 
 async function createUniqueQuoteNumber(env, preferred) {
