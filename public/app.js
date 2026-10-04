@@ -831,15 +831,16 @@ async function openAnonymousConsultation(request, bid, role = "customer") {
     modal.id = "anonymousConsultationModal";
     modal.className = "modal-backdrop anonymous-consultation-modal";
     modal.innerHTML = `<div class="modal-panel anonymous-consultation-panel" role="dialog" aria-modal="true" aria-labelledby="anonymousConsultationTitle">
-      <button class="modal-close" type="button" data-anonymous-close aria-label="닫기">×</button>
-      <p class="eyebrow">선택 전 익명상담</p><h2 id="anonymousConsultationTitle">궁금한 점을 물어보세요</h2>
-      <p class="anonymous-consultation-notice">고객과 판매자의 이름, 전화번호, 링크, 매장 정보는 선택 전 공개되지 않습니다. 상담은 텍스트만 사용할 수 있습니다.</p>
+      <header class="anonymous-chat-header">
+        <div class="anonymous-chat-heading"><span class="anonymous-chat-kicker">견적 상담</span><h2 id="anonymousConsultationTitle">선택 전 익명상담</h2><p data-anonymous-context>견적 조건을 확인하는 중</p></div>
+        <button class="modal-close" type="button" data-anonymous-close aria-label="닫기">×</button>
+      </header>
+      <p class="anonymous-chat-policy">선택 전에는 연락처와 매장 정보를 주고받을 수 없습니다.</p>
       <p class="anonymous-sync-status" data-anonymous-sync role="status" hidden></p>
       <div class="anonymous-message-list" data-anonymous-messages><p class="empty-state">상담을 불러오는 중입니다.</p></div>
-      <form class="anonymous-message-form" data-anonymous-form><textarea name="message" rows="3" maxlength="1000" placeholder="설치, 배송, 혜택 등 조건을 물어보세요." required></textarea><div class="anonymous-form-actions"><small>개인정보·연락처·링크 입력 금지</small><button class="primary-btn" type="submit">메시지 보내기</button></div><p class="form-message" data-anonymous-message></p></form>
+      <form class="anonymous-message-form" data-anonymous-form><textarea name="message" rows="2" maxlength="1000" placeholder="메시지를 입력하세요" aria-label="상담 메시지" required></textarea><div class="anonymous-form-actions"><button class="primary-btn" type="submit">전송</button></div><p class="form-message" data-anonymous-message></p></form>
     </div>`;
     document.body.appendChild(modal);
-    modal.querySelector('.anonymous-consultation-panel').insertAdjacentHTML('afterbegin', `<div class="anonymous-chat-header"><div class="anonymous-chat-avatar" aria-hidden="true"><img src="/assets/pickquote-official-symbol-navy.png" alt="" /></div><div><span class="anonymous-chat-kicker">안전한 견적 상담</span><strong>선택 전 익명상담</strong><p data-anonymous-context>견적 조건을 익명으로 확인하는 중</p></div><button class="modal-close" type="button" data-anonymous-close aria-label="닫기">×</button></div><div class="anonymous-chat-policy"><strong>개인정보 보호 안내</strong><span>전화번호, 링크, 메신저, 매장 정보는 공유할 수 없습니다.</span></div>`);
     modal.addEventListener("click", (event) => { if (event.target.closest("[data-anonymous-close]")) closeAnonymousConsultation(); });
     modal.querySelector("[data-anonymous-form] textarea").addEventListener("keydown", (event) => {
       if (event.key === "Enter" && !event.shiftKey) {
@@ -877,14 +878,12 @@ async function openAnonymousConsultation(request, bid, role = "customer") {
           const item = document.createElement("div");
           item.className = "anonymous-message is-mine";
           item.dataset.messageId = result.row.id;
-          const label = document.createElement("span");
-          label.textContent = activeAnonymousConsultation.role === "seller" ? "판매자" : "고객";
           const body = document.createElement("p");
           body.textContent = result.row.body;
           const state = document.createElement("small");
           state.className = "anonymous-read-state";
           state.textContent = "전송됨";
-          item.append(label, body, state);
+          item.append(body, state);
           list.appendChild(item);
           list.scrollTop = list.scrollHeight;
         }
@@ -928,7 +927,7 @@ async function openAnonymousConsultation(request, bid, role = "customer") {
     if (role === "seller" && !result.consultation) { modal.hidden = true; setBidFormMessage("아직 고객 질문이 시작되지 않은 제안입니다.", "normal"); return; }
     activeAnonymousConsultation = { ...(result.consultation || result), role };
     const contextLabel = modal.querySelector('[data-anonymous-context]');
-    if (contextLabel) contextLabel.textContent = role === 'seller' ? '고객의 질문에 익명으로 답변하세요.' : '선택 전 판매자에게 조건을 물어보세요.';
+    if (contextLabel) contextLabel.textContent = role === 'seller' ? '고객과 대화 중' : '판매자와 대화 중';
     await refreshAnonymousConsultation(modal);
     window.clearInterval(anonymousRefreshTimer);
     anonymousRefreshTimer = window.setInterval(() => {
@@ -982,7 +981,7 @@ async function refreshAnonymousConsultation(modal) {
       const sendButton = modal.querySelector('[data-anonymous-form] button[type="submit"]');
       const composerNotice = modal.querySelector('[data-anonymous-message]');
       composer.disabled = sellerMustWait;
-      composer.placeholder = sellerMustWait ? '고객이 먼저 메시지를 보내면 답변할 수 있습니다.' : '설치, 배송, 혜택 등 조건을 물어보세요.';
+      composer.placeholder = sellerMustWait ? '고객의 첫 메시지를 기다리고 있습니다' : '메시지를 입력하세요';
       sendButton.disabled = sellerMustWait || anonymousSendInFlight;
       if (sellerMustWait) {
         composerNotice.textContent = '고객이 먼저 메시지를 보내야 답변할 수 있습니다.';
@@ -990,7 +989,7 @@ async function refreshAnonymousConsultation(modal) {
       } else if (composerNotice.dataset.type === 'normal') {
         composerNotice.textContent = '';
       }
-      list.innerHTML = rows.length ? rows.map((row) => `<div class="anonymous-message ${row.sender_role === role ? "is-mine" : ""}" data-message-id="${escapeHTML(row.id)}"><span>${row.sender_role === "seller" ? "판매자" : "고객"}</span><p>${escapeHTML(row.body)}</p></div>`).join("") : `<p class="empty-state">아직 메시지가 없습니다.</p>`;
+      list.innerHTML = rows.length ? rows.map((row) => `<div class="anonymous-message ${row.sender_role === role ? "is-mine" : ""}" data-message-id="${escapeHTML(row.id)}">${row.sender_role === role ? "" : `<span>${row.sender_role === "seller" ? "판매자" : "고객"}</span>`}<p>${escapeHTML(row.body)}</p></div>`).join("") : `<p class="empty-state">아직 메시지가 없습니다.</p>`;
       list.querySelectorAll('.anonymous-message').forEach((message, index) => {
         const row = rows[index];
         if (row.sender_role !== role) return;
