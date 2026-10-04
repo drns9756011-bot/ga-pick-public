@@ -5948,7 +5948,9 @@ export async function onRequest(context) {
 export async function onScheduled(context) {
   const { env } = context;
   if (!env.DB) return;
-  await cleanupExpiredStoredData(env);
+  const quoteOnly = context.event?.cron === "* * * * *";
+  await cleanupExpiredStoredData(env, { quoteOnly });
+  if (quoteOnly) return;
   await processScheduledSellerQuoteAlimtalks(env);
   await closeExpiredQuotes(env);
   await cleanupExpiredAnonymousConsultations(env);
