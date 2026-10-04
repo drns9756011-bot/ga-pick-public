@@ -1307,7 +1307,7 @@ async function deleteR2Object(env, key) {
   }
 }
 
-async function cleanupExpiredStoredData(env) {
+async function cleanupExpiredStoredData(env, { quoteOnly = false } = {}) {
   await ensureCustomerQuoteColumns(env);
   const now = new Date().toISOString();
   const phoneAccessCutoff = addDays(now, -7);
@@ -1349,7 +1349,7 @@ async function cleanupExpiredStoredData(env) {
     `SELECT id
      FROM customer_quotes
      WHERE created_at < ?
-     LIMIT 100`
+     LIMIT 25`
   )
     .bind(addDays(now, -30))
     .all();
@@ -1360,6 +1360,14 @@ async function cleanupExpiredStoredData(env) {
   }
   await ensureCustomerAccessTokens(env);
   await env.DB.prepare("DELETE FROM customer_access_tokens WHERE expires_at < ?").bind(now).run();
+
+  const quoteCleanup = {
+    fullImagesDeleted: Number((expiredFullImages.results || []).length),
+    quotesDeleted: Number((expiredQuotes.results || []).length),
+    legacyPhonesProtected: Number((legacyPhones.results || []).length),
+    expiredPhonesErased: Number((expiredPhones.results || []).length),
+  };
+  if (quoteOnly) return quoteCleanup;
 
   // 개인정보 처리방침의 1년 보유정책과 실제 서버 보관기간을 맞춥니다.
   // 아직 생성되지 않은 선택 기능 테이블은 기존 서비스에 영향을 주지 않도록 개별적으로 무시합니다.
@@ -1401,13 +1409,11 @@ async function cleanupExpiredStoredData(env) {
     }
   }
 
-  return {
-    fullImagesDeleted: Number((expiredFullImages.results || []).length),
-    quotesDeleted: Number((expiredQuotes.results || []).length),
-    legacyPhonesProtected: Number((legacyPhones.results || []).length),
-    expiredPhonesErased: Number((expiredPhones.results || []).length),
-    ...cleanupResults,
-  };
+  return { ...quoteCleanup, ...cleanupResults };
+}
+
+async function runQuotePrivacyMaintenance(env) {
+  return json({ ok: true, cleanup: await cleanupExpiredStoredData(env, { quoteOnly: true }) });
 }
 
 async function migrateLegacySellerPasswords(env) {
@@ -5926,6 +5932,11 @@ export async function onRequest(context) {
     const denied = requireAdmin(request, env);
     if (denied) return denied;
     return runMaintenance(env);
+  }
+  if (path === "maintenance/quote-privacy" && method === "POST") {
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
+    return runQuotePrivacyMaintenance(env);
   }
 
   if (path === "uploads" && method === "POST") return uploadFile(env, request);

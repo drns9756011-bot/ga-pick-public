@@ -101,11 +101,16 @@ test("worker gates quote phone by seller session, selection, and seven-day windo
   db.prepare(`INSERT INTO alimtalk_queue (id, type, title, body, related_id, target_phone, created_at)
     VALUES ('notice-old', 'customer-quote', 'test', 'test', 'q-old', '01077778888', ?)`)
     .run(new Date(now.getTime() - 31 * 86400000).toISOString());
-  const maintenance = await call(env, "maintenance", "POST", {}, { "X-Admin-Token": env.ADMIN_API_TOKEN });
+  db.prepare(`INSERT INTO brand_consultations
+    (id, package_id, seller_id, customer_name, customer_phone, created_at, updated_at)
+    VALUES ('brand-old', 'package-1', 'seller1', '브랜드고객', '01077778888', ?, ?)`)
+    .run(new Date(now.getTime() - 400 * 86400000).toISOString(), now.toISOString());
+  const maintenance = await call(env, "maintenance/quote-privacy", "POST", {}, { "X-Admin-Token": env.ADMIN_API_TOKEN });
   assert.equal(maintenance.status, 200);
   assert.equal(db.prepare("SELECT id FROM customer_quotes WHERE id = 'q-old'").get(), undefined);
   assert.equal(db.prepare("SELECT id FROM quote_images WHERE quote_id = 'q-old'").get(), undefined);
   assert.equal(db.prepare("SELECT id FROM alimtalk_queue WHERE related_id = 'q-old'").get(), undefined);
+  assert.ok(db.prepare("SELECT id FROM brand_consultations WHERE id = 'brand-old'").get());
   assert.deepEqual(deletedObjects, ["private/old-image"]);
   db.close();
 });
