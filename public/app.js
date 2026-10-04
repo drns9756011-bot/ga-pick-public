@@ -8,6 +8,8 @@ let businessCardImage = "";
 let activeSellerId = "";
 let activeSellerTab = "all";
 let sellerChatRooms = [];
+let sellerChatRoomsLoading = false;
+let sellerChatRefreshTimer = 0;
 let activeSellerBrandFilter = "all";
 let activeSellerRegionFilter = "all";
 let activeSellerSort = "deadline";
@@ -23,6 +25,10 @@ let quoteCountdownTimer = 0;
 let quoteCountdownRefreshQueued = false;
 let activeAnonymousConsultation = null;
 let anonymousConsultationLoading = false;
+let anonymousRefreshTimer = 0;
+let anonymousRefreshInFlight = "";
+let anonymousSendInFlight = false;
+let anonymousRenderKey = "";
 
 const ADMIN_EMAIL = "di02013@naver.com";
 const STORAGE_KEYS = {
@@ -827,6 +833,7 @@ async function openAnonymousConsultation(request, bid, role = "customer") {
       <button class="modal-close" type="button" data-anonymous-close aria-label="닫기">×</button>
       <p class="eyebrow">선택 전 익명상담</p><h2 id="anonymousConsultationTitle">궁금한 점을 물어보세요</h2>
       <p class="anonymous-consultation-notice">고객과 판매자의 이름, 전화번호, 링크, 매장 정보는 선택 전 공개되지 않습니다. 상담은 텍스트만 사용할 수 있습니다.</p>
+      <p class="anonymous-sync-status" data-anonymous-sync role="status" hidden></p>
       <div class="anonymous-message-list" data-anonymous-messages><p class="empty-state">상담을 불러오는 중입니다.</p></div>
       <form class="anonymous-message-form" data-anonymous-form><textarea name="message" rows="3" maxlength="1000" placeholder="설치, 배송, 혜택 등 조건을 물어보세요." required></textarea><div class="anonymous-form-actions"><small>개인정보·연락처·링크 입력 금지</small><button class="primary-btn" type="submit">메시지 보내기</button></div><p class="form-message" data-anonymous-message></p></form>
     </div>`;
@@ -843,13 +850,32 @@ async function openAnonymousConsultation(request, bid, role = "customer") {
       event.preventDefault();
       const field = event.currentTarget.elements.message;
       const message = field.value.trim();
-      if (!activeAnonymousConsultation || !message) return;
+      if (!activeAnonymousConsultation || !message || anonymousSendInFlight) return;
       const notice = modal.querySelector("[data-anonymous-message]");
-      const result = await apiJson("/api/anonymous-consultation-messages", { method: "POST", body: JSON.stringify({ consultationId: activeAnonymousConsultation.id, role: activeAnonymousConsultation.role, senderId: activeAnonymousConsultation.role === "seller" ? activeSellerId : "", message }) });
-      if (!result?.ok) { notice.textContent = result?.message || "메시지를 보내지 못했습니다."; notice.dataset.type = "error"; return; }
-      field.value = ""; notice.textContent = ""; await refreshAnonymousConsultation(modal);
+      const sendButton = event.currentTarget.querySelector('button[type="submit"]');
+      const clientMessageId = field.dataset.pendingMessage === message && field.dataset.pendingId
+        ? field.dataset.pendingId : `anon-msg-${crypto.randomUUID()}`;
+      const sendingConsultationId = activeAnonymousConsultation.id;
+      field.dataset.pendingMessage = message;
+      field.dataset.pendingId = clientMessageId;
+      anonymousSendInFlight = true;
+      sendButton.disabled = true;
+      try {
+        const result = await apiJson("/api/anonymous-consultation-messages", { method: "POST", showLoading: false, body: JSON.stringify({ consultationId: activeAnonymousConsultation.id, role: activeAnonymousConsultation.role, senderId: activeAnonymousConsultation.role === "seller" ? activeSellerId : "", message, clientMessageId }) });
+        if (activeAnonymousConsultation?.id !== sendingConsultationId || modal.hidden) return;
+        if (!result?.ok) { notice.textContent = result?.message || "메시지를 보내지 못했습니다."; notice.dataset.type = "error"; return; }
+        field.value = "";
+        delete field.dataset.pendingMessage;
+        delete field.dataset.pendingId;
+        notice.textContent = "";
+        await refreshAnonymousConsultation(modal);
+      } finally {
+        anonymousSendInFlight = false;
+        if (activeAnonymousConsultation?.id === sendingConsultationId && !modal.hidden) sendButton.disabled = field.disabled;
+      }
     });
   }
+  modal.hidden = true;
   try {
     let result;
     if (role === "customer") result = await apiJson("/api/anonymous-consultations", { method: "POST", body: JSON.stringify({ quoteId: request.id, bidId: bid.id, role }) });
@@ -860,64 +886,93 @@ async function openAnonymousConsultation(request, bid, role = "customer") {
     const contextLabel = modal.querySelector('[data-anonymous-context]');
     if (contextLabel) contextLabel.textContent = role === 'seller' ? '고객의 질문에 익명으로 답변하세요.' : '선택 전 판매자에게 조건을 물어보세요.';
     modal.hidden = false;
+    anonymousRenderKey = "";
+    modal.querySelector("[data-anonymous-messages]").innerHTML = '<p class="empty-state">상담을 불러오는 중입니다.</p>';
     await refreshAnonymousConsultation(modal);
+    window.clearInterval(anonymousRefreshTimer);
+    anonymousRefreshTimer = window.setInterval(() => {
+      if (!document.hidden && !modal.hidden) refreshAnonymousConsultation(modal);
+    }, 8000);
   } finally { anonymousConsultationLoading = false; }
 }
 
 function closeAnonymousConsultation() {
+  window.clearInterval(anonymousRefreshTimer);
+  anonymousRefreshTimer = 0;
   const modal = document.querySelector("#anonymousConsultationModal");
   if (modal) modal.hidden = true;
   activeAnonymousConsultation = null;
+  anonymousRenderKey = "";
 }
 
 async function refreshAnonymousConsultation(modal) {
-  if (!activeAnonymousConsultation?.id) return;
-  const result = await apiJson(`/api/anonymous-consultations?id=${encodeURIComponent(activeAnonymousConsultation.id)}`, { method: "GET" });
-  const list = modal.querySelector("[data-anonymous-messages]");
-  if (!result?.ok) { list.innerHTML = `<p class="empty-state">상담 내용을 불러오지 못했습니다.</p>`; return; }
-  const rows = result.rows || [];
-  const hasCustomerMessage = rows.some((row) => row.sender_role === 'customer' && Number(row.blocked || 0) === 0);
-  const composer = modal.querySelector('[data-anonymous-form] textarea');
-  const sendButton = modal.querySelector('[data-anonymous-form] button[type="submit"]');
-  const composerNotice = modal.querySelector('[data-anonymous-message]');
-  const sellerMustWait = activeAnonymousConsultation.role === 'seller' && !hasCustomerMessage;
-  if (composer) {
-    composer.disabled = sellerMustWait;
-    composer.placeholder = sellerMustWait ? '고객이 먼저 메시지를 보내면 답변할 수 있습니다.' : '설치, 배송, 혜택 등 조건을 물어보세요.';
-  }
-  if (sendButton) sendButton.disabled = sellerMustWait;
-  if (sellerMustWait && composerNotice) {
-    composerNotice.textContent = '고객이 먼저 메시지를 보내야 답변할 수 있습니다.';
-    composerNotice.dataset.type = 'normal';
-  }
-  list.innerHTML = rows.length ? rows.map((row) => `<div class="anonymous-message ${row.sender_role === activeAnonymousConsultation.role ? "is-mine" : ""}"><span>${row.sender_role === "seller" ? "판매자" : "고객"}</span><p>${escapeHTML(row.body)}</p></div>`).join("") : `<p class="empty-state">아직 메시지가 없습니다.</p>`;
-  const roleReadAt = activeAnonymousConsultation.role === 'seller' ? result.consultation.sellerReadAt : result.consultation.customerReadAt;
-  const incomingCount = rows.filter((row) => row.sender_role !== activeAnonymousConsultation.role && (!roleReadAt || String(row.created_at || '') > String(roleReadAt))).length;
-  document.querySelectorAll("[data-anonymous-chat-badge]").forEach((badge) => {
-    if (String(badge.dataset.requestId || "") !== String(activeAnonymousConsultation.quoteId || "")) return;
-    badge.textContent = incomingCount > 99 ? "99+" : String(incomingCount);
-    badge.hidden = incomingCount === 0;
-  });
-  const counterpartReadAt = activeAnonymousConsultation.role === 'seller' ? result.consultation.customerReadAt : result.consultation.sellerReadAt;
-  list.querySelectorAll('.anonymous-message').forEach((message, index) => {
-    const row = rows[index];
-    if (!row || row.sender_role !== activeAnonymousConsultation.role) return;
-    const read = counterpartReadAt && String(row.created_at || '') <= String(counterpartReadAt);
-    const state = document.createElement('small');
-    state.className = 'anonymous-read-state';
-    state.textContent = read ? '읽음' : '전송됨';
-    message.appendChild(state);
-  });
-  const readResult = await apiJson(`/api/anonymous-consultations/${encodeURIComponent(activeAnonymousConsultation.id)}/read`, { method: 'POST', showLoading: false, silent: true, body: JSON.stringify({ role: activeAnonymousConsultation.role }) });
-  if (readResult?.ok) {
+  if (!activeAnonymousConsultation?.id || modal.hidden || anonymousRefreshInFlight === activeAnonymousConsultation.id) return;
+  const { id, role, quoteId } = activeAnonymousConsultation;
+  anonymousRefreshInFlight = id;
+  try {
+    const result = await apiJson(`/api/anonymous-consultations?id=${encodeURIComponent(id)}`, { method: "GET", showLoading: false, timeoutMs: 10000 });
+    if (modal.hidden || activeAnonymousConsultation?.id !== id || activeAnonymousConsultation.role !== role) return;
+    const list = modal.querySelector("[data-anonymous-messages]");
+    const sync = modal.querySelector("[data-anonymous-sync]");
+    if (!result?.ok) {
+      sync.textContent = "연결이 지연되고 있습니다. 자동으로 다시 확인합니다.";
+      sync.hidden = false;
+      return;
+    }
+    sync.hidden = true;
+    const rows = result.rows || [];
+    const consultation = result.consultation || {};
+    const roleReadAt = role === 'seller' ? consultation.sellerReadAt : consultation.customerReadAt;
+    const counterpartReadAt = role === 'seller' ? consultation.customerReadAt : consultation.sellerReadAt;
+    const renderKey = JSON.stringify([rows, counterpartReadAt]);
+    if (renderKey !== anonymousRenderKey) {
+      const nearBottom = !anonymousRenderKey || list.scrollHeight - list.scrollTop - list.clientHeight < 80;
+      const scrollTop = list.scrollTop;
+      const hasCustomerMessage = rows.some((row) => row.sender_role === 'customer' && Number(row.blocked || 0) === 0);
+      const sellerMustWait = role === 'seller' && !hasCustomerMessage;
+      const composer = modal.querySelector('[data-anonymous-form] textarea');
+      const sendButton = modal.querySelector('[data-anonymous-form] button[type="submit"]');
+      const composerNotice = modal.querySelector('[data-anonymous-message]');
+      composer.disabled = sellerMustWait;
+      composer.placeholder = sellerMustWait ? '고객이 먼저 메시지를 보내면 답변할 수 있습니다.' : '설치, 배송, 혜택 등 조건을 물어보세요.';
+      sendButton.disabled = sellerMustWait || anonymousSendInFlight;
+      if (sellerMustWait) {
+        composerNotice.textContent = '고객이 먼저 메시지를 보내야 답변할 수 있습니다.';
+        composerNotice.dataset.type = 'normal';
+      } else if (composerNotice.dataset.type === 'normal') {
+        composerNotice.textContent = '';
+      }
+      list.innerHTML = rows.length ? rows.map((row) => `<div class="anonymous-message ${row.sender_role === role ? "is-mine" : ""}"><span>${row.sender_role === "seller" ? "판매자" : "고객"}</span><p>${escapeHTML(row.body)}</p></div>`).join("") : `<p class="empty-state">아직 메시지가 없습니다.</p>`;
+      list.querySelectorAll('.anonymous-message').forEach((message, index) => {
+        const row = rows[index];
+        if (row.sender_role !== role) return;
+        const state = document.createElement('small');
+        state.className = 'anonymous-read-state';
+        state.textContent = counterpartReadAt && String(row.created_at || '') <= String(counterpartReadAt) ? '읽음' : '전송됨';
+        message.appendChild(state);
+      });
+      list.scrollTop = nearBottom ? list.scrollHeight : scrollTop;
+      anonymousRenderKey = renderKey;
+    }
+    const incomingCount = rows.filter((row) => Number(row.blocked || 0) === 0 && row.sender_role !== role && (!roleReadAt || String(row.created_at || '') > String(roleReadAt))).length;
+    if (!incomingCount) return;
+    const readResult = await apiJson(`/api/anonymous-consultations/${encodeURIComponent(id)}/read`, { method: 'POST', showLoading: false, body: JSON.stringify({ role }) });
+    if (!readResult?.ok || modal.hidden || activeAnonymousConsultation?.id !== id) return;
     document.querySelectorAll("[data-anonymous-chat-badge]").forEach((badge) => {
-      if (String(badge.dataset.requestId || "") !== String(activeAnonymousConsultation.quoteId || "")) return;
+      if (String(badge.dataset.requestId || "") !== String(quoteId || "")) return;
       badge.textContent = "0";
       badge.hidden = true;
     });
-    if (activeAnonymousConsultation.role === 'seller') clearSellerChatRoomBadge(activeAnonymousConsultation.id);
+    if (role === 'seller') clearSellerChatRoomBadge(id);
+  } catch {
+    if (!modal.hidden && activeAnonymousConsultation?.id === id) {
+      const sync = modal.querySelector("[data-anonymous-sync]");
+      sync.textContent = "연결이 지연되고 있습니다. 자동으로 다시 확인합니다.";
+      sync.hidden = false;
+    }
+  } finally {
+    if (anonymousRefreshInFlight === id) anonymousRefreshInFlight = "";
   }
-  list.scrollTop = list.scrollHeight;
 }
 
 function clearSellerChatRoomBadge(roomId) {
@@ -1159,14 +1214,25 @@ async function syncSellerDashboardData(options = {}) {
 }
 
 async function loadSellerChatRooms() {
-  if (!activeSellerId || !canUseApiServer()) return;
-  const result = await apiJson(`/api/anonymous-consultations?sellerId=${encodeURIComponent(activeSellerId)}`, { showLoading: false, silent: true });
-  if (!result?.ok || !Array.isArray(result.rooms)) return;
-  sellerChatRooms = result.rooms;
-  const count = sellerChatRooms.reduce((sum, room) => sum + Number(room.customerMessageCount || 0), 0);
-  const badge = document.querySelector('#sellerChatTabBadge');
-  if (badge) { badge.textContent = count > 99 ? '99+' : String(count); badge.hidden = count === 0; }
-  if (activeSellerTab === 'chat') renderRequests();
+  if (!activeSellerId || !canUseApiServer() || sellerChatRoomsLoading) return;
+  if (!sellerChatRefreshTimer) {
+    sellerChatRefreshTimer = window.setInterval(() => {
+      if (!document.hidden && activeSellerTab === 'chat' && document.querySelector("#anonymousConsultationModal")?.hidden !== false) loadSellerChatRooms();
+    }, 15000);
+  }
+  sellerChatRoomsLoading = true;
+  try {
+    const result = await apiJson(`/api/anonymous-consultations?sellerId=${encodeURIComponent(activeSellerId)}`, { showLoading: false, timeoutMs: 10000 });
+    if (!result?.ok || !Array.isArray(result.rooms)) return;
+    const changed = JSON.stringify(sellerChatRooms) !== JSON.stringify(result.rooms);
+    sellerChatRooms = result.rooms;
+    const count = sellerChatRooms.reduce((sum, room) => sum + Number(room.customerMessageCount || 0), 0);
+    const badge = document.querySelector('#sellerChatTabBadge');
+    if (badge) { badge.textContent = count > 99 ? '99+' : String(count); badge.hidden = count === 0; }
+    if (changed && activeSellerTab === 'chat' && document.querySelector("#anonymousConsultationModal")?.hidden !== false) renderRequests();
+  } finally {
+    sellerChatRoomsLoading = false;
+  }
 }
 
 function renderSellerChatRooms() {

@@ -8046,6 +8046,7 @@ html.is-mobile-device .header-ad-picture img {
 .anonymous-consultation-panel > .anonymous-consultation-notice { margin: 16px 22px 0; font-size: 13px; }
 .anonymous-consultation-panel > .anonymous-consultation-notice { background: #fff !important; color: #526579 !important; }
 .anonymous-message-list { position: relative; z-index: 1; display: grid; gap: 10px; max-height: 360px; overflow: auto; padding: 14px; background: #f4f7fb !important; border: 1px solid #d8e1eb; opacity: 1 !important; }
+.anonymous-sync-status { margin: 8px 22px 0; color: #9b4d16; font-size: 13px; }
 .anonymous-message { max-width: 78%; padding: 11px 14px; background: #fff; border: 1px solid #d8e1eb; border-radius: 4px 14px 14px 14px; box-shadow: 0 2px 6px rgba(17, 44, 72, .04); }
 .anonymous-message.is-mine { justify-self: end; background: #e9f0f8; border-color: #b8cbe0; }
 .anonymous-message span { display: block; color: #526579; font-size: 12px; font-weight: 700; margin-bottom: 4px; }
