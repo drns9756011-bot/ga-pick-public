@@ -1360,12 +1360,17 @@ async function cleanupExpiredStoredData(env, { quoteOnly = false } = {}) {
   }
   await ensureCustomerAccessTokens(env);
   await env.DB.prepare("DELETE FROM customer_access_tokens WHERE expires_at < ?").bind(now).run();
+  const orphanNotices = await env.DB.prepare(`DELETE FROM alimtalk_queue
+    WHERE related_id != '' AND type LIKE 'customer-%'
+      AND NOT EXISTS (SELECT 1 FROM customer_quotes q WHERE q.id = alimtalk_queue.related_id)`)
+    .run();
 
   const quoteCleanup = {
     fullImagesDeleted: Number((expiredFullImages.results || []).length),
     quotesDeleted: Number((expiredQuotes.results || []).length),
     legacyPhonesProtected: Number((legacyPhones.results || []).length),
     expiredPhonesErased: Number((expiredPhones.results || []).length),
+    orphanNoticesDeleted: Number(orphanNotices?.meta?.changes || 0),
   };
   if (quoteOnly) return quoteCleanup;
 
