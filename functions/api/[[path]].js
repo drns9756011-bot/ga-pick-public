@@ -1349,7 +1349,7 @@ async function cleanupExpiredStoredData(env, { quoteOnly = false } = {}) {
     `SELECT id
      FROM customer_quotes
      WHERE created_at < ?
-     LIMIT 25`
+     LIMIT 100`
   )
     .bind(addDays(now, -30))
     .all();
@@ -5995,9 +5995,7 @@ export async function onRequest(context) {
 export async function onScheduled(context) {
   const { env } = context;
   if (!env.DB) return;
-  const quoteOnly = context.event?.cron === "* * * * *";
-  await cleanupExpiredStoredData(env, { quoteOnly });
-  if (quoteOnly) return;
+  await cleanupExpiredStoredData(env);
   await processScheduledSellerQuoteAlimtalks(env);
   await closeExpiredQuotes(env);
   await cleanupExpiredAnonymousConsultations(env);
