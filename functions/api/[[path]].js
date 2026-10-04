@@ -1,4 +1,5 @@
 import { getHomeCases } from "../home-cases.js";
+import { getOfficialCatalog, verifyOfficialModels } from "../official-models.js";
 import { protectCustomerPhone, customerPhoneHash, readCustomerPhone, customerPhoneWithinSevenDays, fullyMaskCustomerPhone, quoteImageSignature, verifyQuoteImageSignature } from "../phone-vault.js";
 
 const jsonHeaders = {
@@ -4510,56 +4511,6 @@ async function getLplanTrainingQuotes(env, request) {
   });
 }
 
-async function getLplanModelLearning(env) {
-  await ensureLplanTrainingTable(env);
-  const summary = await env.DB.prepare(
-    `SELECT COUNT(*) AS total, MAX(synced_at) AS latest_synced_at
-       FROM lplan_quote_patterns`
-  ).first();
-  const rows = await env.DB.prepare(
-    `SELECT rows_json
-       FROM lplan_quote_patterns
-       ORDER BY synced_at DESC
-       LIMIT 1000`
-  ).all();
-
-  const modelCounts = {};
-  const productCounts = {};
-  for (const row of rows.results || []) {
-    const quoteModels = new Set();
-    const quoteProducts = new Set();
-    const parsedRows = parseJson(row.rows_json, []);
-    const quoteRows = Array.isArray(parsedRows)
-      ? parsedRows
-      : Array.isArray(parsedRows?.rows)
-        ? parsedRows.rows
-        : [];
-    for (const item of quoteRows) {
-      const model = String(item?.model || item?.modelName || "")
-        .trim()
-        .toUpperCase()
-        .replace(/\s+/g, "");
-      if (model) quoteModels.add(model);
-      const product = String(item?.product || item?.category || item?.item || item?.name || "")
-        .trim()
-        .replace(/\s+/g, " ");
-      if (product) quoteProducts.add(product);
-    }
-    for (const model of quoteModels) modelCounts[model] = Number(modelCounts[model] || 0) + 1;
-    for (const product of quoteProducts) productCounts[product] = Number(productCounts[product] || 0) + 1;
-  }
-
-  return json({
-    ok: true,
-    version: PUBLIC_API_VERSION,
-    totalQuotes: Number(summary?.total || 0),
-    latestSyncedAt: summary?.latest_synced_at || "",
-    modelCounts,
-    productCounts,
-  });
-}
-
-
 let siteVisitTablesReady = false;
 
 async function ensureSiteVisitTables(env) {
@@ -5905,9 +5856,32 @@ export async function onRequest(context) {
   }
   if (path === "customer-quotes" && method === "GET") return getCustomerQuotes(env, request);
   if (path === "customer-quotes" && method === "POST") return createCustomerQuote(env, request, context.ctx || context);
+  if (path === "official-model-catalog" && method === "GET") {
+    const url = new URL(request.url);
+    const brand = url.searchParams.get("brand") || "";
+    const product = url.searchParams.get("product") || "";
+    try {
+      const result = await getOfficialCatalog(env, brand, product);
+      return json({ ok: true, ...result });
+    } catch {
+      return json({ ok: false, message: "공식몰 모델 목록을 확인할 수 없습니다." }, 502);
+    }
+  }
+  if (path === "official-model-verify" && method === "POST") {
+    const raw = await request.text();
+    if (raw.length > 2048) return json({ ok: false, message: "요청이 너무 큽니다." }, 413);
+    let body;
+    try { body = JSON.parse(raw); } catch { body = {}; }
+    if (!Array.isArray(body.models) || body.models.length > 8) return json({ ok: false, message: "모델은 최대 8개까지 확인할 수 있습니다." }, 400);
+    try {
+      const models = await verifyOfficialModels(env, body.brand, body.product, body.models);
+      return json({ ok: true, models });
+    } catch {
+      return json({ ok: false, message: "공식몰 모델 확인에 실패했습니다." }, 502);
+    }
+  }
   if (path === "lplan-training-quotes" && method === "POST") return saveLplanTrainingQuote(env, request);
   if (path === "lplan-training-quotes" && method === "GET") return getLplanTrainingQuotes(env, request);
-  if (path === "lplan-model-learning" && method === "GET") return getLplanModelLearning(env);
   if (path === "bids" && method === "GET") return getBids(env, request);
   if (path === "bids" && method === "POST") return upsertBid(env, request);
   if (path === "reviews" && method === "GET") return getReviews(env, request);

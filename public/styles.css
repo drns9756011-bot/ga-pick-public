@@ -7660,6 +7660,13 @@ body:has(#homePage.is-active) .pick-zero-fee {
   word-break: break-word;
 }
 
+.quote-wizard .ai-recommendation-group li a {
+  color: #1f63d8;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .quote-wizard .ai-recommendation-group li em {
   flex: 0 0 auto;
   color: #1f63d8;

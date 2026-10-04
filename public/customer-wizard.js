@@ -46,9 +46,8 @@
       note: "",
     },
     catalogs: {},
+    officialCatalogs: {},
     lowestPriceCache: new Map(),
-    modelLearning: null,
-    productLearning: null,
     recommendationGroups: [],
     recommending: false,
     recommendationMode: "",
@@ -1306,6 +1305,8 @@
 
   function openOptionModal(product) {
     const draft = normalizeOptionDraft(optionStateFor(product));
+    let officialModels = [];
+    let officialLoading = true;
     const modal = document.createElement("div");
     modal.className = "option-modal is-open";
     modal.innerHTML = `
@@ -1340,8 +1341,26 @@
         .map((section) => renderOptionSection(product, section, draft))
         .filter(Boolean)
         .join("");
-      wrap.innerHTML = visibleSections || `<p class="option-empty">선택할 수 있는 옵션이 없습니다.</p>`;
+      const matchingOfficial = firstMissingOptionSection(schema, draft)
+        ? []
+        : filterModelsByProductOptions(product, officialModels, "", draft).slice(0, 24);
+      if (draft.preferredModel && !matchingOfficial.some((model) => model.modelName === draft.preferredModel)) {
+        delete draft.preferredModel;
+      }
+      const officialSection = officialLoading
+        ? `<section class="option-section"><h4>공식몰 모델 확인 중</h4></section>`
+        : matchingOfficial.length
+          ? `<section class="option-section"><h4>공식몰 등록 모델</h4>
+              <label class="option-row"><span>조건에 맞춰 자동 추천</span><input type="radio" name="preferredModel" value="" ${!draft.preferredModel ? "checked" : ""} /><b aria-hidden="true"></b></label>
+              ${matchingOfficial.map((model) => `<label class="option-row"><span>${escapeHtml(model.title || model.modelName)} <small>${escapeHtml(model.modelName)}</small></span><input type="radio" name="preferredModel" value="${escapeHtml(model.modelName)}" ${draft.preferredModel === model.modelName ? "checked" : ""} /><b aria-hidden="true"></b></label>`).join("")}
+            </section>`
+          : "";
+      wrap.innerHTML = (visibleSections || `<p class="option-empty">선택할 수 있는 옵션이 없습니다.</p>`) + officialSection;
+      wrap.querySelectorAll('input[name="preferredModel"]').forEach((input) => {
+        input.addEventListener("change", () => { draft.preferredModel = input.value; rerender(); });
+      });
       wrap.querySelectorAll(".option-row input").forEach((input) => {
+        if (input.name === "preferredModel") return;
         input.addEventListener("change", () => {
           const key = input.dataset.optionKey;
           const section = schema.find((item) => item.key === key);
@@ -1359,6 +1378,7 @@
           if (!(normalizeProductKey(product) === "청소기" && key === "type")) {
             clearDependentOptionValues(schema, draft, key);
           }
+          delete draft.preferredModel;
           clearAiRecommendation();
           rerender();
         });
@@ -1389,13 +1409,24 @@
         });
         return;
       }
-      writeOptionState(product, cleanOptionDraft(schema, draft));
+      const cleaned = cleanOptionDraft(schema, draft);
+      if (draft.preferredModel) cleaned.preferredModel = draft.preferredModel;
+      writeOptionState(product, cleaned);
       clearAiRecommendation();
       syncAllFields();
       close();
       render();
     });
     rerender();
+    if (shouldUseAiRecommendation()) {
+      loadOfficialCatalog(normalizeProductKey(product))
+        .then((models) => { officialModels = models; })
+        .catch(() => { officialModels = []; })
+        .finally(() => { officialLoading = false; if (modal.isConnected) rerender(); });
+    } else {
+      officialLoading = false;
+      rerender();
+    }
   }
 
   function normalizeOptionDraft(source) {
@@ -1968,8 +1999,9 @@ function buildAiSummary() {
   }
 
   async function loadCatalogByBrand(brand) {
+    if (brand === "삼성전자") return {};
     if (state.catalogs[brand]) return state.catalogs[brand];
-    const path = brand === "삼성전자" ? "/assets/samsung-catalog-product-model-map.json" : "/assets/pickquote-product-model-map.json";
+    const path = "/assets/pickquote-product-model-map.json";
     const response = await fetchWithTimeout(path, { cache: "no-store" }, 12000);
     if (!response.ok) throw new Error("catalog load failed");
     state.catalogs[brand] = await response.json();
@@ -1984,22 +2016,46 @@ function buildAiSummary() {
     return loadCatalogByBrand(brand);
   }
 
-  async function loadModelLearning() {
-    if (state.modelLearning) return state.modelLearning;
-    try {
-      const response = await fetchWithTimeout("/api/lplan-model-learning", { cache: "no-store" }, 9000);
-      const data = response.ok ? await response.json() : null;
-      state.modelLearning = data?.ok && data.modelCounts ? data.modelCounts : {};
-      state.productLearning = data?.ok && data.productCounts ? data.productCounts : {};
-    } catch {
-      state.modelLearning = {};
-      state.productLearning = {};
+  async function loadOfficialCatalog(product) {
+    const brand = selectedBrandKey();
+    const key = `${brand}:${product}`;
+    if (!state.officialCatalogs[key]) {
+      state.officialCatalogs[key] = (async () => {
+        const response = await fetchWithTimeout(
+          `/api/official-model-catalog?brand=${encodeURIComponent(brand)}&product=${encodeURIComponent(product)}`,
+          { cache: "no-store" }, 14000
+        );
+        if (!response.ok) throw new Error("official catalog unavailable");
+        const data = await response.json();
+        if (!data.ok || !Array.isArray(data.models)) throw new Error("official catalog invalid");
+        return data.models;
+      })().catch((error) => {
+        delete state.officialCatalogs[key];
+        throw error;
+      });
     }
-    return state.modelLearning;
+    return state.officialCatalogs[key];
+  }
+
+  async function verifyOfficialCandidates(product, models) {
+    if (!models.length) return [];
+    const response = await fetchWithTimeout("/api/official-model-verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ brand: selectedBrandKey(), product, models: models.map((model) => model.modelName) }),
+    }, 18000);
+    if (!response.ok) throw new Error("official model verification failed");
+    const data = await response.json();
+    if (!data.ok || !Array.isArray(data.models)) throw new Error("official model verification invalid");
+    const verified = new Map(data.models.map((model) => [compactModelName(model.modelName), model]));
+    return models.map((model) => {
+      const official = verified.get(compactModelName(model.modelName));
+      return official ? { ...model, ...official, naverLowestPrice: 0 } : null;
+    }).filter(Boolean);
   }
 
   async function buildAiModelRecommendations() {
-    const [catalog] = await Promise.all([loadCatalog(), loadModelLearning()]);
+    const catalog = await loadCatalog();
     const selectedProducts = state.selectedProducts.filter(Boolean).flatMap((product) => {
       const types = normalizeProductKey(product) === "청소기" ? optionStateFor(product).type : [];
       return types?.length ? types.map((type) => ({ product, type })) : [{ product, type: "" }];
@@ -2012,27 +2068,37 @@ function buildAiSummary() {
       const productKey = normalizeProductKey(product);
       const optionSource = optionStateFor(productKey);
       const optionBrand = optionBrandFor(optionSource);
-      const models = Array.isArray(catalog?.[productKey]?.models) ? catalog[productKey].models : [];
+      const officialModels = await loadOfficialCatalog(productKey).catch((error) => {
+        if (selectedBrandKey() === "LG전자") return [];
+        throw error;
+      });
+      const storedModels = Array.isArray(catalog?.[productKey]?.models) ? catalog[productKey].models : [];
+      const models = [...new Map([...storedModels, ...officialModels]
+        .filter((model) => model?.modelName)
+        .map((model) => [compactModelName(model.modelName), model])).values()];
       const brandModels = optionBrand ? models.filter((model) => modelMatchesOptionBrand(model, optionBrand)) : models;
       const candidates = filterModelsByProductOptions(product, brandModels, type);
       const targetPrice = budgetWon
         ? Math.round((budgetWon * productBudgetWeight(product)) / totalWeight)
         : defaultTargetPrice(product, candidates);
 
-      const shortlist = rankModelCandidates(product, candidates, targetPrice).slice(0, 5);
+      const preferredCode = compactModelName(optionSource.preferredModel || "");
+      const preferred = preferredCode && candidates.find((model) => compactModelName(model.modelName) === preferredCode);
+      const shortlist = preferred ? [preferred] : rankModelCandidates(product, candidates, targetPrice).slice(0, 8);
+      const verified = await verifyOfficialCandidates(productKey, shortlist);
       const enriched = await Promise.all(
-        shortlist.map(async (model) => ({
+        verified.map(async (model) => ({
           ...model,
           naverLowestPrice: (await fetchLowestPrice(model.modelName)) || 0,
         }))
       );
 
       const chosen = chooseRecommendedModel(product, enriched, targetPrice);
-      const catalogModelNames = new Set(models.map((model) => compactModelName(model?.modelName || "")).filter(Boolean));
+      const catalogModelNames = new Set(verified.map((model) => compactModelName(model?.modelName || "")).filter(Boolean));
       const verifiedChosen =
         chosen &&
         catalogModelNames.has(compactModelName(chosen.modelName || "")) &&
-        candidates.some((candidate) => compactModelName(candidate.modelName) === compactModelName(chosen.modelName))
+        verified.some((candidate) => compactModelName(candidate.modelName) === compactModelName(chosen.modelName))
           ? chosen
           : null;
 
@@ -2049,9 +2115,11 @@ function buildAiSummary() {
     return groups;
   }
 
-  function filterModelsByProductOptions(product, models, selectedCleanerType = "") {
+  function filterModelsByProductOptions(product, models, selectedCleanerType = "", optionsOverride = null) {
     const productKey = normalizeProductKey(product);
-    const options = recommendationOptionState(productKey);
+    const options = optionsOverride
+      ? Object.fromEntries(Object.entries(optionsOverride).filter(([key]) => key !== "optionBrand" && key !== "preferredModel"))
+      : recommendationOptionState(productKey);
     if (selectedCleanerType) options.type = selectedCleanerType;
     const normalized = models
       .filter((model) => model && model.modelName)
@@ -2142,9 +2210,9 @@ function buildAiSummary() {
           const selectedType = String(type || "");
           const text = modelSearchText(model);
           const body = modelBody(model);
-          if (/로봇/.test(selectedType)) return /로봇\s*청소기|ROBOT/i.test(text) || /^(MO|B9|R9|VR)/i.test(body);
+          if (/로봇/.test(selectedType)) return /로봇\s*청소기|ROBOT|HOM-BOT|로니/i.test(text) || /^(MO|B9|R9|VR|N95)/i.test(body);
           if (/무선/.test(selectedType)) {
-            const isRobot = /로봇\s*청소기|ROBOT/i.test(text) || /^(MO|B9|R9|VR)/i.test(body);
+            const isRobot = /로봇\s*청소기|ROBOT|HOM-BOT|로니/i.test(text) || /^(MO|B9|R9|VR|N95)/i.test(body);
             return !isRobot && (/무선|코드제로|제트/i.test(text) || /^(AS|A7|AI9|A9|AU|VS)/i.test(body));
           }
           if (/유선/.test(selectedType)) return /유선/i.test(text) || /^VC/i.test(body);
@@ -2184,6 +2252,7 @@ function buildAiSummary() {
     const brand = compactModelName(model?.brand || "");
 
     if (!body || body.includes("상담")) return false;
+    if (model?.officialUrl) return true;
 
     if (brand.includes("삼성") || brand.includes("SAMSUNG")) {
       return isAllowedSamsungRecommendationModel(product, model);
@@ -2354,7 +2423,7 @@ function buildAiSummary() {
   function estimatedOnlinePrice(model) {
     const normalPrice = Number(model?.normalPrice || 0);
     if (normalPrice < 300000) return 0;
-    return Math.round(normalPrice * 0.62);
+    return model?.officialUrl ? normalPrice : Math.round(normalPrice * 0.62);
   }
 
   function rankModelCandidates(product, candidates, targetPrice) {
@@ -2406,10 +2475,6 @@ function buildAiSummary() {
     const body = modelBody(model);
     const brand = typeof model === "object" ? model?.brand || "" : "";
     let score = 0;
-    const learnedCount = modelLearningCount(model);
-    if (learnedCount > 0) score -= Math.min(0.3, Math.log2(learnedCount + 1) * 0.06);
-    const productCount = productLearningCount(productKey);
-    if (productCount > 0) score -= Math.min(0.12, Math.log2(productCount + 1) * 0.025);
     if (productKey === "TV") {
       if (/OLED|QNED9|QNED8/.test(name)) score -= 0.22;
       if (/^(KQ|QN).*9|OLED|NEO/.test(name) || /NEO QLED|OLED/.test(text)) score -= 0.18;
@@ -2438,29 +2503,6 @@ function buildAiSummary() {
     if (productKey === "의류관리기" && /^DF/.test(name)) score -= 0.12;
     if (brand === "삼성전자" && fields.brand.value === "삼성전자") score -= 0.03;
     return score;
-  }
-
-  function modelLearningCount(model) {
-    const counts = state.modelLearning || {};
-    const fullName = compactModelName(typeof model === "object" ? model?.modelName : model);
-    const body = modelBody(model);
-    const exactCount = Number(counts[fullName] || 0);
-    if (!body) return exactCount;
-    const bodyCount = Object.entries(counts).reduce((sum, [name, value]) => {
-      return String(name).split(".")[0] === body ? sum + Number(value || 0) : sum;
-    }, 0);
-    return Math.max(exactCount, bodyCount);
-  }
-
-  function productLearningCount(product) {
-    const counts = state.productLearning || {};
-    const target = compactModelName(product);
-    return Object.entries(counts).reduce((max, [name, value]) => {
-      const normalized = compactModelName(name);
-      return normalized === target || normalized.includes(target) || target.includes(normalized)
-        ? Math.max(max, Number(value || 0))
-        : max;
-    }, 0);
   }
 
   function extractTvInches(modelName) {
@@ -2547,7 +2589,10 @@ function buildAiSummary() {
   function renderModelWithPrice(model) {
     const price = Number(model?.naverLowestPrice || 0);
     const priceLabel = price >= 300000 ? `네이버 최저가 ${formatWon(price)}` : "일반 구매가 확인 중";
-    return `<span>${escapeHtml(displayModelName(model))}</span><em>${escapeHtml(priceLabel)}</em>`;
+    const source = model?.officialUrl
+      ? ` <a href="${escapeHtml(model.officialUrl)}" target="_blank" rel="noopener noreferrer">공식몰</a>`
+      : "";
+    return `<span>${escapeHtml(displayModelName(model))}${source}</span><em>${escapeHtml(priceLabel)}</em>`;
   }
 
   function recommendationModelPrice(model) {
