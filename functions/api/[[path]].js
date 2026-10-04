@@ -1,5 +1,5 @@
 import { getHomeCases } from "../home-cases.js";
-import { protectCustomerPhone, customerPhoneHash, readCustomerPhone, customerPhoneWithinSevenDays, fullyMaskCustomerPhone } from "../phone-vault.js";
+import { protectCustomerPhone, customerPhoneHash, readCustomerPhone, customerPhoneWithinSevenDays, fullyMaskCustomerPhone, quoteImageSignature, verifyQuoteImageSignature } from "../phone-vault.js";
 
 const jsonHeaders = {
   "Content-Type": "application/json; charset=utf-8",
@@ -1410,6 +1410,27 @@ async function cleanupExpiredStoredData(env, { quoteOnly = false } = {}) {
   }
 
   return { ...quoteCleanup, ...cleanupResults };
+}
+
+async function secureQuoteImageUrls(env, quote) {
+  const expiresAt = String(Math.floor(Date.now() / 1000) + 20 * 60);
+  const signed = new Map();
+  async function sign(url) {
+    if (!url || !url.startsWith("/api/files/")) return url;
+    if (signed.has(url)) return signed.get(url);
+    const objectKey = decodeURIComponent(url.slice("/api/files/".length).split("?")[0]);
+    if (!objectKey.startsWith("quote-originals/") && !objectKey.startsWith("quote-thumbnails/")) return url;
+    const signature = await quoteImageSignature(env, quote.id, objectKey, expiresAt);
+    const result = `${url}?quote=${encodeURIComponent(quote.id)}&expires=${expiresAt}&signature=${signature}`;
+    signed.set(url, result);
+    return result;
+  }
+  return {
+    ...quote,
+    thumbnailImage: await sign(quote.thumbnailImage),
+    image: await sign(quote.image),
+    images: await Promise.all((quote.images || []).map(sign)),
+  };
 }
 
 async function runQuotePrivacyMaintenance(env) {
@@ -3056,7 +3077,7 @@ async function updateCustomerQuote(env, request, id) {
   const row = await env.DB.prepare("SELECT * FROM customer_quotes WHERE id = ?").bind(id).first();
   const images = await getQuoteImages(env, id, true);
   const bids = await getBidsForQuote(env, id);
-  return json({ ok: true, row: normalizeCustomerQuote({ ...row, bid_count: bids.length, bids }, images) });
+  return json({ ok: true, row: await secureQuoteImageUrls(env, normalizeCustomerQuote({ ...row, bid_count: bids.length, bids }, images)) });
 }
 
 async function ensureQuoteDeletionDependencies(env) {
@@ -3184,7 +3205,7 @@ async function getCustomerQuotes(env, request) {
       if (selectedSeller) quote.phone = await readCustomerPhone(env, row);
     }
     if (scope !== "lookup" && !isAdminView && !selectedSeller) quote.customer = "고객님";
-    normalized.push(scope === "lookup" ? hideSellerOnlyQuoteFields(quote) : quote);
+    normalized.push(await secureQuoteImageUrls(env, scope === "lookup" ? hideSellerOnlyQuoteFields(quote) : quote));
   }
 
   return json({ ok: true, rows: normalized, accessToken: scope === "lookup" ? await issueCustomerAccessToken(env, rows.map((row) => row.id)) : "" });
@@ -3407,7 +3428,7 @@ async function createCustomerQuote(env, request, executionContext) {
     failed: 1,
     errors: [error?.message || "앱 푸시 발송 처리 중 오류가 발생했습니다."],
   }));
-  return json({ ok: true, row: hideSellerOnlyQuoteFields(normalizedRow), accessToken: await issueCustomerAccessToken(env, [id]), pushResult }, 201);
+  return json({ ok: true, row: await secureQuoteImageUrls(env, hideSellerOnlyQuoteFields(normalizedRow)), accessToken: await issueCustomerAccessToken(env, [id]), pushResult }, 201);
 }
 
 async function getBids(env, request) {
@@ -3716,7 +3737,7 @@ async function selectBid(env, request) {
   const images = await getQuoteImages(env, quoteId, true);
   return json({
     ok: true,
-    row: hideSellerOnlyQuoteFields(normalizeCustomerQuote(row, images)),
+    row: await secureQuoteImageUrls(env, hideSellerOnlyQuoteFields(normalizeCustomerQuote(row, images))),
     selectedBid,
     releasedBidIds,
     selectedAt: now,
@@ -3761,7 +3782,7 @@ async function closeQuoteByCustomer(env, request) {
 
   const row = await env.DB.prepare("SELECT * FROM customer_quotes WHERE id = ?").bind(quoteId).first();
   const images = await getQuoteImages(env, quoteId, true);
-  return json({ ok: true, row: hideSellerOnlyQuoteFields(normalizeCustomerQuote(row, images)) });
+  return json({ ok: true, row: await secureQuoteImageUrls(env, hideSellerOnlyQuoteFields(normalizeCustomerQuote(row, images))) });
 }
 
 async function getAlimtalk(env) {
@@ -3928,8 +3949,25 @@ async function refreshAlimtalkStatus(env, id) {
   }
 }
 
-async function getFile(env, key) {
+async function getFile(env, request, key) {
   if (!env.FILES) return json({ ok: false, message: "R2 바인딩이 필요합니다." }, 500);
+  if (key.startsWith("quote-originals/") || key.startsWith("quote-thumbnails/")) {
+    const params = new URL(request.url).searchParams;
+    const quoteId = String(params.get("quote") || "");
+    const expiresAt = String(params.get("expires") || "");
+    const signature = String(params.get("signature") || "");
+    if (!quoteId || !await verifyQuoteImageSignature(env, quoteId, key, expiresAt, signature)) {
+      return json({ ok: false, message: "견적 이미지 접근 권한이 없습니다." }, 403);
+    }
+    const owner = await env.DB.prepare(`SELECT q.id FROM customer_quotes q
+      WHERE q.id = ? AND q.created_at >= ? AND
+      (q.thumbnail_image_key = ? OR EXISTS (
+        SELECT 1 FROM quote_images i WHERE i.quote_id = q.id AND i.object_key = ?
+          AND (i.expires_at = '' OR i.expires_at >= ?)
+      )) LIMIT 1`)
+      .bind(quoteId, addDays(new Date().toISOString(), -30), key, key, new Date().toISOString()).first();
+    if (!owner) return json({ ok: false, message: "견적 이미지가 만료되었습니다." }, 404);
+  }
   const object = await env.FILES.get(key);
   if (!object) return new Response("Not found", { status: 404 });
 
@@ -5939,8 +5977,12 @@ export async function onRequest(context) {
     return runQuotePrivacyMaintenance(env);
   }
 
-  if (path === "uploads" && method === "POST") return uploadFile(env, request);
-  if (path.startsWith("files/") && method === "GET") return getFile(env, decodeURIComponent(pathParts.slice(1).join("/")));
+  if (path === "uploads" && method === "POST") {
+    const denied = requireAdmin(request, env);
+    if (denied) return denied;
+    return uploadFile(env, request);
+  }
+  if (path.startsWith("files/") && method === "GET") return getFile(env, request, decodeURIComponent(pathParts.slice(1).join("/")));
 
   return json({ ok: false, message: "API를 찾을 수 없습니다." }, 404);
 }

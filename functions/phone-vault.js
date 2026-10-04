@@ -55,6 +55,22 @@ export async function customerPhoneHash(env, phone) {
   return Array.from(new Uint8Array(signature), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
+export async function quoteImageSignature(env, quoteId, objectKey, expiresAt) {
+  const { lookup } = await keys(env);
+  const payload = `quote-image-v1\n${quoteId}\n${objectKey}\n${expiresAt}`;
+  const signature = await crypto.subtle.sign("HMAC", lookup, encoder.encode(payload));
+  return Array.from(new Uint8Array(signature), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+export async function verifyQuoteImageSignature(env, quoteId, objectKey, expiresAt, supplied) {
+  if (!/^\d{10}$/.test(String(expiresAt || "")) || Number(expiresAt) < Math.floor(Date.now() / 1000)) return false;
+  if (!/^[a-f0-9]{64}$/.test(String(supplied || ""))) return false;
+  const expected = await quoteImageSignature(env, quoteId, objectKey, expiresAt);
+  let difference = 0;
+  for (let index = 0; index < expected.length; index++) difference |= expected.charCodeAt(index) ^ supplied.charCodeAt(index);
+  return difference === 0;
+}
+
 export async function readCustomerPhone(env, row) {
   if (!row || !customerPhoneWithinSevenDays(row)) return "";
   if (!row.phone_ciphertext) return String(row.phone || "").replace(/\D/g, "");

@@ -63,6 +63,14 @@ test("worker gates quote phone by seller session, selection, and seven-day windo
     .run("b-selected", "q-selected", "seller1", now.toISOString());
   db.prepare(`INSERT INTO bids (id, quote_id, seller_id, seller, price, created_at) VALUES (?, ?, ?, '전자랜드', 100, ?)`)
     .run("b-expired", "q-expired", "seller1", now.toISOString());
+  db.prepare(`INSERT INTO quote_images (id, quote_id, image_type, object_key, url, created_at)
+    VALUES ('selected-thumb', 'q-selected', 'thumbnail', 'quote-thumbnails/q-selected-thumb.png',
+      '/api/files/quote-thumbnails/q-selected-thumb.png', ?)`)
+    .run(now.toISOString());
+  db.prepare("UPDATE customer_quotes SET thumbnail_image_key = ?, thumbnail_image = ? WHERE id = 'q-selected'")
+    .run("quote-thumbnails/q-selected-thumb.png", "/api/files/quote-thumbnails/q-selected-thumb.png");
+  const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=", "base64");
+  env.FILES = { async get() { return { arrayBuffer: async () => png, httpMetadata: { contentType: "image/png" } }; } };
 
   assert.equal((await call(env, "customer-quotes")).status, 401);
   assert.equal((await call(env, "bids?quoteId=q-selected")).status, 401);
@@ -77,6 +85,16 @@ test("worker gates quote phone by seller session, selection, and seven-day windo
   assert.equal(byId["q-other"].phone, "***-****-****");
   assert.equal(byId["q-other"].customer, "고객님");
   assert.equal(byId["q-expired"].phone, "***-****-****");
+  assert.match(byId["q-selected"].image, /signature=[a-f0-9]{64}/);
+  const imagePath = "files/quote-thumbnails/q-selected-thumb.png";
+  const unsignedImage = await onRequest({ env, request: new Request(`https://ga-pick.com/api/${imagePath}`), params: { path: imagePath.split("/") } });
+  assert.equal(unsignedImage.status, 403);
+  const signedImage = await onRequest({
+    env,
+    request: new Request(`https://ga-pick.com${byId["q-selected"].image}`),
+    params: { path: imagePath.split("/") },
+  });
+  assert.equal(signedImage.status, 200);
 
   db.prepare(`INSERT INTO anonymous_consultations
     (id, quote_id, bid_id, seller_id, status, created_at, updated_at)
