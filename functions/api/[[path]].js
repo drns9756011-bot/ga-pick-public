@@ -986,12 +986,21 @@ async function logoutSeller(env, request) {
   return json({ ok: true });
 }
 
+const customerAccessTablesReady = new WeakMap();
 async function ensureCustomerAccessTokens(env) {
-  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS customer_access_tokens (
-    token_hash TEXT NOT NULL, quote_id TEXT NOT NULL, expires_at TEXT NOT NULL,
-    PRIMARY KEY (token_hash, quote_id)
-  )`).run();
-  await env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_customer_access_tokens_quote ON customer_access_tokens(quote_id)").run();
+  let ready = customerAccessTablesReady.get(env.DB);
+  if (!ready) {
+    ready = (async () => {
+      await env.DB.prepare(`CREATE TABLE IF NOT EXISTS customer_access_tokens (
+        token_hash TEXT NOT NULL, quote_id TEXT NOT NULL, expires_at TEXT NOT NULL,
+        PRIMARY KEY (token_hash, quote_id)
+      )`).run();
+      await env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_customer_access_tokens_quote ON customer_access_tokens(quote_id)").run();
+    })();
+    customerAccessTablesReady.set(env.DB, ready);
+    ready.catch(() => { if (customerAccessTablesReady.get(env.DB) === ready) customerAccessTablesReady.delete(env.DB); });
+  }
+  await ready;
 }
 
 async function issueCustomerAccessToken(env, quoteIds) {
@@ -5019,24 +5028,32 @@ async function createBrandConsultation(env, request) {
 }
 
 // Pre-selection anonymous consultation: text-only, customer-first, server-validated.
-let anonymousConsultationTablesReady = false;
+const anonymousConsultationTablesReady = new WeakMap();
 async function ensureAnonymousConsultationTables(env) {
-  if (anonymousConsultationTablesReady) return;
-  await env.DB.batch([
-    env.DB.prepare(`CREATE TABLE IF NOT EXISTS anonymous_consultations (id TEXT PRIMARY KEY, quote_id TEXT NOT NULL, bid_id TEXT NOT NULL, seller_id TEXT NOT NULL, started_by TEXT NOT NULL DEFAULT 'customer', status TEXT NOT NULL DEFAULT 'open', created_at TEXT NOT NULL, updated_at TEXT NOT NULL, selected_at TEXT DEFAULT '')`),
-    env.DB.prepare(`CREATE UNIQUE INDEX IF NOT EXISTS idx_anon_consultation_bid ON anonymous_consultations(quote_id, bid_id)`),
-    env.DB.prepare(`CREATE TABLE IF NOT EXISTS anonymous_consultation_messages (id TEXT PRIMARY KEY, consultation_id TEXT NOT NULL, sender_role TEXT NOT NULL, sender_id TEXT DEFAULT '', body TEXT NOT NULL, normalized_body TEXT NOT NULL, blocked INTEGER NOT NULL DEFAULT 0, block_reason TEXT DEFAULT '', created_at TEXT NOT NULL)`),
-    env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_anon_messages_consultation ON anonymous_consultation_messages(consultation_id, created_at)`),
-    env.DB.prepare(`CREATE TABLE IF NOT EXISTS anonymous_policy_cases (id TEXT PRIMARY KEY, consultation_id TEXT NOT NULL, message_id TEXT NOT NULL, quote_id TEXT NOT NULL, bid_id TEXT NOT NULL, seller_id TEXT NOT NULL, branch TEXT DEFAULT '', detection_type TEXT NOT NULL, original_message TEXT NOT NULL, normalized_message TEXT NOT NULL, reason TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'UNDER_REVIEW', follow_up_action TEXT DEFAULT '', prior_violation_count INTEGER DEFAULT 0, region_violation_count INTEGER DEFAULT 0, reviewed_at TEXT DEFAULT '', reviewed_by TEXT DEFAULT '', review_memo TEXT DEFAULT '', created_at TEXT NOT NULL)`),
-    env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_anon_cases_status ON anonymous_policy_cases(status, created_at DESC)`),
-    env.DB.prepare(`CREATE TABLE IF NOT EXISTS anonymous_seller_restrictions (seller_id TEXT PRIMARY KEY, branch_key TEXT NOT NULL, seller_status TEXT NOT NULL DEFAULT 'ACTIVE', region_status TEXT NOT NULL DEFAULT 'NORMAL', violation_count INTEGER NOT NULL DEFAULT 0, updated_at TEXT NOT NULL, last_case_id TEXT DEFAULT '')`),
-    env.DB.prepare(`CREATE TABLE IF NOT EXISTS anonymous_audit_logs (id TEXT PRIMARY KEY, event_type TEXT NOT NULL, case_id TEXT DEFAULT '', consultation_id TEXT DEFAULT '', seller_id TEXT DEFAULT '', payload_json TEXT NOT NULL DEFAULT '{}', created_at TEXT NOT NULL)`),
-  ]);
-  await Promise.all([
-    env.DB.prepare("ALTER TABLE anonymous_consultations ADD COLUMN customer_read_at TEXT DEFAULT ''").run().catch(() => {}),
-    env.DB.prepare("ALTER TABLE anonymous_consultations ADD COLUMN seller_read_at TEXT DEFAULT ''").run().catch(() => {}),
-  ]);
-  anonymousConsultationTablesReady = true;
+  let ready = anonymousConsultationTablesReady.get(env.DB);
+  if (!ready) {
+    ready = (async () => {
+      await env.DB.batch([
+        env.DB.prepare(`CREATE TABLE IF NOT EXISTS anonymous_consultations (id TEXT PRIMARY KEY, quote_id TEXT NOT NULL, bid_id TEXT NOT NULL, seller_id TEXT NOT NULL, started_by TEXT NOT NULL DEFAULT 'customer', status TEXT NOT NULL DEFAULT 'open', created_at TEXT NOT NULL, updated_at TEXT NOT NULL, selected_at TEXT DEFAULT '')`),
+        env.DB.prepare(`CREATE UNIQUE INDEX IF NOT EXISTS idx_anon_consultation_bid ON anonymous_consultations(quote_id, bid_id)`),
+        env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_anon_consultation_seller ON anonymous_consultations(seller_id, updated_at DESC)`),
+        env.DB.prepare(`CREATE TABLE IF NOT EXISTS anonymous_consultation_messages (id TEXT PRIMARY KEY, consultation_id TEXT NOT NULL, sender_role TEXT NOT NULL, sender_id TEXT DEFAULT '', body TEXT NOT NULL, normalized_body TEXT NOT NULL, blocked INTEGER NOT NULL DEFAULT 0, block_reason TEXT DEFAULT '', created_at TEXT NOT NULL)`),
+        env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_anon_messages_consultation ON anonymous_consultation_messages(consultation_id, created_at)`),
+        env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_anon_messages_unread ON anonymous_consultation_messages(consultation_id, sender_role, blocked, created_at)`),
+        env.DB.prepare(`CREATE TABLE IF NOT EXISTS anonymous_policy_cases (id TEXT PRIMARY KEY, consultation_id TEXT NOT NULL, message_id TEXT NOT NULL, quote_id TEXT NOT NULL, bid_id TEXT NOT NULL, seller_id TEXT NOT NULL, branch TEXT DEFAULT '', detection_type TEXT NOT NULL, original_message TEXT NOT NULL, normalized_message TEXT NOT NULL, reason TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'UNDER_REVIEW', follow_up_action TEXT DEFAULT '', prior_violation_count INTEGER DEFAULT 0, region_violation_count INTEGER DEFAULT 0, reviewed_at TEXT DEFAULT '', reviewed_by TEXT DEFAULT '', review_memo TEXT DEFAULT '', created_at TEXT NOT NULL)`),
+        env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_anon_cases_status ON anonymous_policy_cases(status, created_at DESC)`),
+        env.DB.prepare(`CREATE TABLE IF NOT EXISTS anonymous_seller_restrictions (seller_id TEXT PRIMARY KEY, branch_key TEXT NOT NULL, seller_status TEXT NOT NULL DEFAULT 'ACTIVE', region_status TEXT NOT NULL DEFAULT 'NORMAL', violation_count INTEGER NOT NULL DEFAULT 0, updated_at TEXT NOT NULL, last_case_id TEXT DEFAULT '')`),
+        env.DB.prepare(`CREATE TABLE IF NOT EXISTS anonymous_audit_logs (id TEXT PRIMARY KEY, event_type TEXT NOT NULL, case_id TEXT DEFAULT '', consultation_id TEXT DEFAULT '', seller_id TEXT DEFAULT '', payload_json TEXT NOT NULL DEFAULT '{}', created_at TEXT NOT NULL)`),
+      ]);
+      await ensureColumns(env, "anonymous_consultations", [
+        ["customer_read_at", "TEXT DEFAULT ''"],
+        ["seller_read_at", "TEXT DEFAULT ''"],
+      ]);
+    })();
+    anonymousConsultationTablesReady.set(env.DB, ready);
+    ready.catch(() => { if (anonymousConsultationTablesReady.get(env.DB) === ready) anonymousConsultationTablesReady.delete(env.DB); });
+  }
+  await ready;
 }
 
 async function cleanupExpiredAnonymousConsultations(env) {
@@ -5227,12 +5244,13 @@ async function postAnonymousConsultationMessage(env, request) {
         : json({ ok: true, row: { id: previous.id, senderRole: role, body: message, createdAt: previous.created_at } });
     }
   }
-  const quote = await env.DB.prepare('SELECT selected_bid_id FROM customer_quotes WHERE id = ? LIMIT 1').bind(consultation.quote_id).first();
-  if (quote?.selected_bid_id) return json({ ok: false, message: '판매자 선택이 완료되어 익명상담이 종료되었습니다.' }, 403);
   if (role === 'seller' && senderId !== String(consultation.seller_id || '')) return json({ ok: false, message: '판매자 상담 권한을 확인할 수 없습니다.' }, 403);
-  const quoteTiming = await env.DB.prepare('SELECT selected_bid_id, quote_expires_at FROM customer_quotes WHERE id = ? LIMIT 1').bind(consultation.quote_id).first();
+  const [quoteTiming, prior] = await Promise.all([
+    env.DB.prepare('SELECT selected_bid_id, quote_expires_at FROM customer_quotes WHERE id = ? LIMIT 1').bind(consultation.quote_id).first(),
+    env.DB.prepare('SELECT body FROM anonymous_consultation_messages WHERE consultation_id = ? AND blocked = 0 ORDER BY created_at DESC LIMIT 3').bind(consultationId).all(),
+  ]);
+  if (!quoteTiming) return json({ ok: false, message: '견적을 확인할 수 없어 채팅을 보낼 수 없습니다.' }, 403);
   if (quoteTiming?.selected_bid_id || (quoteTiming?.quote_expires_at && quoteTiming.quote_expires_at < new Date().toISOString())) return json({ ok: false, message: '견적 시간이 종료되어 채팅을 보낼 수 없습니다.' }, 403);
-  const prior = await env.DB.prepare('SELECT body FROM anonymous_consultation_messages WHERE consultation_id = ? AND blocked = 0 ORDER BY created_at DESC LIMIT 3').bind(consultationId).all();
   if (role === 'seller' && !(prior.results || []).length) return json({ ok: false, message: '고객이 먼저 질문한 뒤 답변할 수 있습니다.' }, 403);
   const scan = scanAnonymousMessage(message, role, (prior.results || []).reverse().map((row) => row.body));
   const now = new Date().toISOString();
@@ -5791,10 +5809,6 @@ export async function onRequest(context) {
   if (path === "home-cases" && method === "GET") {
     return apiBoundary(() => getHomeCases(request, env, context.ctx || context), "비교 사례를 불러오지 못했습니다.");
   }
-  if (path.startsWith('anonymous-consultations') || path.startsWith('anonymous-policy-cases')) {
-    await cleanupExpiredAnonymousConsultations(env).catch(() => {});
-  }
-
   if (path === "public-health" && method === "GET") {
     return json({
       ok: true,
@@ -5996,10 +6010,14 @@ export async function onRequest(context) {
 export async function onScheduled(context) {
   const { env } = context;
   if (!env.DB) return;
+  try {
+    await cleanupExpiredAnonymousConsultations(env);
+  } catch (error) {
+    console.error('만료된 익명상담 정리에 실패했습니다.', error);
+  }
   await cleanupExpiredStoredData(env);
   await processScheduledSellerQuoteAlimtalks(env);
   await closeExpiredQuotes(env);
-  await cleanupExpiredAnonymousConsultations(env);
   await migrateLegacySellerPasswords(env);
   await ensureQuotePhoneVerificationTable(env);
   await env.DB.prepare("UPDATE quote_phone_verifications SET phone_masked = '***-****-****' WHERE phone_masked != '***-****-****'").run();

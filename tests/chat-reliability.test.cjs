@@ -19,6 +19,58 @@ const context = vm.createContext({
 });
 vm.runInContext(source.slice(start, end), context);
 
+test('warm chat requests reuse schema setup, including concurrent first requests', async () => {
+  const db = new DatabaseSync(':memory:');
+  try {
+    let statements = 0;
+    let batches = 0;
+    const binding = {
+      prepare(sql) {
+        return { async run() { statements += 1; db.exec(sql); } };
+      },
+      async batch(items) {
+        batches += 1;
+        for (const item of items) await item.run();
+      },
+    };
+    const schemaContext = vm.createContext({ WeakMap, ensureColumns: async () => {} });
+    const tokenStart = source.indexOf('const customerAccessTablesReady =');
+    vm.runInContext(source.slice(tokenStart, source.indexOf('async function issueCustomerAccessToken(', tokenStart)), schemaContext);
+    const anonymousStart = source.indexOf('const anonymousConsultationTablesReady =');
+    vm.runInContext(source.slice(anonymousStart, source.indexOf('async function cleanupExpiredAnonymousConsultations(', anonymousStart)), schemaContext);
+    const env = { DB: binding };
+    await Promise.all([schemaContext.ensureCustomerAccessTokens(env), schemaContext.ensureCustomerAccessTokens(env)]);
+    await schemaContext.ensureCustomerAccessTokens(env);
+    assert.equal(statements, 2);
+    await Promise.all([schemaContext.ensureAnonymousConsultationTables(env), schemaContext.ensureAnonymousConsultationTables(env)]);
+    await schemaContext.ensureAnonymousConsultationTables(env);
+    assert.equal(batches, 1);
+    assert.ok(db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'index' AND name = 'idx_anon_messages_unread'").get());
+  } finally {
+    db.close();
+  }
+});
+
+test('chat requests do not wait for scheduled retention cleanup', async () => {
+  let cleanupCalls = 0;
+  const dispatchContext = vm.createContext({
+    apiBoundary: (task) => task(),
+    getAnonymousConsultation: async () => ({ status: 404 }),
+    cleanupExpiredAnonymousConsultations: async () => { cleanupCalls += 1; },
+  });
+  const dispatchStart = source.indexOf('export async function onRequest(');
+  const dispatchEnd = source.indexOf('export async function onScheduled(', dispatchStart);
+  vm.runInContext(source.slice(dispatchStart, dispatchEnd).replace('export ', ''), dispatchContext);
+  const result = await dispatchContext.onRequest({
+    request: { method: 'GET' },
+    env: { DB: {} },
+    params: { path: ['anonymous-consultations'] },
+  });
+  assert.equal(result.status, 404);
+  assert.equal(cleanupCalls, 0);
+  assert.match(source.slice(dispatchEnd), /await cleanupExpiredAnonymousConsultations\(env\)/);
+});
+
 function d1(db) {
   return {
     prepare(sql) {
