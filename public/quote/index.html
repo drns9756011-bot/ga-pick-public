@@ -161,12 +161,14 @@
         display: block;
       }
     </style>
-  <link rel="stylesheet" href="/styles.css?v=20260831-live-baseline-clean-v2" />
-    <script defer src="/privacy-policy.js?v=20260811-privacy-policy-v19"></script>
-  <script defer src="/app.js?v=20260930-seller-privacy"></script>
+  <link rel="stylesheet" href="/styles.css?v=20260930-navy-unified" />
+    <script defer src="/privacy-policy.js?v=20261004-quote-privacy"></script>
+  <script defer src="/app.js?v=20261004-quote-privacy"></script>
     <script defer src="/customer-wizard.js?v=20260930-cleaner-options"></script>
     <script defer src="/page-guide.js?v=20260731-mobile-modal-safe-area"></script>
-    <link rel="stylesheet" href="/customer-ui.css?v=20260930-customer-refresh" />
+    <link rel="preload" href="https://cdn.jsdelivr.net/gh/sun-typeface/SUIT@2/fonts/variable/woff2/SUIT-Variable.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="/customer-ui.css?v=20260930-home-identity" />
+    <link rel="stylesheet" href="/customer-lookup-ui.css?v=20260930-2" />
 </head>
   <body class="customer-refresh">
     <header class="topbar">
@@ -186,20 +188,77 @@
         <section class="pick-app-home" aria-label="픽견적 홈">
           <div class="pick-home-shell">
             <section class="customer-hero" aria-labelledby="pickHomeTitle">
-              <p class="customer-eyebrow">혼수부터 입주까지, 가전 견적 비교</p>
-              <h1 id="pickHomeTitle"><span>견적서 올리면,</span><span>좋은 조건 찾아드려요.</span></h1>
-              <p class="customer-hero-lead">가격부터 배송·설치 혜택까지<br />여러 판매자의 제안을 한곳에서 비교하세요.</p>
-              <div class="customer-hero-actions">
-                <button type="button" class="customer-primary" data-view="customer">무료로 견적 비교하기 <span aria-hidden="true">→</span></button>
-                <button type="button" class="customer-text-link" data-view="customer">견적서 없이 시작하기</button>
+              <div class="customer-hero-copy">
+                <h1 id="pickHomeTitle">가전 견적 비교</h1>
+                <p class="customer-hero-promise">가격도 혜택도 한 번에.</p>
+                <p class="customer-hero-lead">여러 판매자의 제안을 받아<br />가격·배송·설치 조건을 비교하세요.</p>
               </div>
               <img class="customer-hero-products" src="/assets/brand-hero-lg-products.png" width="960" height="380" alt="냉장고, TV, 세탁기 등 비교 가능한 가전제품" fetchpriority="high" />
+              <div class="customer-hero-actions">
+                <button type="button" class="customer-primary" data-view="customer">무료로 견적 비교하기 <span aria-hidden="true">→</span></button>
+                <p class="customer-hero-start-note">견적서가 없어도 시작할 수 있어요.</p>
+              </div>
               <div class="customer-hero-foot"><span>고객 이용료 <strong>0원</strong></span><span>판매자 선택 전 <strong>연락처 비공개</strong></span></div>
+              <button type="button" class="customer-text-link customer-return-link" data-view="lookup">이미 등록했다면, 내 견적 확인</button>
+            </section>
+
+
+
+            <section class="pick-flow-home" aria-labelledby="pickFlowTitle">
+              <div class="pick-home-heading">
+                <h2 id="pickFlowTitle">등록부터 상담까지 간단하게</h2>
+              </div>
+              <div class="customer-journey">
+                <ol class="customer-journey-steps">
+                  <li>
+                    <span class="journey-number">1</span>
+                    <h3>견적 등록</h3>
+                    <p>견적서 또는<br />필요한 가전 등록</p>
+                    <div class="journey-preview" aria-label="견적 등록 화면 예시">
+                      <span class="journey-preview-label">필요한 가전</span>
+                      <img src="/assets/brand-hero-lg-products.png" alt="" loading="lazy" width="210" height="95" />
+                      <div class="journey-preview-line"><span>냉장고 · 세탁기</span><span>선택</span></div>
+                      <span class="journey-preview-action">견적 등록하기</span>
+                    </div>
+                  </li>
+                  <li>
+                    <span class="journey-number">2</span>
+                    <h3>제안 비교</h3>
+                    <p>가격·배송·설치<br />조건을 한눈에</p>
+                    <div class="journey-preview" aria-label="제안 비교 화면 예시">
+                      <span class="journey-preview-label">도착한 제안</span>
+                      <div class="journey-preview-line"><span>제안 A</span><b>가격 비교</b></div>
+                      <div class="journey-preview-line"><span>제안 B</span><b>배송 확인</b></div>
+                      <div class="journey-preview-line"><span>제안 C</span><b>설치 확인</b></div>
+                      <span class="journey-preview-caption">가격 · 배송 · 설치</span>
+                    </div>
+                  </li>
+                  <li>
+                    <span class="journey-number">3</span>
+                    <h3>판매자 선택</h3>
+                    <p>원하는 제안을 골라<br />판매자와 상담</p>
+                    <div class="journey-preview" aria-label="판매자 선택 화면 예시">
+                      <span class="journey-preview-label">내가 고른 제안</span>
+                      <img class="journey-symbol" src="/assets/pickquote-official-symbol-navy.png" alt="" loading="lazy" width="48" height="48" />
+                      <b class="journey-preview-title">이 판매자와 상담할게요</b>
+                      <span class="journey-preview-caption">선택한 판매자에게만 연락처 공개</span>
+                      <span class="journey-preview-action">판매자 선택</span>
+                    </div>
+                  </li>
+                </ol>
+                <div class="journey-free">
+                  <span>고객 이용료</span>
+                  <strong>0<span>원</span></strong>
+                  <h3>비교는 무료로,<br />선택은 여유롭게.</h3>
+                  <p>견적 등록부터 제안 비교까지</p>
+                </div>
+              </div>
+              <p class="journey-example-note">이용 과정의 이해를 돕기 위한 화면 예시입니다.</p>
             </section>
 
             <section class="pick-privacy-home" aria-labelledby="pickPrivacyTitle">
               <div class="pick-home-heading">
-                <h2 id="pickPrivacyTitle">내 정보는 선택 전까지 공개되지 않습니다.</h2>
+                <h2 id="pickPrivacyTitle">연락처 공개는 판매자를 고른 뒤에.</h2>
               </div>
               <ol class="pick-privacy-steps">
                 <li><span>01</span><div><strong>견적 등록</strong><p>연락처 비공개</p></div></li>
@@ -210,18 +269,6 @@
               <div class="pick-approved-note" aria-label="판매자 확인 기준">
                 <span>승인된 판매자만 제안 가능</span><span>지점·매니저 정보 확인</span><span>선택한 판매자만 연락 가능</span>
               </div>
-            </section>
-
-            <section class="pick-flow-home" aria-labelledby="pickFlowTitle">
-              <div class="pick-home-heading">
-                <h2 id="pickFlowTitle">등록부터 상담까지 간단하게</h2>
-              </div>
-              <ol class="pick-flow-list">
-                <li><span class="pick-flow-icon" aria-hidden="true">1</span><div><strong>견적을 등록하세요</strong><p>견적서 사진 또는 필요한 품목을 입력합니다.</p></div></li>
-                <li><span class="pick-flow-icon" aria-hidden="true">2</span><div><strong>제안을 비교하세요</strong><p>가격과 배송·설치 조건을 함께 확인합니다.</p></div></li>
-                <li><span class="pick-flow-icon" aria-hidden="true">3</span><div><strong>판매자를 선택하세요</strong><p>선택한 판매자와 상담을 시작합니다.</p></div></li>
-              </ol>
-              <p class="pick-flow-time">최대 72시간 동안 제안을 비교할 수 있습니다.</p>
             </section>
 
             <section class="pick-faq-home" aria-labelledby="pickFaqTitle">
@@ -858,7 +905,7 @@
             <li>수집 항목: 고객님 성함, 연락처, 휴대전화 인증기록, 설치 지역, 구매 품목, 구매 목적, 희망 브랜드, 예상 금액, 설치 희망일, 견적서 이미지 최대 4장, 요청사항, 접속 IP·접속지역·기기·브라우저·요청 식별값 등 자동 생성 정보</li>
             <li>이용 목적: 휴대전화 본인확인, 견적 요청 접수, 본인 견적 조회, 판매자 제안 연결, 상담 진행, 부정 등록 방지 및 개인정보 침해사고 조사</li>
             <li>열람 대상: 페이지 운영 회사, 관리자, 견적 검토 및 고객님 응대 담당 직원</li>
-            <li>보유 기간: 견적 등록일로부터 1년 또는 고객님 삭제 요청 시까지 (원본 견적서 이미지는 등록 후 7일)</li>
+            <li>보유 기간: 견적 등록일로부터 30일 또는 고객님 삭제 요청 시까지 (원본 견적서 이미지는 등록 후 7일)</li>
           </ul>
         </div>
         <div class="consent-box">
@@ -901,25 +948,9 @@
       <div class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="bidSelectConfirmTitle">
         <h2 id="bidSelectConfirmTitle">이 견적을 선택하시겠습니까?</h2>
         <p id="bidSelectConfirmDescription">
-          선택하신 견적은 이후 변경할 수 없습니다. 연락처 공개 범위를 선택한 뒤 확인을 눌러주세요.
+          선택하신 견적은 이후 변경할 수 없습니다. 선택한 판매자에게만 연락처가 공개됩니다.
         </p>
         <div class="confirm-summary" id="bidSelectConfirmSummary"></div>
-        <div class="contact-release-options" role="radiogroup" aria-label="연락처 공개 범위">
-          <label>
-            <input type="radio" name="contactReleaseScope" value="selected" checked />
-            <span>
-              <strong>1순위에게만 연락처 공개</strong>
-              선택한 제안 판매자에게만 고객님 연락처가 공개됩니다.
-            </span>
-          </label>
-          <label>
-            <input type="radio" name="contactReleaseScope" value="top3" />
-            <span>
-              <strong>1~3순위까지 연락처 공개</strong>
-              낮은 금액순 상위 3개 제안 판매자에게 연락처가 공개됩니다.
-            </span>
-          </label>
-        </div>
         <div class="consent-actions">
           <button class="secondary-btn" id="cancelBidSelectBtn" type="button">취소</button>
           <button class="primary-btn" id="confirmBidSelectBtn" type="button">확인</button>

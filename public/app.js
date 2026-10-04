@@ -17,6 +17,7 @@ let pendingBidSelection = null;
 let pendingQuoteCloseId = null;
 let quoteCloseSubmitting = false;
 let lookupAccessGranted = false;
+let activeCustomerAccessToken = "";
 let activeLookupRequestIds = [];
 let quoteCountdownTimer = 0;
 let quoteCountdownRefreshQueued = false;
@@ -28,12 +29,14 @@ const STORAGE_KEYS = {
   sellerApplications: "pickquoteSellerApplications",
   approvedSellers: "pickquoteApprovedSellers",
   activeSellerId: "pickquoteActiveSellerId",
+  sellerSessionToken: "pickquoteSellerSessionToken",
   sellerBrandFilter: "pickquoteSellerBrandFilter",
   sellerRegionFilter: "pickquoteSellerRegionFilter",
   sellerSort: "pickquoteSellerSort",
 };
 const registeredSellerPhones = new Set();
 const sellerAccounts = new Map();
+localStorage.removeItem(STORAGE_KEYS.approvedSellers);
 hydrateApprovedSellerAccounts();
 restoreActiveSellerSession();
 restoreSellerFilterState();
@@ -436,10 +439,7 @@ function formatSellerRequestMemoHtml(value) {
 }
 
 function maskPhone(value) {
-  const digits = normalizePhone(value);
-  if (digits.length < 8) return "연락처 비공개";
-  if (digits.startsWith("02")) return `02-****-${digits.slice(-4)}`;
-  return `${digits.slice(0, 3)}-****-${digits.slice(-4)}`;
+  return value ? "***-****-****" : "연락처 비공개";
 }
 
 function maskCustomerName(value) {
@@ -646,13 +646,15 @@ function readActiveSellerSession() {
   }
 }
 
-function writeActiveSellerSession(sellerId) {
+function writeActiveSellerSession(sellerId, token = "") {
   try {
     if (sellerId) {
       sessionStorage.setItem(STORAGE_KEYS.activeSellerId, sellerId);
+      if (token) sessionStorage.setItem(STORAGE_KEYS.sellerSessionToken, token);
       return;
     }
     sessionStorage.removeItem(STORAGE_KEYS.activeSellerId);
+    sessionStorage.removeItem(STORAGE_KEYS.sellerSessionToken);
   } catch (error) {
     // 세션 저장을 사용할 수 없는 브라우저에서도 로그인 흐름은 계속 진행합니다.
   }
@@ -660,7 +662,7 @@ function writeActiveSellerSession(sellerId) {
 
 function restoreActiveSellerSession() {
   const sellerId = readActiveSellerSession();
-  if (sellerId && sellerAccounts.has(sellerId)) {
+  if (sellerId && sessionStorage.getItem(STORAGE_KEYS.sellerSessionToken)) {
     activeSellerId = sellerId;
   }
 }
@@ -745,6 +747,10 @@ async function apiJson(path, options = {}) {
       cache: "no-store",
       headers: {
         "Content-Type": "application/json",
+        ...(sessionStorage.getItem(STORAGE_KEYS.sellerSessionToken)
+          ? { "X-Seller-Session": sessionStorage.getItem(STORAGE_KEYS.sellerSessionToken) }
+          : {}),
+        ...(activeCustomerAccessToken ? { "X-Customer-Access": activeCustomerAccessToken } : {}),
         ...(fetchOptions.headers || {}),
       },
       signal: controller.signal,
@@ -778,7 +784,13 @@ async function syncApprovedSellersFromServer(options = {}) {
     loadingTitle: "판매자 정보를 확인 중입니다.",
     loadingText: "승인된 판매자 계정을 서버에서 불러오고 있습니다.",
   });
-  if (!result?.ok || !Array.isArray(result.rows)) return;
+  if (!result?.ok || !Array.isArray(result.rows)) {
+    if (result?.status === 401) {
+      activeSellerId = "";
+      writeActiveSellerSession("");
+    }
+    return;
+  }
 
   writeStorageArray(STORAGE_KEYS.approvedSellers, result.rows);
   hydrateApprovedSellerAccounts();
@@ -1196,6 +1208,7 @@ async function lookupCustomerQuotesFromServer(customer, phone, quoteNumber = "")
     };
   }
 
+  activeCustomerAccessToken = result.accessToken || "";
   return { ok: true, rows: result.rows };
 }
 
@@ -1237,7 +1250,7 @@ async function selectBidOnServer(request, bid, contactReleaseScope) {
   return apiJson("/api/bid-selection", {
     method: "POST",
     loadingTitle: "견적을 선택 중입니다.",
-    loadingText: "선택 내용과 연락처 공개 범위를 서버에 저장하고 있습니다.",
+    loadingText: "선택 내용을 서버에 저장하고 있습니다.",
     body: JSON.stringify({
       requestId: request.id,
       bidId: bid.id,
@@ -1254,7 +1267,6 @@ async function closeQuoteOnServer(request) {
     body: JSON.stringify({
       requestId: request.id,
       customer: request.customer,
-      phone: request.phone,
     }),
   });
 }
@@ -2420,8 +2432,8 @@ async function createCustomerRequest(formData) {
       phoneVerifiedAt: String(formData.get("phoneVerifiedAt") || ""),
       retention: {
         fullQuoteImagesDays: 7,
-        representativeImageDays: 365,
-        customerInfoDays: 365,
+        representativeImageDays: 30,
+        customerInfoDays: 30,
         quoteReceiveHours: QUOTE_RECEIVE_HOURS,
       },
     },
@@ -2436,6 +2448,7 @@ async function createCustomerRequest(formData) {
       return { ok: false, message };
     }
     savedRequest = serverResult.row;
+    activeCustomerAccessToken = serverResult.accessToken || "";
   }
 
   requests.unshift(savedRequest);
@@ -2469,7 +2482,7 @@ function openBidSelectConfirmModal(request, bid) {
   if (bidSelectConfirmDescription) {
     bidSelectConfirmDescription.innerHTML = shouldCloseEarly
       ? `견적비교 가능시간이 아직 <strong data-quote-countdown data-quote-id="${escapeHTML(request.id)}" data-countdown-mode="short" data-countdown-prefix="" data-countdown-expired="0">${escapeHTML(remainingLabel)}</strong> 남았습니다.<br />종료하고 선택할까요?`
-      : "선택하신 견적은 이후 변경할 수 없습니다. 연락처 공개 범위를 선택한 뒤 확인을 눌러주세요.";
+      : "선택하신 견적은 이후 변경할 수 없습니다. 선택한 판매자에게만 연락처가 공개됩니다.";
   }
   if (confirmBidSelectBtn) {
     confirmBidSelectBtn.textContent = shouldCloseEarly ? "네 종료하고 선택합니다" : "확인";
@@ -2482,8 +2495,6 @@ function openBidSelectConfirmModal(request, bid) {
     <div><span>현재 순위</span><strong>${rankInfo.rank ? `${rankInfo.rank}위 / ${rankInfo.total}개 제안` : "순위 확인중"}</strong></div>
     <div><span>제안 금액</span><strong>${formatPrice(bid.price)}</strong></div>
   `;
-  const selectedScopeInput = document.querySelector("input[name='contactReleaseScope'][value='selected']");
-  if (selectedScopeInput) selectedScopeInput.checked = true;
   bidSelectConfirmModal.hidden = false;
 }
 
@@ -2494,7 +2505,7 @@ function closeBidSelectConfirmModal() {
   if (bidSelectConfirmTitle) bidSelectConfirmTitle.textContent = "이 견적을 선택하시겠습니까?";
   if (bidSelectConfirmDescription) {
     bidSelectConfirmDescription.textContent =
-      "선택하신 견적은 이후 변경할 수 없습니다. 연락처 공개 범위를 선택한 뒤 확인을 눌러주세요.";
+      "선택하신 견적은 이후 변경할 수 없습니다. 선택한 판매자에게만 연락처가 공개됩니다.";
   }
   if (confirmBidSelectBtn) confirmBidSelectBtn.textContent = "확인";
   if (cancelBidSelectBtn) cancelBidSelectBtn.textContent = "취소";
@@ -2626,7 +2637,7 @@ async function confirmBidSelection() {
       return;
     }
 
-    const scope = document.querySelector("input[name='contactReleaseScope']:checked")?.value === "top3" ? "top3" : "selected";
+    const scope = "selected";
     let savedRequest = null;
     if (canUseApiServer()) {
       const serverResult = await selectBidOnServer(request, bid, scope);
@@ -2641,10 +2652,7 @@ async function confirmBidSelection() {
     if (savedRequest) {
       Object.assign(request, savedRequest);
     } else {
-      const releasedBidIds =
-        scope === "top3"
-          ? Array.from(new Set([...getBidsForRequest(request.id).slice(0, 3).map((item) => item.id), bid.id]))
-          : [bid.id];
+      const releasedBidIds = [bid.id];
       request.selectedBidId = bid.id;
       request.contactReleaseScope = scope;
       request.contactReleasedBidIds = releasedBidIds;
@@ -3495,7 +3503,7 @@ sellerLoginForm.addEventListener("submit", async (event) => {
     ]);
 
     activeSellerId = loginId;
-    writeActiveSellerSession(loginId);
+    writeActiveSellerSession(loginId, loginResult.sessionToken);
     activeSellerTab = "all";
     resetSellerFilterState();
     setSellerLoginMessage("");

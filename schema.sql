@@ -78,6 +78,8 @@ CREATE TABLE IF NOT EXISTS customer_quotes (
   quote_number TEXT NOT NULL UNIQUE,
   customer TEXT NOT NULL,
   phone TEXT NOT NULL,
+  phone_hash TEXT DEFAULT '',
+  phone_ciphertext TEXT DEFAULT '',
   items TEXT NOT NULL,
   quote_type TEXT DEFAULT '',
   purchase_purpose TEXT DEFAULT '',
@@ -121,6 +123,7 @@ CREATE TABLE IF NOT EXISTS customer_quotes (
 
 CREATE INDEX IF NOT EXISTS idx_customer_quotes_quote_number ON customer_quotes(quote_number);
 CREATE INDEX IF NOT EXISTS idx_customer_quotes_phone ON customer_quotes(phone);
+CREATE INDEX IF NOT EXISTS idx_customer_quotes_phone_hash ON customer_quotes(phone_hash);
 
 CREATE TABLE IF NOT EXISTS quote_phone_verifications (
   id TEXT PRIMARY KEY,

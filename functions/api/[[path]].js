@@ -1,10 +1,11 @@
 import { getHomeCases } from "../home-cases.js";
+import { protectCustomerPhone, customerPhoneHash, readCustomerPhone, customerPhoneWithinSevenDays, fullyMaskCustomerPhone } from "../phone-vault.js";
 
 const jsonHeaders = {
   "Content-Type": "application/json; charset=utf-8",
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, X-Admin-Token, X-Lplan-Sync-Token",
+  "Access-Control-Allow-Headers": "Content-Type, X-Admin-Token, X-Lplan-Sync-Token, X-Seller-Session, X-Customer-Access",
   "Cache-Control": "no-store",
 };
 
@@ -48,9 +49,7 @@ const PHONE_VERIFICATION_HOURLY_LIMIT = 5;
 const NAVER_SHOPPING_CLIENT_ID_DEFAULT = "x1CsXB5ZCYULxcGnclGq";
 const LPLAN_SYNC_TOKEN_DEFAULT = "pickquote-lplan-sync-v1";
 const MASTER_SELLER_ID = "pickgj";
-const MASTER_SELLER_PASSWORD = "qwer1234!!";
-const MASTER_SELLER_PASSWORD_HASH =
-  "pbkdf2$100000$67612d7069636b2d6d61737465722d73$23a61a5e679dd6475f9ddca3667166c9ea839ff7de5eed9de20a7e8964f4408c";
+const SELLER_SESSION_HOURS = 12;
 
 function solapiValue(env, key) {
   const bundledValue = String(SOLAPI_DEFAULTS[key] || "").trim();
@@ -554,111 +553,6 @@ function normalizeApprovedSeller(row) {
   };
 }
 
-async function isMasterSellerLogin(sellerId, password) {
-  if (String(sellerId || "").trim() !== MASTER_SELLER_ID) return false;
-  const typedPassword = String(password || "").trim();
-  if (typedPassword === MASTER_SELLER_PASSWORD) return true;
-  return safelyVerifyPassword(typedPassword, MASTER_SELLER_PASSWORD_HASH);
-}
-
-async function upsertMasterSeller(env) {
-  const now = new Date().toISOString();
-  const masterRow = {
-    id: "seller-master-pickgj",
-    status: "approved",
-    seller_id: MASTER_SELLER_ID,
-    password: MASTER_SELLER_PASSWORD_HASH,
-    channel: "픽견적",
-    branch: "운영본부",
-    branch_region: "전국",
-    manager: "마스터 관리자",
-    manager_position: "관리자",
-    phone: "010-6631-2323",
-    card_image: "",
-    card_image_key: "",
-    memo: "운영자 마스터 계정",
-    consent_json: "{}",
-    requested_at: now,
-    reviewed_at: now,
-    review_memo: "마스터 계정 자동 복구",
-    approved_at: now,
-  };
-
-  const existing = await env.DB.prepare(
-    "SELECT id FROM approved_sellers WHERE id = ? OR seller_id = ? LIMIT 1"
-  )
-    .bind(masterRow.id, MASTER_SELLER_ID)
-    .first();
-
-  if (existing?.id) {
-    await env.DB.prepare(
-      `UPDATE approved_sellers SET
-        status = ?,
-        password = ?,
-        channel = ?,
-        branch = ?,
-        branch_region = ?,
-        manager = ?,
-        manager_position = ?,
-        phone = ?,
-        memo = ?,
-        consent_json = ?,
-        reviewed_at = ?,
-        review_memo = ?,
-        approved_at = ?
-       WHERE id = ?`
-    )
-      .bind(
-        masterRow.status,
-        masterRow.password,
-        masterRow.channel,
-        masterRow.branch,
-        masterRow.branch_region,
-        masterRow.manager,
-        masterRow.manager_position,
-        masterRow.phone,
-        masterRow.memo,
-        masterRow.consent_json,
-        masterRow.reviewed_at,
-        masterRow.review_memo,
-        masterRow.approved_at,
-        existing.id
-      )
-      .run();
-  } else {
-    await env.DB.prepare(
-      `INSERT INTO approved_sellers
-        (id, status, seller_id, password, channel, branch, branch_region, manager, manager_position, phone,
-         card_image, card_image_key, memo, consent_json, requested_at, reviewed_at, review_memo, approved_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-    )
-    .bind(
-      masterRow.id,
-      masterRow.status,
-      masterRow.seller_id,
-      masterRow.password,
-      masterRow.channel,
-      masterRow.branch,
-      masterRow.branch_region,
-      masterRow.manager,
-      masterRow.manager_position,
-      masterRow.phone,
-      masterRow.card_image,
-      masterRow.card_image_key,
-      masterRow.memo,
-      masterRow.consent_json,
-      masterRow.requested_at,
-      masterRow.reviewed_at,
-      masterRow.review_memo,
-      masterRow.approved_at
-    )
-    .run();
-  }
-
-  return env.DB.prepare("SELECT * FROM approved_sellers WHERE seller_id = ? AND status = 'approved' LIMIT 1")
-    .bind(MASTER_SELLER_ID)
-    .first();
-}
 
 function normalizeMessage(row) {
   if (!row) return null;
@@ -907,7 +801,7 @@ function normalizeCustomerQuote(row, images = []) {
     id: row.id,
     quoteNumber: row.quote_number,
     customer: row.customer,
-    phone: row.phone,
+    phone: fullyMaskCustomerPhone(row.phone_ciphertext || row.phone_hash || row.phone),
     items: row.items,
     quoteType: row.quote_type || "",
     purchasePurpose: row.purchase_purpose || "",
@@ -1052,8 +946,79 @@ async function ensureColumns(env, table, columns) {
   }
 }
 
+async function ensureSellerSessions(env) {
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS seller_sessions (
+    token_hash TEXT PRIMARY KEY, seller_id TEXT NOT NULL,
+    created_at TEXT NOT NULL, expires_at TEXT NOT NULL
+  )`).run();
+  await env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_seller_sessions_seller ON seller_sessions(seller_id)").run();
+}
+
+async function createSellerSession(env, sellerId) {
+  await ensureSellerSessions(env);
+  const token = `${crypto.randomUUID()}${crypto.randomUUID()}`;
+  const now = new Date();
+  await env.DB.prepare("INSERT INTO seller_sessions (token_hash, seller_id, created_at, expires_at) VALUES (?, ?, ?, ?)")
+    .bind(await sha256Hex(token), sellerId, now.toISOString(), new Date(now.getTime() + SELLER_SESSION_HOURS * 3600000).toISOString()).run();
+  return token;
+}
+
+async function getAuthenticatedSeller(env, request) {
+  const token = String(request.headers.get("X-Seller-Session") || "").trim();
+  if (!token) return null;
+  try {
+    return await env.DB.prepare(`SELECT s.* FROM approved_sellers s
+      JOIN seller_sessions session ON session.seller_id = s.seller_id
+      WHERE session.token_hash = ? AND session.expires_at > ? AND s.status = 'approved' LIMIT 1`)
+      .bind(await sha256Hex(token), new Date().toISOString()).first();
+  } catch {
+    return null;
+  }
+}
+
+async function logoutSeller(env, request) {
+  const token = String(request.headers.get("X-Seller-Session") || "").trim();
+  if (token) {
+    await ensureSellerSessions(env);
+    await env.DB.prepare("DELETE FROM seller_sessions WHERE token_hash = ?").bind(await sha256Hex(token)).run();
+  }
+  return json({ ok: true });
+}
+
+async function ensureCustomerAccessTokens(env) {
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS customer_access_tokens (
+    token_hash TEXT NOT NULL, quote_id TEXT NOT NULL, expires_at TEXT NOT NULL,
+    PRIMARY KEY (token_hash, quote_id)
+  )`).run();
+  await env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_customer_access_tokens_quote ON customer_access_tokens(quote_id)").run();
+}
+
+async function issueCustomerAccessToken(env, quoteIds) {
+  if (!quoteIds.length) return "";
+  await ensureCustomerAccessTokens(env);
+  const token = `${crypto.randomUUID()}${crypto.randomUUID()}`;
+  const hash = await sha256Hex(token);
+  const expiresAt = new Date(Date.now() + 15 * 60000).toISOString();
+  await env.DB.batch(quoteIds.map((id) => env.DB.prepare(
+    "INSERT INTO customer_access_tokens (token_hash, quote_id, expires_at) VALUES (?, ?, ?)"
+  ).bind(hash, id, expiresAt)));
+  return token;
+}
+
+async function hasCustomerAccess(env, request, quoteId) {
+  const token = String(request.headers.get("X-Customer-Access") || "").trim();
+  if (!token || !quoteId) return false;
+  await ensureCustomerAccessTokens(env);
+  const row = await env.DB.prepare(
+    "SELECT 1 FROM customer_access_tokens WHERE token_hash = ? AND quote_id = ? AND expires_at > ? LIMIT 1"
+  ).bind(await sha256Hex(token), quoteId, new Date().toISOString()).first();
+  return Boolean(row);
+}
+
 async function ensureCustomerQuoteColumns(env) {
   await ensureColumns(env, "customer_quotes", [
+    ["phone_hash", "TEXT DEFAULT ''"],
+    ["phone_ciphertext", "TEXT DEFAULT ''"],
     ["thumbnail_image", "TEXT DEFAULT ''"],
     ["thumbnail_image_key", "TEXT DEFAULT ''"],
     ["quote_expires_at", "TEXT DEFAULT ''"],
@@ -1089,6 +1054,7 @@ async function ensureCustomerQuoteColumns(env) {
     ["image_type", "TEXT DEFAULT 'full'"],
     ["expires_at", "TEXT DEFAULT ''"],
   ]);
+  await env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_customer_quotes_phone_hash ON customer_quotes(phone_hash)").run();
 }
 
 async function ensureSellerColumns(env) {
@@ -1142,23 +1108,24 @@ async function createUniqueQuoteNumber(env, preferred) {
 async function getPreviousQuoteStats(env, customer, phone) {
   const normalizedPhone = normalizePhone(phone);
   if (!customer || !normalizedPhone) return { submissionCount: 1, previousLowestPrice: 0 };
+  const hash = await customerPhoneHash(env, normalizedPhone);
 
   const countRow = await env.DB.prepare(
     `SELECT COUNT(*) AS total
      FROM customer_quotes
-     WHERE customer = ? AND REPLACE(REPLACE(phone, '-', ''), ' ', '') = ?`
+     WHERE customer = ? AND (phone_hash = ? OR REPLACE(REPLACE(phone, '-', ''), ' ', '') = ?)`
   )
-    .bind(customer, normalizedPhone)
+    .bind(customer, hash, normalizedPhone)
     .first();
 
   const previousQuote = await env.DB.prepare(
     `SELECT id
      FROM customer_quotes
-     WHERE customer = ? AND REPLACE(REPLACE(phone, '-', ''), ' ', '') = ?
+     WHERE customer = ? AND (phone_hash = ? OR REPLACE(REPLACE(phone, '-', ''), ' ', '') = ?)
      ORDER BY created_at DESC
      LIMIT 1`
   )
-    .bind(customer, normalizedPhone)
+    .bind(customer, hash, normalizedPhone)
     .first();
 
   let previousLowestPrice = 0;
@@ -1260,12 +1227,14 @@ async function queueQuoteClosedNotice(env, quote, claimedAt) {
   if (isTestCustomerName(quote?.customer)) {
     return { ok: true, skipped: true, reason: "test-customer" };
   }
+  const customerPhone = await readCustomerPhone(env, quote);
+  if (!customerPhone) return { ok: true, skipped: true, reason: "phone-access-expired" };
   try {
     return await queueAlimtalk(env, {
       type: "customer-quote-closed",
       targetRole: "customer",
       targetName: quote.customer,
-      targetPhone: quote.phone,
+      targetPhone: customerPhone,
       title: "견적 비교 시간이 종료되었습니다",
       body: `${quote.customer} 고객님의 견적 비교 시간이 종료되었습니다. 견적번호 ${quote.quote_number}의 제안 내역을 확인해 주세요.`,
       relatedId: quote.id,
@@ -1341,6 +1310,25 @@ async function deleteR2Object(env, key) {
 async function cleanupExpiredStoredData(env) {
   await ensureCustomerQuoteColumns(env);
   const now = new Date().toISOString();
+  const phoneAccessCutoff = addDays(now, -7);
+  const legacyPhones = await env.DB.prepare(
+    "SELECT id, phone, created_at FROM customer_quotes WHERE phone != '' LIMIT 100"
+  ).all();
+  for (const quote of legacyPhones.results || []) {
+    const protectedPhone = await protectCustomerPhone(env, quote.phone);
+    await env.DB.prepare("UPDATE customer_quotes SET phone = '', phone_hash = ?, phone_ciphertext = ? WHERE id = ?")
+      .bind(protectedPhone.hash, customerPhoneWithinSevenDays(quote) ? protectedPhone.ciphertext : "", quote.id).run();
+    if (!customerPhoneWithinSevenDays(quote)) {
+      await env.DB.prepare("DELETE FROM alimtalk_queue WHERE related_id = ?").bind(quote.id).run();
+    }
+  }
+  const expiredPhones = await env.DB.prepare(
+    "SELECT id FROM customer_quotes WHERE created_at < ? AND phone_ciphertext != '' LIMIT 100"
+  ).bind(phoneAccessCutoff).all();
+  for (const quote of expiredPhones.results || []) {
+    await env.DB.prepare("UPDATE customer_quotes SET phone_ciphertext = '' WHERE id = ?").bind(quote.id).run();
+    await env.DB.prepare("DELETE FROM alimtalk_queue WHERE related_id = ?").bind(quote.id).run();
+  }
   const expiredFullImages = await env.DB.prepare(
     `SELECT id, object_key
      FROM quote_images
@@ -1360,23 +1348,18 @@ async function cleanupExpiredStoredData(env) {
   const expiredQuotes = await env.DB.prepare(
     `SELECT id
      FROM customer_quotes
-     WHERE personal_expires_at != ''
-       AND personal_expires_at < ?
+     WHERE created_at < ?
      LIMIT 100`
   )
-    .bind(now)
+    .bind(addDays(now, -30))
     .all();
 
+  if ((expiredQuotes.results || []).length) await ensureQuoteDeletionDependencies(env);
   for (const quote of expiredQuotes.results || []) {
-    const images = await env.DB.prepare("SELECT object_key FROM quote_images WHERE quote_id = ?").bind(quote.id).all();
-    for (const image of images.results || []) {
-      await deleteR2Object(env, image.object_key);
-    }
-    await env.DB.prepare("DELETE FROM quote_images WHERE quote_id = ?").bind(quote.id).run();
-    await env.DB.prepare("DELETE FROM bids WHERE quote_id = ?").bind(quote.id).run();
-    await env.DB.prepare("DELETE FROM reviews WHERE quote_id = ?").bind(quote.id).run();
-    await env.DB.prepare("DELETE FROM customer_quotes WHERE id = ?").bind(quote.id).run();
+    await permanentlyDeleteCustomerQuote(env, quote.id);
   }
+  await ensureCustomerAccessTokens(env);
+  await env.DB.prepare("DELETE FROM customer_access_tokens WHERE expires_at < ?").bind(now).run();
 
   // 개인정보 처리방침의 1년 보유정책과 실제 서버 보관기간을 맞춥니다.
   // 아직 생성되지 않은 선택 기능 테이블은 기존 서비스에 영향을 주지 않도록 개별적으로 무시합니다.
@@ -1421,6 +1404,8 @@ async function cleanupExpiredStoredData(env) {
   return {
     fullImagesDeleted: Number((expiredFullImages.results || []).length),
     quotesDeleted: Number((expiredQuotes.results || []).length),
+    legacyPhonesProtected: Number((legacyPhones.results || []).length),
+    expiredPhonesErased: Number((expiredPhones.results || []).length),
     ...cleanupResults,
   };
 }
@@ -1455,13 +1440,16 @@ async function migrateLegacySellerPasswords(env) {
 }
 
 async function runMaintenance(env) {
-  await closeExpiredQuotes(env);
   const cleanup = await cleanupExpiredStoredData(env);
+  await closeExpiredQuotes(env);
   const passwordMigration = await migrateLegacySellerPasswords(env);
   await ensureQuotePhoneVerificationTable(env);
+  await env.DB.prepare("UPDATE quote_phone_verifications SET phone_masked = '***-****-****' WHERE phone_masked != '***-****-****'").run();
   const verificationCleanup = await env.DB.prepare(
     "DELETE FROM quote_phone_verifications WHERE requested_at < ?"
   ).bind(new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()).run();
+  await ensureSellerSessions(env);
+  await env.DB.prepare("DELETE FROM seller_sessions WHERE expires_at < ?").bind(new Date().toISOString()).run();
   return json({
     ok: true,
     cleanup,
@@ -1818,8 +1806,7 @@ async function hashPhoneVerificationValue(env, purpose, value) {
 
 function maskVerificationPhone(phone) {
   const digits = normalizePhone(phone);
-  if (digits.length < 7) return "***";
-  return `${digits.slice(0, 3)}-****-${digits.slice(-4)}`;
+  return fullyMaskCustomerPhone(digits);
 }
 
 function createPhoneVerificationCode() {
@@ -2713,10 +2700,6 @@ async function loginSeller(env, request) {
     .first();
 
   let authenticated = row ? await safelyVerifyPassword(password, row.password) : false;
-  if (!authenticated && (await isMasterSellerLogin(sellerId, password))) {
-    row = await upsertMasterSeller(env);
-    authenticated = Boolean(row);
-  }
 
   if (!row || !authenticated) {
     return json(
@@ -2741,7 +2724,7 @@ async function loginSeller(env, request) {
   } catch (error) {
     console.warn("판매자 접속 기록 저장에 실패했습니다.", error);
   }
-  return json({ ok: true, row: normalizeApprovedSeller(updated) });
+  return json({ ok: true, row: normalizeApprovedSeller(updated), sessionToken: await createSellerSession(env, updated.seller_id) });
 }
 
 async function findSellerAccount(env, request) {
@@ -2809,9 +2792,15 @@ async function resetSellerPassword(env, request) {
   return json({ ok: true, message: "비밀번호가 새 비밀번호로 재설정되었습니다." });
 }
 
-async function getApprovedSellers(env) {
+async function getApprovedSellers(env, request) {
   await ensureSellerColumns(env);
-  const result = await env.DB.prepare("SELECT * FROM approved_sellers ORDER BY approved_at DESC").all();
+  const seller = await getAuthenticatedSeller(env, request);
+  if (!hasValidAdminToken(request, env) && !seller) {
+    return json({ ok: false, message: "로그인이 필요합니다." }, 401);
+  }
+  const result = hasValidAdminToken(request, env)
+    ? await env.DB.prepare("SELECT * FROM approved_sellers ORDER BY approved_at DESC").all()
+    : await env.DB.prepare("SELECT * FROM approved_sellers WHERE seller_id = ? LIMIT 1").bind(seller.seller_id).all();
   return json({ ok: true, rows: result.results.map(normalizeApprovedSeller) });
 }
 
@@ -3031,8 +3020,9 @@ async function updateCustomerQuote(env, request, id) {
   if (Object.prototype.hasOwnProperty.call(body, "phone")) {
     const phone = normalizePhone(body.phone || "");
     if (!phone) return json({ ok: false, message: "고객 연락처를 입력해주세요." }, 400);
-    updates.push("phone = ?");
-    values.push(phone);
+    const protectedPhone = await protectCustomerPhone(env, phone);
+    updates.push("phone = '', phone_hash = ?, phone_ciphertext = ?");
+    values.push(protectedPhone.hash, protectedPhone.ciphertext);
   }
   setText("items", "items");
   setText("quoteType", "quote_type");
@@ -3063,17 +3053,20 @@ async function updateCustomerQuote(env, request, id) {
   return json({ ok: true, row: normalizeCustomerQuote({ ...row, bid_count: bids.length, bids }, images) });
 }
 
-async function deleteCustomerQuote(env, request, id) {
+async function ensureQuoteDeletionDependencies(env) {
   await ensureCustomerQuoteColumns(env);
   await ensureReviewsTable(env);
   await ensureQuotePhoneVerificationTable(env);
   await ensureLplanTrainingTable(env);
   await ensureAnonymousConsultationTables(env);
   await ensureQuoteDeletionAuditTable(env);
+  await ensureCustomerAccessTokens(env);
   await purgeDeletedQuoteLogStorage(env);
+}
 
+async function permanentlyDeleteCustomerQuote(env, id) {
   const quote = await env.DB.prepare("SELECT * FROM customer_quotes WHERE id = ?").bind(id).first();
-  if (!quote) return json({ ok: false, message: "고객 견적을 찾을 수 없습니다." }, 404);
+  if (!quote) return false;
 
   const images = await env.DB.prepare("SELECT object_key FROM quote_images WHERE quote_id = ?").bind(id).all();
   const objectKeys = [...new Set([
@@ -3081,7 +3074,7 @@ async function deleteCustomerQuote(env, request, id) {
     ...(images.results || []).map((image) => image.object_key || ""),
   ].filter(Boolean))];
   if (objectKeys.length && !env.FILES) {
-    return json({ ok: false, message: "견적 이미지 저장소에 연결할 수 없어 삭제를 중단했습니다." }, 503);
+    throw new Error("견적 이미지 저장소에 연결할 수 없어 삭제를 중단했습니다.");
   }
   for (const key of objectKeys) await env.FILES.delete(key);
 
@@ -3099,41 +3092,57 @@ async function deleteCustomerQuote(env, request, id) {
     env.DB.prepare("DELETE FROM alimtalk_queue WHERE related_id = ?").bind(id),
     env.DB.prepare("DELETE FROM lplan_quote_patterns WHERE source_quote_id = ?").bind(id),
     env.DB.prepare("DELETE FROM quote_phone_verifications WHERE id = ?").bind(verificationId),
+    env.DB.prepare("DELETE FROM customer_access_tokens WHERE quote_id = ?").bind(id),
     env.DB.prepare("DELETE FROM customer_quotes WHERE id = ?").bind(id),
   ]);
 
+  return true;
+}
+
+async function deleteCustomerQuote(env, request, id) {
+  await ensureQuoteDeletionDependencies(env);
+  const deleted = await permanentlyDeleteCustomerQuote(env, id);
+  if (!deleted) return json({ ok: false, message: "고객 견적을 찾을 수 없습니다." }, 404);
   return json({ ok: true, id, permanentlyDeleted: true });
 }
 
 async function getCustomerQuotes(env, request) {
   await ensureCustomerQuoteColumns(env);
-  await closeExpiredQuotes(env);
   const url = new URL(request.url);
   const customer = String(url.searchParams.get("customer") || "").trim();
   const normalizedCustomer = normalizeText(customer);
   const phone = normalizePhone(url.searchParams.get("phone"));
   const quoteNumber = String(url.searchParams.get("quoteNumber") || "").trim();
   const scope = String(url.searchParams.get("scope") || "seller");
-  const sellerId = String(url.searchParams.get("sellerId") || "").trim();
+  const seller = await getAuthenticatedSeller(env, request);
+  const sellerId = String(seller?.seller_id || "");
   const now = new Date().toISOString();
   const isAdminView = hasValidAdminToken(request, env);
+  if (scope === "lookup" && (!customer || !/^01[016789]\d{7,8}$/.test(phone))) {
+    return json({ ok: false, message: "고객명과 휴대전화번호를 확인해주세요." }, 400);
+  }
+  if (scope !== "lookup" && !isAdminView && !seller) {
+    return json({ ok: false, message: "판매자 로그인이 필요합니다." }, 401);
+  }
+  await closeExpiredQuotes(env);
 
   let rows = [];
   if (scope === "lookup" && customer && phone) {
+    const phoneHash = await customerPhoneHash(env, phone);
     const result = quoteNumber
       ? await env.DB.prepare(
           `SELECT * FROM customer_quotes
-           WHERE REPLACE(customer, ' ', '') = ? AND REPLACE(REPLACE(phone, '-', ''), ' ', '') = ? AND quote_number = ? AND (personal_expires_at = '' OR personal_expires_at >= ?)
+           WHERE REPLACE(customer, ' ', '') = ? AND (phone_hash = ? OR REPLACE(REPLACE(phone, '-', ''), ' ', '') = ?) AND quote_number = ? AND created_at >= ?
            ORDER BY created_at DESC`
         )
-          .bind(normalizedCustomer, phone, quoteNumber, now)
+          .bind(normalizedCustomer, phoneHash, phone, quoteNumber, addDays(now, -30))
           .all()
       : await env.DB.prepare(
           `SELECT * FROM customer_quotes
-           WHERE REPLACE(customer, ' ', '') = ? AND REPLACE(REPLACE(phone, '-', ''), ' ', '') = ? AND (personal_expires_at = '' OR personal_expires_at >= ?)
+           WHERE REPLACE(customer, ' ', '') = ? AND (phone_hash = ? OR REPLACE(REPLACE(phone, '-', ''), ' ', '') = ?) AND created_at >= ?
            ORDER BY created_at DESC`
         )
-          .bind(normalizedCustomer, phone, now)
+          .bind(normalizedCustomer, phoneHash, phone, addDays(now, -30))
           .all();
     rows = result.results || [];
   } else {
@@ -3142,10 +3151,10 @@ async function getCustomerQuotes(env, request) {
       : " AND customer NOT LIKE '%테스트용%' AND customer NOT LIKE '%테스트%'";
     const result = await env.DB.prepare(
       `SELECT * FROM customer_quotes
-       WHERE (personal_expires_at = '' OR personal_expires_at >= ?)
+       WHERE created_at >= ?
          ${visibilityClause}
        ORDER BY created_at DESC`
-    ).bind(now).all();
+    ).bind(addDays(now, -30)).all();
     rows = result.results || [];
   }
 
@@ -3161,10 +3170,18 @@ async function getCustomerQuotes(env, request) {
       : storedImages.filter((image) => image.image_type === "thumbnail");
     const bids = bidMap.get(String(row.id)) || [];
     const quote = normalizeCustomerQuote({ ...row, bid_count: bids.length, bids }, images);
+    let selectedSeller = false;
+    if (seller && row.selected_bid_id && customerPhoneWithinSevenDays(row)) {
+      const selectedBid = await env.DB.prepare("SELECT seller_id FROM bids WHERE id = ? AND quote_id = ? LIMIT 1")
+        .bind(row.selected_bid_id, row.id).first();
+      selectedSeller = selectedBid?.seller_id === sellerId;
+      if (selectedSeller) quote.phone = await readCustomerPhone(env, row);
+    }
+    if (scope !== "lookup" && !isAdminView && !selectedSeller) quote.customer = "고객님";
     normalized.push(scope === "lookup" ? hideSellerOnlyQuoteFields(quote) : quote);
   }
 
-  return json({ ok: true, rows: normalized });
+  return json({ ok: true, rows: normalized, accessToken: scope === "lookup" ? await issueCustomerAccessToken(env, rows.map((row) => row.id)) : "" });
 }
 
 async function createCustomerQuote(env, request, executionContext) {
@@ -3189,8 +3206,9 @@ async function createCustomerQuote(env, request, executionContext) {
   const quoteNumber = await createUniqueQuoteNumber(env, body.quoteNumber);
   const quoteExpiresAt = addHours(createdAt, QUOTE_DURATION_HOURS);
   const fullImagesExpiresAt = addDays(createdAt, 7);
-  const personalExpiresAt = addDays(createdAt, 365);
+  const personalExpiresAt = addDays(createdAt, 30);
   const previousStats = await getPreviousQuoteStats(env, String(body.customer || "").trim(), body.phone);
+  const protectedPhone = await protectCustomerPhone(env, body.phone);
   const submissionAudit = await createQuoteSubmissionAudit(
     env,
     request,
@@ -3252,15 +3270,15 @@ async function createCustomerQuote(env, request, executionContext) {
        submission_region, submission_city, submission_user_agent, submission_device_type,
        submission_browser_name, submission_cf_ray, submission_consent_version,
        submission_consented_at, submission_recorded_at, submission_phone_verified,
-       submission_phone_verification_id, submission_phone_verified_at)
+       submission_phone_verification_id, submission_phone_verified_at, phone_hash, phone_ciphertext)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   )
     .bind(
       id,
       quoteNumber,
       body.customer,
-      body.phone,
+      "",
       body.items,
       body.quoteType || "",
       body.purchasePurpose || "",
@@ -3299,7 +3317,9 @@ async function createCustomerQuote(env, request, executionContext) {
       submissionAudit.recordedAt,
       submissionAudit.phoneVerified,
       submissionAudit.phoneVerificationId,
-      submissionAudit.phoneVerifiedAt
+      submissionAudit.phoneVerifiedAt,
+      protectedPhone.hash,
+      protectedPhone.ciphertext
     )
     .run();
 
@@ -3381,7 +3401,7 @@ async function createCustomerQuote(env, request, executionContext) {
     failed: 1,
     errors: [error?.message || "앱 푸시 발송 처리 중 오류가 발생했습니다."],
   }));
-  return json({ ok: true, row: hideSellerOnlyQuoteFields(normalizedRow), pushResult }, 201);
+  return json({ ok: true, row: hideSellerOnlyQuoteFields(normalizedRow), accessToken: await issueCustomerAccessToken(env, [id]), pushResult }, 201);
 }
 
 async function getBids(env, request) {
@@ -3390,6 +3410,10 @@ async function getBids(env, request) {
   const quoteId = String(url.searchParams.get("quoteId") || "").trim();
   const sellerId = String(url.searchParams.get("sellerId") || "").trim();
   const isAdminView = hasValidAdminToken(request, env);
+  const seller = await getAuthenticatedSeller(env, request);
+  const customerAccess = quoteId ? await hasCustomerAccess(env, request, quoteId) : false;
+  if (!isAdminView && !seller && !customerAccess) return json({ ok: false, message: "로그인이 필요합니다." }, 401);
+  if (sellerId && !isAdminView && seller?.seller_id !== sellerId) return json({ ok: false, message: "접근 권한이 없습니다." }, 403);
   let sql = `SELECT b.*, q.selected_bid_id AS quote_selected_bid_id
              FROM bids b
              LEFT JOIN customer_quotes q ON q.id = b.quote_id`;
@@ -3415,7 +3439,8 @@ async function getBids(env, request) {
   const rows = (result.results || []).map((row) => {
     const bid = normalizeBid(row);
     const isSelectedBid = String(row.quote_selected_bid_id || "") === String(row.id || "");
-    return isAdminView || isSelectedBid ? bid : hideBidIdentityBeforeSelection(bid);
+    return isAdminView || (customerAccess && isSelectedBid) || (seller && row.seller_id === seller.seller_id)
+      ? bid : hideBidIdentityBeforeSelection(bid);
   });
   return json({ ok: true, rows });
 }
@@ -3504,6 +3529,10 @@ async function createReview(env, request) {
 async function upsertBid(env, request) {
   await closeExpiredQuotes(env);
   const body = await request.json();
+  const seller = await getAuthenticatedSeller(env, request);
+  if (!seller || seller.seller_id !== String(body.sellerId || "")) {
+    return json({ ok: false, message: "판매자 로그인이 필요합니다." }, 403);
+  }
   const visibilityQuote = await env.DB.prepare("SELECT customer FROM customer_quotes WHERE id = ?").bind(body.requestId || "").first();
   if (isTestQuote(visibilityQuote) && !isMasterSellerId(body.sellerId)) {
     return json({ ok: false, code: "TEST_QUOTE_MASTER_ONLY", message: "테스트용 견적은 마스터 계정만 확인하고 제안할 수 있습니다." }, 403);
@@ -3605,7 +3634,7 @@ async function upsertBid(env, request) {
         type: "customer-bid-received",
         targetRole: "customer",
         targetName: quote.customer,
-        targetPhone: quote.phone,
+        targetPhone: await readCustomerPhone(env, quote),
         relatedId: quote.id,
         title: "새로운 판매자 제안이 도착했습니다",
         body: `${quote.customer} 고객님의 견적번호 ${quote.quote_number}에 새로운 판매자 제안이 도착했습니다.`,
@@ -3629,11 +3658,13 @@ async function selectBid(env, request) {
   const body = await request.json();
   const quoteId = String(body.requestId || "").trim();
   const bidId = String(body.bidId || "").trim();
-  const scope = body.contactReleaseScope === "top3" ? "top3" : "selected";
+  const scope = "selected";
   if (!quoteId || !bidId) return json({ ok: false, message: "선택할 견적 정보가 필요합니다." }, 400);
+  if (!await hasCustomerAccess(env, request, quoteId)) return json({ ok: false, message: "고객 견적을 다시 조회해주세요." }, 403);
 
   const quote = await env.DB.prepare("SELECT * FROM customer_quotes WHERE id = ?").bind(quoteId).first();
   if (!quote) return json({ ok: false, message: "고객 견적을 찾을 수 없습니다." }, 404);
+  if (!customerPhoneWithinSevenDays(quote)) return json({ ok: false, message: "연락처 열람 기간이 지났습니다." }, 410);
   if (quote.selected_bid_id && quote.selected_bid_id !== bidId) {
     return json({ ok: false, message: "이미 선택한 견적은 변경할 수 없습니다." }, 400);
   }
@@ -3642,10 +3673,7 @@ async function selectBid(env, request) {
   const selectedBid = quoteBids.find((bid) => bid.id === bidId);
   if (!selectedBid) return json({ ok: false, message: "선택할 판매자 제안을 찾을 수 없습니다." }, 404);
 
-  const releasedBidIds =
-    scope === "top3"
-      ? Array.from(new Set([...quoteBids.slice(0, 3).map((bid) => bid.id), bidId]))
-      : [bidId];
+  const releasedBidIds = [bidId];
   const now = new Date().toISOString();
   await env.DB.prepare(
     `UPDATE customer_quotes
@@ -3672,7 +3700,7 @@ async function selectBid(env, request) {
           "#{매니저명}": bid.manager || bid.seller || "",
           "#{견적번호}": quote.quote_number,
           "#{고객명}": quote.customer,
-          "#{고객연락처}": formatPhoneNumber(quote.phone),
+          "#{고객연락처}": formatPhoneNumber(await readCustomerPhone(env, quote)),
         },
       });
     }
@@ -3694,16 +3722,15 @@ async function closeQuoteByCustomer(env, request) {
   const body = await request.json();
   const quoteId = String(body.requestId || "").trim();
   const customer = normalizeText(body.customer);
-  const phone = normalizePhone(body.phone);
 
-  if (!quoteId || !customer || !phone) {
+  if (!quoteId || !customer) {
     return json({ ok: false, message: "견적 종료를 확인할 고객님 정보가 필요합니다." }, 400);
   }
 
   const quote = await env.DB.prepare("SELECT * FROM customer_quotes WHERE id = ?").bind(quoteId).first();
   if (!quote) return json({ ok: false, message: "고객님 견적을 찾을 수 없습니다." }, 404);
 
-  if (normalizeText(quote.customer) !== customer || normalizePhone(quote.phone) !== phone) {
+  if (normalizeText(quote.customer) !== customer || !await hasCustomerAccess(env, request, quoteId)) {
     return json({ ok: false, message: "견적 등록 정보와 일치하지 않아 종료할 수 없습니다." }, 403);
   }
 
@@ -4776,10 +4803,6 @@ async function authenticateBrandSeller(env, sellerIdValue, passwordValue) {
     .bind(sellerId)
     .first();
   let authenticated = row ? await safelyVerifyPassword(password, row.password) : false;
-  if (!authenticated && (await isMasterSellerLogin(sellerId, password))) {
-    row = await upsertMasterSeller(env);
-    authenticated = Boolean(row);
-  }
   if (!row || !authenticated) return { ok: false, status: 401, message: "승인된 판매자 계정의 아이디 또는 비밀번호가 일치하지 않습니다." };
   return { ok: true, row };
 }
@@ -5092,6 +5115,7 @@ async function createAnonymousConsultation(env, request) {
   if (context.error) return context.error;
   if (String(body.role || 'customer') === 'seller') return json({ ok: false, message: '판매자는 고객의 질문 이후에만 익명상담에 답할 수 있습니다.' }, 403);
   const { quoteId, bidId, bid } = context;
+  if (!await hasCustomerAccess(env, request, quoteId)) return json({ ok: false, message: '고객 인증이 필요합니다.' }, 403);
   if (context.quote.selected_bid_id) return json({ ok: false, message: '판매자 선택이 완료되어 익명상담을 시작할 수 없습니다.' }, 403);
   const existing = await env.DB.prepare('SELECT * FROM anonymous_consultations WHERE quote_id = ? AND bid_id = ? LIMIT 1').bind(quoteId, bidId).first();
   const now = new Date().toISOString();
@@ -5104,6 +5128,8 @@ async function getAnonymousConsultation(env, request) {
   const url = new URL(request.url);
   const sellerId = String(url.searchParams.get('sellerId') || '').trim();
   if (sellerId && !url.searchParams.get('id') && !url.searchParams.get('quoteId')) {
+    const seller = await getAuthenticatedSeller(env, request);
+    if (String(seller?.seller_id || '') !== sellerId) return json({ ok: false, message: '판매자 인증이 필요합니다.' }, 403);
     await blockPastStoreIdentityQuestions(env, { sellerId });
     const rooms = await env.DB.prepare(`SELECT c.*, q.items, q.quote_number, q.region, b.price,
       (SELECT CASE WHEN m.blocked = 1 THEN '개인정보 보호 정책에 의해 내용이 가려졌습니다.' ELSE m.body END FROM anonymous_consultation_messages m WHERE m.consultation_id = c.id ORDER BY m.created_at DESC LIMIT 1) AS last_message,
@@ -5131,6 +5157,12 @@ async function getAnonymousConsultation(env, request) {
   if (!id) return json({ ok: false, message: '상담 정보가 필요합니다.' }, 400);
   const consultation = await env.DB.prepare('SELECT * FROM anonymous_consultations WHERE id = ? LIMIT 1').bind(id).first();
   if (!consultation) return json({ ok: false, message: '익명상담을 찾을 수 없습니다.' }, 404);
+  const seller = await getAuthenticatedSeller(env, request);
+  if (!hasValidAdminToken(request, env)
+    && String(seller?.seller_id || '') !== String(consultation.seller_id || '')
+    && !await hasCustomerAccess(env, request, consultation.quote_id)) {
+    return json({ ok: false, message: '상담 열람 권한이 없습니다.' }, 403);
+  }
   await blockPastStoreIdentityQuestions(env, { consultationId: id });
   const rows = await env.DB.prepare('SELECT id, sender_role, body, blocked, block_reason, created_at FROM anonymous_consultation_messages WHERE consultation_id = ? ORDER BY created_at ASC').bind(id).all();
   const safeRows = (rows.results || []).map((row) => ({
@@ -5144,8 +5176,14 @@ async function markAnonymousConsultationRead(env, request, consultationId) {
   await ensureAnonymousConsultationTables(env);
   const body = await request.json().catch(() => ({}));
   const role = String(body.role || '') === 'seller' ? 'seller' : 'customer';
-  const consultation = await env.DB.prepare('SELECT id FROM anonymous_consultations WHERE id = ? LIMIT 1').bind(consultationId).first();
+  const consultation = await env.DB.prepare('SELECT id, quote_id, seller_id FROM anonymous_consultations WHERE id = ? LIMIT 1').bind(consultationId).first();
   if (!consultation) return json({ ok: false, message: '익명상담을 찾을 수 없습니다.' }, 404);
+  if (role === 'seller') {
+    const seller = await getAuthenticatedSeller(env, request);
+    if (String(seller?.seller_id || '') !== String(consultation.seller_id || '')) return json({ ok: false, message: '판매자 인증이 필요합니다.' }, 403);
+  } else if (!await hasCustomerAccess(env, request, consultation.quote_id)) {
+    return json({ ok: false, message: '고객 인증이 필요합니다.' }, 403);
+  }
   const now = new Date().toISOString();
   const column = role === 'seller' ? 'seller_read_at' : 'customer_read_at';
   await env.DB.prepare(`UPDATE anonymous_consultations SET ${column} = ?, updated_at = ? WHERE id = ?`).bind(now, now, consultationId).run();
@@ -5163,6 +5201,12 @@ async function postAnonymousConsultationMessage(env, request) {
   if (body.attachment || body.attachments || body.file || body.image) return json({ ok: false, blocked: true, message: '선택 전 익명상담은 개인정보 보호를 위해 텍스트만 사용할 수 있습니다.' }, 400);
   const consultation = await env.DB.prepare('SELECT * FROM anonymous_consultations WHERE id = ? LIMIT 1').bind(consultationId).first();
   if (!consultation || consultation.status !== 'open') return json({ ok: false, message: '현재 상담을 이용할 수 없습니다.' }, 403);
+  if (role === 'seller') {
+    const seller = await getAuthenticatedSeller(env, request);
+    if (String(seller?.seller_id || '') !== String(consultation.seller_id || '')) return json({ ok: false, message: '판매자 인증이 필요합니다.' }, 403);
+  } else if (!await hasCustomerAccess(env, request, consultation.quote_id)) {
+    return json({ ok: false, message: '고객 인증이 필요합니다.' }, 403);
+  }
   const quote = await env.DB.prepare('SELECT selected_bid_id FROM customer_quotes WHERE id = ? LIMIT 1').bind(consultation.quote_id).first();
   if (quote?.selected_bid_id) return json({ ok: false, message: '판매자 선택이 완료되어 익명상담이 종료되었습니다.' }, 403);
   if (role === 'seller' && senderId !== String(consultation.seller_id || '')) return json({ ok: false, message: '판매자 상담 권한을 확인할 수 없습니다.' }, 403);
@@ -5777,7 +5821,7 @@ export async function onRequest(context) {
     return updateSellerApplication(env, request, decodeURIComponent(pathParts.slice(1).join("/")));
   }
 
-  if (path === "approved-sellers" && method === "GET") return getApprovedSellers(env);
+  if (path === "approved-sellers" && method === "GET") return getApprovedSellers(env, request);
   if (path.startsWith("approved-sellers/") && method === "PATCH") {
     const denied = requireAdmin(request, env);
     if (denied) return denied;
@@ -5893,9 +5937,11 @@ export async function onRequest(context) {
 export async function onScheduled(context) {
   const { env } = context;
   if (!env.DB) return;
+  await cleanupExpiredStoredData(env);
   await processScheduledSellerQuoteAlimtalks(env);
   await closeExpiredQuotes(env);
-  await cleanupExpiredStoredData(env);
   await cleanupExpiredAnonymousConsultations(env);
   await migrateLegacySellerPasswords(env);
+  await ensureQuotePhoneVerificationTable(env);
+  await env.DB.prepare("UPDATE quote_phone_verifications SET phone_masked = '***-****-****' WHERE phone_masked != '***-****-****'").run();
 }
