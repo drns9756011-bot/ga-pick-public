@@ -2,13 +2,13 @@
 body.customer-refresh #lookupPage { background: #fff; padding-bottom: 100px; min-height: calc(100dvh - 80px); }
 body.customer-refresh #lookupPage > .page-head { max-width: 460px; padding: 36px 20px 0; margin: auto; text-align: left; border: 0; }
 body.customer-refresh #lookupPage .back-btn { min-height: 32px; padding: 0; margin-bottom: 20px; background: none; border: 0; border-radius: 0; color: #65717c; font-size: 13px; box-shadow: none; }
-body.customer-refresh #lookupPage .lookup-page-title { margin: 0 0 12px; color: #202b36; font-size: 30px; line-height: 1.35; font-weight: 750; }
+body.customer-refresh #lookupPage .lookup-page-title { margin: 0 0 12px; color: #202b36; font-size: 30px; line-height: 1.3; font-weight: 750; }
 body.customer-refresh #lookupPage .page-head > p { font-size: 15px; line-height: 1.65; color: #65717c; margin: 0; }
 body.customer-refresh #lookupPage .lookup-layout { display: block; max-width: 460px; padding: 28px 20px 0; margin: auto; }
 body.customer-refresh #lookupPage .lookup-form { padding: 0; border: 0; background: transparent; border-radius: 0; box-shadow: none; gap: 24px; min-width: 0; }
 body.customer-refresh #lookupPage .lookup-form .form-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
 body.customer-refresh #lookupPage .lookup-form label { font-size: 14px; font-weight: 650; gap: 8px; color: #364452; }
-body.customer-refresh #lookupPage .lookup-form input { min-width: 0; min-height: 52px; padding: 12px 14px; font-size: 16px; border: 1px solid #d5dde5; border-radius: 6px; background: #fff; }
+body.customer-refresh #lookupPage .lookup-form input { min-width: 0; min-height: 52px; padding: 12px 14px; font-size: 16px; border: 1px solid #d5dde5; border-radius: 6px; background: #fff; transition: border-color .18s ease, box-shadow .18s ease; }
 body.customer-refresh #lookupPage .lookup-form input::placeholder { color: #89939e; }
 body.customer-refresh #lookupPage .primary-btn { min-height: 50px; border-radius: 6px; background: #123b67; border-color: #123b67; font-size: 15px; box-shadow: none; }
 body.customer-refresh #lookupPage .secondary-btn { min-height: 44px; border-radius: 6px; font-size: 14px; box-shadow: none; }
