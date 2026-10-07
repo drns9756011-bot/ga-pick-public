@@ -2094,7 +2094,6 @@ function renderHomeFeeds() {
           return `
             <article>
               <div class="pick-case-copy">
-                <span>실제 비교 사례</span>
                 <h3>${escapeHTML(region)} · ${escapeHTML(purpose)}</h3>
                 <p>${escapeHTML(homeQuoteTitle(request))}</p>
               </div>

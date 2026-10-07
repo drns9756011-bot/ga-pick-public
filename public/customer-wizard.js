@@ -533,9 +533,39 @@
 
     bindNativeFields();
     form.addEventListener("pickquote:wizard-reset", resetWizardState);
+    document.querySelector("[data-home-quote-start]")?.addEventListener("click", startHomeQuote);
     hideNativeFields();
     render();
     syncAllFields();
+  }
+
+  function selectQuoteType(value) {
+    if (!quoteTypes.some((type) => type.value === value)) return false;
+    fields.quoteType.value = value;
+    state.recommendationMode = "";
+    fields.price.value = "0";
+    if (value === "with_quote") {
+      state.selectedProducts = [];
+      state.productOptions = {};
+      clearAiRecommendation();
+    }
+    return true;
+  }
+
+  function startHomeQuote() {
+    const value = document.querySelector('[name="homeQuoteMode"]:checked')?.value;
+    const changed = value !== fields.quoteType.value;
+    if (!quoteTypes.some((type) => type.value === value)) return;
+    if (changed) selectQuoteType(value);
+    if (changed || state.stepIndex === 0) state.stepIndex = 1;
+    clearMessage();
+    syncAllFields();
+    render();
+    const heading = form.querySelector(".wizard-step > h3");
+    if (heading) {
+      heading.tabIndex = -1;
+      heading.focus({ preventScroll: true });
+    }
   }
 
   function resetWizardState() {
@@ -746,8 +776,8 @@
             <p>제품을 살펴본 뒤 필요한 품목만 선택해 견적을 요청할 수 있습니다.</p>
           </div>
           <div class="wizard-brand-guide-links">
-            <a href="/brand"><img src="/assets/brand-hero-lg-products.png" alt="LG전자 제품" /><span>LG전자 브랜드관</span></a>
-            <a href="/brand"><img src="/assets/brand-hero-samsung-products.png" alt="삼성전자 제품" /><span>삼성전자 브랜드관</span></a>
+            <a href="/brand"><img src="/assets/appliances-lg.webp" alt="LG전자 제품" /><span>LG전자 브랜드관</span></a>
+            <a href="/brand"><img src="/assets/appliances-samsung.webp" alt="삼성전자 제품" /><span>삼성전자 브랜드관</span></a>
           </div>
         </aside>
       `
@@ -1105,14 +1135,7 @@
     root.querySelectorAll("input[data-choice-name]").forEach((input) => {
       input.addEventListener("change", () => {
         if (input.name === "wizardQuoteTypeProxy") {
-          fields.quoteType.value = input.value;
-          state.recommendationMode = "";
-          fields.price.value = "0";
-          if (input.value === "with_quote") {
-            state.selectedProducts = [];
-            state.productOptions = {};
-            clearAiRecommendation();
-          }
+          selectQuoteType(input.value);
         }
         if (input.name === "wizardPurposeProxy") fields.purpose.value = input.value;
         if (input.name === "wizardBrandProxy") {

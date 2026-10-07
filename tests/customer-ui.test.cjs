@@ -12,7 +12,11 @@ const home = (html) => html.slice(html.indexOf('<section class="page is-active" 
 
 test('all route shells contain the same redesigned home and form anchors', () => {
   const baseline = home(read(shells[0]));
-  assert.ok(baseline.includes('class="pq-hero-scene"'));
+  assert.ok(baseline.includes('data-home-quote-start'));
+  assert.ok(baseline.includes('name="homeQuoteMode" value="with_quote" checked'));
+  assert.ok(baseline.includes('name="homeQuoteMode" value="without_quote"'));
+  assert.doesNotMatch(baseline, /pq-hero-scene|pq-benefit-strip|pq-privacy/);
+  assert.ok(baseline.indexOf('id="homeCaseStudy"') < baseline.indexOf('class="pq-process-band"'));
   for (const file of shells) {
     const html = read(file);
     assert.equal(home(html), baseline);
@@ -27,12 +31,62 @@ test('all route shells contain the same redesigned home and form anchors', () =>
 test('all customer pages load one version of the shared design without ad scripts', () => {
   for (const file of [...shells, ...catalogs]) {
     const html = read(file);
-    assert.ok(html.includes('/customer-ui.css?v=20261007-full-redesign'), file);
+    assert.ok(html.includes('/customer-ui.css?v=20261007-action-first'), file);
+    assert.ok(html.includes('href="/assets/suit-variable.woff2"'), file);
     assert.ok(html.includes('customer-refresh'), file);
     assert.doesNotMatch(html, /adsbygoogle|PICK SUBSCRIPTION|PICK SHOPPING/);
     assert.doesNotMatch(html, /page-guide\.js/);
   }
-  assert.ok(statSync(path.join(root, 'assets/customer-home-room-20261007.webp')).size < 120000);
+  for (const asset of ['appliances-lg.webp', 'appliances-samsung.webp']) {
+    assert.ok(statSync(path.join(root, 'assets', asset)).size < 50000, asset);
+  }
+  assert.ok(statSync(path.join(root, 'assets/suit-variable.woff2')).size < 700000);
+  assert.ok(statSync(path.join(root, 'assets/suit-LICENSE.txt')).size > 1000);
+  assert.match(read('customer-ui.css'), /src: url\("\/assets\/suit-variable\.woff2"\)/);
+  for (const file of ['styles.css', 'brand/brand.css', 'commerce/commerce.css']) {
+    assert.doesNotMatch(read(file), /@import.*https:/, file);
+  }
+});
+
+test('home quote choice uses the existing wizard and resumes matching drafts', () => {
+  const source = read('customer-wizard.js');
+  let choice = 'without_quote';
+  let clears = 0;
+  let renders = 0;
+  const fields = { quoteType: { value: '' }, price: { value: '1500' }, customer: { value: 'draft' } };
+  const state = { stepIndex: 0, recommendationMode: 'ai', selectedProducts: ['TV'], productOptions: { TV: {} } };
+  const context = vm.createContext({
+    fields, state,
+    quoteTypes: [{ value: 'with_quote' }, { value: 'without_quote' }],
+    document: { querySelector: () => ({ value: choice }) },
+    form: { querySelector: () => null },
+    clearAiRecommendation: () => { clears++; },
+    clearMessage: () => {},
+    syncAllFields: () => {},
+    render: () => { renders++; },
+  });
+  vm.runInContext(source.slice(source.indexOf('  function selectQuoteType('), source.indexOf('  function resetWizardState(')), context);
+  context.startHomeQuote();
+  assert.equal(fields.quoteType.value, 'without_quote');
+  assert.equal(state.stepIndex, 1);
+  assert.equal(fields.customer.value, 'draft');
+  assert.deepEqual(state.selectedProducts, ['TV']);
+  state.stepIndex = 4;
+  fields.price.value = '2000';
+  context.startHomeQuote();
+  assert.equal(state.stepIndex, 4);
+  assert.equal(fields.price.value, '2000');
+  choice = 'with_quote';
+  context.startHomeQuote();
+  assert.equal(state.stepIndex, 1);
+  assert.equal(state.selectedProducts.length, 0);
+  assert.equal(Object.keys(state.productOptions).length, 0);
+  assert.equal(clears, 1);
+  assert.equal(fields.customer.value, 'draft');
+  choice = 'invalid';
+  context.startHomeQuote();
+  assert.equal(fields.quoteType.value, 'with_quote');
+  assert.equal(renders, 3);
 });
 
 test('catalog controls remain present and the subscription video follows products', () => {
