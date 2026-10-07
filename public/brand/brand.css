@@ -388,14 +388,6 @@ body.brand-server-is-loading { cursor: wait; }
   body.brand-hall-body {
     width: 100%;
     max-width: 100%;
-    overflow-x: hidden !important;
-  }
-
-  .brand-hall-main {
-    width: 100% !important;
-    max-width: 100% !important;
-    margin: 0 auto 50px !important;
-    padding: 0 !important;
     overflow-x: clip;
   }
 
@@ -543,14 +535,6 @@ body.brand-server-is-loading { cursor: wait; }
   }
 
   .brand-hall-proof-strip,
-  .brand-hall-toolbar,
-  .brand-hall-grid,
-  .brand-hall-guide {
-    max-width: calc(100% - 24px) !important;
-    margin-left: 12px !important;
-    margin-right: 12px !important;
-  }
-
   .brand-package-card {
     width: 100%;
     max-width: 100%;

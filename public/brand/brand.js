@@ -12,10 +12,6 @@
   const detailContent = document.querySelector("#packageDetailContent");
   const detailConsultButton = document.querySelector("#packageDetailConsult");
   const money = new Intl.NumberFormat("ko-KR");
-  const heroPreview = document.querySelector("#heroPackagePreview");
-  const heroBrowse = document.querySelector("#heroBrowsePackages");
-  const heroConsult = document.querySelector("#heroConsultFirst");
-  const heroSeeMore = document.querySelector("#heroSeeMore");
   const packageToolbar = document.querySelector(".brand-hall-toolbar");
 
   const escapeHtml = (value) => String(value ?? "").replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[char]));
@@ -75,14 +71,15 @@
   }
 
   async function apiJson(path, options = {}) {
-    showServerLoading();
+    const { showLoading = true, ...fetchOptions } = options;
+    if (showLoading) showServerLoading();
     try {
-      const response = await fetch(path, { ...options, headers: { "Content-Type": "application/json", ...(options.headers || {}) } });
+      const response = await fetch(path, { ...fetchOptions, headers: { "Content-Type": "application/json", ...(fetchOptions.headers || {}) } });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok || payload.ok === false) throw new Error(payload.message || "서버 요청을 처리하지 못했습니다.");
       return payload;
     } finally {
-      hideServerLoading();
+      if (showLoading) hideServerLoading();
     }
   }
 
@@ -102,39 +99,22 @@
     });
   }
 
-  function renderHeroPreview() {
-    if (!heroPreview) return;
-    const rows = state.rows.slice(0, 3);
-    if (!rows.length) {
-      heroPreview.innerHTML = `<div class="brand-hero-preview-empty">등록된 패키지를 준비 중입니다.</div>`;
-      if (heroConsult) heroConsult.disabled = true;
-      return;
-    }
-    if (heroConsult) heroConsult.disabled = false;
-    heroPreview.innerHTML = rows.map((row) => {
-      const image = row.coverImage
-        ? `<img src="${escapeHtml(row.coverImage)}" alt="${escapeHtml(row.title)}" loading="eager" />`
-        : `<div class="brand-hero-preview-fallback">${escapeHtml((row.brand || "P").slice(0,1))}</div>`;
-      return `<article class="brand-hero-preview-card" data-hero-package-id="${escapeHtml(row.id)}">
-        <div class="brand-hero-preview-media">${image}</div>
-        <div class="brand-hero-preview-copy"><strong>${escapeHtml(row.title)}</strong><b>${formatPrice(row.salePrice)}~</b><small>${escapeHtml(row.channel || "픽견적 브랜드관")}</small></div>
-      </article>`;
-    }).join("");
-  }
-
   function render() {
-    renderHeroPreview();
     const rows = filteredRows();
-    count.textContent = rows.length ? `현재 ${rows.length}개의 패키지를 확인할 수 있습니다.` : "조건에 맞는 패키지가 없습니다.";
+    count.textContent = `${rows.length}개 패키지`;
     if (!rows.length) {
-      grid.innerHTML = `<div class="brand-empty"><b>P</b><h3>등록된 패키지가 아직 없습니다.</h3><p>픽견적에서 새로운 제휴 패키지를 등록하면 이곳에 바로 표시됩니다.</p></div>`;
+      grid.innerHTML = `<div class="brand-empty"><h3>등록된 패키지가 아직 없습니다.</h3></div>`;
       return;
     }
     grid.innerHTML = rows.map((row) => {
       const image = row.coverImage ? `<img src="${escapeHtml(row.coverImage)}" alt="${escapeHtml(row.title)} 패키지 이미지" loading="lazy" />` : `<div class="brand-package-fallback"><b>${escapeHtml((row.brand || "P").slice(0,1))}</b><span>패키지 이미지 준비중</span></div>`;
       return `<article class="brand-package-card brand-package-card-visual">
         <button class="brand-package-image brand-package-image-button" type="button" data-detail-id="${escapeHtml(row.id)}" aria-label="${escapeHtml(row.title)} 상세보기">${image}</button>
-        <div class="brand-package-price brand-package-price-only">${Number(row.originalPrice || 0) > 0 ? `<del>${formatPrice(row.originalPrice)}</del>` : ""}<strong>${formatPrice(row.salePrice)}<small>~</small></strong></div>
+        <div class="brand-package-body">
+          <span class="brand-package-channel">${escapeHtml(row.channel || row.brand || "가전 패키지")}</span>
+          <h3>${escapeHtml(row.title || "가전 패키지")}</h3>
+          <div class="brand-package-price">${Number(row.originalPrice || 0) > 0 ? `<del>${formatPrice(row.originalPrice)}</del>` : ""}<strong>${formatPrice(row.salePrice)}<small>~</small></strong></div>
+        </div>
       </article>`;
     }).join("");
   }
@@ -189,26 +169,19 @@
   }
 
   async function loadPackages() {
-    grid.innerHTML = `<div class="brand-empty"><b>P</b><h3>패키지를 불러오고 있습니다.</h3><p>잠시만 기다려주세요.</p></div>`;
+    grid.innerHTML = `<div class="brand-empty"><h3>패키지를 불러오는 중입니다.</h3></div>`;
     try {
-      const result = await apiJson("/api/brand-packages");
+      const result = await apiJson("/api/brand-packages", { showLoading: false });
       state.rows = Array.isArray(result.rows) ? result.rows : [];
       populateFilters();
       render();
     } catch (error) {
       count.textContent = "패키지 조회 실패";
-      grid.innerHTML = `<div class="brand-empty"><b>!</b><h3>브랜드관 정보를 불러오지 못했습니다.</h3><p>${escapeHtml(error.message)}</p></div>`;
+      grid.innerHTML = `<div class="brand-empty"><h3>브랜드관 정보를 불러오지 못했습니다.</h3><p>${escapeHtml(error.message)}</p></div>`;
     }
   }
 
   const scrollToPackages = () => packageToolbar?.scrollIntoView({ behavior: "smooth", block: "start" });
-  heroBrowse?.addEventListener("click", scrollToPackages);
-  heroSeeMore?.addEventListener("click", scrollToPackages);
-  heroConsult?.addEventListener("click", () => { if (state.rows[0]) openConsult(state.rows[0].id); else scrollToPackages(); });
-  heroPreview?.addEventListener("click", (event) => {
-    const card = event.target.closest("[data-hero-package-id]");
-    if (card) openConsult(card.dataset.heroPackageId);
-  });
 
   brandFilters?.addEventListener("click", (event) => {
     const button = event.target.closest("button[data-brand]");

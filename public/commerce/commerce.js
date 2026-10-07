@@ -454,11 +454,10 @@ function getCategoryList() {
 function renderCategories() {
   if (!categoryGrid) return;
   const list = ["전체", ...getCategoryList()];
-  categoryGrid.innerHTML = list.map((category, index) => `
-    <button class="commerce-category${category === activeCategory ? " is-active" : ""}" type="button" data-category="${escapeHtml(category)}">
-      <b>${String(index + 1).padStart(2, "0")}</b>
+  categoryGrid.innerHTML = list.map((category) => `
+    <button class="commerce-category${category === activeCategory ? " is-active" : ""}" type="button" data-category="${escapeHtml(category)}" aria-pressed="${category === activeCategory}">
       <strong>${escapeHtml(category)}</strong>
-      <small>${(category === "전체" ? commerceItems.length : commerceItems.filter((item) => item.category === category).length).toLocaleString("ko-KR")}개 상품</small>
+      <small>${(category === "전체" ? commerceItems.length : commerceItems.filter((item) => item.category === category).length).toLocaleString("ko-KR")}</small>
     </button>
   `).join("");
 }

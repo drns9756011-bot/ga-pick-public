@@ -1935,6 +1935,7 @@ function stopHomeCaseRelay() {
 function startHomeCaseRelay() {
   stopHomeCaseRelay();
   if (!homeCaseContent || homeCaseContent.children.length < 2) return;
+  if (homeCaseContent.scrollWidth <= homeCaseContent.clientWidth) return;
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
   let index = 0;
@@ -2083,6 +2084,7 @@ function renderHomeFeeds() {
     } else {
       homeCaseStudy.hidden = false;
       homeCaseContent.innerHTML = caseRows
+        .slice(0, 2)
         .map(({ request, quoteBids, bidCount }) => {
           const originalPrice = Number(request.price) || 0;
           const region = String(request.region || request.installRegion || "지역 비공개").trim();

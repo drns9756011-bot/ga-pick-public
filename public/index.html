@@ -2,16 +2,13 @@
 <html lang="ko">
   <head>
     <meta charset="utf-8" />
-    <meta name="pickquote-build" content="20260811-main-redesign-v21-worker" />
+    <meta name="pickquote-build" content="20261007-full-redesign" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 
     <!-- 픽견적은 시스템 다크모드와 무관하게 항상 라이트 UI를 사용합니다. -->
     <meta name="color-scheme" content="light" />
     <meta name="supported-color-schemes" content="light" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-<!-- Google AdSense site ownership / ads script -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9286156779528114"
-         crossorigin="anonymous"></script>
     <title>픽견적 | 혼수·입주 가전 견적 비교 - LG·삼성 조건 비교</title>
     <link rel="canonical" href="https://ga-pick.com/" />
     <link rel="shortcut icon" href="/favicon-navy.ico?v=20260813-symbol-cutout" />
@@ -163,12 +160,11 @@
     </style>
   <link rel="stylesheet" href="/styles.css?v=20261005-chat-ui" />
     <script defer src="/privacy-policy.js?v=20261004-quote-privacy"></script>
-  <script defer src="/app.js?v=20261005-chat-ui"></script>
+  <script defer src="/app.js?v=20261007-full-redesign"></script>
     <script defer src="/customer-wizard.js?v=20261004-official-models"></script>
-    <script defer src="/page-guide.js?v=20260731-mobile-modal-safe-area"></script>
     <link rel="preload" href="https://cdn.jsdelivr.net/gh/sun-typeface/SUIT@2/fonts/variable/woff2/SUIT-Variable.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="stylesheet" href="/customer-ui.css?v=20261007-design-skill" />
-    <link rel="stylesheet" href="/customer-lookup-ui.css?v=20261007-refined" />
+    <link rel="stylesheet" href="/customer-ui.css?v=20261007-full-redesign" />
+    <link rel="stylesheet" href="/customer-lookup-ui.css?v=20261007-full-redesign" />
 </head>
   <body class="customer-refresh">
     <header class="topbar">
@@ -185,137 +181,64 @@
 
     <main>
       <section class="page is-active" id="homePage" data-page="home">
-        <section class="pick-app-home" aria-label="픽견적 홈">
-          <div class="pick-home-shell">
-            <section class="customer-hero" aria-labelledby="pickHomeTitle">
-              <div class="customer-hero-copy">
-                <h1 id="pickHomeTitle">가전 견적,<br />한 번에 비교하세요.</h1>
-                <p class="customer-hero-lead">받은 견적서나 필요한 가전을 등록하고<br />가격과 배송·설치 조건을 비교하세요.</p>
+        <div class="pq-home">
+          <section class="pq-hero" aria-labelledby="pickHomeTitle">
+            <img class="pq-hero-scene" src="/assets/customer-home-room-20261007.webp" width="1536" height="1024" alt="냉장고와 세탁기, TV가 놓인 밝은 가전 공간" fetchpriority="high" />
+            <div class="pq-hero-inner">
+              <div class="pq-hero-copy">
+                <h1 id="pickHomeTitle">혼수·입주 가전<br />견적 비교</h1>
+                <p>받은 견적서 한 장으로,<br />여러 판매자의 가격과 혜택을 비교하세요.</p>
+                <button class="pq-primary" type="button" data-view="customer">무료로 견적 비교하기 <span aria-hidden="true">→</span></button>
+                <button class="pq-return" type="button" data-view="lookup">내 견적 확인 <span aria-hidden="true">↗</span></button>
               </div>
-              <img class="customer-hero-products" src="/assets/brand-hero-lg-products.png" width="960" height="380" alt="냉장고, TV, 세탁기 등 비교 가능한 가전제품" fetchpriority="high" />
-              <div class="customer-hero-actions">
-                <button type="button" class="customer-primary" data-view="customer">무료로 견적 비교하기 <span aria-hidden="true">→</span></button>
-                <p class="customer-hero-start-note">견적서가 없어도 시작할 수 있어요.</p>
-              </div>
-              <div class="customer-hero-foot"><span>고객 이용료 <strong>0원</strong></span><span>판매자 선택 전 <strong>연락처 비공개</strong></span></div>
-              <button type="button" class="customer-text-link customer-return-link" data-view="lookup">이미 등록했다면, 내 견적 확인</button>
-            </section>
+            </div>
+          </section>
+          <div class="pq-benefit-strip"><span>고객 이용료 <strong>0원</strong></span><span>견적서 없이도 <strong>등록 가능</strong></span><span>판매자 선택 전 <strong>연락처 비공개</strong></span></div>
 
+          <section class="pq-section pq-discover" aria-labelledby="pickBrandTitle">
+            <div class="pq-section-head"><h2 id="pickBrandTitle">가전관 둘러보기</h2></div>
+            <div class="pq-entry-grid">
+              <a href="/brand" class="pq-entry"><div class="pq-entry-media"><img src="/assets/lg-electronics-logo.svg" alt="LG전자" /></div><div><strong>LG전자 브랜드관</strong><span>제품과 패키지</span></div><span class="pq-entry-arrow" aria-hidden="true">↗</span></a>
+              <a href="/brand" class="pq-entry"><div class="pq-entry-media"><img src="/assets/samsung-electronics-logo.svg" alt="삼성전자" /></div><div><strong>삼성전자 브랜드관</strong><span>제품과 패키지</span></div><span class="pq-entry-arrow" aria-hidden="true">↗</span></a>
+              <a href="/subscription" class="pq-entry"><div class="pq-entry-media"><img src="/assets/brand-hero-lg-products.png" alt="구독 가능한 가전" /></div><div><strong>가전 구독관</strong><span>월 구독료와 추가 혜택</span></div><span class="pq-entry-arrow" aria-hidden="true">↗</span></a>
+              <a href="/shopping" class="pq-entry"><div class="pq-entry-media"><img src="/assets/brand-hero-samsung-products.png" alt="쇼핑 가능한 가전" /></div><div><strong>가전 쇼핑관</strong><span>필요한 제품만 골라 구매</span></div><span class="pq-entry-arrow" aria-hidden="true">↗</span></a>
+            </div>
+          </section>
 
+          <section class="pq-process-band" aria-labelledby="pickFlowTitle">
+            <div class="pq-section">
+              <div class="pq-section-head"><h2 id="pickFlowTitle">등록부터 상담까지</h2><span>간단한 세 단계</span></div>
+              <div class="pq-process-grid">
+                <article><span class="pq-step-number">1</span><h3>견적 등록</h3><p>견적서가 없다면<br />필요한 가전부터 고르세요.</p><img class="pq-step-products" src="/assets/brand-hero-lg-products.png" alt="" loading="lazy" /></article>
+                <article><span class="pq-step-number">2</span><h3>제안 비교</h3><p>최대 72시간 동안<br />가격과 구매 조건을 비교하세요.</p><div class="pq-step-compare"><span>가격<strong>견적 금액</strong></span><span>배송<strong>희망 일정</strong></span><span>설치<strong>포함 조건</strong></span></div></article>
+                <article><span class="pq-step-number">3</span><h3>판매자 선택</h3><p>마음에 드는 제안을 고르면<br />선택한 판매자와 상담할 수 있어요.</p><div class="pq-step-select"><img src="/assets/pickquote-official-symbol-navy.png" alt="" loading="lazy" /><span>선택한 판매자에게만<br />연락처 공개</span></div></article>
+                <article class="pq-process-free"><span>고객 이용료</span><strong>0<small>원</small></strong><h3>비교는 무료로.<br />선택은 여유롭게.</h3></article>
+              </div>
+            </div>
+          </section>
 
-            <section class="pick-flow-home" aria-labelledby="pickFlowTitle">
-              <div class="pick-home-heading">
-                <h2 id="pickFlowTitle">등록부터 상담까지 간단하게</h2>
-              </div>
-              <div class="customer-journey">
-                <ol class="customer-journey-steps">
-                  <li>
-                    <span class="journey-number">1</span>
-                    <h3>견적 등록</h3>
-                    <p>견적서 또는<br />필요한 가전 등록</p>
-                    <div class="journey-preview" aria-label="견적 등록 화면 예시">
-                      <span class="journey-preview-label">필요한 가전</span>
-                      <img src="/assets/brand-hero-lg-products.png" alt="" loading="lazy" width="210" height="95" />
-                      <div class="journey-preview-line"><span>냉장고 · 세탁기</span><span>선택</span></div>
-                      <span class="journey-preview-action">견적 등록하기</span>
-                    </div>
-                  </li>
-                  <li>
-                    <span class="journey-number">2</span>
-                    <h3>제안 비교</h3>
-                    <p>가격·배송·설치<br />조건을 한눈에</p>
-                    <div class="journey-preview" aria-label="제안 비교 화면 예시">
-                      <span class="journey-preview-label">도착한 제안</span>
-                      <div class="journey-preview-line"><span>제안 A</span><b>가격 비교</b></div>
-                      <div class="journey-preview-line"><span>제안 B</span><b>배송 확인</b></div>
-                      <div class="journey-preview-line"><span>제안 C</span><b>설치 확인</b></div>
-                      <span class="journey-preview-caption">가격 · 배송 · 설치</span>
-                    </div>
-                  </li>
-                  <li>
-                    <span class="journey-number">3</span>
-                    <h3>판매자 선택</h3>
-                    <p>원하는 제안을 골라<br />판매자와 상담</p>
-                    <div class="journey-preview" aria-label="판매자 선택 화면 예시">
-                      <span class="journey-preview-label">내가 고른 제안</span>
-                      <img class="journey-symbol" src="/assets/pickquote-official-symbol-navy.png" alt="" loading="lazy" width="48" height="48" />
-                      <b class="journey-preview-title">이 판매자와 상담할게요</b>
-                      <span class="journey-preview-caption">선택한 판매자에게만 연락처 공개</span>
-                      <span class="journey-preview-action">판매자 선택</span>
-                    </div>
-                  </li>
-                </ol>
-                <div class="journey-free">
-                  <span>고객 이용료</span>
-                  <strong>0<span>원</span></strong>
-                  <h3>비교는 무료로,<br />선택은 여유롭게.</h3>
-                  <p>견적 등록부터 제안 비교까지</p>
-                </div>
-              </div>
-            </section>
+          <section class="pq-section pq-privacy" aria-labelledby="pickPrivacyTitle">
+            <div><h2 id="pickPrivacyTitle">내 연락처는<br />내가 고른 판매자에게만.</h2><p>여러 판매업체에서 동시에 전화가 오는 방식이 아닙니다.</p></div>
+            <div class="pq-privacy-list"><div><span>견적 등록</span><strong>연락처 비공개</strong></div><div><span>제안 비교</span><strong>연락처 비공개</strong></div><div><span>판매자 선택</span><strong>선택한 판매자에게만 공개</strong></div></div>
+          </section>
 
-            <section class="pick-privacy-home" aria-labelledby="pickPrivacyTitle">
-              <div class="pick-home-heading">
-                <h2 id="pickPrivacyTitle">연락처 공개는 판매자를 고른 뒤에.</h2>
-              </div>
-              <ol class="pick-privacy-steps">
-                <li><span>01</span><div><strong>견적 등록</strong><p>연락처 비공개</p></div></li>
-                <li><span>02</span><div><strong>제안 비교</strong><p>연락처 비공개</p></div></li>
-                <li><span>03</span><div><strong>판매자 선택</strong><p>선택한 판매자에게만 공개</p></div></li>
-              </ol>
-              <p class="pick-privacy-emphasis">여러 판매업체에서 동시에 전화가 오는 방식이 아닙니다.</p>
-              <div class="pick-approved-note" aria-label="판매자 확인 기준">
-                <span>승인된 판매자만 제안 가능</span><span>지점·매니저 정보 확인</span><span>선택한 판매자만 연락 가능</span>
-              </div>
-            </section>
+          <section class="pq-section pick-case-home" id="homeCaseStudy" aria-labelledby="pickCaseTitle" hidden>
+            <div class="pq-section-head"><h2 id="pickCaseTitle">실제 견적 비교</h2></div><div class="pick-case-content"></div>
+          </section>
+          <section class="pq-section pick-review-home" aria-labelledby="pickReviewTitle" hidden>
+            <div class="pq-section-head"><h2 id="pickReviewTitle">고객 후기</h2></div><div class="pick-review-grid" aria-live="polite"></div>
+          </section>
 
-            <section class="pick-faq-home" aria-labelledby="pickFaqTitle">
-              <div class="pick-home-heading is-row">
-                <div><span>자주 묻는 질문</span><h2 id="pickFaqTitle">처음 이용해도 어렵지 않아요.</h2></div>
-                <button class="pick-heading-link" type="button" data-view="customer">지금 시작하기</button>
-              </div>
-              <div class="pick-faq-list">
-                <details open><summary>견적서가 없어도 요청할 수 있나요?</summary><p>네. 필요한 품목과 브랜드, 예산을 선택하면 견적서 없이도 비교 요청을 등록할 수 있어요.</p></details>
-                <details><summary>연락처가 판매자에게 바로 공개되나요?</summary><p>아니요. 제안을 비교한 뒤 고객님이 판매자를 선택했을 때만 선택한 판매자에게 공개됩니다.</p></details>
-                <details><summary>견적 비교에 비용이 드나요?</summary><p>고객님 이용료는 없습니다. 여러 판매자의 제안을 무료로 비교할 수 있어요.</p></details>
-              </div>
-            </section>
-
-            <section class="pick-case-home" id="homeCaseStudy" aria-labelledby="pickCaseTitle" hidden>
-              <div class="pick-home-heading">
-                <span>실제 비교 사례</span>
-                <h2 id="pickCaseTitle">가격과 구매 조건을 함께 비교했습니다.</h2>
-              </div>
-              <div class="pick-case-content"></div>
-            </section>
-
-            <section class="pick-review-home" aria-labelledby="pickReviewTitle" hidden>
-              <div class="pick-home-heading">
-                <span>실제 이용 후기</span>
-                <h2 id="pickReviewTitle">실제 픽견적 이용 고객 후기</h2>
-              </div>
-              <div class="pick-review-grid" aria-live="polite">
-              </div>
-            </section>
-
-            <section class="pick-brand-home" aria-labelledby="pickBrandTitle">
-              <div class="pick-home-heading is-row">
-                <div><h2 id="pickBrandTitle">우리 집에 맞는 가전 찾기</h2></div>
-              </div>
-              <div class="pick-brand-grid">
-                <a href="/brand" aria-label="LG전자 브랜드관"><img class="brand-entry-logo" src="/assets/lg-electronics-logo.svg" alt="LG전자" /><strong>LG전자 브랜드관</strong><span>인기 제품과 패키지 보기</span></a>
-                <a href="/brand" aria-label="삼성전자 브랜드관"><img class="brand-entry-logo" src="/assets/samsung-electronics-logo.svg" alt="삼성전자" /><strong>삼성전자 브랜드관</strong><span>인기 제품과 패키지 보기</span></a>
-                <a href="/subscription" aria-label="가전 구독관"><img src="/assets/brand-hero-lg-products.png" alt="가전 구독 상품" /><strong>가전 구독관</strong><span>월 구독료와 계약 조건 비교</span></a>
-                <a href="/shopping" aria-label="가전 쇼핑관"><img src="/assets/brand-hero-samsung-products.png" alt="쇼핑 가능한 가전 제품" /><strong>가전 쇼핑관</strong><span>필요한 제품만 골라서 구매</span></a>
-              </div>
-            </section>
-
-            <section class="customer-partner" aria-labelledby="partnerTitle">
-              <div><p>픽견적 파트너</p><h2 id="partnerTitle">가전 판매자이신가요?</h2></div>
-              <a href="https://partner.ga-pick.com/register">판매자 등록 <span aria-hidden="true">↗</span></a>
-            </section>
-          </div>
-        </section>
+          <section class="pq-section pq-faq" aria-labelledby="pickFaqTitle">
+            <h2 id="pickFaqTitle">자주 묻는 질문</h2>
+            <div class="pq-faq-list">
+              <details><summary>견적서가 없어도 요청할 수 있나요?</summary><p>필요한 품목과 브랜드, 예산을 선택하면 견적서 없이도 비교 요청을 등록할 수 있어요.</p></details>
+              <details><summary>연락처가 판매자에게 바로 공개되나요?</summary><p>제안을 비교한 뒤 고객님이 판매자를 선택했을 때만 선택한 판매자에게 공개됩니다.</p></details>
+              <details><summary>견적 비교에 비용이 드나요?</summary><p>고객님 이용료는 없습니다. 여러 판매자의 제안을 무료로 비교할 수 있어요.</p></details>
+            </div>
+          </section>
+          <section class="pq-partner"><div><h2>가전 판매자이신가요?</h2><a href="https://partner.ga-pick.com/register">픽견적 판매자 등록 <span aria-hidden="true">↗</span></a></div></section>
+        </div>
       </section>
 
         <section class="page" id="customerPage" data-page="customer">
