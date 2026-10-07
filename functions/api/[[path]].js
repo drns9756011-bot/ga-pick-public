@@ -1,6 +1,6 @@
 import { getHomeCases } from "../home-cases.js";
 import { getOfficialCatalog, verifyOfficialModels } from "../official-models.js";
-import { protectCustomerPhone, customerPhoneHash, readCustomerPhone, customerPhoneWithinSevenDays, fullyMaskCustomerPhone, quoteImageSignature, verifyQuoteImageSignature } from "../phone-vault.js";
+import { protectCustomerPhone, customerPhoneHash, readCustomerPhone, customerPhoneWithinSevenDays, customerPhoneRetained, customerPhoneAccessExpiresAt, customerPersonalExpiresAt, fullyMaskCustomerPhone, maskPhoneInMessage, quoteImageSignature, verifyQuoteImageSignature } from "../phone-vault.js";
 
 const jsonHeaders = {
   "Content-Type": "application/json; charset=utf-8",
@@ -555,24 +555,25 @@ function normalizeApprovedSeller(row) {
 }
 
 
-function normalizeMessage(row) {
+function normalizeMessage(row, internal = false) {
   if (!row) return null;
+  const safe = internal === true ? (value) => value : maskPhoneInMessage;
   return {
     id: row.id,
     status: row.status,
     type: row.type,
     targetRole: row.target_role || "",
     targetName: row.target_name || "",
-    targetPhone: row.target_phone || "",
+    targetPhone: internal !== true && row.target_role === "customer" ? fullyMaskCustomerPhone(row.target_phone) : (row.target_phone || ""),
     title: row.title,
-    body: row.body,
+    body: safe(row.body),
     relatedId: row.related_id || "",
     templateId: row.template_id || "",
-    variables: parseJson(row.variables_json, {}),
+    variables: safe(parseJson(row.variables_json, {})),
     solapiGroupId: row.solapi_group_id || "",
     solapiMessageId: row.solapi_message_id || "",
-    errorMessage: row.error_message || "",
-    solapiResponse: parseJson(row.solapi_response_json, null),
+    errorMessage: safe(row.error_message || ""),
+    solapiResponse: safe(parseJson(row.solapi_response_json, null)),
     scheduledAt: row.scheduled_at || "",
     createdAt: row.created_at || "",
     sentAt: row.sent_at || "",
@@ -813,6 +814,8 @@ function normalizeCustomerQuote(row, images = []) {
     memo: row.memo || "",
     status: row.status || "open",
     selectedBidId: row.selected_bid_id || null,
+    selectedAt: row.selected_at || "",
+    phoneAccessExpiresAt: customerPhoneAccessExpiresAt(row),
     contactReleaseScope: row.contact_release_scope || "selected",
     contactReleasedBidIds: parseJson(row.contact_released_bid_ids, []),
     submissionCount: Number(row.submission_count || 1),
@@ -823,7 +826,7 @@ function normalizeCustomerQuote(row, images = []) {
     thumbnailImageKey: row.thumbnail_image_key || "",
     quoteExpiresAt: row.quote_expires_at || "",
     fullImagesExpiresAt: row.full_images_expires_at || "",
-    personalExpiresAt: row.personal_expires_at || "",
+    personalExpiresAt: customerPersonalExpiresAt(row),
     createdAt: row.created_at || "",
     consent: parseJson(row.consent_json, {}),
     image: displayImages[0]?.url || thumbnailUrl,
@@ -1029,6 +1032,7 @@ async function ensureCustomerQuoteColumns(env) {
   await ensureColumns(env, "customer_quotes", [
     ["phone_hash", "TEXT DEFAULT ''"],
     ["phone_ciphertext", "TEXT DEFAULT ''"],
+    ["selected_at", "TEXT DEFAULT ''"],
     ["thumbnail_image", "TEXT DEFAULT ''"],
     ["thumbnail_image_key", "TEXT DEFAULT ''"],
     ["quote_expires_at", "TEXT DEFAULT ''"],
@@ -1319,22 +1323,32 @@ async function deleteR2Object(env, key) {
 
 async function cleanupExpiredStoredData(env, { quoteOnly = false } = {}) {
   await ensureCustomerQuoteColumns(env);
+  await env.DB.prepare(`UPDATE customer_quotes
+    SET personal_expires_at = strftime('%Y-%m-%dT%H:%M:%fZ', created_at, '+30 days')
+    WHERE julianday(created_at) IS NOT NULL AND
+      (julianday(personal_expires_at) IS NULL OR julianday(personal_expires_at) != julianday(created_at, '+30 days'))`).run();
   const now = new Date().toISOString();
   const phoneAccessCutoff = addDays(now, -7);
+  const personalCutoff = addDays(now, -30);
   const legacyPhones = await env.DB.prepare(
-    "SELECT id, phone, created_at FROM customer_quotes WHERE phone != '' LIMIT 100"
+    "SELECT id, phone, created_at, selected_at, selected_bid_id FROM customer_quotes WHERE phone != '' LIMIT 100"
   ).all();
   for (const quote of legacyPhones.results || []) {
     const protectedPhone = await protectCustomerPhone(env, quote.phone);
     await env.DB.prepare("UPDATE customer_quotes SET phone = '', phone_hash = ?, phone_ciphertext = ? WHERE id = ?")
-      .bind(protectedPhone.hash, customerPhoneWithinSevenDays(quote) ? protectedPhone.ciphertext : "", quote.id).run();
-    if (!customerPhoneWithinSevenDays(quote)) {
+      .bind(protectedPhone.hash, customerPhoneRetained(quote) ? protectedPhone.ciphertext : "", quote.id).run();
+    if (!customerPhoneRetained(quote)) {
       await env.DB.prepare("DELETE FROM alimtalk_queue WHERE related_id = ?").bind(quote.id).run();
     }
   }
   const expiredPhones = await env.DB.prepare(
-    "SELECT id FROM customer_quotes WHERE created_at < ? AND phone_ciphertext != '' LIMIT 100"
-  ).bind(phoneAccessCutoff).all();
+    `SELECT id FROM customer_quotes
+     WHERE (phone_ciphertext != '' OR EXISTS (SELECT 1 FROM alimtalk_queue a WHERE a.related_id = customer_quotes.id)) AND (
+       julianday(created_at) <= julianday(?) OR julianday(created_at) IS NULL
+       OR (COALESCE(selected_at, '') != '' AND (julianday(selected_at) <= julianday(?) OR julianday(selected_at) IS NULL))
+       OR (COALESCE(selected_at, '') = '' AND COALESCE(selected_bid_id, '') != '' AND julianday(created_at) <= julianday(?))
+     ) LIMIT 100`
+  ).bind(personalCutoff, phoneAccessCutoff, phoneAccessCutoff).all();
   for (const quote of expiredPhones.results || []) {
     await env.DB.prepare("UPDATE customer_quotes SET phone_ciphertext = '' WHERE id = ?").bind(quote.id).run();
     await env.DB.prepare("DELETE FROM alimtalk_queue WHERE related_id = ?").bind(quote.id).run();
@@ -1358,10 +1372,10 @@ async function cleanupExpiredStoredData(env, { quoteOnly = false } = {}) {
   const expiredQuotes = await env.DB.prepare(
     `SELECT id
      FROM customer_quotes
-     WHERE created_at < ?
+     WHERE created_at <= ?
      LIMIT 100`
   )
-    .bind(addDays(now, -30))
+    .bind(personalCutoff)
     .all();
 
   if ((expiredQuotes.results || []).length) await ensureQuoteDeletionDependencies(env);
@@ -3060,6 +3074,7 @@ async function updateCustomerQuote(env, request, id) {
 
   setText("customer", "customer");
   if (Object.prototype.hasOwnProperty.call(body, "phone")) {
+    if (!customerPhoneRetained(existing)) return json({ ok: false, message: "연락처 보관 기간이 지나 수정할 수 없습니다." }, 410);
     const phone = normalizePhone(body.phone || "");
     if (!phone) return json({ ok: false, message: "고객 연락처를 입력해주세요." }, 400);
     const protectedPhone = await protectCustomerPhone(env, phone);
@@ -3081,7 +3096,9 @@ async function updateCustomerQuote(env, request, id) {
   setText("installDate", "install_date");
   setText("memo", "memo");
   setText("status", "status");
-  setText("selectedBidId", "selected_bid_id");
+  if (Object.prototype.hasOwnProperty.call(body, "selectedBidId") && String(body.selectedBidId || "") !== String(existing.selected_bid_id || "")) {
+    return json({ ok: false, message: "판매자 선택은 고객의 선택 요청으로만 변경할 수 있습니다." }, 400);
+  }
   setText("contactReleaseScope", "contact_release_scope");
 
   if (!updates.length) return json({ ok: false, message: "변경할 정보가 없습니다." }, 400);
@@ -3706,7 +3723,9 @@ async function selectBid(env, request) {
 
   const quote = await env.DB.prepare("SELECT * FROM customer_quotes WHERE id = ?").bind(quoteId).first();
   if (!quote) return json({ ok: false, message: "고객 견적을 찾을 수 없습니다." }, 404);
-  if (!customerPhoneWithinSevenDays(quote)) return json({ ok: false, message: "연락처 열람 기간이 지났습니다." }, 410);
+  if (Date.now() >= Date.parse(customerPersonalExpiresAt(quote)) || !customerPersonalExpiresAt(quote)) {
+    return json({ ok: false, message: "견적 보관 기간이 지났습니다." }, 410);
+  }
   if (quote.selected_bid_id && quote.selected_bid_id !== bidId) {
     return json({ ok: false, message: "이미 선택한 견적은 변경할 수 없습니다." }, 400);
   }
@@ -3717,18 +3736,26 @@ async function selectBid(env, request) {
 
   const releasedBidIds = [bidId];
   const now = new Date().toISOString();
-  await env.DB.prepare(
+  const selection = await env.DB.prepare(
     `UPDATE customer_quotes
-     SET selected_bid_id = ?, contact_release_scope = ?, contact_released_bid_ids = ?,
+     SET selected_bid_id = ?, selected_at = ?, contact_release_scope = ?, contact_released_bid_ids = ?,
          status = 'closed', quote_expires_at = ?, rank_notice_queued_at = ?
-     WHERE id = ?`
+     WHERE id = ? AND COALESCE(selected_bid_id, '') = '' AND COALESCE(selected_at, '') = ''
+       AND created_at > ?`
   )
-    .bind(bidId, scope, JSON.stringify(releasedBidIds), now, now, quoteId)
+    .bind(bidId, now, scope, JSON.stringify(releasedBidIds), now, now, quoteId, addDays(now, -30))
     .run();
-  await ensureAnonymousConsultationTables(env);
-  await env.DB.prepare("UPDATE anonymous_consultations SET status = 'closed', selected_at = ?, updated_at = ? WHERE quote_id = ?").bind(now, now, quoteId).run();
+  const row = await env.DB.prepare("SELECT * FROM customer_quotes WHERE id = ?").bind(quoteId).first();
+  if (!row || row.selected_bid_id !== bidId) {
+    return json({ ok: false, message: "이미 처리된 견적입니다. 다시 조회해주세요." }, 409);
+  }
+  const newlySelected = Number(selection?.meta?.changes || 0) === 1;
+  if (newlySelected) {
+    await ensureAnonymousConsultationTables(env);
+    await env.DB.prepare("UPDATE anonymous_consultations SET status = 'closed', selected_at = ?, updated_at = ? WHERE quote_id = ?").bind(row.selected_at, now, quoteId).run();
+  }
 
-  if (!isTestCustomerName(quote.customer)) {
+  if (newlySelected && !isTestCustomerName(quote.customer)) {
     for (const bid of quoteBids.filter((item) => releasedBidIds.includes(item.id))) {
       await queueAlimtalk(env, {
         type: "seller-bid-selected",
@@ -3742,20 +3769,19 @@ async function selectBid(env, request) {
           "#{매니저명}": bid.manager || bid.seller || "",
           "#{견적번호}": quote.quote_number,
           "#{고객명}": quote.customer,
-          "#{고객연락처}": formatPhoneNumber(await readCustomerPhone(env, quote)),
+          "#{고객연락처}": formatPhoneNumber(await readCustomerPhone(env, row)),
         },
       });
     }
   }
 
-  const row = await env.DB.prepare("SELECT * FROM customer_quotes WHERE id = ?").bind(quoteId).first();
   const images = await getQuoteImages(env, quoteId, true);
   return json({
     ok: true,
     row: await secureQuoteImageUrls(env, hideSellerOnlyQuoteFields(normalizeCustomerQuote(row, images))),
     selectedBid,
     releasedBidIds,
-    selectedAt: now,
+    selectedAt: row.selected_at || "",
   });
 }
 
@@ -3868,7 +3894,7 @@ async function deleteAlimtalk(env, id) {
 async function resendAlimtalk(env, id) {
   await ensureAlimtalkColumns(env);
   const row = normalizeMessage(
-    await env.DB.prepare("SELECT * FROM alimtalk_queue WHERE id = ?").bind(id).first()
+    await env.DB.prepare("SELECT * FROM alimtalk_queue WHERE id = ?").bind(id).first(), true
   );
   if (!row) return json({ ok: false, message: "알림톡 정보를 찾을 수 없습니다." }, 404);
   if (
@@ -3899,7 +3925,7 @@ async function resendAlimtalk(env, id) {
   return json({
     ok: Boolean(result.ok),
     row: updated,
-    message: result.ok ? "알림톡을 재발송했습니다." : result.error || "알림톡 재발송에 실패했습니다.",
+    message: result.ok ? "알림톡을 재발송했습니다." : maskPhoneInMessage(result.error) || "알림톡 재발송에 실패했습니다.",
   });
 }
 
@@ -3937,7 +3963,7 @@ async function refreshAlimtalkStatus(env, id) {
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
       const message = payload.errorMessage || payload.message || "솔라피 상태 조회에 실패했습니다.";
-      return json({ ok: false, row, message, solapiResponse: payload }, response.status);
+      return json({ ok: false, row, message: maskPhoneInMessage(message), solapiResponse: maskPhoneInMessage(payload) }, response.status);
     }
 
     const messageList = payload.messageList || {};
@@ -3952,7 +3978,7 @@ async function refreshAlimtalkStatus(env, id) {
     const updated = normalizeMessage(
       await env.DB.prepare("SELECT * FROM alimtalk_queue WHERE id = ?").bind(id).first()
     );
-    return json({ ok: true, row: updated, latestMessage: solapiMessage });
+    return json({ ok: true, row: updated, latestMessage: maskPhoneInMessage(solapiMessage) });
   } catch (error) {
     return json(
       {

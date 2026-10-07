@@ -90,6 +90,7 @@ CREATE TABLE IF NOT EXISTS customer_quotes (
   memo TEXT DEFAULT '',
   status TEXT NOT NULL DEFAULT 'open',
   selected_bid_id TEXT DEFAULT '',
+  selected_at TEXT DEFAULT '',
   contact_release_scope TEXT DEFAULT 'selected',
   contact_released_bid_ids TEXT DEFAULT '[]',
   submission_count INTEGER DEFAULT 1,

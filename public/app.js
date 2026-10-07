@@ -283,6 +283,12 @@ function queueQuoteCountdownViewRefresh() {
 
 function updateQuoteCountdowns() {
   let expiryTransitioned = false;
+  for (const request of requests) {
+    if (/^01[016789]\d{7,8}$/.test(normalizePhone(request.phone)) && !(Date.now() < Date.parse(request.phoneAccessExpiresAt || ""))) {
+      request.phone = "***-****-****";
+      expiryTransitioned = true;
+    }
+  }
   document.querySelectorAll("[data-quote-countdown]").forEach((element) => {
     const request = requests.find((item) => sameId(item.id, element.dataset.quoteId));
     if (!request) return;
@@ -1737,7 +1743,8 @@ function quoteImageMarkup(request, label) {
 
 function canActiveSellerSeeCustomerPhone(request) {
   const sellerBid = getActiveSellerBid(request);
-  return Boolean(sellerBid && isBidContactReleased(request, sellerBid));
+  return Boolean(sellerBid && sameId(request?.selectedBidId, sellerBid.id)
+    && Date.now() < Date.parse(request.phoneAccessExpiresAt || ""));
 }
 
 function isActiveSellerSelectedRequest(request) {
@@ -3989,7 +3996,7 @@ function renderRequests() {
 
   filteredRequests.forEach((request) => {
     const sellerBid = getActiveSellerBid(request);
-    const isSelectedByCustomer = canActiveSellerSeeCustomerPhone(request);
+    const isSelectedByCustomer = isActiveSellerSelectedRequest(request);
     const isSaleCompleted = Boolean(request.saleCompletedAt && request.saleCompletedBidId === sellerBid?.id);
     const isClosedTab = activeSellerTab === "closed";
     const lowestBid = getLowestBidForRequest(request.id);
@@ -4055,7 +4062,7 @@ function renderSelectedRequest() {
   setBidFormEnabled(!isClosedTab);
   syncBidFormForRequest(request);
 
-  const visiblePhone = isClosedTab ? maskPhone(request.phone) : canActiveSellerSeeCustomerPhone(request) ? request.phone : maskPhone(request.phone);
+  const visiblePhone = canActiveSellerSeeCustomerPhone(request) ? request.phone : maskPhone(request.phone);
   const safeCustomer = escapeHTML(request.customer);
   const safePhone = escapeHTML(visiblePhone);
   const safePurchasePurpose = escapeHTML(request.purchasePurpose || "미선택");
@@ -4067,7 +4074,7 @@ function renderSelectedRequest() {
   const safeMemo = formatSellerRequestMemoHtml(request.memo);
   const expired = isQuoteExpired(request);
   const activeSellerBid = getActiveSellerBid(request);
-  const isSelectedSeller = canActiveSellerSeeCustomerPhone(request);
+  const isSelectedSeller = isActiveSellerSelectedRequest(request);
   const isSaleCompleted = isSaleCompletedForBid(request, activeSellerBid);
   const lowestBid = getLowestBidForRequest(request.id);
   const repeatNotice = getRepeatQuoteNotice(request);
@@ -4117,10 +4124,12 @@ function renderSelectedRequest() {
         ? `판매완료 처리되었습니다. 고객님 후기 요청 알림톡 발송 상태: ${
             request.reviewNotificationSentAt ? "발송 완료" : "발송 대기"
           }`
+        : isSelectedSeller
+        ? canActiveSellerSeeCustomerPhone(request)
+          ? "선택일부터 7일간 연락처를 확인할 수 있습니다. 등록 후 30일에는 고객정보가 삭제됩니다."
+          : "연락처 열람 기간이 종료되었습니다."
         : isClosedTab
         ? "종료된 견적에서는 고객님 연락처가 마스킹 처리되며 1위 금액만 표시됩니다."
-        : isSelectedSeller
-        ? "고객님이 내 제안을 선택해 연락처가 공개되었습니다."
         : "연락처는 고객님이 제안을 선택한 뒤 공개됩니다."
     }</p>
     ${
