@@ -213,6 +213,10 @@ test("late selection starts a server clock once, rejects other bids, and cannot 
   assert.equal(db.prepare("SELECT phone_ciphertext FROM customer_quotes WHERE id = 'q-late'").get().phone_ciphertext, '');
   assert.equal((await call(env, 'customer-quotes/q-late', 'PATCH', { phone: '01012345678' }, { 'X-Admin-Token': env.ADMIN_API_TOKEN })).status, 410);
   db.prepare("UPDATE customer_quotes SET selected_bid_id = '' WHERE id = 'q-late'").run();
-  assert.equal((await call(env, 'bid-selection', 'POST', { requestId: 'q-late', bidId: 'bid-other' }, headers)).status, 409);
+  const reselected = await call(env, 'bid-selection', 'POST', { requestId: 'q-late', bidId: 'bid-other' }, headers);
+  assert.equal(reselected.status, 200);
+  assert.equal(reselected.body.row.selectedAt, new Date(now - 8 * 86400000).toISOString());
+  assert.equal(db.prepare("SELECT phone_ciphertext FROM customer_quotes WHERE id = 'q-late'").get().phone_ciphertext, '');
+  assert.equal(reselected.body.row.phoneAccessExpiresAt, new Date(now - 86400000).toISOString());
   db.close();
 });

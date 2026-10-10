@@ -3736,14 +3736,17 @@ async function selectBid(env, request) {
 
   const releasedBidIds = [bidId];
   const now = new Date().toISOString();
+  // Keep the first selection deadline when an administrator removes its bid.
+  // The EXISTS guard prevents a concurrently deleted bid from being selected.
   const selection = await env.DB.prepare(
     `UPDATE customer_quotes
-     SET selected_bid_id = ?, selected_at = ?, contact_release_scope = ?, contact_released_bid_ids = ?,
+     SET selected_bid_id = ?, selected_at = COALESCE(NULLIF(selected_at, ''), ?), contact_release_scope = ?, contact_released_bid_ids = ?,
          status = 'closed', quote_expires_at = ?, rank_notice_queued_at = ?
-     WHERE id = ? AND COALESCE(selected_bid_id, '') = '' AND COALESCE(selected_at, '') = ''
-       AND created_at > ?`
+     WHERE id = ? AND COALESCE(selected_bid_id, '') = ''
+       AND created_at > ?
+       AND EXISTS (SELECT 1 FROM bids WHERE id = ? AND quote_id = customer_quotes.id)`
   )
-    .bind(bidId, now, scope, JSON.stringify(releasedBidIds), now, now, quoteId, addDays(now, -30))
+    .bind(bidId, now, scope, JSON.stringify(releasedBidIds), now, now, quoteId, addDays(now, -30), bidId)
     .run();
   const row = await env.DB.prepare("SELECT * FROM customer_quotes WHERE id = ?").bind(quoteId).first();
   if (!row || row.selected_bid_id !== bidId) {
