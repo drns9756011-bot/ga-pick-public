@@ -1,8 +1,10 @@
-﻿User-agent: *
+User-agent: *
 Allow: /
-
-User-agent: Yeti
-Allow: /
+Disallow: /api/
+Allow: /api/brand-packages
+Allow: /api/subscription-products
+Disallow: /admin
+Disallow: /seller
 
 Sitemap: https://ga-pick.com/sitemap.xml
 

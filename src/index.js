@@ -1,140 +1,74 @@
 import { onRequest, onScheduled } from "../functions/api/[[path]].js";
+import { SEARCH_ORIGIN, SEARCH_PAGES } from "./search-config.js";
+
+const routePages = new Map(SEARCH_PAGES.map((page) => [page.path, page]));
+const appPaths = new Set(["/", "/quote", "/my-quote"]);
+const aliases = new Map([
+  ["/index.html", "/"], ["/products", "/shopping"], ["/products/index.html", "/shopping"],
+  ...SEARCH_PAGES.filter((page) => page.path !== "/").map((page) => [page.path + "/index.html", page.path]),
+]);
+
+function responsePolicy(response, url, path) {
+  const headers = new Headers(response.headers);
+  headers.set("X-Content-Type-Options", "nosniff");
+  headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  headers.set("X-Frame-Options", "DENY");
+  headers.set("Content-Security-Policy", "base-uri 'self'; object-src 'none'; frame-ancestors 'none'");
+  const privatePath = path.startsWith("/api/") || path === "/admin" || path.startsWith("/admin/") ||
+    path === "/seller" || path.startsWith("/seller/") || routePages.get(path)?.index === false;
+  if (privatePath || response.status >= 400 || url.hostname !== "ga-pick.com") {
+    headers.set("X-Robots-Tag", "noindex, nofollow, nosnippet");
+  }
+  if (routePages.has(path)) {
+    headers.set("Link", '<' + SEARCH_ORIGIN + path + '>; rel="canonical"');
+    headers.set("Cache-Control", "no-store");
+    headers.set("X-GA-Pick-Route-Version", "20261014-search-security");
+  }
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+}
+
+async function route(request, env, ctx, url, path) {
+  if (url.pathname.startsWith("/api/")) {
+    return onRequest({ request, env, ctx, params: { path: url.pathname.replace(/^\/api\/?/, "").split("/").filter(Boolean) } });
+  }
+  if (path === "/admin" || path.startsWith("/admin/")) {
+    return new Response("Not found", { status: 404 });
+  }
+  if (path === "/seller" || path === "/seller/index.html") return Response.redirect("https://partner.ga-pick.com/", 308);
+  if (path === "/seller/register" || path === "/seller/register/index.html") return Response.redirect("https://partner.ga-pick.com/register", 308);
+  if (["GET", "HEAD"].includes(request.method)) {
+    const canonical = aliases.get(path) || path;
+    if (url.hostname === "www.ga-pick.com" || aliases.has(path) ||
+        (routePages.has(path) && url.pathname !== path)) {
+      const destination = new URL(url);
+      if (url.hostname === "www.ga-pick.com") destination.hostname = "ga-pick.com";
+      destination.pathname = canonical;
+      return Response.redirect(destination.toString(), 308);
+    }
+  }
+  const page = routePages.get(path);
+  if (page) {
+    const assetUrl = new URL(url);
+    assetUrl.pathname = "/" + page.file;
+    const response = await env.ASSETS.fetch(new Request(assetUrl, { method: "GET", headers: request.headers, redirect: "manual" }));
+    if (response.status >= 300 && response.status < 400 && appPaths.has(path)) {
+      return new Response("Application shell routing error", { status: 500 });
+    }
+    return response;
+  }
+  return env.ASSETS.fetch(request);
+}
 
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    const routeVersion = "20260821-mobile-verification-phone-fix-v9";
-
-    if (url.pathname === "/robots.txt") {
-      return new Response("User-agent: *\nAllow: /\n\nSitemap: https://ga-pick.com/sitemap.xml\n", {
-        headers: {
-          "Content-Type": "text/plain; charset=utf-8",
-          "Cache-Control": "public, max-age=300",
-        },
-      });
+    let path;
+    try {
+      path = decodeURIComponent(url.pathname).replace(/\/+$/, "") || "/";
+    } catch {
+      return responsePolicy(new Response("Bad request", { status: 400 }), url, "");
     }
-
-    if (url.pathname === "/sitemap.xml") {
-      return new Response(
-        `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://ga-pick.com/</loc>
-    <lastmod>2026-08-04</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
-  </url>
-  <url>
-    <loc>https://ga-pick.com/quote</loc>
-    <lastmod>2026-08-04</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://ga-pick.com/my-quote</loc>
-    <lastmod>2026-08-04</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://ga-pick.com/brand</loc>
-    <lastmod>2026-08-17</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://ga-pick.com/subscription</loc>
-    <lastmod>2026-08-17</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://ga-pick.com/shopping</loc>
-    <lastmod>2026-08-17</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-</urlset>`,
-        {
-          headers: {
-            "Content-Type": "application/xml; charset=utf-8",
-            "Cache-Control": "public, max-age=300",
-          },
-        }
-      );
-    }
-
-    if (url.pathname.startsWith("/api/")) {
-      return onRequest({
-        request,
-        env,
-        ctx,
-        params: {
-          path: url.pathname.replace(/^\/api\/?/, "").split("/").filter(Boolean),
-        },
-      });
-    }
-
-    const normalizedPath = decodeURIComponent(url.pathname).replace(/\/+$/, "") || "/";
-
-    if (normalizedPath === "/seller" || normalizedPath === "/seller/index.html") {
-      return Response.redirect("https://partner.ga-pick.com/", 308);
-    }
-    if (normalizedPath === "/seller/register" || normalizedPath === "/seller/register/index.html") {
-      return Response.redirect("https://partner.ga-pick.com/register", 308);
-    }
-
-    const standaloneRoutes = new Map([
-      ["/brand", "/brand/index.html"],
-      ["/brand/index.html", "/brand/index.html"],
-      ["/subscription", "/subscription/index.html"],
-      ["/subscription/index.html", "/subscription/index.html"],
-      ["/shopping", "/shopping/index.html"],
-      ["/shopping/index.html", "/shopping/index.html"],
-      ["/products", "/shopping/index.html"],
-      ["/products/index.html", "/shopping/index.html"],
-    ]);
-    if (standaloneRoutes.has(normalizedPath)) {
-      const assetUrl = new URL(request.url);
-      assetUrl.pathname = standaloneRoutes.get(normalizedPath);
-      const response = await env.ASSETS.fetch(new Request(assetUrl.toString(), { method: "GET", headers: request.headers, redirect: "manual" }));
-      const headers = new Headers(response.headers);
-      headers.set("Cache-Control", "no-store");
-      headers.set("X-GA-Pick-Route-Version", routeVersion);
-      return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
-    }
-
-    const appRoutes = new Set(["/", "/index.html", "/quote", "/my-quote"]);
-    if (appRoutes.has(normalizedPath)) {
-      const indexUrl = new URL(request.url);
-      indexUrl.pathname = "/index.html";
-      const assetRequest = new Request(indexUrl.toString(), {
-        method: "GET",
-        headers: request.headers,
-        redirect: "manual",
-      });
-      const response = await env.ASSETS.fetch(assetRequest);
-      if (response.status >= 300 && response.status < 400) {
-        return new Response("Application shell routing error", {
-          status: 500,
-          headers: {
-            "Content-Type": "text/plain; charset=utf-8",
-            "Cache-Control": "no-store",
-            "X-GA-Pick-Asset-Redirect": response.headers.get("Location") || "unknown",
-          },
-        });
-      }
-      const headers = new Headers(response.headers);
-      headers.set("Cache-Control", "no-store");
-      headers.set("X-GA-Pick-Route-Version", routeVersion);
-      return new Response(response.body, {
-        status: response.status,
-        statusText: response.statusText,
-        headers,
-      });
-    }
-
-    return env.ASSETS.fetch(request);
+    return responsePolicy(await route(request, env, ctx, url, path), url, path);
   },
   async scheduled(event, env, ctx) {
     ctx.waitUntil(onScheduled({ event, env, ctx }));

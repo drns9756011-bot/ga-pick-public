@@ -3253,6 +3253,11 @@ sellerFindIdForm.addEventListener("submit", async (event) => {
 sellerResetPasswordForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const formData = new FormData(sellerResetPasswordForm);
+  const proof = window.PickSellerRecovery?.payloadFor(formData.get("resetPhone"));
+  if (!proof) {
+    setResetPasswordMessage("등록된 휴대전화번호로 본인인증을 완료해주세요.", "error");
+    return;
+  }
   const nextPassword = formData.get("newPassword");
   if (String(nextPassword).length < 4) {
     setResetPasswordMessage("새 비밀번호는 4자리 이상으로 입력해주세요.", "error");
@@ -3266,6 +3271,7 @@ sellerResetPasswordForm.addEventListener("submit", async (event) => {
     phone: formData.get("resetPhone"),
     sellerId: formData.get("resetSellerId"),
     newPassword: nextPassword,
+    ...proof,
   });
 
   if (!result?.ok) {

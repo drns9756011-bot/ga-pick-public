@@ -2035,20 +2035,21 @@ async function verifyQuotePhoneCode(env, request) {
 }
 
 async function validateQuotePhoneVerification(env, phoneInput, verificationIdInput, tokenInput) {
-  await ensureQuotePhoneVerificationTable(env);
   const phone = normalizePhone(phoneInput);
   const verificationId = String(verificationIdInput || "").trim();
   const token = String(tokenInput || "").trim();
   if (!verificationId || !token) {
     return { ok: false, response: json({ ok: false, message: "휴대전화 인증을 완료해주세요." }, 403) };
   }
+  await ensureQuotePhoneVerificationTable(env);
   const row = await env.DB.prepare(
     "SELECT * FROM quote_phone_verifications WHERE id = ? LIMIT 1"
   ).bind(verificationId).first();
   if (!row || row.status !== "verified" || row.consumed_at) {
     return { ok: false, response: json({ ok: false, message: "유효한 휴대전화 인증정보가 없습니다. 다시 인증해주세요." }, 403) };
   }
-  if (!row.token_expires_at || new Date(row.token_expires_at).getTime() < Date.now()) {
+  const tokenDeadline = Date.parse(row.token_expires_at || "");
+  if (!Number.isFinite(tokenDeadline) || tokenDeadline <= Date.now()) {
     await env.DB.prepare("UPDATE quote_phone_verifications SET status = 'expired' WHERE id = ?")
       .bind(verificationId)
       .run();
@@ -2057,7 +2058,7 @@ async function validateQuotePhoneVerification(env, phoneInput, verificationIdInp
   const phoneHash = await hashPhoneVerificationValue(env, "phone", phone);
   const tokenHash = await hashPhoneVerificationValue(env, "token", token);
   if (!verificationHashEqual(row.phone_hash, phoneHash) || !verificationHashEqual(row.token_hash, tokenHash)) {
-    return { ok: false, response: json({ ok: false, message: "인증한 휴대전화번호와 견적 연락처가 일치하지 않습니다." }, 403) };
+    return { ok: false, response: json({ ok: false, message: "인증한 휴대전화번호와 입력한 연락처가 일치하지 않습니다." }, 403) };
   }
   return { ok: true, row, tokenHash };
 }
@@ -2827,6 +2828,9 @@ async function resetSellerPassword(env, request) {
     return json({ ok: false, message: "새 비밀번호는 4자 이상으로 입력해주세요." }, 400);
   }
 
+  const proof = await validateQuotePhoneVerification(env, phone, body.phoneVerificationId, body.phoneVerificationToken);
+  if (!proof.ok) return proof.response;
+
   const row = await env.DB.prepare(
     `SELECT * FROM approved_sellers
      WHERE seller_id = ?
@@ -2842,9 +2846,32 @@ async function resetSellerPassword(env, request) {
 
   if (!row) return json({ ok: false, message: "일치하는 판매자 계정을 찾을 수 없습니다." }, 404);
 
-  await env.DB.prepare("UPDATE approved_sellers SET password = ? WHERE id = ?")
-    .bind(await hashPassword(nextPassword), row.id)
-    .run();
+  await ensureSellerSessions(env);
+  const passwordHash = await hashPassword(nextPassword);
+  const resetMarker = await sha256Hex(crypto.randomUUID());
+  const consumedAt = new Date().toISOString();
+  // One transaction claims the proof once, changes the password, and revokes sessions.
+  const results = await env.DB.batch([
+    env.DB.prepare(`UPDATE quote_phone_verifications
+      SET status = 'consumed', consumed_at = ?, token_hash = ?
+      WHERE id = ? AND token_hash = ? AND phone_hash = ?
+        AND status = 'verified' AND consumed_at = '' AND token_expires_at > ?
+        AND EXISTS (SELECT 1 FROM approved_sellers WHERE id = ? AND status = 'approved'
+          AND REPLACE(REPLACE(phone, '-', ''), ' ', '') = ?)`)
+      .bind(consumedAt, resetMarker, proof.row.id, proof.tokenHash, proof.row.phone_hash, consumedAt, row.id, phone),
+    env.DB.prepare(`UPDATE approved_sellers SET password = ? WHERE id = ? AND status = 'approved'
+      AND EXISTS (SELECT 1 FROM quote_phone_verifications WHERE id = ?
+        AND status = 'consumed' AND token_hash = ? AND consumed_at = ?)`)
+      .bind(passwordHash, row.id, proof.row.id, resetMarker, consumedAt),
+    env.DB.prepare(`DELETE FROM seller_sessions WHERE seller_id = ?
+      AND EXISTS (SELECT 1 FROM approved_sellers WHERE id = ? AND password = ?)
+      AND EXISTS (SELECT 1 FROM quote_phone_verifications WHERE id = ?
+        AND status = 'consumed' AND token_hash = ? AND consumed_at = ?)`)
+      .bind(row.seller_id, row.id, passwordHash, proof.row.id, resetMarker, consumedAt),
+  ]);
+  if (Number(results[0]?.meta?.changes || 0) !== 1 || Number(results[1]?.meta?.changes || 0) !== 1) {
+    return json({ ok: false, message: "인증정보가 만료되었거나 이미 사용되었습니다. 다시 인증해주세요." }, 403);
+  }
   return json({ ok: true, message: "비밀번호가 새 비밀번호로 재설정되었습니다." });
 }
 
@@ -5869,7 +5896,7 @@ export async function onRequest(context) {
     return apiBoundary(() => loginSeller(env, request), "판매자 로그인 처리 중 오류가 발생했습니다.");
   }
   if (path === "seller-account-find" && method === "POST") return findSellerAccount(env, request);
-  if (path === "seller-password-reset" && method === "POST") return resetSellerPassword(env, request);
+  if (path === "seller-password-reset" && method === "POST") return apiBoundary(() => resetSellerPassword(env, request), "비밀번호를 재설정하지 못했습니다.");
   if (path === "brand-packages" && method === "GET") return apiBoundary(() => getPublicBrandPackages(env, request), "브랜드관 패키지를 불러오지 못했습니다.");
   if (path === "brand-consultations" && method === "POST") return apiBoundary(() => createBrandConsultation(env, request), "브랜드관 상담 요청 처리 중 오류가 발생했습니다.");
   if (path === "subscription-products" && method === "GET") return apiBoundary(() => getSubscriptionProducts(env), "구독 상품을 불러오지 못했습니다.");
