@@ -3287,8 +3287,8 @@ async function createCustomerQuote(env, request, executionContext) {
   );
   if (!phoneVerification.ok) return phoneVerification.response;
 
-  const id = body.id || createId("quote");
-  const createdAt = body.createdAt || new Date().toISOString();
+  const id = `quote-${crypto.randomUUID()}`;
+  const createdAt = new Date().toISOString();
   const quoteNumber = await createUniqueQuoteNumber(env, body.quoteNumber);
   const quoteExpiresAt = addHours(createdAt, QUOTE_DURATION_HOURS);
   const fullImagesExpiresAt = addDays(createdAt, 7);
@@ -3344,6 +3344,7 @@ async function createCustomerQuote(env, request, executionContext) {
 
   const thumbnailUrl = thumbnail.url || "";
   const thumbnailKey = thumbnail.key || "";
+  let quoteInserted = false;
 
   try {
   await env.DB.prepare(
@@ -3408,6 +3409,7 @@ async function createCustomerQuote(env, request, executionContext) {
       protectedPhone.ciphertext
     )
     .run();
+  quoteInserted = true;
 
   if (thumbnailKey || thumbnailUrl) {
     await env.DB.prepare(
@@ -3442,8 +3444,10 @@ async function createCustomerQuote(env, request, executionContext) {
   }
 
   } catch (error) {
-    await env.DB.prepare("DELETE FROM quote_images WHERE quote_id = ?").bind(id).run().catch(() => {});
-    await env.DB.prepare("DELETE FROM customer_quotes WHERE id = ?").bind(id).run().catch(() => {});
+    if (quoteInserted) {
+      await env.DB.prepare("DELETE FROM quote_images WHERE quote_id = ?").bind(id).run().catch(() => {});
+      await env.DB.prepare("DELETE FROM customer_quotes WHERE id = ?").bind(id).run().catch(() => {});
+    }
     await Promise.all(savedObjectKeys.map((key) => deleteR2Object(env, key)));
     return json({ ok: false, message: error?.message || "견적서 저장 처리 중 오류가 발생했습니다." }, 500);
   }

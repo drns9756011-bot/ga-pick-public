@@ -9,6 +9,21 @@ import { SEARCH_PAGES } from "../src/search-config.js";
 
 const read = (path) => readFileSync(new URL("../" + path, import.meta.url), "utf8");
 
+test("quote identity and retention dates are server-owned, with insert-scoped rollback", () => {
+  const source = read("functions/api/[[path]].js");
+  const start = source.indexOf("async function createCustomerQuote(");
+  assert.notEqual(start, -1);
+  const end = source.indexOf("\nasync function ", start + 1);
+  const create = source.slice(start, end === -1 ? undefined : end);
+  assert.doesNotMatch(create, /body\.(?:id|createdAt)\b/);
+  assert.ok(create.includes('const id = `quote-${crypto.randomUUID()}`;'));
+  assert.ok(create.includes("const createdAt = new Date().toISOString();"));
+  assert.ok(create.includes("const personalExpiresAt = addDays(createdAt, 30);"));
+  assert.ok(create.includes("let quoteInserted = false;"));
+  assert.match(create, /\.run\(\);\s*quoteInserted = true;/);
+  assert.match(create, /if \(quoteInserted\) \{\s*await env\.DB\.prepare\("DELETE FROM quote_images WHERE quote_id = \?"\)[\s\S]*?DELETE FROM customer_quotes WHERE id = \?/);
+});
+
 test("search metadata is unique, route-specific, and excludes private forms", () => {
   for (const page of SEARCH_PAGES) {
     const html = read("public/" + page.file);
