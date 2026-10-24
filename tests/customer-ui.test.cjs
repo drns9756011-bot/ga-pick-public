@@ -35,7 +35,7 @@ test('all route shells contain the same redesigned home and form anchors', () =>
 test('all customer pages load one version of the shared design without ad scripts', () => {
   for (const file of [...shells, ...catalogs]) {
     const html = read(file);
-    assert.ok(html.includes('/customer-ui.css?v=20261024-wix-redesign'), file);
+    assert.ok(html.includes('/customer-ui.css?v=20261024-readable-type'), file);
     assert.ok(html.includes('href="/assets/suit-variable.woff2"'), file);
     assert.ok(html.includes('customer-refresh'), file);
     assert.doesNotMatch(html, /adsbygoogle|PICK SUBSCRIPTION|PICK SHOPPING/);
@@ -51,6 +51,16 @@ test('all customer pages load one version of the shared design without ad script
   for (const file of ['styles.css', 'brand/brand.css', 'commerce/commerce.css']) {
     assert.doesNotMatch(read(file), /@import.*https:/, file);
   }
+});
+
+test('customer typography uses readable body, controls, and supporting text', () => {
+  const css = read('customer-ui.css');
+  assert.match(css, /font-weight: 500; font-size: 18px; line-height: 1\.6/);
+  assert.match(css, /--pick-muted: #465463/);
+  assert.match(css, /\.pq-primary \{[^}]*font-size: 18px; font-weight: 750/);
+  assert.match(css, /\.pq-hero-note \{[^}]*font-size: 14px/);
+  assert.match(css, /\.pq-hero-followup \{[^}]*flex-wrap: wrap/);
+  assert.doesNotMatch(css, /font-size: (?:10|11)px/);
 });
 
 test('home quote choice uses the existing wizard and resumes matching drafts', () => {
