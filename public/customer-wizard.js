@@ -509,7 +509,6 @@
 
   const steps = [
     { key: "quoteType", render: renderQuoteType, validate: validateQuoteType },
-    { key: "personal", render: renderPersonal, validate: validatePersonal },
     { key: "purpose", render: renderPurpose, validate: validatePurpose },
     { key: "brand", render: renderBrand, validate: validateBrand },
     { key: "products", render: renderProducts, validate: validateProducts, show: isWithoutQuote },
@@ -518,6 +517,7 @@
     { key: "ai", render: renderAiContext, validate: validateAiContext, show: shouldUseAiRecommendation },
     { key: "manualBudget", render: renderManualBudget, validate: validateManualBudget, show: isManualWithoutQuote },
     { key: "comparisonBudget", render: renderComparisonBudget, validate: validateComparisonBudget, show: isComparisonWithoutQuote },
+    { key: "personal", render: renderPersonal, validate: validatePersonal },
     { key: "quoteInfo", render: renderQuoteInfo, validate: validateQuoteInfo },
   ];
 
@@ -611,6 +611,10 @@
   }
 
   function bindNativeFields() {
+    if (imagePreview) {
+      const previewObserver = new MutationObserver(syncPreviewVisibility);
+      previewObserver.observe(imagePreview, { childList: true, subtree: true });
+    }
     fields.phone?.addEventListener("input", () => {
       fields.phone.value = formatPhoneInput(fields.phone.value);
     });
@@ -744,7 +748,11 @@
     state.stepIndex = Math.max(0, Math.min(visibleSteps().length - 1, state.stepIndex + delta));
     render();
 
-    if (mobile) guardMobileStepScroll(previousScrollY);
+    if (mobile) {
+      guardMobileStepScroll(previousScrollY);
+    } else {
+      form.querySelector(".wizard-step")?.scrollIntoView({ block: "start", behavior: "auto" });
+    }
   }
 
   function validateCurrentStep() {
@@ -767,21 +775,6 @@
   }
 
   function renderQuoteType() {
-    const brandGuide = fields.quoteType.value === "without_quote"
-      ? `
-        <aside class="wizard-brand-guide">
-          <div class="wizard-brand-guide-copy">
-            <span>제품 선택이 막막하신가요?</span>
-            <strong>브랜드관에서 제품과 패키지를 먼저 살펴보세요.</strong>
-            <p>제품을 살펴본 뒤 필요한 품목만 선택해 견적을 요청할 수 있습니다.</p>
-          </div>
-          <div class="wizard-brand-guide-links">
-            <a href="/brand"><img src="/assets/appliances-lg.webp" alt="LG전자 제품" /><span>LG전자 브랜드관</span></a>
-            <a href="/brand"><img src="/assets/appliances-samsung.webp" alt="삼성전자 제품" /><span>삼성전자 브랜드관</span></a>
-          </div>
-        </aside>
-      `
-      : "";
     return `
       <h3>받아둔 견적서가 있나요?</h3>
       <div class="wizard-choice-grid wizard-choice-grid-two">
@@ -917,18 +910,13 @@
   function renderPurpose() {
     return `
       <h3>구매 목적을 선택해주세요.</h3>
-      <p>목적에 따라 비교해야 할 혜택과 일정 조건이 달라집니다.</p>
       <div class="wizard-choice-grid">${purposeOptions.map((item) => choiceCard(item, "wizardPurposeProxy", fields.purpose.value)).join("")}</div>
     `;
   }
 
   function renderBrand() {
-    const description = isWithQuote()
-      ? "견적서에 적힌 브랜드 기준으로 선택해주세요."
-      : "LG전자와 삼성전자는 AI 후보 모델을 정리하고, 비교견적은 AI 추천 없이 선택한 옵션과 예산으로 판매자 제안을 받습니다.";
     return `
-      <h3>브랜드를 선택해주세요.</h3>
-      <p>${description}</p>
+      <h3>${isWithQuote() ? "견적서의 브랜드를 선택해주세요." : "비교할 브랜드를 선택해주세요."}</h3>
       <div class="wizard-choice-grid wizard-choice-grid-three">${brandOptions.map((item) => choiceCard(item, "wizardBrandProxy", fields.brand.value)).join("")}</div>
     `;
   }
@@ -936,7 +924,6 @@
   function renderProducts() {
     return `
       <h3>구매 예정 품목을 모두 선택해주세요.</h3>
-      <p>견적서가 없는 고객님은 선택한 품목 기준으로 판매자에게 요청이 전달됩니다.</p>
       <div class="wizard-product-list">
         ${productOptions
           .map((product) => {
@@ -957,7 +944,6 @@
   function renderOptions() {
     return `
       <h3>선택한 품목의 옵션을 확인해주세요.</h3>
-      <p>선택한 각 품목의 옵션을 엑셀 기준 순서대로 모두 선택해주세요.</p>
       <div class="wizard-option-list">
         ${state.selectedProducts
           .map((product) => {
@@ -2523,6 +2509,7 @@ function buildAiSummary() {
   }
 
   function updatePreview() {
+    syncPreviewVisibility();
     if (previewTitle) previewTitle.textContent = buildItemsValue() || "견적 요청서가 여기에 표시됩니다.";
     if (previewMeta) {
       const brand = fields.brand.value || "브랜드 미선택";
@@ -2530,11 +2517,15 @@ function buildAiSummary() {
       const type = isWithoutQuote() ? "견적서 없음" : isWithQuote() ? "견적서 있음" : "견적서 유무 미선택";
       previewMeta.textContent = `${type} · ${brand} · ${region}`;
     }
-    if (imagePreview && isWithoutQuote()) {
-      imagePreview.innerHTML = isComparisonWithoutQuote()
-        ? "<span>견적서 없이 선택 품목·옵션과 예산으로 비교 요청됩니다.</span>"
-        : "<span>견적서 없이 AI 추천 정보로 접수됩니다.</span>";
-    }
+  }
+
+  function syncPreviewVisibility() {
+    const panel = imagePreview?.closest(".preview-card");
+    if (!panel) return;
+    const show = isWithQuote() && Boolean(imagePreview.querySelector("img"));
+    if (show && panel.hidden) panel.open = true;
+    panel.hidden = !show;
+    if (!show) panel.open = false;
   }
 
   function formatPhoneInput(value) {
