@@ -46,7 +46,6 @@
       note: "",
     },
     officialCatalogs: {},
-    lowestPriceCache: new Map(),
     recommendationGroups: [],
     recommendationError: "",
     recommending: false,
@@ -1074,7 +1073,7 @@
     const showAiNotice = shouldUseAiRecommendation();
     return `
       <h3>${showUpload ? "견적서 이미지와 설치 정보를 확인해주세요." : "설치 정보와 요청사항을 확인해주세요."}</h3>
-      <p>${showAiNotice ? "AI가 고객님 상황에 맞는 추천 모델과 네이버 최저가 일반 구매가를 함께 정리합니다." : "판매자가 확인할 설치 일정과 요청사항을 입력해주세요."}</p>
+      <p>${showAiNotice ? "선택한 옵션에 맞춰 AI가 추천한 모델을 확인해 주세요." : "판매자가 확인할 설치 일정과 요청사항을 입력해주세요."}</p>
       ${showUpload ? renderUploadBox() : ""}
       ${showAiNotice ? renderRecommendationPanel() : ""}
       ${
@@ -1123,13 +1122,13 @@
                 <div class="ai-recommendation-group">
                   <strong>[${escapeHtml(group.displayProduct || group.product)}]</strong>
                   <span>${escapeHtml(group.optionSummary || "상세 옵션 미입력")}</span>
-                  <ul>${group.models.map((model) => `<li>${renderModelWithPrice(model)}</li>`).join("")}</ul>
+                  <ul>${group.models.map((model) => `<li>${renderRecommendedModel(model)}</li>`).join("")}</ul>
                   ${group.reason ? `<p>${escapeHtml(group.reason)}</p>` : ""}
                 </div>
               `
             )
             .join("")}
-          ${renderRecommendationTotal(state.recommendationGroups)}`
+          `
       : "<p>마지막 단계에서 AI 추천 모델이 자동으로 정리됩니다.</p>";
     const usedAi = state.recommending || state.recommendationGroups.some((group) => ["workers-ai", "ollama"].includes(group.engine));
     return `<div class="ai-recommendation-panel"><b>${usedAi ? "AI 추천 간이 견적서" : "추천 모델 확인"}</b>${loading || body}</div>`;
@@ -1994,7 +1993,7 @@ function buildAiSummary() {
       const groups = await buildAiModelRecommendations();
       state.recommendationGroups = groups;
       fields.aiModelRecommendations.value = recommendationsToText(groups);
-      applyAutoLowestPrice(groups);
+      fields.price.value = "0";
     } catch (error) {
       console.warn("AI recommendation failed", error);
       state.recommendationError = "AI 추천을 완료하지 못했습니다. 다시 시도해 주세요.";
@@ -2094,16 +2093,14 @@ function buildAiSummary() {
     if (!response.ok) throw new Error("AI recommendation unavailable");
     const result = await response.json();
     if (!result.ok || !Array.isArray(result.groups) || result.groups.length !== groups.length) throw new Error("AI recommendation invalid");
-    return Promise.all(groups.map(async (group, index) => {
+    return groups.map((group, index) => {
       const recommendation = result.groups[index];
       if (recommendation.group !== index || !Array.isArray(recommendation.models)) throw new Error("AI recommendation group invalid");
-      const models = await Promise.all(recommendation.models.map(async (model) => ({
-        ...model, naverLowestPrice: await fetchLowestPrice(model.modelName),
-      })));
+      const models = recommendation.models;
       return { ...group, candidates: undefined, engine: result.engine, reason: recommendation.reason,
-        models: models.length ? models : [{ modelName: "판매자 상담 후 모델 확정", normalPrice: 0, naverLowestPrice: 0 }],
+        models: models.length ? models : [{ modelName: "판매자 상담 후 모델 확정" }],
       };
-    }));
+    });
   }
 
   function filterModelsByProductOptions(product, models, selectedCleanerType = "", optionsOverride = null) {
@@ -2494,30 +2491,6 @@ function buildAiSummary() {
     return extractTvInches(name);
   }
 
-  async function fetchLowestPrice(modelName) {
-    const cacheKey = modelBody(modelName);
-    if (!cacheKey) return 0;
-    if (state.lowestPriceCache.has(cacheKey)) return state.lowestPriceCache.get(cacheKey);
-
-    const request = (async () => {
-      try {
-        const response = await fetchWithTimeout(
-          `/api/naver-shopping-lowest?query=${encodeURIComponent(cacheKey)}&display=30`,
-          { cache: "no-store" },
-          12000
-        );
-        if (!response.ok) return 0;
-        const data = await response.json();
-        if (!data.ok || data.confidence !== "exact-model-filtered") return 0;
-        return Number(data.lowestPrice || 0);
-      } catch {
-        return 0;
-      }
-    })();
-
-    state.lowestPriceCache.set(cacheKey, request);
-    return request;
-  }
 
   function recommendationsToText(groups) {
     const usedAi = groups.some((group) => ["workers-ai", "ollama"].includes(group.engine));
@@ -2527,14 +2500,9 @@ function buildAiSummary() {
       lines.push(
         `[${group.displayProduct || group.product}]${group.optionSummary ? ` ${group.optionSummary}` : ""}`
       );
-      group.models.forEach((model) => lines.push(`- ${displayModelName(model)}${formatModelLowestPrice(model)}`));
+      group.models.forEach((model) => lines.push(`- ${displayModelName(model)}`));
       if (group.reason) lines.push(group.reason);
     });
-    const total = recommendationTotalPrice(groups);
-    if (total > 0) {
-      lines.push("");
-      lines.push(`네이버 최저가 기준 합계: ${formatWon(total)}`);
-    }
     return lines.join("\n").trim();
   }
 
@@ -2542,51 +2510,11 @@ function buildAiSummary() {
     return model?.modelName || "판매자 상담 후 모델 확정";
   }
 
-  function formatWon(value) {
-    const price = Number(value || 0);
-    return price > 0 ? `${price.toLocaleString("ko-KR")}원` : "";
-  }
-
-  function formatModelLowestPrice(model) {
-    const price = Number(model?.naverLowestPrice || 0);
-    return price >= 300000 ? ` (네이버 최저가 ${formatWon(price)})` : "";
-  }
-
-  function renderModelWithPrice(model) {
-    const price = Number(model?.naverLowestPrice || 0);
-    const priceLabel = price >= 300000 ? `네이버 최저가 ${formatWon(price)}` : "일반 구매가 확인 중";
+  function renderRecommendedModel(model) {
     const source = model?.officialUrl
       ? ` <a href="${escapeHtml(model.officialUrl)}" target="_blank" rel="noopener noreferrer">공식몰</a>`
       : "";
-    return `<span>${escapeHtml(displayModelName(model))}${source}</span><em>${escapeHtml(priceLabel)}</em>`;
-  }
-
-  function recommendationModelPrice(model) {
-    const naverPrice = Number(model?.naverLowestPrice || 0);
-    return naverPrice >= 300000 ? naverPrice : 0;
-  }
-
-  function recommendationTotalPrice(groups) {
-    return groups.reduce((sum, group) => {
-      const productTotal = (group.models || []).reduce((modelSum, model) => modelSum + recommendationModelPrice(model), 0);
-      return sum + productTotal;
-    }, 0);
-  }
-
-  function renderRecommendationTotal(groups) {
-    const total = recommendationTotalPrice(groups);
-    if (!total) return "";
-    return `
-      <div class="ai-recommendation-total">
-        <span>네이버 최저가 기준 합계</span>
-        <strong>${escapeHtml(formatWon(total))}</strong>
-      </div>
-    `;
-  }
-
-  function applyAutoLowestPrice(groups) {
-    const total = recommendationTotalPrice(groups);
-    fields.price.value = total ? String(Math.ceil(total / 10000)) : "0";
+    return `<span>${escapeHtml(displayModelName(model))}${source}</span>`;
   }
 
   function updatePreview() {

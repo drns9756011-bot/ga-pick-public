@@ -7673,26 +7673,6 @@ body:has(#homePage.is-active) .pick-zero-fee {
   white-space: nowrap;
 }
 
-.quote-wizard .ai-recommendation-total {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 14px 16px;
-  border: 1px solid #bdd3f5;
-  border-radius: 8px;
-  background: #eaf2ff;
-  color: var(--ink);
-  font-weight: 900;
-}
-
-.quote-wizard .ai-recommendation-total strong {
-  color: #1f63d8;
-  font-size: 20px;
-  font-weight: 950;
-  white-space: nowrap;
-}
-
 @media (max-width: 640px) {
   .quote-wizard .ai-recommendation-group li {
     align-items: flex-start;
@@ -7700,11 +7680,6 @@ body:has(#homePage.is-active) .pick-zero-fee {
     gap: 2px;
   }
 
-  .quote-wizard .ai-recommendation-total {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 4px;
-  }
 }
 
 .option-modal {

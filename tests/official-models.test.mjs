@@ -38,7 +38,7 @@ test("official parsers keep exact models and exclude dotcom-only and bundles", (
   assert.deepEqual(samsung.map((model) => model.modelName), ["KQ65QNH80AFXKR"]);
 });
 
-test("official LG verification requires the exact SKU while Naver uses the base code", async () => {
+test("official LG verification requires the exact SKU", async () => {
   const db = new DatabaseSync(":memory:");
   let requests = 0;
   const fetcher = async (url) => {
@@ -57,21 +57,18 @@ test("official LG verification requires the exact SKU while Naver uses the base 
   db.close();
 });
 
-test("Naver lowest-price request excludes the model suffix", async () => {
+test("retired Naver price endpoint returns 404 without contacting Naver", async () => {
   const originalFetch = globalThis.fetch;
-  let queried = "";
-  globalThis.fetch = async (url) => {
-    queried = new URL(url).searchParams.get("query");
-    return new Response(JSON.stringify({ items: [] }), { status: 200, headers: { "Content-Type": "application/json" } });
-  };
+  let requests = 0;
+  globalThis.fetch = async () => { requests += 1; throw new Error("Retired service must not be called"); };
   try {
     const response = await onRequest({
-      env: { DB: {}, NAVER_SHOPPING_CLIENT_ID: "test-id", NAVER_SHOPPING_CLIENT_SECRET: "test-secret" },
+      env: { DB: {} },
       request: new Request("https://example.com/api/naver-shopping-lowest?query=A730WC.AKRG"),
       params: { path: ["naver-shopping-lowest"] },
     });
-    assert.equal(response.status, 200);
-    assert.equal(queried, "A730WC");
+    assert.equal(response.status, 404);
+    assert.equal(requests, 0);
   } finally {
     globalThis.fetch = originalFetch;
   }

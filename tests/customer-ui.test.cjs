@@ -10,7 +10,7 @@ const shells = ['index.html', 'quote/index.html', 'my-quote/index.html'];
 const catalogs = ['brand/index.html', 'subscription/index.html', 'shopping/index.html'];
 const home = (html) => html.slice(html.indexOf('<section class="page is-active" id="homePage"'), html.indexOf('<section class="page" id="customerPage"')).replace(/\s(?:fetchpriority="high"|loading="lazy")/g, '');
 
-test('recommendation batches both cleaner types and prices only the AI-selected models', async () => {
+test('recommendation batches both cleaner types without any price requests', async () => {
   const source = read('customer-wizard.js');
   const start = source.indexOf('  async function buildAiModelRecommendations()');
   const end = source.indexOf('  function filterModelsByProductOptions(', start);
@@ -19,7 +19,6 @@ test('recommendation batches both cleaner types and prices only the AI-selected 
     { modelName: 'A730WC.AKRG', type: '무선 청소기' },
     { modelName: 'N95THO.CKOR', type: '로봇 청소기' },
   ];
-  const prices = [];
   let requests = 0;
   const context = vm.createContext({
     state: { selectedProducts: ['청소기'], aiContext: { situation: '이사', budgetRange: '5000000', family: ['2인'], priorities: ['가격'], note: 'private note must not be sent' } },
@@ -27,7 +26,6 @@ test('recommendation batches both cleaner types and prices only the AI-selected 
     productBudgetWeight: () => 1, parseBudgetWon: Number, selectedBrandKey: () => 'LG전자',
     loadOfficialCatalog: async () => candidates, filterModelsByProductOptions: (_, models, type) => models.filter((model) => model.type === type),
     rankModelCandidates: (_, models) => models, compactModelName: (name) => name || '',
-    fetchLowestPrice: async (name) => { prices.push(name); return 500000; },
     fetchWithTimeout: async (url, init) => {
       requests += 1;
       assert.equal(url, '/api/ai-model-recommendations');
@@ -45,8 +43,9 @@ test('recommendation batches both cleaner types and prices only the AI-selected 
   vm.runInContext(source.slice(start, end), context);
   const groups = await vm.runInContext('buildAiModelRecommendations()', context);
   assert.equal(requests, 1);
-  assert.deepEqual(prices.sort(), candidates.map((model) => model.modelName).sort());
-  assert.equal(groups[0].models[0].naverLowestPrice, 500000);
+  assert.equal(groups[0].models[0].modelName, candidates[0].modelName);
+  assert.equal(groups[0].models[0].naverLowestPrice, undefined);
+  assert.doesNotMatch(source, /fetchLowestPrice|naver-shopping|네이버 최저|renderRecommendationTotal|applyAutoLowestPrice/);
   assert.equal(groups[1].displayProduct, '로봇 청소기');
   assert.equal(groups[0].engine, 'workers-ai');
 });
@@ -71,7 +70,10 @@ test('failed inference clears output, offers retry, and does not masquerade as A
   assert.ok(source.includes('data-retry-ai'));
   assert.ok(!source.includes('chooseRecommendedModel('));
   assert.ok(!source.includes('fallbackRecommendationText('));
-  for (const shell of shells) assert.ok(read(shell).includes('/customer-wizard.js?v=20261024-catalog-ai'));
+  for (const shell of shells) {
+    assert.ok(read(shell).includes('/customer-wizard.js?v=20261024-model-only'));
+    assert.doesNotMatch(read(shell), /네이버 최저/);
+  }
 });
 
 test('all route shells contain the same redesigned home and form anchors', () => {
