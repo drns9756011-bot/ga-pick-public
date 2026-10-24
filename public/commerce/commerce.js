@@ -506,7 +506,11 @@ function renderProducts() {
   const isSubscription = commercePage === "subscription";
 
   if (!items.length) {
-    renderEmpty(isSubscription, commerceItems.length ? "조건에 맞는 구독 상품이 없습니다." : "구독 상품을 불러오지 못했습니다.");
+    const productType = isSubscription ? "구독" : "쇼핑";
+    const message = commerceItems.length
+      ? `조건에 맞는 ${productType} 상품이 없습니다.`
+      : isSubscription ? "구독 상품을 불러오지 못했습니다." : "쇼핑 상품을 준비하고 있습니다.";
+    renderEmpty(isSubscription, message);
     updateCatalogMeta(0, 0);
     return;
   }

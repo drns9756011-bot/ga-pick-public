@@ -140,6 +140,25 @@ test('all customer pages load one version of the shared design without ad script
   }
 });
 
+test('shopping empty states never report a subscription API failure', () => {
+  const source = read('commerce/commerce.js');
+  const start = source.indexOf('function renderProducts()');
+  const end = source.indexOf('  productGrid.innerHTML = items.map', start);
+  const emptyRender = source.slice(start, end) + '}';
+  for (const [page, products, expected] of [
+    ['shopping', [], '쇼핑 상품을 준비하고 있습니다.'],
+    ['shopping', [{}], '조건에 맞는 쇼핑 상품이 없습니다.'],
+    ['subscription', [], '구독 상품을 불러오지 못했습니다.'],
+    ['subscription', [{}], '조건에 맞는 구독 상품이 없습니다.'],
+  ]) {
+    let rendered;
+    const context = vm.createContext({ productGrid: {}, filteredItems: () => [], visibleCount: 24,
+      commercePage: page, commerceItems: products, renderEmpty: (_, message) => { rendered = message; }, updateCatalogMeta() {} });
+    vm.runInContext(emptyRender + '; renderProducts();', context);
+    assert.equal(rendered, expected);
+  }
+});
+
 test('customer typography uses readable body, controls, and supporting text', () => {
   const css = read('customer-ui.css');
   assert.match(css, /font-weight: 500; font-size: 18px; line-height: 1\.6/);
