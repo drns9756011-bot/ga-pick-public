@@ -5,6 +5,14 @@ compatibility_date = "2026-08-05"
 [triggers]
 crons = ["0 * * * *"]
 
+[ai]
+binding = "AI"
+
+[[ratelimits]]
+name = "AI_RECOMMENDATION_LIMITER"
+namespace_id = "20261024"
+simple = { limit = 8, period = 60 }
+
 [vars]
 SOLAPI_CHANNEL_ID = "KA01PF260720091629575EzVmd2YRyU7"
 SOLAPI_FROM = "01066312323"

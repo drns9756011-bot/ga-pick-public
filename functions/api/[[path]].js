@@ -1,5 +1,5 @@
 import { getHomeCases } from "../home-cases.js";
-import { getOfficialCatalog, verifyOfficialModels } from "../official-models.js";
+import { getOfficialCatalog, verifyOfficialModels, readBoundedJson, validateRecommendationRequest, recommendOfficialModels } from "../official-models.js";
 import { protectCustomerPhone, customerPhoneHash, readCustomerPhone, customerPhoneWithinSevenDays, customerPhoneRetained, customerPhoneAccessExpiresAt, customerPersonalExpiresAt, fullyMaskCustomerPhone, maskPhoneInMessage, quoteImageSignature, verifyQuoteImageSignature } from "../phone-vault.js";
 
 const jsonHeaders = {
@@ -5954,6 +5954,26 @@ export async function onRequest(context) {
   }
   if (path === "customer-quotes" && method === "GET") return getCustomerQuotes(env, request);
   if (path === "customer-quotes" && method === "POST") return createCustomerQuote(env, request, context.ctx || context);
+  if (path === "ai-model-recommendations" && method === "POST") {
+    const origin = request.headers.get("Origin");
+    if (origin && origin !== new URL(request.url).origin) return json({ ok: false, message: "허용되지 않은 요청입니다." }, 403);
+    if (!env.AI_RECOMMENDATION_LIMITER?.limit) return json({ ok: false, message: "AI 연결 설정을 확인하고 있습니다." }, 503);
+    const encoder = new TextEncoder();
+    const digest = await crypto.subtle.digest("SHA-256", encoder.encode(request.headers.get("CF-Connecting-IP") || "local"));
+    const key = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+    const limit = await env.AI_RECOMMENDATION_LIMITER.limit({ key: `recommend:${key}` });
+    if (!limit.success) return json({ ok: false, message: "잠시 후 다시 추천받아 주세요." }, 429, { "Retry-After": "60" });
+    let body;
+    try { body = await readBoundedJson(request, 16384); } catch {
+      return json({ ok: false, message: "추천 요청 형식을 확인해 주세요." }, 400);
+    }
+    if (!validateRecommendationRequest(body)) return json({ ok: false, message: "브랜드와 선택 옵션을 확인해 주세요." }, 400);
+    try {
+      return json({ ok: true, ...await recommendOfficialModels(env, body) });
+    } catch {
+      return json({ ok: false, message: "AI 추천을 완료하지 못했습니다. 잠시 후 다시 시도해 주세요." }, 503);
+    }
+  }
   if (path === "official-model-catalog" && method === "GET") {
     const url = new URL(request.url);
     const brand = url.searchParams.get("brand") || "";

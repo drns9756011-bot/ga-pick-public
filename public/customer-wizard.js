@@ -45,10 +45,10 @@
       priorities: [],
       note: "",
     },
-    catalogs: {},
     officialCatalogs: {},
     lowestPriceCache: new Map(),
     recommendationGroups: [],
+    recommendationError: "",
     recommending: false,
     recommendationMode: "",
     phoneVerificationId: "",
@@ -582,6 +582,7 @@
     };
     state.recommendationGroups = [];
     state.recommending = false;
+    state.recommendationError = "";
     state.recommendationMode = "";
     state.phoneVerificationId = "";
     state.verificationPhone = "";
@@ -1113,6 +1114,7 @@
   }
 
   function renderRecommendationPanel() {
+    if (state.recommendationError) return `<div class="ai-recommendation-panel" role="alert"><p>${escapeHtml(state.recommendationError)}</p><button type="button" class="secondary-btn" data-retry-ai>다시 추천받기</button></div>`;
     const loading = state.recommending ? "<p>AI가 모델 후보를 정리하고 있습니다.</p>" : "";
     const body = state.recommendationGroups.length
       ? `${state.recommendationGroups
@@ -1122,13 +1124,15 @@
                   <strong>[${escapeHtml(group.displayProduct || group.product)}]</strong>
                   <span>${escapeHtml(group.optionSummary || "상세 옵션 미입력")}</span>
                   <ul>${group.models.map((model) => `<li>${renderModelWithPrice(model)}</li>`).join("")}</ul>
+                  ${group.reason ? `<p>${escapeHtml(group.reason)}</p>` : ""}
                 </div>
               `
             )
             .join("")}
           ${renderRecommendationTotal(state.recommendationGroups)}`
       : "<p>마지막 단계에서 AI 추천 모델이 자동으로 정리됩니다.</p>";
-    return `<div class="ai-recommendation-panel"><b>AI 추천 간이 견적서</b>${loading || body}</div>`;
+    const usedAi = state.recommending || state.recommendationGroups.some((group) => ["workers-ai", "ollama"].includes(group.engine));
+    return `<div class="ai-recommendation-panel"><b>${usedAi ? "AI 추천 간이 견적서" : "추천 모델 확인"}</b>${loading || body}</div>`;
   }
 
   function bindStepEvents(root, key) {
@@ -1293,7 +1297,8 @@
       syncAllFields();
     });
 
-    if (key === "quoteInfo" && shouldUseAiRecommendation() && !state.recommending && !state.recommendationGroups.length) {
+    root.querySelector("[data-retry-ai]")?.addEventListener("click", runAiRecommendation);
+    if (key === "quoteInfo" && shouldUseAiRecommendation() && !state.recommending && !state.recommendationGroups.length && !state.recommendationError) {
       runAiRecommendation();
     }
   }
@@ -1975,10 +1980,13 @@ function buildAiSummary() {
 
   function clearAiRecommendation() {
     state.recommendationGroups = [];
+    state.recommendationError = "";
     fields.aiModelRecommendations.value = "";
   }
 
   async function runAiRecommendation() {
+    if (state.recommending) return;
+    state.recommendationError = "";
     state.recommending = true;
     showAiRecommendationLoading();
     render();
@@ -1989,7 +1997,8 @@ function buildAiSummary() {
       applyAutoLowestPrice(groups);
     } catch (error) {
       console.warn("AI recommendation failed", error);
-      fields.aiModelRecommendations.value = fallbackRecommendationText();
+      state.recommendationError = "AI 추천을 완료하지 못했습니다. 다시 시도해 주세요.";
+      fields.aiModelRecommendations.value = "";
       fields.price.value = "0";
     } finally {
       state.recommending = false;
@@ -2021,24 +2030,6 @@ function buildAiSummary() {
     return "LG전자";
   }
 
-  async function loadCatalogByBrand(brand) {
-    if (brand === "삼성전자") return {};
-    if (state.catalogs[brand]) return state.catalogs[brand];
-    const path = "/assets/pickquote-product-model-map.json";
-    const response = await fetchWithTimeout(path, { cache: "no-store" }, 12000);
-    if (!response.ok) throw new Error("catalog load failed");
-    state.catalogs[brand] = await response.json();
-    return state.catalogs[brand];
-  }
-
-  async function loadCatalog() {
-    const brand = selectedBrandKey();
-    if (!shouldUseAiRecommendation() || !["LG전자", "삼성전자"].includes(brand)) {
-      throw new Error("비교견적에는 AI 추천을 사용하지 않습니다.");
-    }
-    return loadCatalogByBrand(brand);
-  }
-
   async function loadOfficialCatalog(product) {
     const brand = selectedBrandKey();
     const key = `${brand}:${product}`;
@@ -2060,45 +2051,18 @@ function buildAiSummary() {
     return state.officialCatalogs[key];
   }
 
-  async function verifyOfficialCandidates(product, models) {
-    if (!models.length) return [];
-    const response = await fetchWithTimeout("/api/official-model-verify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ brand: selectedBrandKey(), product, models: models.map((model) => model.modelName) }),
-    }, 18000);
-    if (!response.ok) throw new Error("official model verification failed");
-    const data = await response.json();
-    if (!data.ok || !Array.isArray(data.models)) throw new Error("official model verification invalid");
-    const verified = new Map(data.models.map((model) => [compactModelName(model.modelName), model]));
-    return models.map((model) => {
-      const official = verified.get(compactModelName(model.modelName));
-      return official ? { ...model, ...official, naverLowestPrice: 0 } : null;
-    }).filter(Boolean);
-  }
-
   async function buildAiModelRecommendations() {
-    const catalog = await loadCatalog();
     const selectedProducts = state.selectedProducts.filter(Boolean).flatMap((product) => {
       const types = normalizeProductKey(product) === "청소기" ? optionStateFor(product).type : [];
       return types?.length ? types.map((type) => ({ product, type })) : [{ product, type: "" }];
     });
     const totalWeight = selectedProducts.reduce((sum, item) => sum + productBudgetWeight(item.product), 0) || 1;
     const budgetWon = parseBudgetWon(state.aiContext.budgetRange);
-    const groups = [];
-
-    for (const { product, type } of selectedProducts) {
+    const groups = await Promise.all(selectedProducts.map(async ({ product, type }) => {
       const productKey = normalizeProductKey(product);
       const optionSource = optionStateFor(productKey);
       const optionBrand = optionBrandFor(optionSource);
-      const officialModels = await loadOfficialCatalog(productKey).catch((error) => {
-        if (selectedBrandKey() === "LG전자") return [];
-        throw error;
-      });
-      const storedModels = Array.isArray(catalog?.[productKey]?.models) ? catalog[productKey].models : [];
-      const models = [...new Map([...storedModels, ...officialModels]
-        .filter((model) => model?.modelName)
-        .map((model) => [compactModelName(model.modelName), model])).values()];
+      const models = await loadOfficialCatalog(productKey);
       const brandModels = optionBrand ? models.filter((model) => modelMatchesOptionBrand(model, optionBrand)) : models;
       const candidates = filterModelsByProductOptions(product, brandModels, type);
       const targetPrice = budgetWon
@@ -2108,34 +2072,38 @@ function buildAiSummary() {
       const preferredCode = compactModelName(optionSource.preferredModel || "");
       const preferred = preferredCode && candidates.find((model) => compactModelName(model.modelName) === preferredCode);
       const shortlist = preferred ? [preferred] : rankModelCandidates(product, candidates, targetPrice).slice(0, 8);
-      const verified = await verifyOfficialCandidates(productKey, shortlist);
-      const enriched = await Promise.all(
-        verified.map(async (model) => ({
-          ...model,
-          naverLowestPrice: (await fetchLowestPrice(model.modelName)) || 0,
-        }))
-      );
-
-      const chosen = chooseRecommendedModel(product, enriched, targetPrice);
-      const catalogModelNames = new Set(verified.map((model) => compactModelName(model?.modelName || "")).filter(Boolean));
-      const verifiedChosen =
-        chosen &&
-        catalogModelNames.has(compactModelName(chosen.modelName || "")) &&
-        verified.some((candidate) => compactModelName(candidate.modelName) === compactModelName(chosen.modelName))
-          ? chosen
-          : null;
-
-      groups.push({
+      return {
         product,
         displayProduct: type || productDisplayTitle(product, optionSource),
         optionSummary: type
-          ? (optionSource[type === "무선 청소기" ? "cordlessDetail" : type === "로봇 청소기" ? "robotDetail" : ""] || "")
+          ? [type, optionSource[type === "무선 청소기" ? "cordlessDetail" : type === "로봇 청소기" ? "robotDetail" : ""] || ""].filter(Boolean).join(" · ")
           : productOptionSummary(product),
         targetPrice,
-        models: verifiedChosen ? [verifiedChosen] : [{ modelName: "판매자 상담 후 모델 확정", normalPrice: 0, naverLowestPrice: 0 }],
-      });
-    }
-    return groups;
+        candidates: shortlist,
+      };
+    }));
+    const response = await fetchWithTimeout("/api/ai-model-recommendations", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ brand: selectedBrandKey(), context: {
+        situation: state.aiContext.situation, family: state.aiContext.family, priorities: state.aiContext.priorities,
+      }, groups: groups.map((group) => ({
+        product: normalizeProductKey(group.product), options: group.optionSummary,
+        targetPrice: group.targetPrice, models: group.candidates.map((model) => model.modelName),
+      })) }),
+    }, 35000);
+    if (!response.ok) throw new Error("AI recommendation unavailable");
+    const result = await response.json();
+    if (!result.ok || !Array.isArray(result.groups) || result.groups.length !== groups.length) throw new Error("AI recommendation invalid");
+    return Promise.all(groups.map(async (group, index) => {
+      const recommendation = result.groups[index];
+      if (recommendation.group !== index || !Array.isArray(recommendation.models)) throw new Error("AI recommendation group invalid");
+      const models = await Promise.all(recommendation.models.map(async (model) => ({
+        ...model, naverLowestPrice: await fetchLowestPrice(model.modelName),
+      })));
+      return { ...group, candidates: undefined, engine: result.engine, reason: recommendation.reason,
+        models: models.length ? models : [{ modelName: "판매자 상담 후 모델 확정", normalPrice: 0, naverLowestPrice: 0 }],
+      };
+    }));
   }
 
   function filterModelsByProductOptions(product, models, selectedCleanerType = "", optionsOverride = null) {
@@ -2464,33 +2432,6 @@ function buildAiSummary() {
     return score + modelQualityAdjustment(product, model);
   }
 
-  function chooseRecommendedModel(product, candidates, targetPrice) {
-    const premium = isPremiumAiContext();
-    const allowed = [...candidates]
-      .filter((model) => model && model.modelName)
-      .filter((model) => isAllowedRecommendationModel(product, model));
-    const priced = allowed.filter((model) => Number(model.naverLowestPrice || 0) >= 300000);
-    return (priced.length ? priced : allowed)
-      .sort((a, b) => {
-        const aNaverPrice = Number(a.naverLowestPrice || 0);
-        const bNaverPrice = Number(b.naverLowestPrice || 0);
-        const aPrice = aNaverPrice >= 300000 ? aNaverPrice : estimatedOnlinePrice(a);
-        const bPrice = bNaverPrice >= 300000 ? bNaverPrice : estimatedOnlinePrice(b);
-        const target = targetPrice || Math.max(aPrice, bPrice, 1);
-        let aScore = Math.abs(aPrice - target) / target;
-        let bScore = Math.abs(bPrice - target) / target;
-        if (premium && aPrice < target * 0.72) aScore += 0.95;
-        if (premium && bPrice < target * 0.72) bScore += 0.95;
-        if (!premium && aPrice < target * 0.5) aScore += 0.35;
-        if (!premium && bPrice < target * 0.5) bScore += 0.35;
-        if (aPrice > target * 1.65) aScore += 0.2;
-        if (bPrice > target * 1.65) bScore += 0.2;
-        if (a.catalogueHit) aScore -= 0.08;
-        if (b.catalogueHit) bScore -= 0.08;
-        return aScore + modelQualityAdjustment(product, a) - (bScore + modelQualityAdjustment(product, b));
-      })[0];
-  }
-
   function modelQualityAdjustment(product, model) {
     const productKey = normalizeProductKey(product);
     const name = String(typeof model === "object" ? model?.modelName : model || "").toUpperCase();
@@ -2579,13 +2520,15 @@ function buildAiSummary() {
   }
 
   function recommendationsToText(groups) {
-    const lines = ["고객의 상황에 맞춰 AI가 추천한 모델임을 알려드립니다."];
+    const usedAi = groups.some((group) => ["workers-ai", "ollama"].includes(group.engine));
+    const lines = [usedAi ? "고객의 상황에 맞춰 AI가 추천한 모델입니다." : "공식 카탈로그에서 조건에 맞는 모델 확인이 필요합니다."];
     groups.forEach((group) => {
       lines.push("");
       lines.push(
         `[${group.displayProduct || group.product}]${group.optionSummary ? ` ${group.optionSummary}` : ""}`
       );
       group.models.forEach((model) => lines.push(`- ${displayModelName(model)}${formatModelLowestPrice(model)}`));
+      if (group.reason) lines.push(group.reason);
     });
     const total = recommendationTotalPrice(groups);
     if (total > 0) {
@@ -2639,16 +2582,6 @@ function buildAiSummary() {
         <strong>${escapeHtml(formatWon(total))}</strong>
       </div>
     `;
-  }
-
-  function fallbackRecommendationText() {
-    const lines = ["고객의 상황에 맞춰 AI가 추천한 모델임을 알려드립니다."];
-    state.selectedProducts.forEach((product) => {
-      lines.push("");
-      lines.push(`[${product}]${productOptionSummary(product) ? ` ${productOptionSummary(product)}` : ""}`);
-      lines.push("- 판매자 상담 후 모델 확정");
-    });
-    return lines.join("\n").trim();
   }
 
   function applyAutoLowestPrice(groups) {

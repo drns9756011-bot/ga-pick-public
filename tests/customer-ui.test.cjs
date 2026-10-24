@@ -10,6 +10,70 @@ const shells = ['index.html', 'quote/index.html', 'my-quote/index.html'];
 const catalogs = ['brand/index.html', 'subscription/index.html', 'shopping/index.html'];
 const home = (html) => html.slice(html.indexOf('<section class="page is-active" id="homePage"'), html.indexOf('<section class="page" id="customerPage"')).replace(/\s(?:fetchpriority="high"|loading="lazy")/g, '');
 
+test('recommendation batches both cleaner types and prices only the AI-selected models', async () => {
+  const source = read('customer-wizard.js');
+  const start = source.indexOf('  async function buildAiModelRecommendations()');
+  const end = source.indexOf('  function filterModelsByProductOptions(', start);
+  const options = { type: ['무선 청소기', '로봇 청소기'], cordlessDetail: '기본형', robotDetail: '직배수형' };
+  const candidates = [
+    { modelName: 'A730WC.AKRG', type: '무선 청소기' },
+    { modelName: 'N95THO.CKOR', type: '로봇 청소기' },
+  ];
+  const prices = [];
+  let requests = 0;
+  const context = vm.createContext({
+    state: { selectedProducts: ['청소기'], aiContext: { situation: '이사', budgetRange: '5000000', family: ['2인'], priorities: ['가격'], note: 'private note must not be sent' } },
+    normalizeProductKey: (product) => product, optionStateFor: () => options, optionBrandFor: () => '',
+    productBudgetWeight: () => 1, parseBudgetWon: Number, selectedBrandKey: () => 'LG전자',
+    loadOfficialCatalog: async () => candidates, filterModelsByProductOptions: (_, models, type) => models.filter((model) => model.type === type),
+    rankModelCandidates: (_, models) => models, compactModelName: (name) => name || '',
+    fetchLowestPrice: async (name) => { prices.push(name); return 500000; },
+    fetchWithTimeout: async (url, init) => {
+      requests += 1;
+      assert.equal(url, '/api/ai-model-recommendations');
+      const body = JSON.parse(init.body);
+      assert.equal(body.groups.length, 2);
+      assert.equal(body.groups[0].options, '무선 청소기 · 기본형');
+      assert.equal(body.groups[1].options, '로봇 청소기 · 직배수형');
+      assert.ok(!init.body.includes('private note'));
+      return { ok: true, json: async () => ({ ok: true, engine: 'workers-ai', groups: [
+        { group: 0, models: [candidates[0]], reason: '무선 추천' },
+        { group: 1, models: [candidates[1]], reason: '로봇 추천' },
+      ] }) };
+    },
+  });
+  vm.runInContext(source.slice(start, end), context);
+  const groups = await vm.runInContext('buildAiModelRecommendations()', context);
+  assert.equal(requests, 1);
+  assert.deepEqual(prices.sort(), candidates.map((model) => model.modelName).sort());
+  assert.equal(groups[0].models[0].naverLowestPrice, 500000);
+  assert.equal(groups[1].displayProduct, '로봇 청소기');
+  assert.equal(groups[0].engine, 'workers-ai');
+});
+
+test('failed inference clears output, offers retry, and does not masquerade as AI success', async () => {
+  const source = read('customer-wizard.js');
+  const start = source.indexOf('  async function runAiRecommendation()');
+  const end = source.indexOf('  function showAiRecommendationLoading()', start);
+  const state = { recommending: false, recommendationError: '', recommendationGroups: [] };
+  const fields = { aiModelRecommendations: { value: 'old output' }, price: { value: '100' } };
+  const context = vm.createContext({
+    state, fields, console: { warn() {} }, buildAiModelRecommendations: async () => { throw new Error('offline'); },
+    showAiRecommendationLoading() {}, hideAiRecommendationLoading() {}, render() {}, syncAllFields() {},
+  });
+  vm.runInContext(source.slice(start, end), context);
+  await vm.runInContext('runAiRecommendation()', context);
+  assert.equal(state.recommending, false);
+  assert.ok(state.recommendationError);
+  assert.equal(fields.aiModelRecommendations.value, '');
+  assert.equal(fields.price.value, '0');
+  assert.ok(source.includes('!state.recommendationError'));
+  assert.ok(source.includes('data-retry-ai'));
+  assert.ok(!source.includes('chooseRecommendedModel('));
+  assert.ok(!source.includes('fallbackRecommendationText('));
+  for (const shell of shells) assert.ok(read(shell).includes('/customer-wizard.js?v=20261024-catalog-ai'));
+});
+
 test('all route shells contain the same redesigned home and form anchors', () => {
   const baseline = home(read(shells[0]));
   assert.ok(baseline.includes('data-home-quote-start'));
