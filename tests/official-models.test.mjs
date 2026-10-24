@@ -105,6 +105,16 @@ test("Samsung family options expand only catalog sizes with matching installatio
   assert.deepEqual(parseSamsungFamilies({ products: [{ ...product, goodsDetailUrl: "tvs/package-tv/KQ85QNH70AFXKR/" }] }, "TV"), []);
 });
 
+test("Samsung catalog keeps verified official options when manufacturer requests fail", async () => {
+  const db = new DatabaseSync(":memory:");
+  const result = await getOfficialCatalog({ DB: d1(db) }, "삼성전자", "TV", async () => { throw new Error("manufacturer unavailable"); });
+  const model = result.models.find((item) => item.modelName === "KQ65QNH70AFXKR");
+  assert.ok(model?.installationOptions.some((option) => option.includes("벽걸이")));
+  assert.ok(model.catalog.pages.length);
+  assert.ok(result.models.every((item) => catalogEvidence("삼성전자", item.modelName)));
+  db.close();
+});
+
 test("LG catalog model and retail SKU are linked only by an explicit official Product record", () => {
   const listing = { modelName: "OLED65C6SW.AKRG", title: "LG 올레드 벽걸이형", officialUrl: "https://www.lge.co.kr/tvs/oled65c6sna-wall" };
   const detail = (sku, model) => `<script type="application/ld+json">${JSON.stringify({ "@type": "Product", sku, model, description: "65인치 벽걸이형", additionalProperty: [{ name: "해상도", value: "4K UHD" }] })}</script>`;

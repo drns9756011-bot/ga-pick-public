@@ -276,7 +276,7 @@ export async function getOfficialCatalog(env, brand, product, fetcher = fetch) {
   const isLg = brand === "LG전자";
   const path = isLg ? LG_SEARCH_TERMS[product] : SAMSUNG_CATEGORIES[product];
   if (!path || !["LG전자", "삼성전자"].includes(brand)) return { models: [], checkedAt: 0 };
-  const result = await cached(env, `catalog:v3:${brand}:${product}`, async () => {
+  const result = await cached(env, `catalog:v4:${brand}:${product}`, async () => {
     if (isLg) {
       const pages = await Promise.allSettled(path.map((term) => fetchOfficialHtml(
         `https://www.lge.co.kr/search?keyword=${encodeURIComponent(term)}&tab=product`, fetcher
@@ -290,9 +290,10 @@ export async function getOfficialCatalog(env, brand, product, fetcher = fetch) {
     const paths = Array.isArray(path) ? path : [path];
     const pages = await Promise.allSettled(paths.map((entry) => fetchOfficialHtml(new URL(entry, "https://www.samsung.com").href, fetcher)));
     const successful = pages.filter((page) => page.status === "fulfilled").map((page) => page.value);
-    if (!successful.length) throw new Error("삼성 공식 분류 조회에 실패했습니다.");
-    const families = product === "TV" ? await loadSamsungTvFamilies(successful[0], fetcher) : [];
-    return [...new Map([...successful.flatMap((html) => parseSamsungProducts(html, product)), ...families]
+    const verifiedSnapshot = catalogIndex[brand]?.officialModels?.[product] || [];
+    if (!successful.length && !verifiedSnapshot.length) throw new Error("삼성 공식 분류 조회에 실패했습니다.");
+    const families = product === "TV" && successful.length ? await loadSamsungTvFamilies(successful[0], fetcher).catch(() => []) : [];
+    return [...new Map([...successful.flatMap((html) => parseSamsungProducts(html, product)), ...verifiedSnapshot, ...families]
       .map((model) => [modelSku(model.modelName), model])).values()];
   });
   // Recheck even cached official-store results against the current PDF index.
