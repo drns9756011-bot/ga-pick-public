@@ -103,7 +103,7 @@ test('all route shells contain the same redesigned home and form anchors', () =>
   assert.ok(baseline.includes('name="homeQuoteMode" value="with_quote" checked'));
   assert.ok(baseline.includes('name="homeQuoteMode" value="without_quote"'));
   assert.match(baseline, /pq-hero-scene/);
-  assert.match(baseline, /pickquote-showroom-20261024\.webp/);
+  assert.match(baseline, /pickquote-studio-20261024\.webp/);
   assert.doesNotMatch(baseline, /pq-benefit-strip|pq-privacy/);
   assert.ok(baseline.includes('/brand?brand=LG'));
   assert.ok(baseline.includes('/brand?brand=Samsung'));
@@ -122,7 +122,7 @@ test('all route shells contain the same redesigned home and form anchors', () =>
 test('all customer pages load one version of the shared design without ad scripts', () => {
   for (const file of [...shells, ...catalogs]) {
     const html = read(file);
-    assert.ok(html.includes('/customer-ui.css?v=20261024-readable-type'), file);
+    assert.ok(html.includes('/customer-ui.css?v=20261024-studio-redesign'), file);
     assert.ok(html.includes('href="/assets/suit-variable.woff2"'), file);
     assert.ok(html.includes('customer-refresh'), file);
     assert.doesNotMatch(html, /adsbygoogle|PICK SUBSCRIPTION|PICK SHOPPING/);
@@ -132,7 +132,7 @@ test('all customer pages load one version of the shared design without ad script
     assert.ok(statSync(path.join(root, 'assets', asset)).size < 50000, asset);
   }
   assert.ok(statSync(path.join(root, 'assets/suit-variable.woff2')).size < 700000);
-  assert.ok(statSync(path.join(root, 'assets/pickquote-showroom-20261024.webp')).size < 80000);
+  assert.ok(statSync(path.join(root, 'assets/pickquote-studio-20261024.webp')).size < 80000);
   assert.ok(statSync(path.join(root, 'assets/suit-LICENSE.txt')).size > 1000);
   assert.match(read('customer-ui.css'), /src: url\("\/assets\/suit-variable\.woff2"\)/);
   for (const file of ['styles.css', 'brand/brand.css', 'commerce/commerce.css']) {
@@ -143,11 +143,28 @@ test('all customer pages load one version of the shared design without ad script
 test('customer typography uses readable body, controls, and supporting text', () => {
   const css = read('customer-ui.css');
   assert.match(css, /font-weight: 500; font-size: 18px; line-height: 1\.6/);
-  assert.match(css, /--pick-muted: #465463/);
+  assert.match(css, /--pick-muted: #52616c/);
   assert.match(css, /\.pq-primary \{[^}]*font-size: 18px; font-weight: 750/);
   assert.match(css, /\.pq-hero-note \{[^}]*font-size: 14px/);
   assert.match(css, /\.pq-hero-followup \{[^}]*flex-wrap: wrap/);
   assert.doesNotMatch(css, /font-size: (?:10|11)px/);
+});
+
+test('studio layout keeps square entries, a central hero, and lookup artwork inside the lookup page', () => {
+  const css = read('customer-ui.css');
+  assert.match(css, /\.pq-hero-copy \{[^}]*margin: auto; text-align: center/);
+  assert.match(css, /\.pq-entry \{[^}]*aspect-ratio: 1/);
+  assert.match(css, /\.pq-hero-scene img \{ object-fit: contain; object-position: center bottom/);
+  assert.match(css, /grid-auto-flow: column; grid-auto-columns: 190px/);
+  assert.doesNotMatch(css, /pq-step-compare|pq-step-select|pq-entry-room|hero-mobile-scene/);
+  for (const file of shells) {
+    const html = read(file);
+    const lookup = html.slice(html.indexOf('id="lookupPage"'), html.indexOf('id="sellerLoginPage"'));
+    assert.equal((html.match(/class="lookup-intro"/g) || []).length, 1);
+    assert.ok(lookup.includes('class="lookup-intro"'));
+    assert.doesNotMatch(home(html), /pickquote-showroom|pq-step-compare|pq-step-select/);
+  }
+  assert.ok(read('privacy/index.html').includes('/customer-ui.css?v=20261024-studio-redesign'));
 });
 
 test('home quote choice uses the existing wizard and resumes matching drafts', () => {
