@@ -8,14 +8,18 @@ const root = path.join(__dirname, '../public');
 const read = (file) => readFileSync(path.join(root, file), 'utf8');
 const shells = ['index.html', 'quote/index.html', 'my-quote/index.html'];
 const catalogs = ['brand/index.html', 'subscription/index.html', 'shopping/index.html'];
-const home = (html) => html.slice(html.indexOf('<section class="page is-active" id="homePage"'), html.indexOf('<section class="page" id="customerPage"'));
+const home = (html) => html.slice(html.indexOf('<section class="page is-active" id="homePage"'), html.indexOf('<section class="page" id="customerPage"')).replace(/\s(?:fetchpriority="high"|loading="lazy")/g, '');
 
 test('all route shells contain the same redesigned home and form anchors', () => {
   const baseline = home(read(shells[0]));
   assert.ok(baseline.includes('data-home-quote-start'));
   assert.ok(baseline.includes('name="homeQuoteMode" value="with_quote" checked'));
   assert.ok(baseline.includes('name="homeQuoteMode" value="without_quote"'));
-  assert.doesNotMatch(baseline, /pq-hero-scene|pq-benefit-strip|pq-privacy/);
+  assert.match(baseline, /pq-hero-scene/);
+  assert.match(baseline, /pickquote-showroom-20261024\.webp/);
+  assert.doesNotMatch(baseline, /pq-benefit-strip|pq-privacy/);
+  assert.ok(baseline.includes('/brand?brand=LG'));
+  assert.ok(baseline.includes('/brand?brand=Samsung'));
   assert.ok(baseline.indexOf('id="homeCaseStudy"') < baseline.indexOf('class="pq-process-band"'));
   for (const file of shells) {
     const html = read(file);
@@ -31,7 +35,7 @@ test('all route shells contain the same redesigned home and form anchors', () =>
 test('all customer pages load one version of the shared design without ad scripts', () => {
   for (const file of [...shells, ...catalogs]) {
     const html = read(file);
-    assert.ok(html.includes('/customer-ui.css?v=20261007-action-first'), file);
+    assert.ok(html.includes('/customer-ui.css?v=20261024-wix-redesign'), file);
     assert.ok(html.includes('href="/assets/suit-variable.woff2"'), file);
     assert.ok(html.includes('customer-refresh'), file);
     assert.doesNotMatch(html, /adsbygoogle|PICK SUBSCRIPTION|PICK SHOPPING/);
@@ -41,6 +45,7 @@ test('all customer pages load one version of the shared design without ad script
     assert.ok(statSync(path.join(root, 'assets', asset)).size < 50000, asset);
   }
   assert.ok(statSync(path.join(root, 'assets/suit-variable.woff2')).size < 700000);
+  assert.ok(statSync(path.join(root, 'assets/pickquote-showroom-20261024.webp')).size < 80000);
   assert.ok(statSync(path.join(root, 'assets/suit-LICENSE.txt')).size > 1000);
   assert.match(read('customer-ui.css'), /src: url\("\/assets\/suit-variable\.woff2"\)/);
   for (const file of ['styles.css', 'brand/brand.css', 'commerce/commerce.css']) {
@@ -133,4 +138,8 @@ test('brand selection and consultation anchors remain available', () => {
   assert.ok(html.includes('/assets/lg-electronics-logo.svg'));
   assert.ok(html.includes('/assets/samsung-electronics-logo.svg'));
   assert.doesNotMatch(html, /STORE PACKAGE|PICK GUIDE|class="brand-hall-hero"/);
+  const source = read('brand/brand.js');
+  assert.match(source, /new URLSearchParams\(window.location.search\)\.get\("brand"\)/);
+  assert.match(source, /new Map\(\[\["LG", "LG전자"\], \["Samsung", "삼성전자"\]\]\)/);
+  assert.ok(source.includes('button.setAttribute("aria-pressed", String(selected))'));
 });

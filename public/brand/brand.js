@@ -1,5 +1,7 @@
 (() => {
-  const state = { rows: [], brand: "", channel: "", selected: null, detailSelected: null };
+  const requestedBrand = new URLSearchParams(window.location.search).get("brand");
+  const initialBrand = new Map([["LG", "LG전자"], ["Samsung", "삼성전자"]]).get(requestedBrand) || "";
+  const state = { rows: [], brand: initialBrand, channel: "", selected: null, detailSelected: null };
   const grid = document.querySelector("#packageGrid");
   const count = document.querySelector("#packageCount");
   const brandFilters = document.querySelector("#brandFilters");
@@ -89,6 +91,15 @@
     const available = new Set(state.rows.map((row) => row.channel).filter(Boolean));
     const channels = PUBLIC_CHANNELS.filter((channel) => available.has(channel));
     channelFilter.innerHTML = `<option value="">전체 채널</option>${channels.map((v) => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join("")}`;
+    syncBrandFilters();
+  }
+
+  function syncBrandFilters() {
+    brandFilters?.querySelectorAll("button[data-brand]").forEach((button) => {
+      const selected = button.dataset.brand === state.brand;
+      button.classList.toggle("is-active", selected);
+      button.setAttribute("aria-pressed", String(selected));
+    });
   }
 
   function filteredRows() {
@@ -187,13 +198,13 @@
     const button = event.target.closest("button[data-brand]");
     if (!button) return;
     state.brand = button.dataset.brand || "";
-    brandFilters.querySelectorAll("button").forEach((item) => item.classList.toggle("is-active", item === button));
+    syncBrandFilters();
     render();
   });
   document.querySelectorAll("[data-showcase-brand]").forEach((card) => card.addEventListener("click", () => {
     const brand = card.dataset.showcaseBrand || "";
     state.brand = brand;
-    brandFilters?.querySelectorAll("button[data-brand]").forEach((button) => button.classList.toggle("is-active", button.dataset.brand === brand));
+    syncBrandFilters();
     render();
     scrollToPackages();
   }));
