@@ -10,6 +10,27 @@ const shells = ['index.html', 'quote/index.html', 'my-quote/index.html'];
 const catalogs = ['brand/index.html', 'subscription/index.html', 'shopping/index.html'];
 const home = (html) => html.slice(html.indexOf('<section class="page is-active" id="homePage"'), html.indexOf('<section class="page" id="customerPage"')).replace(/\s(?:fetchpriority="high"|loading="lazy")/g, '');
 
+test('Neo QLED filter does not confuse Serif or OLED models sharing the KQ prefix', () => {
+  const source = read('customer-wizard.js');
+  const start = source.indexOf('  function filterModelsByProductOptions(');
+  const end = source.indexOf('  function isAllowedRecommendationModel(', start);
+  const candidates = [
+    { modelName: 'KQ65QNH70AFXKR', title: '2026 Neo QLED QNH70 (163cm)' },
+    { modelName: 'KQ65LSD01AFXKR', title: '2024 The Serif (163cm)' },
+    { modelName: 'KQ65SH90AFXKR', title: 'OLED 65인치' },
+    { modelName: 'KQ85QNH70AFXKR', title: '2026 Neo QLED QNH70 (214cm)' },
+  ];
+  const context = vm.createContext({
+    candidates, normalizeProductKey: (value) => value, selectedBrandKey: () => '삼성전자',
+    isAllowedRecommendationModel: () => true, modelBody: (model) => model.modelName,
+    modelSearchText: (model) => model.title, compactModelName: (value) => String(value).toUpperCase().replace(/\s/g, ''),
+    extractTvInches: (code) => Number(code.match(/^KQ(\d{2})/)?.[1]),
+  });
+  vm.runInContext(source.slice(start, end), context);
+  const result = vm.runInContext('filterModelsByProductOptions("TV", candidates, "", {type:"NEO QLED",size:"65인치"})', context);
+  assert.deepEqual(Array.from(result, (model) => model.modelName), ['KQ65QNH70AFXKR']);
+});
+
 test('recommendation batches both cleaner types without any price requests', async () => {
   const source = read('customer-wizard.js');
   const start = source.indexOf('  async function buildAiModelRecommendations()');
@@ -71,7 +92,7 @@ test('failed inference clears output, offers retry, and does not masquerade as A
   assert.ok(!source.includes('chooseRecommendedModel('));
   assert.ok(!source.includes('fallbackRecommendationText('));
   for (const shell of shells) {
-    assert.ok(read(shell).includes('/customer-wizard.js?v=20261024-model-only'));
+    assert.ok(read(shell).includes('/customer-wizard.js?v=20261024-options-verified'));
     assert.doesNotMatch(read(shell), /네이버 최저/);
   }
 });

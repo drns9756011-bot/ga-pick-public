@@ -1176,6 +1176,11 @@
             (state.verifiedPhone && state.verifiedPhone !== phone)
           ) {
             clearPhoneVerification();
+            const requestButton = root.querySelector("[data-phone-verification-request]");
+            if (requestButton) {
+              requestButton.disabled = false;
+              requestButton.textContent = "인증번호 받기";
+            }
             const status = root.querySelector("[data-phone-verification-status]");
             if (status) {
               status.textContent = "전화번호가 변경되어 다시 인증해야 합니다.";
@@ -2128,7 +2133,7 @@ function buildAiSummary() {
           const text = compactModelName(modelSearchText(model));
           if (selectedType === "OLED") return /OLED/.test(body) || /OLED/.test(text);
           if (selectedType === "QNED") return /QNED/.test(body) || /QNED/.test(text);
-          if (selectedType === "NEOQLED") return /^(KQ|QN)/.test(body) || /NEOQLED/.test(text);
+          if (selectedType === "NEOQLED") return /NEOQLED/.test(text);
           if (selectedType === "MRGB") return /MRGB|MICRORGB/.test(text) || /^(M|KQ).*RGB/.test(body);
           return text.includes(selectedType);
         });

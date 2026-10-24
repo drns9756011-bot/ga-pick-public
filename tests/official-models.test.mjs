@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { DatabaseSync } from "node:sqlite";
-import { catalogEvidence, getOfficialCatalog, modelCode, parseLgProducts, parseSamsungProducts, parseOfficialLgDetail, verifyOfficialModels, readBoundedJson, validateRecommendationRequest, recommendOfficialModels, validateAiChoices } from "../functions/official-models.js";
+import { catalogEvidence, getOfficialCatalog, modelCode, parseLgProducts, parseSamsungProducts, parseSamsungFamilies, parseOfficialLgDetail, verifyOfficialModels, readBoundedJson, validateRecommendationRequest, recommendOfficialModels, validateAiChoices } from "../functions/official-models.js";
 import { onRequest } from "../functions/api/[[path]].js";
 
 function d1(db) {
@@ -80,6 +80,29 @@ test("both brands require exact catalog membership, not just an official product
   assert.equal(catalogEvidence("LG전자", "A730WC2.AKRG"), null);
   assert.equal(catalogEvidence("삼성전자", "KQ65QNH80AFXKR2"), null);
   assert.equal(catalogEvidence("toString", "A730WC"), null);
+});
+
+test("Samsung family options expand only catalog sizes with matching installation IDs", () => {
+  const product = { mdlCode: "KQ85QNH70AFXKR", goodsNm: "2026 Neo QLED QNH70 (214cm)", goodsDetailUrl: "tvs/neo-qled-4k-qnh70-d2c/KQ85QNH70AFXKR/", salePrice: 3000000,
+    goodsOptStr: [
+      "1|1004|1093|1093|사이즈|163cm||N|KQ65QNH70AFXKR|stand65,wall65|size|163 cm|",
+      "1|1004|1060|1060|사이즈|214cm||N|KQ85QNH70AFXKR|stand85|size|214 cm|",
+      "1|1004|1060|1060|사이즈|220cm||N|NOTINCATALOG|unknown|size|220 cm|",
+      "2|2040|2038|2038|옵션|스탠드형||N|KQ85QNH70AFXKR|stand65,stand85|tv option|스탠드형|",
+      "2|2040|5723|5723|옵션|풀 모션 슬림핏 벽걸이형||N|KQ65QNH70-W|wall65|tv option|벽걸이|",
+    ].join("\n"),
+  };
+  const models = parseSamsungFamilies({ products: [product] }, "TV");
+  assert.equal(models.length, 2);
+  assert.equal(models[0].modelName, "KQ65QNH70AFXKR");
+  assert.match(models[0].officialUrl, /\/KQ65QNH70AFXKR\/$/);
+  assert.match(models[0].title, /163cm/);
+  assert.deepEqual(models[0].installationOptions, ["스탠드형", "풀 모션 슬림핏 벽걸이형"]);
+  assert.deepEqual(models[1].installationOptions, ["스탠드형"]);
+  assert.equal(models[0].normalPrice, 0, "85-inch price must not be copied to the 65-inch variant");
+  assert.deepEqual(parseSamsungFamilies({ products: [{ ...product, onlineStoreOnlyYn: "Y" }] }, "TV"), []);
+  assert.deepEqual(parseSamsungFamilies({ products: [{ ...product, flagStr: "닷컴 ONLY" }] }, "TV"), []);
+  assert.deepEqual(parseSamsungFamilies({ products: [{ ...product, goodsDetailUrl: "tvs/package-tv/KQ85QNH70AFXKR/" }] }, "TV"), []);
 });
 
 test("LG catalog model and retail SKU are linked only by an explicit official Product record", () => {
