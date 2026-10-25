@@ -9,7 +9,7 @@ import { onRequest } from '../functions/api/[[path]].js';
 function setup() {
   const db = new DatabaseSync(':memory:');
   db.exec(`PRAGMA foreign_keys = ON; CREATE TABLE approved_sellers(seller_id TEXT PRIMARY KEY, status TEXT, manager TEXT, branch TEXT, channel TEXT);
-    CREATE TABLE seller_sessions(token_hash TEXT, seller_id TEXT, expires_at TEXT);`);
+    CREATE TABLE seller_sessions(token_hash TEXT, seller_id TEXT, expires_at TEXT, created_at TEXT);`);
   for (let i = 1; i <= 4; i++) db.prepare('INSERT INTO approved_sellers VALUES(?,?,?,?,?)').run(`s${i}`, 'approved', `매니저${i}`, '서울점', 'LG');
   const DB = { prepare(sql) { let args = []; return {
     bind(...values) { args = values; return this; },
@@ -98,7 +98,7 @@ test('public worker authenticates session and never trusts submitted seller id o
   };
   assert.equal((await call({ 'X-Admin-Token': 'test-only' })).status, 401);
   assert.equal((await call({ 'X-Seller-Session': 'invalid' })).status, 401);
-  s.db.prepare('INSERT INTO seller_sessions VALUES(?,?,?)').run(createHash('sha256').update('valid-session').digest('hex'), 's1', new Date(Date.now() + 3600000).toISOString());
+  s.db.prepare('INSERT INTO seller_sessions(token_hash,seller_id,expires_at,created_at) VALUES(?,?,?,?)').run(createHash('sha256').update('valid-session').digest('hex'), 's1', new Date(Date.now() + 3600000).toISOString(), new Date().toISOString());
   assert.equal((await call({ 'X-Seller-Session': 'valid-session' })).data.rows.length, 1);
   s.db.prepare("UPDATE approved_sellers SET status = 'rejected' WHERE seller_id = 's1'").run();
   assert.equal((await call({ 'X-Seller-Session': 'valid-session' })).status, 401);

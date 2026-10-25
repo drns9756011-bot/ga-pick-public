@@ -50,7 +50,7 @@ const PHONE_VERIFICATION_MAX_ATTEMPTS = 5;
 const PHONE_VERIFICATION_HOURLY_LIMIT = 5;
 const LPLAN_SYNC_TOKEN_DEFAULT = "pickquote-lplan-sync-v1";
 const MASTER_SELLER_ID = "pickgj";
-const SELLER_SESSION_HOURS = 12;
+const SELLER_SESSION_HOURS = 1;
 
 function solapiValue(env, key) {
   const bundledValue = String(SOLAPI_DEFAULTS[key] || "").trim();
@@ -725,20 +725,34 @@ async function ensureColumns(env, table, columns) {
   }
 }
 
+const sellerSessionSchemas = new WeakMap();
 async function ensureSellerSessions(env) {
+  if (sellerSessionSchemas.has(env.DB)) return sellerSessionSchemas.get(env.DB);
+  const ready = (async () => {
   await env.DB.prepare(`CREATE TABLE IF NOT EXISTS seller_sessions (
     token_hash TEXT PRIMARY KEY, seller_id TEXT NOT NULL,
     created_at TEXT NOT NULL, expires_at TEXT NOT NULL
   )`).run();
   await env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_seller_sessions_seller ON seller_sessions(seller_id)").run();
+  const columns = await env.DB.prepare('PRAGMA table_info(seller_sessions)').all();
+  if (!columns.results.some(column => column.name === 'last_activity_at')) {
+    try { await env.DB.prepare("ALTER TABLE seller_sessions ADD COLUMN last_activity_at TEXT NOT NULL DEFAULT ''").run(); }
+    catch (error) {
+      const check = await env.DB.prepare('PRAGMA table_info(seller_sessions)').all();
+      if (!check.results.some(column => column.name === 'last_activity_at')) throw error;
+    }
+  }
+  })().catch(error => { sellerSessionSchemas.delete(env.DB); throw error; });
+  sellerSessionSchemas.set(env.DB, ready);
+  return ready;
 }
 
 async function createSellerSession(env, sellerId) {
   await ensureSellerSessions(env);
   const token = `${crypto.randomUUID()}${crypto.randomUUID()}`;
   const now = new Date();
-  await env.DB.prepare("INSERT INTO seller_sessions (token_hash, seller_id, created_at, expires_at) VALUES (?, ?, ?, ?)")
-    .bind(await sha256Hex(token), sellerId, now.toISOString(), new Date(now.getTime() + SELLER_SESSION_HOURS * 3600000).toISOString()).run();
+  await env.DB.prepare("INSERT INTO seller_sessions (token_hash, seller_id, created_at, expires_at, last_activity_at) VALUES (?, ?, ?, ?, ?)")
+    .bind(await sha256Hex(token), sellerId, now.toISOString(), new Date(now.getTime() + SELLER_SESSION_HOURS * 3600000).toISOString(), now.toISOString()).run();
   return token;
 }
 
@@ -746,13 +760,31 @@ async function getAuthenticatedSeller(env, request) {
   const token = String(request.headers.get("X-Seller-Session") || "").trim();
   if (!token) return null;
   try {
+    await ensureSellerSessions(env);
     return await env.DB.prepare(`SELECT s.* FROM approved_sellers s
       JOIN seller_sessions session ON session.seller_id = s.seller_id
-      WHERE session.token_hash = ? AND session.expires_at > ? AND s.status = 'approved' LIMIT 1`)
-      .bind(await sha256Hex(token), new Date().toISOString()).first();
+      WHERE session.token_hash = ? AND session.expires_at > ? AND s.status = 'approved'
+      AND COALESCE(NULLIF(session.last_activity_at, ''), session.created_at) > ? LIMIT 1`)
+      .bind(await sha256Hex(token), new Date().toISOString(), new Date(Date.now() - 3600000).toISOString()).first();
   } catch {
     return null;
   }
+}
+
+async function sellerSessionStatus(env, request) {
+  const seller = await getAuthenticatedSeller(env, request);
+  if (!seller) return json({ ok: false, message: '로그인이 만료되었습니다. 다시 로그인해주세요.' }, 401);
+  const hash = await sha256Hex(String(request.headers.get('X-Seller-Session') || '').trim());
+  if (request.method === 'POST') {
+    const now = new Date().toISOString();
+    const result = await env.DB.prepare(`UPDATE seller_sessions SET last_activity_at = ?, expires_at = ?
+      WHERE token_hash = ? AND expires_at > ? AND COALESCE(NULLIF(last_activity_at, ''), created_at) > ?
+      AND EXISTS (SELECT 1 FROM approved_sellers s WHERE s.seller_id = seller_sessions.seller_id AND s.status = 'approved')`)
+      .bind(now, new Date(Date.now() + 3600000).toISOString(), hash, now, new Date(Date.now() - 3600000).toISOString()).run();
+    if (!result.meta.changes) return json({ ok: false, message: '로그인이 만료되었습니다.' }, 401);
+  }
+  const session = await env.DB.prepare("SELECT COALESCE(NULLIF(last_activity_at, ''), created_at) AS lastActivityAt FROM seller_sessions WHERE token_hash = ?").bind(hash).first();
+  return json({ ok: true, lastActivityAt: session?.lastActivityAt });
 }
 
 async function logoutSeller(env, request) {
@@ -5678,6 +5710,8 @@ export async function onRequest(context) {
   if (path === "seller-login" && method === "POST") {
     return apiBoundary(() => loginSeller(env, request), "판매자 로그인 처리 중 오류가 발생했습니다.");
   }
+  if (path === "seller-session" && (method === "GET" || method === "POST")) return apiBoundary(() => sellerSessionStatus(env, request), "세션을 확인하지 못했습니다.");
+  if (path === "seller-session" && method === "DELETE") return logoutSeller(env, request);
   if (path === "seller-account-find" && method === "POST") return findSellerAccount(env, request);
   if (path === "seller-password-reset" && method === "POST") return apiBoundary(() => resetSellerPassword(env, request), "비밀번호를 재설정하지 못했습니다.");
   if (path === "brand-packages" && method === "GET") return apiBoundary(() => getPublicBrandPackages(env, request), "브랜드관 패키지를 불러오지 못했습니다.");
