@@ -92,7 +92,7 @@ test('failed inference clears output, offers retry, and does not masquerade as A
   assert.ok(!source.includes('chooseRecommendedModel('));
   assert.ok(!source.includes('fallbackRecommendationText('));
   for (const shell of shells) {
-    assert.ok(read(shell).includes('/customer-wizard.js?v=20261025-preview-flow'));
+    assert.ok(read(shell).includes('/customer-wizard.js?v=20261025-open-flow'));
     assert.doesNotMatch(read(shell), /네이버 최저/);
   }
 });
@@ -100,10 +100,10 @@ test('failed inference clears output, offers retry, and does not masquerade as A
 test('all route shells contain the same redesigned home and form anchors', () => {
   const baseline = home(read(shells[0]));
   assert.ok(baseline.includes('data-home-quote-start'));
-  assert.ok(baseline.includes('name="homeQuoteMode" value="with_quote" checked'));
-  assert.ok(baseline.includes('name="homeQuoteMode" value="without_quote"'));
+  assert.ok(baseline.includes('data-home-quote-mode="with_quote"'));
+  assert.ok(baseline.includes('data-home-quote-mode="without_quote"'));
   assert.match(baseline, /pq-hero-scene/);
-  assert.match(baseline, /pickquote-home-photo-20261025\.webp/);
+  assert.ok(baseline.includes('/assets/appliances-lg.webp'));
   assert.doesNotMatch(baseline, /pq-benefit-strip|pq-privacy/);
   assert.ok(baseline.includes('/brand?brand=LG'));
   assert.ok(baseline.includes('/brand?brand=Samsung'));
@@ -122,7 +122,7 @@ test('all route shells contain the same redesigned home and form anchors', () =>
 test('all customer pages load one version of the shared design without ad scripts', () => {
   for (const file of [...shells, ...catalogs]) {
     const html = read(file);
-    assert.ok(html.includes('/customer-ui.css?v=20261025-wix-living'), file);
+    assert.ok(html.includes('/customer-ui.css?v=20261025-open-pick'), file);
     assert.ok(html.includes('href="/assets/suit-variable.woff2"'), file);
     assert.ok(html.includes('customer-refresh'), file);
     assert.doesNotMatch(html, /adsbygoogle|PICK SUBSCRIPTION|PICK SHOPPING/);
@@ -162,7 +162,7 @@ test('shopping empty states never report a subscription API failure', () => {
 test('customer typography uses readable body, controls, and supporting text', () => {
   const css = read('customer-ui.css');
   assert.match(css, /font-size: 17px; font-weight: 450; line-height: 1\.65/);
-  assert.match(css, /--pick-muted: #5b6c7d/);
+  assert.match(css, /--pick-muted: #626b70/);
   assert.match(css, /\.pq-primary \{[^}]*font-size: 18px; font-weight: 650/);
   assert.match(css, /\.pq-hero-note \{[^}]*font-size: 13px/);
   assert.match(css, /\.pq-hero-followup \{[^}]*flex-wrap: wrap/);
@@ -171,7 +171,7 @@ test('customer typography uses readable body, controls, and supporting text', ()
 
 test('reference-led layout uses square entries, a category rail, and one focused quote form', () => {
   const css = read('customer-ui.css');
-  assert.match(css, /\.pq-hero-copy \{[^}]*text-align: left/);
+  assert.match(css, /\.pq-hero-copy \{[^}]*text-align: center/);
   assert.match(css, /\.pq-entry \{[^}]*aspect-ratio: 1/);
   assert.match(css, /\.commerce-main \{[^}]*grid-template-columns: 190px minmax\(0,1fr\)/);
   assert.match(css, /grid-auto-flow: column; grid-auto-columns: 190px/);
@@ -184,7 +184,7 @@ test('reference-led layout uses square entries, a category rail, and one focused
     assert.equal((html.match(/<details class="preview-card" hidden>/g) || []).length, 1);
     assert.doesNotMatch(home(html), /pickquote-showroom|pq-step-compare|pq-step-select/);
   }
-  assert.ok(read('privacy/index.html').includes('/customer-ui.css?v=20261025-wix-living'));
+  assert.ok(read('privacy/index.html').includes('/customer-ui.css?v=20261025-open-pick'));
 });
 
 test('home quote choice uses the existing wizard and resumes matching drafts', () => {
@@ -197,7 +197,6 @@ test('home quote choice uses the existing wizard and resumes matching drafts', (
   const context = vm.createContext({
     fields, state,
     quoteTypes: [{ value: 'with_quote' }, { value: 'without_quote' }],
-    document: { querySelector: () => ({ value: choice }) },
     form: { querySelector: () => null },
     clearAiRecommendation: () => { clears++; },
     clearMessage: () => {},
@@ -205,25 +204,25 @@ test('home quote choice uses the existing wizard and resumes matching drafts', (
     render: () => { renders++; },
   });
   vm.runInContext(source.slice(source.indexOf('  function selectQuoteType('), source.indexOf('  function resetWizardState(')), context);
-  context.startHomeQuote();
+  context.startHomeQuote({ currentTarget: { dataset: { homeQuoteMode: choice } } });
   assert.equal(fields.quoteType.value, 'without_quote');
   assert.equal(state.stepIndex, 1);
   assert.equal(fields.customer.value, 'draft');
   assert.deepEqual(state.selectedProducts, ['TV']);
   state.stepIndex = 4;
   fields.price.value = '2000';
-  context.startHomeQuote();
+  context.startHomeQuote({ currentTarget: { dataset: { homeQuoteMode: choice } } });
   assert.equal(state.stepIndex, 4);
   assert.equal(fields.price.value, '2000');
   choice = 'with_quote';
-  context.startHomeQuote();
+  context.startHomeQuote({ currentTarget: { dataset: { homeQuoteMode: choice } } });
   assert.equal(state.stepIndex, 1);
   assert.equal(state.selectedProducts.length, 0);
   assert.equal(Object.keys(state.productOptions).length, 0);
   assert.equal(clears, 1);
   assert.equal(fields.customer.value, 'draft');
   choice = 'invalid';
-  context.startHomeQuote();
+  context.startHomeQuote({ currentTarget: { dataset: { homeQuoteMode: choice } } });
   assert.equal(fields.quoteType.value, 'with_quote');
   assert.equal(renders, 3);
 });
@@ -263,17 +262,17 @@ test('preview is revealed only for an attached image in the quote-present path',
   assert.equal(panel.hidden, true);
 });
 
-test('product choices precede verification and all customer routes share the brand navy', () => {
+test('product choices precede verification and all customer routes share the new action palette', () => {
   const source = read('customer-wizard.js');
   const steps = source.slice(source.indexOf('  const steps = ['), source.indexOf('  installWizard();'));
   assert.ok(steps.indexOf('key: "products"') < steps.indexOf('key: "personal"'));
   assert.ok(steps.indexOf('key: "ai"') < steps.indexOf('key: "personal"'));
   assert.ok(steps.indexOf('key: "personal"') < steps.indexOf('key: "quoteInfo"'));
   const css = read('customer-ui.css');
-  assert.match(css, /--primary: #123b67/);
-  assert.match(css, /--brand-green: #123b67/);
-  assert.match(css, /--commerce-navy: #123b67/);
-  assert.doesNotMatch(css, /#254d40|#2854ed|#e7f1ec|#254c3d/);
+  assert.match(css, /--primary: #bb402c/);
+  assert.match(css, /--brand-green: #bb402c/);
+  assert.match(css, /--commerce-navy: #bb402c/);
+  assert.doesNotMatch(css, /#123b67|#254d40|#2854ed|#e7f1ec|#254c3d/);
   assert.match(css, /@media \(max-width: 1100px\)[\s\S]*?\.pick-case-content article \{ display: block/);
   assert.match(css, /grid-template-columns: 48px minmax\(0,1fr\) max-content/);
 });
@@ -291,6 +290,35 @@ test('catalog controls remain present and the subscription video follows product
   assert.ok(subscription.indexOf('id="commerceProductGrid"') < subscription.indexOf('<details class="subscription-video-section"'));
   assert.ok(subscription.includes('preload="none"'));
   assert.ok(subscription.includes('data-subscription-consult'));
+});
+
+test('the two home actions bind independently and do not require a hidden radio state', () => {
+  const source = read('customer-wizard.js');
+  assert.ok(source.includes('querySelectorAll("[data-home-quote-start]")'));
+  assert.ok(source.includes('event?.currentTarget?.dataset.homeQuoteMode'));
+  assert.doesNotMatch(source, /name="homeQuoteMode"/);
+  for (const file of shells) {
+    assert.equal((home(read(file)).match(/data-home-quote-start/g) || []).length, 2);
+    assert.doesNotMatch(home(read(file)), /pickquote-home-photo|pq-quote-mode/);
+  }
+});
+
+test('selection context shows escaped product choices, never personal details', () => {
+  const source = read('customer-wizard.js');
+  const start = source.indexOf('  function renderSelectionContext(');
+  const end = source.indexOf('  function isMobileWizardViewport(', start);
+  const context = vm.createContext({
+    fields: { purpose: { value: '이사' }, brand: { value: '<LG>' }, phone: { value: 'private' } },
+    state: { selectedProducts: ['TV', '냉장고'] },
+    escapeHtml: (value) => value.replaceAll('<', '&lt;').replaceAll('>', '&gt;'),
+  });
+  vm.runInContext(source.slice(start, end), context);
+  assert.equal(context.renderSelectionContext('quoteType'), '');
+  const html = context.renderSelectionContext('options');
+  assert.ok(html.includes('이사'));
+  assert.ok(html.includes('&lt;LG&gt;'));
+  assert.ok(html.includes('TV, 냉장고'));
+  assert.doesNotMatch(html, /<LG>|private/);
 });
 
 test('compact category controls preserve counts, selection state, and escaping', () => {

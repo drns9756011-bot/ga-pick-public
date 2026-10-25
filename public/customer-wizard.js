@@ -532,7 +532,7 @@
 
     bindNativeFields();
     form.addEventListener("pickquote:wizard-reset", resetWizardState);
-    document.querySelector("[data-home-quote-start]")?.addEventListener("click", startHomeQuote);
+    document.querySelectorAll("[data-home-quote-start]").forEach((button) => button.addEventListener("click", startHomeQuote));
     hideNativeFields();
     render();
     syncAllFields();
@@ -551,8 +551,8 @@
     return true;
   }
 
-  function startHomeQuote() {
-    const value = document.querySelector('[name="homeQuoteMode"]:checked')?.value;
+  function startHomeQuote(event) {
+    const value = event?.currentTarget?.dataset.homeQuoteMode;
     const changed = value !== fields.quoteType.value;
     if (!quoteTypes.some((type) => type.value === value)) return;
     if (changed) selectQuoteType(value);
@@ -688,7 +688,8 @@
       <div class="wizard-progress" style="--wizard-step-count:${list.length}" role="progressbar" aria-valuemin="1" aria-valuemax="${list.length}" aria-valuenow="${state.stepIndex + 1}" aria-label="견적 등록 진행 단계">
         ${list.map((_, index) => `<span class="${index <= state.stepIndex ? "is-active" : ""}"></span>`).join("")}
       </div>
-      <div class="wizard-step-label"><span>견적 등록</span><span>${state.stepIndex + 1} / ${list.length}</span></div>
+      <div class="wizard-step-label"><span>${isWithQuote() ? "견적서로 비교" : isWithoutQuote() ? "가전 선택 비교" : "견적 등록"}</span><span>${state.stepIndex + 1} / ${list.length}</span></div>
+      ${renderSelectionContext(step.key)}
       <div class="wizard-step" data-step="${step.key}">${step.render()}</div>
       <div class="wizard-actions">
         ${state.stepIndex > 0 ? '<button type="button" class="wizard-back">이전</button>' : ""}
@@ -707,6 +708,12 @@
     bindStepEvents(wizard, step.key);
     updateNativeRequirement();
     updatePreview();
+  }
+
+  function renderSelectionContext(stepKey) {
+    if (stepKey === "quoteType") return "";
+    const values = [fields.purpose.value, fields.brand.value, state.selectedProducts.join(", ")].filter(Boolean);
+    return values.length ? `<div class="wizard-context" aria-label="선택한 조건">${values.map((value) => `<span>${escapeHtml(value)}</span>`).join("")}</div>` : "";
   }
 
   function isMobileWizardViewport() {

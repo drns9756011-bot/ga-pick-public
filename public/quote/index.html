@@ -16,7 +16,7 @@
     <link rel="icon" href="/favicon-48x48-navy.png?v=20260813-symbol-cutout" type="image/png" sizes="48x48" />
     <link rel="apple-touch-icon" href="/apple-touch-icon-navy.png?v=20260813-navy-brand" sizes="180x180" />
     <link rel="manifest" href="/site.webmanifest?v=20260813-navy-brand" />
-    <meta name="theme-color" content="#123b67" />
+    <meta name="theme-color" content="#bb402c" />
 
     <meta name="naver-site-verification" content="53afa94ea8dd4dc86ead7b26ea6a1cf750aa3dcb" />
 
@@ -62,10 +62,10 @@
   <link rel="stylesheet" href="/styles.css?v=20261007-action-first" />
     <script defer src="/privacy-policy.js?v=20261007-selection-retention"></script>
   <script defer src="/app.js?v=20261024-model-only"></script>
-    <script defer src="/customer-wizard.js?v=20261025-preview-flow"></script>
+    <script defer src="/customer-wizard.js?v=20261025-open-flow"></script>
     <link rel="preload" href="/assets/suit-variable.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="stylesheet" href="/customer-ui.css?v=20261025-wix-living" />
-    <link rel="stylesheet" href="/customer-lookup-ui.css?v=20261025-wix-living" />
+    <link rel="stylesheet" href="/customer-ui.css?v=20261025-open-pick" />
+    <link rel="stylesheet" href="/customer-lookup-ui.css?v=20261025-open-pick" />
 
     <!-- Search metadata: kept in sync with src/search-config.js. -->
     <title>가전 견적 올리기 | 픽견적</title>
@@ -107,18 +107,16 @@
       <section class="page is-active" id="homePage" data-page="home">
         <div class="pq-home">
           <section class="pq-hero" aria-labelledby="pickHomeTitle">
-            <div class="pq-hero-scene" aria-hidden="true"><img src="/assets/pickquote-home-photo-20261025.webp" width="1800" height="1200" alt="" loading="lazy" /></div>
+            <div class="pq-hero-scene" aria-hidden="true"><img src="/assets/appliances-lg.webp" width="960" height="407" alt="" fetchpriority="high" /></div>
             <div class="pq-hero-inner">
               <div class="pq-hero-copy">
-                <h1 id="pickHomeTitle">픽견적</h1>
-                <p>가전 가격·설치 조건 비교</p>
-                <fieldset class="pq-quote-mode">
-                  <legend>견적서 유무</legend>
-                  <label><input type="radio" name="homeQuoteMode" value="with_quote" checked /><span>견적서가 있어요</span></label>
-                  <label><input type="radio" name="homeQuoteMode" value="without_quote" /><span>견적서가 없어요</span></label>
-                </fieldset>
-                <button class="pq-primary" type="button" data-view="customer" data-home-quote-start>무료로 견적 비교하기</button>
-                <div class="pq-hero-followup"><p class="pq-hero-note">선택한 판매자에게만 연락처 공개</p><button class="pq-return" type="button" data-view="lookup">내 견적 확인</button></div>
+                <h1 id="pickHomeTitle">가전 견적 비교</h1>
+                <p>LG·삼성, 판매자마다 다른 조건을 비교하세요.</p>
+                <div class="pq-start-paths" aria-label="견적 비교 시작">
+                  <button class="pq-primary" type="button" data-view="customer" data-home-quote-start data-home-quote-mode="with_quote">견적서로 비교하기</button>
+                  <button class="pq-primary pq-primary-secondary" type="button" data-view="customer" data-home-quote-start data-home-quote-mode="without_quote">필요한 가전부터 고르기</button>
+                </div>
+                <div class="pq-hero-followup"><p class="pq-hero-note">비교는 무료, 연락처는 선택한 판매자에게만</p><button class="pq-return" type="button" data-view="lookup">내 견적 확인</button></div>
               </div>
             </div>
           </section>
