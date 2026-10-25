@@ -8,6 +8,11 @@ const root = path.join(__dirname, '../public');
 const read = (file) => readFileSync(path.join(root, file), 'utf8');
 const shells = ['index.html', 'quote/index.html', 'my-quote/index.html'];
 const catalogs = ['brand/index.html', 'subscription/index.html', 'shopping/index.html'];
+test('customer pages do not render upper return-home buttons', () => {
+  for (const file of [...shells, ...catalogs, 'privacy/index.html']) {
+    assert.doesNotMatch(read(file), /class="back-btn"|\u2190 첫 화면/, file);
+  }
+});
 const home = (html) => html.slice(html.indexOf('<section class="page is-active" id="homePage"'), html.indexOf('<section class="page" id="customerPage"')).replace(/\s(?:fetchpriority="high"|loading="lazy")/g, '');
 
 test('Neo QLED filter does not confuse Serif or OLED models sharing the KQ prefix', () => {
