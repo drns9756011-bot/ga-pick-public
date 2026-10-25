@@ -284,7 +284,9 @@ test('product choices precede verification and all customer routes share the new
   assert.match(css, /--commerce-navy: #363635/);
   assert.doesNotMatch(css, /#123b67|#254d40|#2854ed|#e7f1ec|#254c3d/);
   assert.match(css, /@media \(max-width: 1100px\)[\s\S]*?\.pick-case-content article \{ display: block/);
-  assert.match(css, /grid-template-columns: minmax\(0,1fr\) auto 30px/);
+  assert.match(css, /grid-template-columns: minmax\(0,1fr\) auto max-content/);
+  assert.match(css, /\.pick-case-bid-list em \{[^}]*white-space: nowrap/);
+  assert.match(css, /li > em \{ grid-column: 2; grid-row: 2/);
 });
 
 test('catalog controls remain present and the subscription video follows products', () => {
