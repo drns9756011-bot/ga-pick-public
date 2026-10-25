@@ -1,5 +1,6 @@
 import { getHomeCases } from "../home-cases.js";
 import { getOfficialCatalog, verifyOfficialModels, readBoundedJson, validateRecommendationRequest, recommendOfficialModels } from "../official-models.js";
+import { handleLeads, purgeExpiredLeads } from "../assigned-leads.js";
 import { protectCustomerPhone, customerPhoneHash, readCustomerPhone, customerPhoneWithinSevenDays, customerPhoneRetained, customerPhoneAccessExpiresAt, customerPersonalExpiresAt, fullyMaskCustomerPhone, maskPhoneInMessage, quoteImageSignature, verifyQuoteImageSignature } from "../phone-vault.js";
 
 const jsonHeaders = {
@@ -5640,6 +5641,10 @@ export async function onRequest(context) {
   if (path === "home-cases" && method === "GET") {
     return apiBoundary(() => getHomeCases(request, env, context.ctx || context), "비교 사례를 불러오지 못했습니다.");
   }
+  if (path === 'assigned-leads' || path.startsWith('assigned-leads/')) {
+    const seller = await getAuthenticatedSeller(env, request);
+    return handleLeads(env, request, path, seller ? { sellerId: seller.seller_id } : null);
+  }
   if (path === "public-health" && method === "GET") {
     return json({
       ok: true,
@@ -5860,6 +5865,9 @@ export async function onRequest(context) {
 export async function onScheduled(context) {
   const { env } = context;
   if (!env.DB) return;
+  try { await purgeExpiredLeads(env); }
+  catch { console.error('배정 고객 보관기간 정리에 실패했습니다.'); }
+  if (context.event?.cron === '*/5 * * * *') return;
   try {
     await cleanupExpiredAnonymousConsultations(env);
   } catch (error) {
