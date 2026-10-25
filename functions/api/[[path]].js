@@ -1,6 +1,7 @@
 import { getHomeCases } from "../home-cases.js";
 import { getOfficialCatalog, verifyOfficialModels, readBoundedJson, validateRecommendationRequest, recommendOfficialModels } from "../official-models.js";
-import { handleLeads, purgeExpiredLeads } from "../assigned-leads.js";
+import { handleLeads, purgeExpiredLeads, ensureLeadSchema } from "../assigned-leads.js";
+import { handleLeadPayments, reconcileLeadPayments } from "../lead-payments.js";
 import { protectCustomerPhone, customerPhoneHash, readCustomerPhone, customerPhoneWithinSevenDays, customerPhoneRetained, customerPhoneAccessExpiresAt, customerPersonalExpiresAt, fullyMaskCustomerPhone, maskPhoneInMessage, quoteImageSignature, verifyQuoteImageSignature } from "../phone-vault.js";
 
 const jsonHeaders = {
@@ -5673,6 +5674,11 @@ export async function onRequest(context) {
   if (path === "home-cases" && method === "GET") {
     return apiBoundary(() => getHomeCases(request, env, context.ctx || context), "비교 사례를 불러오지 못했습니다.");
   }
+  if (path === 'lead-payments' || path.startsWith('lead-payments/')) {
+    const seller = await getAuthenticatedSeller(env, request);
+    if (seller) await ensureLeadSchema(env);
+    return handleLeadPayments(env, request, path, seller ? { sellerId: seller.seller_id } : null);
+  }
   if (path === 'assigned-leads' || path.startsWith('assigned-leads/')) {
     const seller = await getAuthenticatedSeller(env, request);
     return handleLeads(env, request, path, seller ? { sellerId: seller.seller_id } : null);
@@ -5901,6 +5907,8 @@ export async function onScheduled(context) {
   if (!env.DB) return;
   try { await purgeExpiredLeads(env); }
   catch { console.error('배정 고객 보관기간 정리에 실패했습니다.'); }
+  try { await reconcileLeadPayments(env); }
+  catch { console.error('고객DB 결제 확인에 실패했습니다.'); }
   try {
     await cleanupExpiredAnonymousConsultations(env);
   } catch (error) {

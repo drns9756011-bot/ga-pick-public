@@ -7,9 +7,9 @@ import { onRequest as publicRequest } from '../functions/api/[[path]].js';
 import { onRequest as adminRequest } from '../../ga-pick-admin/functions/api/[[path]].js';
 const db = new DatabaseSync(':memory:');
 db.exec(`CREATE TABLE approved_sellers(seller_id TEXT PRIMARY KEY,status TEXT,manager TEXT,branch TEXT,channel TEXT);
- CREATE TABLE seller_sessions(token_hash TEXT,seller_id TEXT,expires_at TEXT);`);
+ CREATE TABLE seller_sessions(token_hash TEXT,seller_id TEXT,expires_at TEXT,created_at TEXT);`);
 db.prepare('INSERT INTO approved_sellers VALUES(?,?,?,?,?)').run('preview-seller', 'approved', '테스트 매니저', '강남점', 'LG전자');
-db.prepare('INSERT INTO seller_sessions VALUES(?,?,?)').run(createHash('sha256').update('preview-session').digest('hex'), 'preview-seller', new Date(Date.now() + 3600000).toISOString());
+db.prepare('INSERT INTO seller_sessions VALUES(?,?,?,?)').run(createHash('sha256').update('preview-session').digest('hex'), 'preview-seller', new Date(Date.now() + 3600000).toISOString(), new Date().toISOString());
 const DB = { prepare(sql) { let values = []; return {
  bind(...args) { values = args; return this; },
  async run() { return { meta: { changes: db.prepare(sql).run(...values).changes } }; },
@@ -22,13 +22,19 @@ const types = { js: 'text/javascript', css: 'text/css', woff2: 'font/woff2', htm
 createServer(async (req, res) => {
  try {
   const url = new URL(req.url, 'http://127.0.0.1:65146');
-  if (url.pathname.startsWith('/api/assigned-leads')) {
+  if (url.pathname.startsWith('/api/assigned-leads') || url.pathname.startsWith('/api/lead-payments')) {
    const chunks = []; let size = 0;
    for await (const chunk of req) { size += chunk.length; if (size > 140000) { res.writeHead(413).end(); return; } chunks.push(chunk); }
    const request = new Request(url, { method: req.method, headers: req.headers, ...(['GET','HEAD'].includes(req.method) ? {} : { body: Buffer.concat(chunks) }) });
    const handler = req.headers['x-seller-session'] ? publicRequest : adminRequest;
    const result = await handler({ env, request, params: { path: url.pathname.slice(5).split('/') } });
    res.writeHead(result.status, Object.fromEntries(result.headers)); res.end(await result.text()); return;
+  }
+  if (['/db-checkout','/db-checkout/checkout.css','/db-checkout/checkout.js','/assets/pickquote-official-logo-navy.png'].includes(url.pathname)) {
+   const file = url.pathname === '/db-checkout' ? '/db-checkout/index.html' : url.pathname;
+   const bytes = await readFile(new URL(`../../ga-pick-partner/public${file}`, import.meta.url));
+   res.writeHead(200, { 'Content-Type': file.endsWith('.png') ? 'image/png' : `${types[file.split('.').pop()]}; charset=utf-8`, 'Cache-Control':'no-store' });
+   res.end(file.endsWith('.html') ? bytes.toString().replace('</head>', "<script>sessionStorage.setItem('pickquoteSellerSessionToken','preview-session')</script></head>") : bytes); return;
   }
   if (url.pathname === '/seller-preview') {
    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });

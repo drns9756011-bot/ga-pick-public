@@ -27,7 +27,12 @@ function setup() {
 }
 const customer = { name: '테스트 고객', phone: '010-1234-5678', region: '서울', items: '냉장고' };
 const payload = { rows: [customer], source: 'test source', consentRef: 'proof-001', consentConfirmed: true };
-async function seed(s) { assert.equal((await s.call('', 'POST', payload)).status, 200); return s.db.prepare('SELECT * FROM assigned_leads').get(); }
+async function seed(s) {
+  assert.equal((await s.call('', 'POST', payload)).status, 200);
+  for (let i = 1; i <= 4; i++) s.db.prepare("INSERT INTO lead_orders(id,seller_id,quantity,amount,mode,status,callback_hash,created_at,expires_at) VALUES(?,?,10,80000,'live','paid','test',?,?)")
+    .run(`order-${i}`, `s${i}`, new Date().toISOString(), new Date(Date.now() + 3600000).toISOString());
+  return s.db.prepare('SELECT * FROM assigned_leads').get();
+}
 const assign = (s, id, sellerId) => s.call(`/${id}/assign`, 'POST', { sellerId, consentRef: 'recipient-proof', consentConfirmed: true });
 
 test('register encrypts phone, deduplicates and never leaks ciphertext/hash in lists', async () => {
