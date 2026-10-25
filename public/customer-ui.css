@@ -115,8 +115,7 @@ body.customer-refresh #homePage .pick-review-grid article { min-width: 0; paddin
 /* A single focused form; its optional preview is a real disclosure control. */
 body.customer-refresh:has(#customerPage.is-active) main { width: 100%; max-width: none; padding: 0; margin: 0; }
 body.customer-refresh #customerPage { min-height: calc(100svh - 84px); padding-bottom: 72px; background: #fff; }
-body.customer-refresh #customerPage .page-head { display: flex; align-items: center; justify-content: space-between; gap: 20px; width: min(680px,calc(100% - 80px)); max-width: none; margin: auto; padding: 24px 0 0; text-align: left; }
-body.customer-refresh :is(#customerPage,#lookupPage) .back-btn { min-height: 28px; padding: 0; border: 0; border-radius: 0; background: none; color: var(--muted); font-size: 14px; box-shadow: none; }
+body.customer-refresh #customerPage .page-head { display: block; min-height: 0; width: min(680px,calc(100% - 80px)); max-width: none; margin: auto; padding: 24px 0 0; border: 0; text-align: left; }
 .quote-page-heading { display: flex; align-items: center; gap: 16px; padding: 0; border: 0; }
 .quote-page-heading h1 { margin: 0; font-size: 21px; font-weight: 700; }
 .quote-page-heading a { color: var(--muted); font-size: 15px; white-space: nowrap; }
@@ -323,7 +322,7 @@ body.customer-refresh #customerPage .request-form-message:empty { display: none;
   body.customer-refresh #homePage :is(.pick-case-content,.pick-review-grid) { grid-template-columns: 1fr; gap: 20px; }
   body.customer-refresh #homePage .pick-case-content article { display: block; padding: 24px 0; }
   body.customer-refresh #homePage .pick-case-prices { margin-top: 20px; }
-  body.customer-refresh #customerPage .page-head { width: calc(100% - 40px); min-height: 64px; padding-top: 0; }
+  body.customer-refresh #customerPage .page-head { width: calc(100% - 40px); min-height: 0; padding: 20px 0 0; }
   .quote-page-heading { padding: 0; }
   .quote-page-heading h1 { font-size: 20px; }
   .quote-page-heading a { font-size: 14px; }
@@ -338,11 +337,15 @@ body.customer-refresh #customerPage .request-form-message:empty { display: none;
   body.customer-refresh #customerPage .wizard-actions { position: fixed; inset: auto 20px calc(65px + env(safe-area-inset-bottom,0px)); z-index: 1201; padding: 12px 0; margin: 0; background: #fff; }
   body.customer-refresh #customerPage .wizard-next { flex: 1; }
   body.customer-refresh:has(#customerPage.is-active) .kakao-floating-btn { position: absolute; top: calc(78px + env(safe-area-inset-top,0px)); right: 20px; bottom: auto; }
+  body.customer-refresh:has(#customerPage.is-active) .kakao-floating-btn { min-height: 36px; padding: 6px 10px; gap: 6px; }
+  body.customer-refresh:has(#customerPage.is-active) .kakao-floating-icon,
+  body.customer-refresh:has(#customerPage.is-active) .kakao-floating-icon svg { width: 24px; height: 24px; }
+  body.customer-refresh:has(#customerPage.is-active) .kakao-floating-text { font-size: 12px; }
   body.customer-refresh :is(.commerce-section-nav-inner,.brand-commerce-nav>div) { width: calc(100% - 40px); gap: 24px; }
   body.customer-refresh :is(.commerce-section-nav,.brand-commerce-nav) a { padding: 13px 0 11px; font-size: 14px; }
   body.customer-refresh :is(.commerce-main,.brand-hall-main) { width: calc(100% - 40px); padding: 24px 0 48px; }
   body.customer-refresh .commerce-main { display: block; }
-  .pq-catalog-head { min-height: 160px; padding: 12px 0 24px; margin-bottom: 24px; gap: 12px; align-items: flex-start; flex-direction: column; background-position: 40% center; }
+  .pq-catalog-head { min-height: 0; padding: 0 0 24px; margin-bottom: 24px; gap: 12px; align-items: flex-start; flex-direction: column; background-position: 40% center; }
   .pq-catalog-head h1 { font-size: 30px; }
   .pq-catalog-head p { max-width: 220px; margin-top: 8px; font-size: 15px; }
   .pq-catalog-head .commerce-secondary { align-self: flex-start; min-height: 36px; padding: 6px 10px; font-size: 14px; }
