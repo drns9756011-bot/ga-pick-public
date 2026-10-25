@@ -26,7 +26,7 @@ test('scroll motion observes only public presentation elements and plays once', 
     window: { matchMedia: () => preference, IntersectionObserver: Observer },
     IntersectionObserver: Observer,
     document: { querySelectorAll: selector => {
-      assert.ok(selector.split(', ').every(part => part.startsWith('#homePage ')));
+      assert.ok(selector.split(', ').every(part => part.startsWith('#homePage ') || ['.pq-catalog-head', '.pq-brand-selectors', '.commerce-tools'].includes(part)));
       return [element];
     } },
   });

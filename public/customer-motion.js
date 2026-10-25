@@ -16,7 +16,7 @@
     }
   }, { threshold: 0.12 });
   // Content is visible by default, including when JavaScript or motion is disabled.
-  document.querySelectorAll('#homePage .pq-section-head, #homePage .pq-entry-grid, #homePage .pq-process-grid, #homePage .pq-partner').forEach(element => observer.observe(element));
+  document.querySelectorAll('#homePage .pq-section-head, #homePage .pq-entry-grid, #homePage .pq-process-grid, #homePage .pq-partner, #homePage .pick-case-content, #homePage .pick-review-grid, #homePage .pq-faq-list, .pq-catalog-head, .pq-brand-selectors, .commerce-tools').forEach(element => observer.observe(element));
   preference.addEventListener('change', () => {
     if (!preference.matches) return;
     observer.disconnect();

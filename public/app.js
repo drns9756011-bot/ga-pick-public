@@ -835,15 +835,20 @@ async function openAnonymousConsultation(request, bid, role = "customer") {
         <div class="anonymous-chat-heading"><span class="anonymous-chat-kicker">견적 상담</span><h2 id="anonymousConsultationTitle">선택 전 익명상담</h2><p data-anonymous-context>견적 조건을 확인하는 중</p></div>
         <button class="modal-close" type="button" data-anonymous-close aria-label="닫기">×</button>
       </header>
-      <p class="anonymous-chat-policy">선택 전에는 연락처와 매장 정보를 주고받을 수 없습니다.</p>
+      <p class="anonymous-chat-policy" data-anonymous-policy></p>
       <p class="anonymous-sync-status" data-anonymous-sync role="status" hidden></p>
       <div class="anonymous-message-list" data-anonymous-messages><p class="empty-state">상담을 불러오는 중입니다.</p></div>
       <form class="anonymous-message-form" data-anonymous-form><textarea name="message" rows="2" maxlength="1000" placeholder="메시지를 입력하세요" aria-label="상담 메시지" required></textarea><div class="anonymous-form-actions"><button class="primary-btn" type="submit">전송</button></div><p class="form-message" data-anonymous-message></p></form>
     </div>`;
     document.body.appendChild(modal);
+    const resumeChat = () => {
+      if (!document.hidden && !modal.hidden && navigator.onLine !== false) refreshAnonymousConsultation(modal);
+    };
+    document.addEventListener("visibilitychange", resumeChat);
+    window.addEventListener("online", resumeChat);
     modal.addEventListener("click", (event) => { if (event.target.closest("[data-anonymous-close]")) closeAnonymousConsultation(); });
     modal.querySelector("[data-anonymous-form] textarea").addEventListener("keydown", (event) => {
-      if (event.key === "Enter" && !event.shiftKey) {
+      if (event.key === "Enter" && !event.shiftKey && !event.isComposing && event.keyCode !== 229) {
         event.preventDefault();
         event.currentTarget.form.requestSubmit();
       }
@@ -858,6 +863,7 @@ async function openAnonymousConsultation(request, bid, role = "customer") {
       const clientMessageId = field.dataset.pendingMessage === message && field.dataset.pendingId
         ? field.dataset.pendingId : `anon-msg-${crypto.randomUUID()}`;
       const sendingConsultationId = activeAnonymousConsultation.id;
+      const sendingVersion = anonymousRefreshVersion;
       field.dataset.pendingMessage = message;
       field.dataset.pendingId = clientMessageId;
       anonymousSendInFlight = true;
@@ -865,9 +871,9 @@ async function openAnonymousConsultation(request, bid, role = "customer") {
       notice.textContent = "전송 중입니다.";
       notice.dataset.type = "normal";
       try {
-        const result = await apiJson("/api/anonymous-consultation-messages", { method: "POST", showLoading: false, body: JSON.stringify({ consultationId: activeAnonymousConsultation.id, role: activeAnonymousConsultation.role, senderId: activeAnonymousConsultation.role === "seller" ? activeSellerId : "", message, clientMessageId }) });
-        if (activeAnonymousConsultation?.id !== sendingConsultationId || modal.hidden) return;
-        if (!result?.ok) { notice.textContent = result?.message || "메시지를 보내지 못했습니다."; notice.dataset.type = "error"; return; }
+        const result = await apiJson("/api/anonymous-consultation-messages", { method: "POST", showLoading: false, timeoutMs: 10000, body: JSON.stringify({ consultationId: activeAnonymousConsultation.id, role: activeAnonymousConsultation.role, senderId: activeAnonymousConsultation.role === "seller" ? activeSellerId : "", message, clientMessageId }) });
+        if (activeAnonymousConsultation?.id !== sendingConsultationId || modal.hidden || sendingVersion !== anonymousRefreshVersion) return;
+        if (!result?.ok || !result.row?.id) { notice.textContent = result?.message || "전송을 확인하지 못했습니다. 내용은 보존되어 있으니 다시 전송해주세요."; notice.dataset.type = "error"; return; }
         if (field.value.trim() === message) field.value = "";
         delete field.dataset.pendingMessage;
         delete field.dataset.pendingId;
@@ -909,6 +915,9 @@ async function openAnonymousConsultation(request, bid, role = "customer") {
     delete composer.dataset.pendingId;
   }
   modal.dataset.roomKey = roomKey;
+  modal.querySelector("[data-anonymous-policy]").textContent = role === "seller"
+    ? "개인정보 요청·공유는 원스트라이크 아웃 대상입니다. 선택 전 연락처·실명·매장명·지점명·외부 연락 수단을 요청하거나 보내지 마세요. 고객이 요청해도 제공할 수 없습니다. 실제 조치는 관리자 확인 후 결정합니다."
+    : "선택 전에는 연락처·실명·매장명·지점명·외부 연락 수단을 요청하거나 보내지 마세요. 매니저는 요청을 받아도 해당 정보를 제공할 수 없습니다. 개인정보 요청·공유는 원스트라이크 아웃 대상이며 실제 조치는 관리자 확인 후 결정합니다.";
   modal.querySelector("[data-anonymous-messages]").innerHTML = '<p class="empty-state">상담을 불러오는 중입니다.</p>';
   composer.disabled = true;
   modal.querySelector('[data-anonymous-form] button[type="submit"]').disabled = true;
@@ -937,6 +946,7 @@ async function openAnonymousConsultation(request, bid, role = "customer") {
 }
 
 function closeAnonymousConsultation() {
+  anonymousRefreshVersion += 1;
   window.clearInterval(anonymousRefreshTimer);
   anonymousRefreshTimer = 0;
   const modal = document.querySelector("#anonymousConsultationModal");
@@ -946,7 +956,7 @@ function closeAnonymousConsultation() {
 }
 
 async function refreshAnonymousConsultation(modal) {
-  if (!activeAnonymousConsultation?.id || modal.hidden || anonymousRefreshInFlight === activeAnonymousConsultation.id) return;
+  if (!activeAnonymousConsultation?.id || modal.hidden || document.hidden || navigator.onLine === false || anonymousSendInFlight || anonymousRefreshInFlight === activeAnonymousConsultation.id) return;
   const { id, role, quoteId } = activeAnonymousConsultation;
   const refreshVersion = anonymousRefreshVersion;
   anonymousRefreshInFlight = id;
@@ -971,7 +981,7 @@ async function refreshAnonymousConsultation(modal) {
     const consultation = result.consultation || {};
     const roleReadAt = role === 'seller' ? consultation.sellerReadAt : consultation.customerReadAt;
     const counterpartReadAt = role === 'seller' ? consultation.customerReadAt : consultation.sellerReadAt;
-    const renderKey = JSON.stringify([rows, counterpartReadAt]);
+    const renderKey = JSON.stringify(rows);
     if (renderKey !== anonymousRenderKey) {
       const nearBottom = !anonymousRenderKey || list.scrollHeight - list.scrollTop - list.clientHeight < 80;
       const scrollTop = list.scrollTop;
@@ -1001,6 +1011,14 @@ async function refreshAnonymousConsultation(modal) {
       list.scrollTop = nearBottom ? list.scrollHeight : scrollTop;
       anonymousRenderKey = renderKey;
     }
+    list.querySelectorAll('.anonymous-message').forEach((item, index) => {
+      const row = rows[index];
+      const state = item.querySelector('.anonymous-read-state');
+      if (state && row) {
+        const text = counterpartReadAt && String(row.created_at || '') <= String(counterpartReadAt) ? '읽음' : '전송됨';
+        if (state.textContent !== text) state.textContent = text;
+      }
+    });
     const incomingCount = rows.filter((row) => Number(row.blocked || 0) === 0 && row.sender_role !== role && (!roleReadAt || String(row.created_at || '') > String(roleReadAt))).length;
     if (!incomingCount) return;
     const readResult = await apiJson(`/api/anonymous-consultations/${encodeURIComponent(id)}/read`, { method: 'POST', showLoading: false, body: JSON.stringify({ role }) });

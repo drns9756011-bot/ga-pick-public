@@ -397,3 +397,9 @@ body.customer-refresh #customerPage .request-form-message:empty { display: none;
 @media (prefers-reduced-motion: reduce) {
   body.customer-refresh *,body.customer-refresh *::before,body.customer-refresh *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
 }
+/* Anonymous chat shares the site palette; policy text stays visible above messages. */
+body.customer-refresh .anonymous-chat-policy { padding: 12px 18px; border-left: 3px solid #363635; background: #f4f4f2; color: #363635; font-size: 13px; font-weight: 600; line-height: 1.6; }
+body.customer-refresh .anonymous-message-list { background: #f4f4f2; }
+body.customer-refresh .anonymous-message.is-mine { background: #363635; border-color: #363635; color: #fff; }
+body.customer-refresh .anonymous-message.is-mine .anonymous-read-state { color: #e9e9e5; }
+body.customer-refresh :is(.anonymous-chat-heading h2,.anonymous-chat-heading p,.anonymous-chat-kicker) { color: #363635; }
