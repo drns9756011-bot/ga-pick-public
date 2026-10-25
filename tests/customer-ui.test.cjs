@@ -122,7 +122,7 @@ test('all route shells contain the same redesigned home and form anchors', () =>
 test('all customer pages load one version of the shared design without ad scripts', () => {
   for (const file of [...shells, ...catalogs]) {
     const html = read(file);
-    assert.ok(html.includes('/customer-ui.css?v=20261025-samsung-photos'), file);
+    assert.ok(html.includes('/customer-ui.css?v=20261025-unified-ready'), file);
     assert.ok(html.includes('href="/assets/pretendard-variable.woff2"'), file);
     assert.ok(html.includes('customer-refresh'), file);
     assert.doesNotMatch(html, /adsbygoogle|PICK SUBSCRIPTION|PICK SHOPPING/);
@@ -146,9 +146,9 @@ test('shopping empty states never report a subscription API failure', () => {
   const end = source.indexOf('  productGrid.innerHTML = items.map', start);
   const emptyRender = source.slice(start, end) + '}';
   for (const [page, products, expected] of [
-    ['shopping', [], '쇼핑 상품을 준비하고 있습니다.'],
+    ['shopping', [], ''],
     ['shopping', [{}], '조건에 맞는 쇼핑 상품이 없습니다.'],
-    ['subscription', [], '구독 상품을 불러오지 못했습니다.'],
+    ['subscription', [], '등록된 구독 상품이 없습니다.'],
     ['subscription', [{}], '조건에 맞는 구독 상품이 없습니다.'],
   ]) {
     let rendered;
@@ -162,7 +162,7 @@ test('shopping empty states never report a subscription API failure', () => {
 test('customer typography uses readable body, controls, and supporting text', () => {
   const css = read('customer-ui.css');
   assert.match(css, /font-size: 17px; font-weight: 500; line-height: 1\.65/);
-  assert.match(css, /--pick-muted: #626b70/);
+  assert.match(css, /--pick-muted: #626262/);
   assert.match(css, /\.pq-primary \{[^}]*font-size: 18px; font-weight: 700/);
   assert.match(css, /\.pq-hero-note \{[^}]*font-size: 14px/);
   assert.match(css, /\.pq-hero-followup \{[^}]*flex-wrap: wrap/);
@@ -184,7 +184,7 @@ test('reference-led layout uses square entries, a category rail, and one focused
     assert.equal((html.match(/<details class="preview-card" hidden>/g) || []).length, 1);
     assert.doesNotMatch(home(html), /pickquote-showroom|pq-step-compare|pq-step-select/);
   }
-  assert.ok(read('privacy/index.html').includes('/customer-ui.css?v=20261025-samsung-photos'));
+  assert.ok(read('privacy/index.html').includes('/customer-ui.css?v=20261025-unified-ready'));
 });
 
 test('home quote choice uses the existing wizard and resumes matching drafts', () => {
@@ -269,9 +269,9 @@ test('product choices precede verification and all customer routes share the new
   assert.ok(steps.indexOf('key: "ai"') < steps.indexOf('key: "personal"'));
   assert.ok(steps.indexOf('key: "personal"') < steps.indexOf('key: "quoteInfo"'));
   const css = read('customer-ui.css');
-  assert.match(css, /--primary: #3067e2/);
-  assert.match(css, /--brand-green: #3067e2/);
-  assert.match(css, /--commerce-navy: #3067e2/);
+  assert.match(css, /--primary: #202020/);
+  assert.match(css, /--brand-green: #202020/);
+  assert.match(css, /--commerce-navy: #202020/);
   assert.doesNotMatch(css, /#123b67|#254d40|#2854ed|#e7f1ec|#254c3d/);
   assert.match(css, /@media \(max-width: 1100px\)[\s\S]*?\.pick-case-content article \{ display: block/);
   assert.match(css, /grid-template-columns: 48px minmax\(0,1fr\) max-content/);

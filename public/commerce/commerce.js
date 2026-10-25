@@ -12,7 +12,7 @@ let activeSort = "recommended";
 let visibleCount = 24;
 let consultationState = { item: null, option: null, verificationId: "", verificationToken: "", verifiedPhone: "" };
 const subscriptionCacheKey = "pickquoteSubscriptionCatalogV3Popularity";
-const subscriptionCacheMaxAgeMs = 6 * 60 * 60 * 1000;
+const subscriptionCacheMaxAgeMs = 5 * 60 * 1000;
 
 const categoryGrid = document.querySelector("#commerceCategories");
 const productGrid = document.querySelector("#commerceProductGrid");
@@ -488,13 +488,14 @@ function filteredItems() {
 }
 
 function renderEmpty(isSubscription, message = "") {
+  if (!isSubscription) {
+    productGrid.replaceChildren();
+    return;
+  }
   productGrid.innerHTML = `
     <div class="commerce-empty">
       <div>
-        <span class="commerce-empty-mark">P</span>
-        <h3>${message || (isSubscription ? "조건에 맞는 구독 상품이 없습니다." : "쇼핑 상품을 준비하고 있습니다.")}</h3>
-        <p>${isSubscription ? "다른 품목이나 모델명으로 다시 검색해보세요." : "공식 상품 정보와 쿠팡 파트너스 링크가 확인된 제품부터 순차적으로 공개합니다."}</p>
-        ${isSubscription ? '<button class="commerce-primary" type="button" data-subscription-consult>전체 상품 보기</button>' : '<a class="commerce-primary" href="/quote">가전 견적 비교하기</a>'}
+        <h3>${escapeHtml(message || "조건에 맞는 상품이 없습니다.")}</h3>
       </div>
     </div>`;
 }
@@ -509,7 +510,7 @@ function renderProducts() {
     const productType = isSubscription ? "구독" : "쇼핑";
     const message = commerceItems.length
       ? `조건에 맞는 ${productType} 상품이 없습니다.`
-      : isSubscription ? "구독 상품을 불러오지 못했습니다." : "쇼핑 상품을 준비하고 있습니다.";
+      : isSubscription ? "등록된 구독 상품이 없습니다." : "";
     renderEmpty(isSubscription, message);
     updateCatalogMeta(0, 0);
     return;
@@ -605,7 +606,7 @@ function updateCatalogMeta(shown, total) {
 }
 
 async function loadSubscriptionProducts() {
-  const response = await fetch("/api/subscription-products?v=20260820-lplan-best", { headers: { Accept: "application/json" }, cache: "reload" });
+  const response = await fetch("/api/subscription-products?v=20260820-lplan-best", { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(12000) });
   if (!response.ok) throw new Error("subscription api unavailable");
   const payload = await response.json();
   if (!applySubscriptionPayload(payload)) throw new Error("subscription data empty");
@@ -630,25 +631,21 @@ sortFilter?.addEventListener("change", () => {
 });
 
 async function initCommerce() {
-  renderCategories();
-  if (commercePage === "subscription") {
-    const cachedPayload = readSubscriptionCache();
-    const hasCachedCatalog = applySubscriptionPayload(cachedPayload);
-    if (hasCachedCatalog) {
-      renderCategories();
-      renderProducts();
+  try {
+    if (commercePage === "subscription") {
+      if (!applySubscriptionPayload(readSubscriptionCache())) await loadSubscriptionProducts();
     }
-    try {
-      await loadSubscriptionProducts();
-    } catch (error) {
-      if (!hasCachedCatalog) {
-        commerceItems = [];
-        sourceInfo = null;
-      }
-    }
+    renderCategories();
+    renderProducts();
+    const firstImages = filteredItems().slice(0, 4).map(item => {
+      const atlas = /^atlas:(.+)#\d+,\d+$/.exec(item.imageUrl || "");
+      return atlas ? atlas[1] : item.imageUrl;
+    });
+    await window.PickPageReady?.images(firstImages);
+    window.PickPageReady?.ready();
+  } catch {
+    window.PickPageReady?.fail();
   }
-  renderCategories();
-  renderProducts();
 }
 
 initCommerce();

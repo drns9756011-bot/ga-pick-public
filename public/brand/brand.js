@@ -76,7 +76,7 @@
     const { showLoading = true, ...fetchOptions } = options;
     if (showLoading) showServerLoading();
     try {
-      const response = await fetch(path, { ...fetchOptions, headers: { "Content-Type": "application/json", ...(fetchOptions.headers || {}) } });
+      const response = await fetch(path, { signal: AbortSignal.timeout(12000), ...fetchOptions, headers: { "Content-Type": "application/json", ...(fetchOptions.headers || {}) } });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok || payload.ok === false) throw new Error(payload.message || "서버 요청을 처리하지 못했습니다.");
       return payload;
@@ -95,6 +95,9 @@
   }
 
   function syncBrandFilters() {
+    document.querySelectorAll("[data-showcase-brand]").forEach((button) => {
+      button.setAttribute("aria-pressed", String(button.dataset.showcaseBrand === state.brand));
+    });
     brandFilters?.querySelectorAll("button[data-brand]").forEach((button) => {
       const selected = button.dataset.brand === state.brand;
       button.classList.toggle("is-active", selected);
@@ -186,9 +189,12 @@
       state.rows = Array.isArray(result.rows) ? result.rows : [];
       populateFilters();
       render();
+      await window.PickPageReady?.images(filteredRows().slice(0, 4).map(row => row.coverImage));
+      window.PickPageReady?.ready();
     } catch (error) {
       count.textContent = "패키지 조회 실패";
       grid.innerHTML = `<div class="brand-empty"><h3>브랜드관 정보를 불러오지 못했습니다.</h3><p>${escapeHtml(error.message)}</p></div>`;
+      window.PickPageReady?.fail();
     }
   }
 
