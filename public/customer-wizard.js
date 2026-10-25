@@ -100,19 +100,19 @@
   ];
 
   const productOptions = [
-    { value: "TV", title: "TV", photo: [2, 0, 5] },
-    { value: "라이프스타일 TV", title: "라이프스타일 TV", photo: [2, 8, 2] },
-    { value: "냉장고", title: "냉장고", photo: [2, 2, 2] },
-    { value: "김치냉장고", title: "김치냉장고", photo: [3, 5, 1] },
-    { value: "세탁기/건조기", title: "세탁기 / 건조기", photo: [3, 6, 8] },
-    { value: "의류관리기", title: "의류관리기", photo: [3, 3, 4] },
-    { value: "에어컨", title: "에어컨", photo: [3, 0, 2] },
-    { value: "청소기", title: "청소기", photo: [8, 4, 1] },
-    { value: "식기세척기", title: "식기세척기", photo: [2, 2, 7] },
-    { value: "인덕션/전기레인지", title: "인덕션", photo: [2, 0, 7] },
-    { value: "오븐 / 전자레인지", title: "오븐 / 전자레인지", photo: [3, 7, 2] },
-    { value: "공기청정기", title: "공기청정기", photo: [2, 1, 3] },
-    { value: "정수기", title: "정수기", photo: [3, 8, 6] },
+    { value: "TV", title: "TV", photo: [2, 0, 5], samsungPhoto: "tv" },
+    { value: "라이프스타일 TV", title: "라이프스타일 TV", photo: [2, 8, 2], samsungPhoto: "movingstyle" },
+    { value: "냉장고", title: "냉장고", photo: [2, 2, 2], samsungPhoto: "refrigerator" },
+    { value: "김치냉장고", title: "김치냉장고", photo: [3, 5, 1], samsungPhoto: "kimchi" },
+    { value: "세탁기/건조기", title: "세탁기 / 건조기", photo: [3, 6, 8], samsungPhoto: "laundry" },
+    { value: "의류관리기", title: "의류관리기", photo: [3, 3, 4], samsungPhoto: "airdresser" },
+    { value: "에어컨", title: "에어컨", photo: [3, 0, 2], samsungPhoto: "air-conditioner" },
+    { value: "청소기", title: "청소기", photo: [8, 4, 1], samsungPhoto: "vacuum" },
+    { value: "식기세척기", title: "식기세척기", photo: [2, 2, 7], samsungPhoto: "dishwasher" },
+    { value: "인덕션/전기레인지", title: "인덕션", photo: [2, 0, 7], samsungPhoto: "induction" },
+    { value: "오븐 / 전자레인지", title: "오븐 / 전자레인지", photo: [3, 7, 2], samsungPhoto: "oven" },
+    { value: "공기청정기", title: "공기청정기", photo: [2, 1, 3], samsungPhoto: "air-purifier" },
+    { value: "정수기", title: "정수기", photo: [3, 8, 6], samsungPhoto: "water-purifier" },
   ];
 
   const unknownOption = "상세 옵션 미입력";
@@ -928,6 +928,13 @@
     `;
   }
 
+  function productPhotoMarkup(product) {
+    if (fields.brand.value === "삼성전자") {
+      return `<img class="wizard-product-photo" src="/assets/samsung-category-photos/${product.samsungPhoto}.png" alt="" width="80" height="80" loading="lazy" decoding="async" />`;
+    }
+    return `<span class="wizard-product-photo" aria-hidden="true" style="--product-photo:url('/assets/subscription-product-atlases/atlas-00${product.photo[0]}.webp');--photo-x:${product.photo[1]};--photo-y:${product.photo[2]}"></span>`;
+  }
+
   function renderProducts() {
     return `
       <h3>구매 예정 품목을 모두 선택해주세요.</h3>
@@ -938,7 +945,7 @@
             return `
               <button type="button" class="wizard-product-card ${checked ? "is-selected" : ""}" data-product="${escapeHtml(product.value)}">
                 <span class="wizard-checkbox" aria-hidden="true">${checked ? "✓" : ""}</span>
-                <span class="wizard-product-photo" aria-hidden="true" style="--product-photo:url('/assets/subscription-product-atlases/atlas-00${product.photo[0]}.webp');--photo-x:${product.photo[1]};--photo-y:${product.photo[2]}"></span>
+                ${productPhotoMarkup(product)}
                 <strong>${escapeHtml(productDisplayTitle(product.value))}</strong>
               </button>
             `;

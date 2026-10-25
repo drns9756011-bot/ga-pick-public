@@ -254,7 +254,7 @@ body.customer-refresh .option-sheet { border-radius: 8px; box-shadow: 0 18px 60p
 body.customer-refresh .option-sheet :is(.option-row,.option-section h4) { font-weight: 600; }
 body.customer-refresh .option-section h4 { color: var(--muted); }
 body.customer-refresh .option-close { border-radius: 6px; font-weight: 500; }
-body.customer-refresh #customerPage .wizard-product-photo { display: block; flex: 0 0 80px; width: 80px; height: 80px; border: 0; border-radius: 0; background-color: #fff; background-image: var(--product-photo); background-repeat: no-repeat; background-size: 1000% 1000%; background-position: calc(var(--photo-x) * 100% / 9) calc(var(--photo-y) * 100% / 9); }
+body.customer-refresh #customerPage .wizard-product-photo { display: block; flex: 0 0 80px; width: 80px; height: 80px; object-fit: contain; border: 0; border-radius: 0; background-color: #fff; background-image: var(--product-photo); background-repeat: no-repeat; background-size: 1000% 1000%; background-position: calc(var(--photo-x) * 100% / 9) calc(var(--photo-y) * 100% / 9); }
 body.customer-refresh #customerPage :is(.wizard-option-row,.wizard-choice-block,.ai-recommendation-panel) { background: #f5f7f7; border-color: var(--line); border-radius: 6px; box-shadow: none; }
 body.customer-refresh #customerPage :is(.wizard-option-row span,.wizard-chip,.wizard-field-grid label,.wizard-wide-label) { font-weight: 600; }
 body.customer-refresh #customerPage .wizard-step:has([data-choice-name="wizardBrandProxy"]) .wizard-choice-card { min-height: 96px; }
