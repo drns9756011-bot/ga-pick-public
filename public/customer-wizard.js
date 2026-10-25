@@ -86,11 +86,11 @@
   ];
 
   const purposeOptions = [
-    { value: "웨딩,혼수 특별혜택", title: "웨딩,혼수", text: "혼수 패키지 조건과 카드 혜택을 함께 비교합니다.", badge: "특별혜택" },
-    { value: "신축입주 특별혜택", title: "신축입주", text: "입주 일정에 맞춘 배송, 설치 조건을 확인합니다.", badge: "특별혜택" },
-    { value: "이사", title: "이사", text: "이사 일정에 맞춰 필요한 품목을 비교합니다." },
-    { value: "인테리어", title: "인테리어", text: "공간과 빌트인 조건을 기준으로 비교합니다." },
-    { value: "일반", title: "일반", text: "교체와 단품 구매 조건을 비교합니다." },
+    { value: "웨딩,혼수 특별혜택", title: "웨딩,혼수", badge: "특별혜택" },
+    { value: "신축입주 특별혜택", title: "신축입주", badge: "특별혜택" },
+    { value: "이사", title: "이사" },
+    { value: "인테리어", title: "인테리어" },
+    { value: "일반", title: "일반" },
   ];
 
   const brandOptions = [
