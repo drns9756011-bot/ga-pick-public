@@ -5867,7 +5867,6 @@ export async function onScheduled(context) {
   if (!env.DB) return;
   try { await purgeExpiredLeads(env); }
   catch { console.error('배정 고객 보관기간 정리에 실패했습니다.'); }
-  if (context.event?.cron === '*/5 * * * *') return;
   try {
     await cleanupExpiredAnonymousConsultations(env);
   } catch (error) {
