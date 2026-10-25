@@ -1978,7 +1978,7 @@ async function loadPublicHomeCases() {
       renderHomeFeeds();
     }
   } catch {}
-  const result = await apiJson("/api/home-cases", { showLoading: false, cache: "default", timeoutMs: 8000 });
+  const result = await apiJson("/api/home-cases?v=channels-v1", { showLoading: false, cache: "default", timeoutMs: 8000 });
   if (!result?.ok || !Array.isArray(result.cases)) return;
   publicHomeCases = result.cases;
   renderHomeFeeds();
