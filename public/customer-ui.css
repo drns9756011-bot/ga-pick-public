@@ -49,6 +49,8 @@ body.customer-refresh #homePage { margin: 0; padding: 0; }
 .pq-hero { position: relative; isolation: isolate; height: min(600px,calc(100svh - 170px)); min-height: 460px; overflow: hidden; background: #deded9; }
 .pq-hero-scene { position: absolute; inset: 0; z-index: -1; }
 .pq-hero-scene img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; }
+.pq-scroll-scene { transform-origin: center; }
+.pq-scroll-progress { position: absolute; bottom: -1px; left: 0; width: 100%; height: 2px; background: #363635; transform: scaleX(0); transform-origin: left; pointer-events: none; }
 .pq-hero-inner { display: flex; align-items: center; width: min(1280px,calc(100% - 80px)); height: 100%; margin: auto; padding: 28px 0; }
 .pq-hero-copy { width: 440px; max-width: 44%; margin: 0; text-align: left; }
 body.customer-refresh #homePage .pq-hero h1 { margin: 0; color: #363635; font-size: 52px; line-height: 1.25; font-weight: 700; text-align: left; }
