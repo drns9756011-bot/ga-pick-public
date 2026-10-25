@@ -242,7 +242,7 @@ body.customer-refresh :is(.footer-company,.commerce-footer-company) { grid-colum
 body.customer-refresh :is(.footer-company,.commerce-footer-company) p { display: flex; flex-wrap: wrap; gap: 4px 20px; margin: 0; }
 body.customer-refresh :is(.footer-company,.commerce-footer-company) > strong { color: #363635; font-size: 14px; font-weight: 600; }
 body.customer-refresh .footer-privacy-btn { padding: 0; color: #363635; font-size: 14px; font-weight: 600; }
-body.customer-refresh :is(.footer-disclaimer,.commerce-footer-disclaimer) { max-width: 880px; }
+body.customer-refresh :is(.footer-company,.commerce-footer-company) :is(.footer-disclaimer,.commerce-footer-disclaimer) { display: block; max-width: 880px; }
 @media (max-width: 760px) {
   body.customer-refresh :is(.footer,.commerce-footer) { grid-template-columns: minmax(0,1fr); gap: 24px; }
   body.customer-refresh .footer-support { grid-column: 1; grid-row: auto; }
