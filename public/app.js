@@ -2122,7 +2122,7 @@ function renderHomeFeeds() {
                 <ol class="pick-case-bid-list" aria-label="실제 판매자 제안 금액">
                   ${comparedBids.map((bid, index) => `
                     <li class="${index === 0 ? "is-lowest" : ""}">
-                      <span>제안 ${index + 1}</span>
+                      <span>${escapeHTML(bid.channel || '판매 채널')}</span>
                       <strong>${escapeHTML(formatPrice(bid.price))}</strong>
                       ${index === 0 ? "<em>최저</em>" : ""}
                     </li>

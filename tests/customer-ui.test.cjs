@@ -133,7 +133,7 @@ test('all customer pages load one version of the shared design without ad script
   for (const file of [...shells, ...catalogs]) {
     const html = read(file);
     assert.ok(html.includes('/customer-ui.css?v=20261025-chat-safe'), file);
-    assert.ok(html.includes('href="/assets/pretendard-variable.woff2"'), file);
+    assert.ok(html.includes('href="/assets/noto-sans-kr-variable.woff2"'), file);
     assert.ok(html.includes('customer-refresh'), file);
     assert.doesNotMatch(html, /adsbygoogle|PICK SUBSCRIPTION|PICK SHOPPING/);
     assert.doesNotMatch(html, /page-guide\.js/);
@@ -141,10 +141,10 @@ test('all customer pages load one version of the shared design without ad script
   for (const asset of ['appliances-lg.webp', 'appliances-samsung.webp']) {
     assert.ok(statSync(path.join(root, 'assets', asset)).size < 50000, asset);
   }
-  assert.ok(statSync(path.join(root, 'assets/pretendard-variable.woff2')).size < 2200000);
+  assert.ok(statSync(path.join(root, 'assets/noto-sans-kr-variable.woff2')).size < 2200000);
   assert.ok(statSync(path.join(root, 'assets/pickquote-appliance-space-20261025.webp')).size < 160000);
-  assert.ok(statSync(path.join(root, 'assets/pretendard-LICENSE.txt')).size > 1000);
-  assert.match(read('customer-ui.css'), /src: url\("\/assets\/pretendard-variable\.woff2"\)/);
+  assert.ok(statSync(path.join(root, 'assets/noto-sans-kr-OFL.txt')).size > 1000);
+  assert.match(read('customer-ui.css'), /src: url\("\/assets\/noto-sans-kr-variable\.woff2"\)/);
   for (const file of ['styles.css', 'brand/brand.css', 'commerce/commerce.css']) {
     assert.doesNotMatch(read(file), /@import.*https:/, file);
   }
@@ -171,9 +171,9 @@ test('shopping empty states never report a subscription API failure', () => {
 
 test('customer typography uses readable body, controls, and supporting text', () => {
   const css = read('customer-ui.css');
-  assert.match(css, /font-size: 17px; font-weight: 500; line-height: 1\.65/);
+  assert.match(css, /font-size: 17px; font-weight: 400; line-height: 1\.75/);
   assert.match(css, /--pick-muted: #666660/);
-  assert.match(css, /\.pq-primary \{[^}]*font-size: 18px; font-weight: 700/);
+  assert.match(css, /\.pq-primary \{[^}]*font-size: 18px; font-weight: 600/);
   assert.match(css, /\.pq-hero-note \{[^}]*font-size: 14px/);
   assert.match(css, /\.pq-hero-followup \{[^}]*flex-wrap: wrap/);
   assert.doesNotMatch(css, /font-size: (?:10|11)px/);
@@ -284,7 +284,7 @@ test('product choices precede verification and all customer routes share the new
   assert.match(css, /--commerce-navy: #363635/);
   assert.doesNotMatch(css, /#123b67|#254d40|#2854ed|#e7f1ec|#254c3d/);
   assert.match(css, /@media \(max-width: 1100px\)[\s\S]*?\.pick-case-content article \{ display: block/);
-  assert.match(css, /grid-template-columns: 48px minmax\(0,1fr\) max-content/);
+  assert.match(css, /grid-template-columns: minmax\(0,1fr\) auto 30px/);
 });
 
 test('catalog controls remain present and the subscription video follows products', () => {
