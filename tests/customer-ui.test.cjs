@@ -122,8 +122,8 @@ test('all route shells contain the same redesigned home and form anchors', () =>
 test('all customer pages load one version of the shared design without ad scripts', () => {
   for (const file of [...shells, ...catalogs]) {
     const html = read(file);
-    assert.ok(html.includes('/customer-ui.css?v=20261025-space'), file);
-    assert.ok(html.includes('href="/assets/suit-variable.woff2"'), file);
+    assert.ok(html.includes('/customer-ui.css?v=20261025-type'), file);
+    assert.ok(html.includes('href="/assets/pretendard-variable.woff2"'), file);
     assert.ok(html.includes('customer-refresh'), file);
     assert.doesNotMatch(html, /adsbygoogle|PICK SUBSCRIPTION|PICK SHOPPING/);
     assert.doesNotMatch(html, /page-guide\.js/);
@@ -131,10 +131,10 @@ test('all customer pages load one version of the shared design without ad script
   for (const asset of ['appliances-lg.webp', 'appliances-samsung.webp']) {
     assert.ok(statSync(path.join(root, 'assets', asset)).size < 50000, asset);
   }
-  assert.ok(statSync(path.join(root, 'assets/suit-variable.woff2')).size < 700000);
+  assert.ok(statSync(path.join(root, 'assets/pretendard-variable.woff2')).size < 2200000);
   assert.ok(statSync(path.join(root, 'assets/pickquote-appliance-space-20261025.webp')).size < 160000);
-  assert.ok(statSync(path.join(root, 'assets/suit-LICENSE.txt')).size > 1000);
-  assert.match(read('customer-ui.css'), /src: url\("\/assets\/suit-variable\.woff2"\)/);
+  assert.ok(statSync(path.join(root, 'assets/pretendard-LICENSE.txt')).size > 1000);
+  assert.match(read('customer-ui.css'), /src: url\("\/assets\/pretendard-variable\.woff2"\)/);
   for (const file of ['styles.css', 'brand/brand.css', 'commerce/commerce.css']) {
     assert.doesNotMatch(read(file), /@import.*https:/, file);
   }
@@ -161,9 +161,9 @@ test('shopping empty states never report a subscription API failure', () => {
 
 test('customer typography uses readable body, controls, and supporting text', () => {
   const css = read('customer-ui.css');
-  assert.match(css, /font-size: 17px; font-weight: 450; line-height: 1\.65/);
+  assert.match(css, /font-size: 17px; font-weight: 500; line-height: 1\.65/);
   assert.match(css, /--pick-muted: #626b70/);
-  assert.match(css, /\.pq-primary \{[^}]*font-size: 18px; font-weight: 650/);
+  assert.match(css, /\.pq-primary \{[^}]*font-size: 18px; font-weight: 700/);
   assert.match(css, /\.pq-hero-note \{[^}]*font-size: 14px/);
   assert.match(css, /\.pq-hero-followup \{[^}]*flex-wrap: wrap/);
   assert.doesNotMatch(css, /font-size: (?:10|11)px/);
@@ -184,7 +184,7 @@ test('reference-led layout uses square entries, a category rail, and one focused
     assert.equal((html.match(/<details class="preview-card" hidden>/g) || []).length, 1);
     assert.doesNotMatch(home(html), /pickquote-showroom|pq-step-compare|pq-step-select/);
   }
-  assert.ok(read('privacy/index.html').includes('/customer-ui.css?v=20261025-space'));
+  assert.ok(read('privacy/index.html').includes('/customer-ui.css?v=20261025-type'));
 });
 
 test('home quote choice uses the existing wizard and resumes matching drafts', () => {

@@ -1966,16 +1966,6 @@ body:has(#homePage.is-active) .topbar .brand {
   box-shadow: none;
 }
 
-body:has(#homePage.is-active) .nav {
-  color: var(--pick-navy);
-  font-weight: 700;
-}
-
-body:has(#homePage.is-active) .nav button,
-body:has(#homePage.is-active) .nav a {
-  color: var(--pick-navy);
-}
-
 body:has(#homePage.is-active) .pick-app-home {
   padding-top: 0;
   background: #fff;
