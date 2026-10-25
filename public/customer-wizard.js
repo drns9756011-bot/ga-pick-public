@@ -100,19 +100,19 @@
   ];
 
   const productOptions = [
-    { value: "TV", title: "TV", icon: "TV", thumb: "tv" },
-    { value: "라이프스타일 TV", title: "라이프스타일 TV", icon: "LS", thumb: "lifestyle" },
-    { value: "냉장고", title: "냉장고", icon: "냉", thumb: "fridge" },
-    { value: "김치냉장고", title: "김치냉장고", icon: "김", thumb: "kimchi" },
-    { value: "세탁기/건조기", title: "세탁기 / 건조기", icon: "세", thumb: "washer" },
-    { value: "의류관리기", title: "의류관리기", icon: "의", thumb: "styler" },
-    { value: "에어컨", title: "에어컨", icon: "에", thumb: "aircon" },
-    { value: "청소기", title: "청소기", icon: "청", thumb: "vacuum" },
-    { value: "식기세척기", title: "식기세척기", icon: "식", thumb: "dishwasher" },
-    { value: "인덕션/전기레인지", title: "인덕션", icon: "인", thumb: "induction" },
-    { value: "오븐 / 전자레인지", title: "오븐 / 전자레인지", icon: "오", thumb: "oven" },
-    { value: "공기청정기", title: "공기청정기", icon: "공", thumb: "purifier" },
-    { value: "정수기", title: "정수기", icon: "정", thumb: "water" },
+    { value: "TV", title: "TV", photo: [2, 0, 5] },
+    { value: "라이프스타일 TV", title: "라이프스타일 TV", photo: [2, 8, 2] },
+    { value: "냉장고", title: "냉장고", photo: [2, 2, 2] },
+    { value: "김치냉장고", title: "김치냉장고", photo: [3, 5, 1] },
+    { value: "세탁기/건조기", title: "세탁기 / 건조기", photo: [3, 6, 8] },
+    { value: "의류관리기", title: "의류관리기", photo: [3, 3, 4] },
+    { value: "에어컨", title: "에어컨", photo: [3, 0, 2] },
+    { value: "청소기", title: "청소기", photo: [8, 4, 1] },
+    { value: "식기세척기", title: "식기세척기", photo: [2, 2, 7] },
+    { value: "인덕션/전기레인지", title: "인덕션", photo: [2, 0, 7] },
+    { value: "오븐 / 전자레인지", title: "오븐 / 전자레인지", photo: [3, 7, 2] },
+    { value: "공기청정기", title: "공기청정기", photo: [2, 1, 3] },
+    { value: "정수기", title: "정수기", photo: [3, 8, 6] },
   ];
 
   const unknownOption = "상세 옵션 미입력";
@@ -938,7 +938,7 @@
             return `
               <button type="button" class="wizard-product-card ${checked ? "is-selected" : ""}" data-product="${escapeHtml(product.value)}">
                 <span class="wizard-checkbox" aria-hidden="true">${checked ? "✓" : ""}</span>
-                <span class="product-thumb product-thumb-${escapeHtml(product.thumb)}" aria-hidden="true"><span>${escapeHtml(product.icon)}</span></span>
+                <span class="wizard-product-photo" aria-hidden="true" style="--product-photo:url('/assets/subscription-product-atlases/atlas-00${product.photo[0]}.webp');--photo-x:${product.photo[1]};--photo-y:${product.photo[2]}"></span>
                 <strong>${escapeHtml(productDisplayTitle(product.value))}</strong>
               </button>
             `;
