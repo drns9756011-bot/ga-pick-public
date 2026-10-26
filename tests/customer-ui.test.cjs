@@ -102,7 +102,7 @@ test('failed inference clears output, offers retry, and does not masquerade as A
   assert.ok(!source.includes('chooseRecommendedModel('));
   assert.ok(!source.includes('fallbackRecommendationText('));
   for (const shell of shells) {
-    assert.ok(read(shell).includes('/customer-wizard.js?v=20261025-samsung-photos'));
+    assert.ok(read(shell).includes('/customer-wizard.js?v=20261026-mobile-audit'));
     assert.doesNotMatch(read(shell), /네이버 최저/);
   }
 });

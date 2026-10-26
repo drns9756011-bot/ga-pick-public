@@ -1,0 +1,82 @@
+/* Touch layouts only: mouse-driven desktop keeps its fixed workspace. */
+@media (max-width: 760px) and (pointer: coarse) {
+  html:has(body.customer-refresh) { scroll-padding-top: calc(88px + env(safe-area-inset-top,0px)); scroll-padding-bottom: calc(176px + env(safe-area-inset-bottom,0px)); }
+  body.customer-refresh { --mobile-nav-space: calc(72px + env(safe-area-inset-bottom,0px)); min-width: 0; font-size: 16px; line-height: 1.7; padding-bottom: var(--mobile-nav-space); }
+  body.customer-refresh :is(h1,h2,h3,p,label,summary,button,a,dd,small) { overflow-wrap: anywhere; }
+  body.customer-refresh :is(p,label,summary) { word-break: keep-all; }
+  body.customer-refresh :is(input,select,textarea) { min-width: 0; max-width: 100%; font-size: 16px; line-height: 1.5; scroll-margin-top: 100px; scroll-margin-bottom: 180px; }
+  body.customer-refresh :is(input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=file]),select) { min-height: 48px; }
+  body.customer-refresh textarea { min-height: 112px; padding: 12px; }
+  body.customer-refresh :is(button,.commerce-category,.commerce-product-action,.brand-primary-btn) { min-height: 44px; }
+  body.customer-refresh :is(button,input,select,textarea):focus-visible { outline-offset: 2px; }
+  body.customer-refresh :is(.helper-text,.form-message,.request-form-message,.wizard-context,.wizard-upload-notice) { font-size: 14px; line-height: 1.7; }
+  body.customer-refresh :is(.topbar,.commerce-topbar) { min-height: 64px; padding-inline: 18px; background: #fff; }
+  body.customer-refresh :is(.nav,.commerce-desktop-nav) .seller-registration { min-height: 44px; display: inline-flex; align-items: center; }
+  body.customer-refresh #customerPage :is(.page-head,.request-grid) { width: calc(100% - 36px); }
+  body.customer-refresh #customerPage .wizard-step > h3 { font-size: 26px; line-height: 1.45; text-wrap: balance; margin-bottom: 24px; }
+  body.customer-refresh #customerPage .wizard-choice-card { gap: 12px; padding: 16px; }
+  body.customer-refresh #customerPage .wizard-choice-card strong { white-space: normal; overflow-wrap: anywhere; font-size: 17px; line-height: 1.5; }
+  body.customer-refresh #customerPage .wizard-choice-card small { font-size: 14px; line-height: 1.7; }
+  body.customer-refresh #customerPage .wizard-choice-card em { flex-shrink: 0; }
+  body.customer-refresh #customerPage .wizard-product-card { grid-template-columns: 24px 64px minmax(0,1fr); gap: 12px; padding: 14px; }
+  body.customer-refresh #customerPage .wizard-product-photo { width: 64px; height: 64px; }
+  body.customer-refresh #customerPage .wizard-product-card strong { white-space: normal; font-size: 16px; line-height: 1.6; }
+  body.customer-refresh #customerPage :is(.wizard-chip,.option-choice,.option-chip) { min-height: 44px; padding: 10px 12px; font-size: 15px; line-height: 1.5; white-space: normal; }
+  body.customer-refresh #customerPage .wizard-actions { inset-inline: 18px; gap: 10px; }
+  body.customer-refresh #customerPage :is(.wizard-next,.wizard-back) { min-height: 48px; font-size: 16px; }
+  body.customer-refresh .wizard-upload-notice { display: block; margin: 12px 0 0; color: #545459; }
+  body.customer-refresh .lookup-page .page-head { padding: 24px 0; text-align: center; }
+  body.customer-refresh .lookup-page-title { max-width: none; margin-inline: auto; font-size: 28px; line-height: 1.4; }
+  body.customer-refresh .lookup-layout { display: grid; grid-template-columns: minmax(0,1fr); gap: 24px; }
+  body.customer-refresh .lookup-form { padding: 20px 16px; }
+  body.customer-refresh .lookup-form .form-row { grid-template-columns: minmax(0,1fr); gap: 18px; }
+  body.customer-refresh .lookup-form label { font-size: 16px; gap: 8px; }
+  body.customer-refresh .lookup-form .primary-btn { width: 100%; min-height: 48px; font-size: 16px; }
+  body.customer-refresh :is(.commerce-section-nav-inner,.brand-commerce-nav > div) { width: calc(100% - 36px); overflow-x: auto; gap: 22px; scrollbar-width: thin; }
+  body.customer-refresh :is(.commerce-section-nav,.brand-commerce-nav) a { min-height: 48px; flex-shrink: 0; display: inline-flex; align-items: center; font-size: 15px; }
+  body.customer-refresh :is(.commerce-main,.brand-hall-main) { width: calc(100% - 36px); }
+  body.customer-refresh .pq-catalog-head { align-items: center; text-align: center; }
+  body.customer-refresh .pq-catalog-head h1 { width: 100%; max-width: none; font-size: 30px; line-height: 1.4; }
+  body.customer-refresh .pq-catalog-head p { max-width: none; font-size: 16px; line-height: 1.7; }
+  body.customer-refresh .pq-catalog-head .commerce-secondary { align-self: center; min-height: 44px; }
+  body.customer-refresh :is(.commerce-category,.brand-hall-filter-chips button) { min-height: 44px; font-size: 15px; }
+  body.customer-refresh .commerce-tools :is(input,select) { min-height: 48px; height: auto; font-size: 16px; }
+  body.customer-refresh .commerce-product-body h3 { font-size: 17px; line-height: 1.5; }
+  body.customer-refresh :is(.commerce-product-model,.commerce-product-meta,.commerce-contract-label,.commerce-product-body > p) { font-size: 14px; line-height: 1.7; overflow-wrap: anywhere; }
+  body.customer-refresh :is(.commerce-product-price,.commerce-price-comparison strong,.brand-package-price strong) { white-space: normal; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+  body.customer-refresh :is(.commerce-card-option select,.commerce-detail-option select,.commerce-affiliate-selector select) { min-height: 48px; height: auto; padding-block: 10px; font-size: 16px; }
+  body.customer-refresh :is(.commerce-product-action,.brand-consult-submit,.subscription-consultation-submit) { min-height: 48px; font-size: 16px; }
+  body.customer-refresh :is(.commerce-price-comparison span,.commerce-price-comparison small,.commerce-detail-additional-benefit,.commerce-detail-sections dt,.commerce-detail-sections dd,.commerce-card-benefits > div,.subscription-consent-box dl div,.subscription-consent-box summary label,.brand-detail-pre,.brand-consent-check small) { font-size: 14px; line-height: 1.7; }
+  body.customer-refresh :is(.commerce-card-disclaimer,.subscription-consent-note) { font-size: 14px !important; line-height: 1.7 !important; }
+  body.customer-refresh :is(.brand-detail-dialog,.brand-consult-dialog,.commerce-product-dialog,.subscription-consultation-dialog,.privacy-policy-dialog) { max-height: calc(100dvh - 24px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px)); overscroll-behavior: contain; scroll-padding-block: 80px; }
+  body.customer-refresh :is(.brand-detail-close,.brand-consult-close,.commerce-product-modal-close,.subscription-consultation-close,.privacy-policy-close,.option-close) { min-width: 44px; min-height: 44px; width: 44px; height: 44px; display: grid; place-items: center; padding: 0; border: 1px solid #d2d2d7; background: #fff; color: #1d1d1f; }
+  body.customer-refresh .brand-detail-close { background: #1d1d1f; color: #fff; border-color: #1d1d1f; }
+  body.customer-refresh :is(.subscription-consultation-head,.brand-consult-head) { padding-right: 72px; }
+  body.customer-refresh .subscription-consultation-head span { color: #626267; font-size: 14px; }
+  body.customer-refresh :is(.subscription-consultation-fields label > span,.subscription-code-status,.subscription-verification-status,.subscription-consultation-message) { font-size: 14px; line-height: 1.6; }
+  body.customer-refresh :is(.subscription-phone-field > div,.subscription-code-field > div) { grid-template-columns: minmax(0,1fr) 108px; }
+  body.customer-refresh :is(.subscription-phone-field button,.subscription-code-field button) { font-size: 14px; min-height: 48px; padding: 8px; }
+  body.customer-refresh :is(.privacy-policy-section p,.privacy-policy-section li,.privacy-policy-table td,.privacy-policy-table th,.privacy-policy-contact) { font-size: 14px; line-height: 1.8; }
+  body.customer-refresh .privacy-policy-table-wrap { overflow-x: auto; scrollbar-width: thin; }
+  body.customer-refresh .privacy-policy-table { min-width: 560px; width: 100%; table-layout: auto; }
+  body.customer-refresh .privacy-policy-table :is(th,td) { overflow-wrap: anywhere; word-break: normal; padding: 10px 8px; }
+  body.customer-refresh :is(.footer,.commerce-footer) { padding-inline: 18px; }
+  body.customer-refresh :is(.footer,.commerce-footer) > nav { gap: 4px 16px; }
+  body.customer-refresh :is(.footer,.commerce-footer) > nav a { display: inline-flex; align-items: center; min-height: 44px; }
+  body.customer-refresh :is(.footer-company,.commerce-footer-company) p { gap: 8px; }
+  body.customer-refresh .kakao-floating-btn { width: 48px; min-width: 48px; height: 48px; min-height: 48px; padding: 5px; justify-content: center; gap: 0; }
+  body.customer-refresh .kakao-floating-btn > span:not(.kakao-floating-icon) { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  body.customer-refresh .kakao-floating-icon { width: 36px; height: 36px; flex: 0 0 36px; }
+  body.customer-refresh.mobile-keyboard-open :is(.mobile-flow-nav,.commerce-mobile-nav,.kakao-floating-btn) { display: none; }
+  body.customer-refresh.mobile-keyboard-open #customerPage .wizard-actions { position: static; margin-top: 24px; }
+  body.customer-refresh.mobile-keyboard-open #customerPage .customer-wizard { padding-bottom: 24px; }
+  body.customer-refresh.mobile-keyboard-open { padding-bottom: 24px; }
+  html:has(body.customer-refresh.mobile-keyboard-open) { scroll-padding-bottom: 24px; }
+}
+@media (max-width: 379px) and (pointer: coarse) {
+  body.customer-refresh :is(.commerce-product-grid,.brand-hall-grid) { grid-template-columns: minmax(0,1fr); gap: 28px; }
+  body.customer-refresh .commerce-product-image { aspect-ratio: 4 / 3; }
+  body.customer-refresh .commerce-price-comparison { grid-template-columns: minmax(0,1fr); }
+  body.customer-refresh .pq-assurance { grid-template-columns: minmax(0,1fr); gap: 16px; padding-block: 24px; }
+  body.customer-refresh .pq-assurance p { gap: 2px; }
+}
