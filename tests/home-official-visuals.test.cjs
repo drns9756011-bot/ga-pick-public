@@ -18,6 +18,7 @@ test('case imagery preserves live prices, channels, difference and expandable co
   assert.match(html, /appliance-lineup--newlywed/);
   assert.match(context.renderHomeCaseCard({ request: { ...request, items: '김치냉장고' }, quoteBids }), /appliance-lineup--moving/);
   assert.match(html, /이미지는 실제 견적 모델과 다를 수 있습니다/);
+  assert.ok(html.indexOf('class="pick-case-offers"') < html.indexOf('class="pick-case-products"'));
   quoteBids[0].channel = '<script>bad</script>';
   assert.doesNotMatch(context.renderHomeCaseCard({ request, quoteBids }), /<script>/);
   assert.equal(context.renderHomeCaseCard({ request, quoteBids: [] }), '');

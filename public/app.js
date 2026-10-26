@@ -2011,10 +2011,10 @@ function renderHomeCaseCard({ request, quoteBids, bidCount }) {
       <p class="pick-case-difference">${escapeHTML(formatPrice(originalPrice - Number(lowest.price)))} 낮은 견적</p>
     </div>
     <details class="pick-case-details"><summary>${escapeHTML(`${count}개 제안 비교`)}</summary>
-      <p class="pick-case-products">${escapeHTML(description)}</p>
       <ol class="pick-case-offers" aria-label="실제 판매자 제안 금액">
         ${comparedBids.map((bid, index) => `<li><div class="pick-case-offer-head"><span>${escapeHTML(bid.channel || '판매 채널')}</span>${index === 0 ? '<em>최저</em>' : ''}</div><strong class="pick-case-offer-price">${escapeHTML(formatPrice(bid.price))}</strong></li>`).join('')}
       </ol>
+      <p class="pick-case-products">${escapeHTML(description)}</p>
       <p class="pick-case-footnote">낮은 금액순 최대 3개 표시. 이미지는 실제 견적 모델과 다를 수 있습니다.</p>
     </details>
   </article>`;
