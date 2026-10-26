@@ -1,5 +1,5 @@
 (() => {
-  const touch = window.matchMedia('(max-width: 760px) and (pointer: coarse)');
+  const compact = window.matchMedia('(max-width: 1100px)');
   const viewport = window.visualViewport;
   if (!viewport) return;
   let baseline = window.innerHeight;
@@ -16,9 +16,12 @@
       baseline = window.innerHeight;
     }
     if (!focused) baseline = window.innerHeight;
-    const obscured = Math.max(baseline, window.innerHeight) - viewport.height;
-    const open = touch.matches && focused && viewport.scale === 1 && obscured > 150;
+    const scale = Math.max(0.1, Number(viewport.scale) || 1);
+    const obscured = Math.max(baseline, window.innerHeight) - viewport.height * scale;
+    const open = focused && obscured > 150;
     document.body.classList.toggle('mobile-keyboard-open', open);
+    document.documentElement.style.setProperty('--customer-viewport-height', `${viewport.height}px`);
+    document.documentElement.style.setProperty('--customer-viewport-top', `${viewport.offsetTop || 0}px`);
   }
   function schedule() {
     if (!frame) frame = requestAnimationFrame(update);
@@ -28,6 +31,6 @@
   window.addEventListener('resize', schedule, { passive: true });
   document.addEventListener('focusin', schedule);
   document.addEventListener('focusout', schedule);
-  touch.addEventListener('change', schedule);
+  compact.addEventListener('change', schedule);
   schedule();
 })();

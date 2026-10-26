@@ -1,0 +1,820 @@
+{
+  "date": "2026-10-26",
+  "method": "Measured Chromium CSS viewport rendering, not physical iOS Safari or Galaxy Fold 7 testing",
+  "reviewers": [
+    "iOS keyboard, safe-area and dialog accessibility",
+    "Fold/tablet catalogue and modal layouts",
+    "Adversarial home comparison and quote navigation"
+  ],
+  "automatedTestsPassed": 98,
+  "layoutCombinations": 53,
+  "manualChecks": {
+    "invalidNext": "Inline role=alert focused below header",
+    "validNext": "Scroll reset to zero and stale error removed",
+    "subscriptionOption": "Selected control retains focus and scroll after rerender",
+    "dialogClose": "Escape restores triggering button and removes temporary inert"
+  },
+  "home": [
+    {
+      "cases": "126.723px 126.738px",
+      "content": 301,
+      "header": 63.99390411376953,
+      "nav": "grid",
+      "overflow": [],
+      "prices": [
+        {
+          "scroll": 107,
+          "text": "7,480,000원",
+          "width": 107
+        },
+        {
+          "scroll": 107,
+          "text": "9,060,000원",
+          "width": 107
+        }
+      ],
+      "scroll": 301,
+      "width": 320
+    },
+    {
+      "cases": "146.723px 146.738px",
+      "content": 341,
+      "header": 63.99390411376953,
+      "nav": "grid",
+      "overflow": [],
+      "prices": [
+        {
+          "scroll": 125,
+          "text": "7,480,000원",
+          "width": 125
+        },
+        {
+          "scroll": 125,
+          "text": "9,060,000원",
+          "width": 125
+        }
+      ],
+      "scroll": 341,
+      "width": 360
+    },
+    {
+      "cases": "161.357px 161.372px",
+      "content": 371,
+      "header": 63.99390411376953,
+      "nav": "grid",
+      "overflow": [],
+      "prices": [
+        {
+          "scroll": 139,
+          "text": "7,480,000원",
+          "width": 139
+        },
+        {
+          "scroll": 139,
+          "text": "9,060,000원",
+          "width": 139
+        }
+      ],
+      "scroll": 371,
+      "width": 389
+    },
+    {
+      "cases": "172.576px 172.591px",
+      "content": 393,
+      "header": 63.99390411376953,
+      "nav": "grid",
+      "overflow": [],
+      "prices": [
+        {
+          "scroll": 151,
+          "text": "7,480,000원",
+          "width": 151
+        },
+        {
+          "scroll": 151,
+          "text": "9,060,000원",
+          "width": 151
+        }
+      ],
+      "scroll": 393,
+      "width": 412
+    },
+    {
+      "cases": "236.479px 236.494px",
+      "content": 521,
+      "header": 63.99390411376953,
+      "nav": "grid",
+      "overflow": [],
+      "prices": [
+        {
+          "scroll": 215,
+          "text": "7,480,000원",
+          "width": 215
+        },
+        {
+          "scroll": 215,
+          "text": "9,060,000원",
+          "width": 215
+        }
+      ],
+      "scroll": 521,
+      "width": 540
+    },
+    {
+      "cases": "342.637px 342.637px",
+      "content": 749,
+      "header": 63.99390411376953,
+      "nav": "grid",
+      "overflow": [],
+      "prices": [
+        {
+          "scroll": 293,
+          "text": "7,480,000원",
+          "width": 293
+        },
+        {
+          "scroll": 293,
+          "text": "9,060,000원",
+          "width": 293
+        }
+      ],
+      "scroll": 749,
+      "width": 768
+    },
+    {
+      "cases": "385.076px 385.076px",
+      "content": 834,
+      "header": 63.99390411376953,
+      "nav": "grid",
+      "overflow": [],
+      "prices": [
+        {
+          "scroll": 335,
+          "text": "7,480,000원",
+          "width": 335
+        },
+        {
+          "scroll": 335,
+          "text": "9,060,000원",
+          "width": 335
+        }
+      ],
+      "scroll": 834,
+      "width": 853
+    },
+    {
+      "cases": "470.442px 470.442px",
+      "content": 1005,
+      "header": 63.99390411376953,
+      "nav": "grid",
+      "overflow": [],
+      "prices": [
+        {
+          "scroll": 421,
+          "text": "7,480,000원",
+          "width": 421
+        },
+        {
+          "scroll": 421,
+          "text": "9,060,000원",
+          "width": 421
+        }
+      ],
+      "scroll": 1005,
+      "width": 1023
+    },
+    {
+      "cases": "508.491px 508.491px",
+      "content": 1081,
+      "header": 63.99390411376953,
+      "nav": "grid",
+      "overflow": [],
+      "prices": [
+        {
+          "scroll": 459,
+          "text": "7,480,000원",
+          "width": 459
+        },
+        {
+          "scroll": 459,
+          "text": "9,060,000원",
+          "width": 459
+        }
+      ],
+      "scroll": 1081,
+      "width": 1100
+    },
+    {
+      "cases": "534.009px 534.009px",
+      "content": 1260,
+      "header": 66.95121765136719,
+      "nav": "none",
+      "overflow": [],
+      "prices": [
+        {
+          "scroll": 484,
+          "text": "7,480,000원",
+          "width": 484
+        },
+        {
+          "scroll": 484,
+          "text": "9,060,000원",
+          "width": 484
+        }
+      ],
+      "scroll": 1260,
+      "width": 1278
+    },
+    {
+      "cases": "534.009px 534.009px",
+      "content": 1420,
+      "header": 66.95121765136719,
+      "nav": "none",
+      "overflow": [],
+      "prices": [
+        {
+          "scroll": 484,
+          "text": "7,480,000원",
+          "width": 484
+        },
+        {
+          "scroll": 484,
+          "text": "9,060,000원",
+          "width": 484
+        }
+      ],
+      "scroll": 1420,
+      "width": 1438
+    }
+  ],
+  "routes": [
+    {
+      "content": 301,
+      "grid": null,
+      "header": 66.96646881103516,
+      "inputFonts": [
+        "16px"
+      ],
+      "nav": "grid",
+      "products": 0,
+      "route": "/brand",
+      "scroll": 301,
+      "width": 320
+    },
+    {
+      "content": 371,
+      "grid": null,
+      "header": 66.96646881103516,
+      "inputFonts": [
+        "16px"
+      ],
+      "nav": "grid",
+      "products": 0,
+      "route": "/brand",
+      "scroll": 371,
+      "width": 389
+    },
+    {
+      "content": 521,
+      "grid": null,
+      "header": 66.96646881103516,
+      "inputFonts": [
+        "16px"
+      ],
+      "nav": "grid",
+      "products": 0,
+      "route": "/brand",
+      "scroll": 521,
+      "width": 540
+    },
+    {
+      "content": 749,
+      "grid": null,
+      "header": 70.9756088256836,
+      "inputFonts": [
+        "16px"
+      ],
+      "nav": "grid",
+      "products": 0,
+      "route": "/brand",
+      "scroll": 749,
+      "width": 768
+    },
+    {
+      "content": 834,
+      "grid": null,
+      "header": 70.9756088256836,
+      "inputFonts": [
+        "16px"
+      ],
+      "nav": "grid",
+      "products": 0,
+      "route": "/brand",
+      "scroll": 834,
+      "width": 853
+    },
+    {
+      "content": 1005,
+      "grid": null,
+      "header": 70.9756088256836,
+      "inputFonts": [
+        "16px"
+      ],
+      "nav": "grid",
+      "products": 0,
+      "route": "/brand",
+      "scroll": 1005,
+      "width": 1023
+    },
+    {
+      "content": 1260,
+      "grid": null,
+      "header": 78.96341705322266,
+      "inputFonts": [
+        "16px"
+      ],
+      "nav": "none",
+      "products": 0,
+      "route": "/brand",
+      "scroll": 1260,
+      "width": 1278
+    },
+    {
+      "content": 301,
+      "grid": "269.451px",
+      "header": 64.96951293945312,
+      "inputFonts": [
+        "16px",
+        "16px",
+        "16px",
+        "16px"
+      ],
+      "nav": "grid",
+      "products": 24,
+      "route": "/subscription",
+      "scroll": 301,
+      "width": 320
+    },
+    {
+      "content": 371,
+      "grid": "163.354px 163.369px",
+      "header": 64.96951293945312,
+      "inputFonts": [
+        "16px",
+        "16px",
+        "16px",
+        "16px"
+      ],
+      "nav": "grid",
+      "products": 24,
+      "route": "/subscription",
+      "scroll": 371,
+      "width": 389
+    },
+    {
+      "content": 521,
+      "grid": "238.476px 238.491px",
+      "header": 64.96951293945312,
+      "inputFonts": [
+        "16px",
+        "16px",
+        "16px",
+        "16px"
+      ],
+      "nav": "grid",
+      "products": 24,
+      "route": "/subscription",
+      "scroll": 521,
+      "width": 540
+    },
+    {
+      "content": 749,
+      "grid": "340.625px 340.64px",
+      "header": 64.96951293945312,
+      "inputFonts": [
+        "16px",
+        "16px",
+        "16px",
+        "16px"
+      ],
+      "nav": "grid",
+      "products": 24,
+      "route": "/subscription",
+      "scroll": 749,
+      "width": 768
+    },
+    {
+      "content": 834,
+      "grid": "383.064px 383.079px",
+      "header": 64.96951293945312,
+      "inputFonts": [
+        "16px",
+        "16px",
+        "16px",
+        "16px"
+      ],
+      "nav": "grid",
+      "products": 24,
+      "route": "/subscription",
+      "scroll": 834,
+      "width": 853
+    },
+    {
+      "content": 1005,
+      "grid": "305.625px 305.625px 305.625px",
+      "header": 64.96951293945312,
+      "inputFonts": [
+        "16px",
+        "16px",
+        "16px",
+        "16px"
+      ],
+      "nav": "grid",
+      "products": 24,
+      "route": "/subscription",
+      "scroll": 1005,
+      "width": 1023
+    },
+    {
+      "content": 1260,
+      "grid": "303.171px 303.171px 303.186px",
+      "header": 75.99085235595703,
+      "inputFonts": [
+        "16px",
+        "16px",
+        "16px",
+        "16px"
+      ],
+      "nav": "none",
+      "products": 24,
+      "route": "/subscription",
+      "scroll": 1260,
+      "width": 1278
+    },
+    {
+      "content": 301,
+      "grid": "269.451px",
+      "header": 64.96951293945312,
+      "inputFonts": [
+        "16px",
+        "16px"
+      ],
+      "nav": "grid",
+      "products": 0,
+      "route": "/shopping",
+      "scroll": 301,
+      "width": 320
+    },
+    {
+      "content": 371,
+      "grid": "163.354px 163.354px",
+      "header": 64.96951293945312,
+      "inputFonts": [
+        "16px",
+        "16px"
+      ],
+      "nav": "grid",
+      "products": 0,
+      "route": "/shopping",
+      "scroll": 371,
+      "width": 389
+    },
+    {
+      "content": 521,
+      "grid": "238.476px 238.476px",
+      "header": 64.96951293945312,
+      "inputFonts": [
+        "16px",
+        "16px"
+      ],
+      "nav": "grid",
+      "products": 0,
+      "route": "/shopping",
+      "scroll": 521,
+      "width": 540
+    },
+    {
+      "content": 749,
+      "grid": "340.625px 340.625px",
+      "header": 64.96951293945312,
+      "inputFonts": [
+        "16px",
+        "16px"
+      ],
+      "nav": "grid",
+      "products": 0,
+      "route": "/shopping",
+      "scroll": 749,
+      "width": 768
+    },
+    {
+      "content": 834,
+      "grid": "383.064px 383.064px",
+      "header": 64.96951293945312,
+      "inputFonts": [
+        "16px",
+        "16px"
+      ],
+      "nav": "grid",
+      "products": 0,
+      "route": "/shopping",
+      "scroll": 834,
+      "width": 853
+    },
+    {
+      "content": 1005,
+      "grid": "305.625px 305.625px 305.625px",
+      "header": 64.96951293945312,
+      "inputFonts": [
+        "16px",
+        "16px"
+      ],
+      "nav": "grid",
+      "products": 0,
+      "route": "/shopping",
+      "scroll": 1005,
+      "width": 1023
+    },
+    {
+      "content": 1260,
+      "grid": "303.171px 303.171px 303.171px",
+      "header": 75.99085235595703,
+      "inputFonts": [
+        "16px",
+        "16px"
+      ],
+      "nav": "none",
+      "products": 0,
+      "route": "/shopping",
+      "scroll": 1260,
+      "width": 1278
+    },
+    {
+      "content": 320,
+      "grid": null,
+      "inputFonts": [],
+      "nav": null,
+      "products": 0,
+      "route": "/privacy",
+      "scroll": 320,
+      "width": 320
+    },
+    {
+      "content": 389,
+      "grid": null,
+      "inputFonts": [],
+      "nav": null,
+      "products": 0,
+      "route": "/privacy",
+      "scroll": 389,
+      "width": 389
+    },
+    {
+      "content": 540,
+      "grid": null,
+      "inputFonts": [],
+      "nav": null,
+      "products": 0,
+      "route": "/privacy",
+      "scroll": 540,
+      "width": 540
+    },
+    {
+      "content": 768,
+      "grid": null,
+      "inputFonts": [],
+      "nav": null,
+      "products": 0,
+      "route": "/privacy",
+      "scroll": 768,
+      "width": 768
+    },
+    {
+      "content": 853,
+      "grid": null,
+      "inputFonts": [],
+      "nav": null,
+      "products": 0,
+      "route": "/privacy",
+      "scroll": 853,
+      "width": 853
+    },
+    {
+      "content": 1023,
+      "grid": null,
+      "inputFonts": [],
+      "nav": null,
+      "products": 0,
+      "route": "/privacy",
+      "scroll": 1023,
+      "width": 1023
+    },
+    {
+      "content": 1278,
+      "grid": null,
+      "inputFonts": [],
+      "nav": null,
+      "products": 0,
+      "route": "/privacy",
+      "scroll": 1278,
+      "width": 1278
+    },
+    {
+      "content": 301,
+      "grid": null,
+      "header": 66.96646881103516,
+      "inputFonts": [
+        "18px",
+        "18px"
+      ],
+      "nav": "grid",
+      "products": 0,
+      "route": "/my-quote",
+      "scroll": 301,
+      "width": 320
+    },
+    {
+      "content": 371,
+      "grid": null,
+      "header": 66.96646881103516,
+      "inputFonts": [
+        "18px",
+        "18px"
+      ],
+      "nav": "grid",
+      "products": 0,
+      "route": "/my-quote",
+      "scroll": 371,
+      "width": 389
+    },
+    {
+      "content": 521,
+      "grid": null,
+      "header": 66.96646881103516,
+      "inputFonts": [
+        "18px",
+        "18px"
+      ],
+      "nav": "grid",
+      "products": 0,
+      "route": "/my-quote",
+      "scroll": 521,
+      "width": 540
+    },
+    {
+      "content": 749,
+      "grid": null,
+      "header": 66.96646881103516,
+      "inputFonts": [
+        "18px",
+        "18px"
+      ],
+      "nav": "grid",
+      "products": 0,
+      "route": "/my-quote",
+      "scroll": 749,
+      "width": 768
+    },
+    {
+      "content": 834,
+      "grid": null,
+      "header": 66.96646881103516,
+      "inputFonts": [
+        "18px",
+        "18px"
+      ],
+      "nav": "grid",
+      "products": 0,
+      "route": "/my-quote",
+      "scroll": 834,
+      "width": 853
+    },
+    {
+      "content": 1005,
+      "grid": null,
+      "header": 64.96951293945312,
+      "inputFonts": [
+        "18px",
+        "18px"
+      ],
+      "nav": "grid",
+      "products": 0,
+      "route": "/my-quote",
+      "scroll": 1005,
+      "width": 1023
+    },
+    {
+      "content": 1260,
+      "grid": null,
+      "header": 78.96341705322266,
+      "inputFonts": [
+        "18px",
+        "18px"
+      ],
+      "nav": "none",
+      "products": 0,
+      "route": "/my-quote",
+      "scroll": 1260,
+      "width": 1278
+    },
+    {
+      "content": 301,
+      "grid": null,
+      "header": 66.96646881103516,
+      "inputFonts": [
+        "16px",
+        "16px"
+      ],
+      "nav": "grid",
+      "products": 0,
+      "route": "/quote",
+      "scroll": 301,
+      "width": 320
+    },
+    {
+      "content": 371,
+      "grid": null,
+      "header": 66.96646881103516,
+      "inputFonts": [
+        "16px",
+        "16px"
+      ],
+      "nav": "grid",
+      "products": 0,
+      "route": "/quote",
+      "scroll": 371,
+      "width": 389
+    },
+    {
+      "content": 521,
+      "grid": null,
+      "header": 66.96646881103516,
+      "inputFonts": [
+        "16px",
+        "16px"
+      ],
+      "nav": "grid",
+      "products": 0,
+      "route": "/quote",
+      "scroll": 521,
+      "width": 540
+    },
+    {
+      "content": 749,
+      "grid": null,
+      "header": 66.96646881103516,
+      "inputFonts": [
+        "16px",
+        "16px"
+      ],
+      "nav": "grid",
+      "products": 0,
+      "route": "/quote",
+      "scroll": 749,
+      "width": 768
+    },
+    {
+      "content": 834,
+      "grid": null,
+      "header": 66.96646881103516,
+      "inputFonts": [
+        "16px",
+        "16px"
+      ],
+      "nav": "grid",
+      "products": 0,
+      "route": "/quote",
+      "scroll": 834,
+      "width": 853
+    },
+    {
+      "content": 1005,
+      "grid": null,
+      "header": 64.96951293945312,
+      "inputFonts": [
+        "16px",
+        "16px"
+      ],
+      "nav": "grid",
+      "products": 0,
+      "route": "/quote",
+      "scroll": 1005,
+      "width": 1023
+    },
+    {
+      "content": 1260,
+      "grid": null,
+      "header": 78.96341705322266,
+      "inputFonts": [
+        "17px",
+        "17px"
+      ],
+      "nav": "none",
+      "products": 0,
+      "route": "/quote",
+      "scroll": 1260,
+      "width": 1278
+    }
+  ],
+  "remaining": "Physical iOS Safari and Galaxy Fold 7 runtime verification requires real devices; viewport testing and targeted source/unit audits completed."
+}

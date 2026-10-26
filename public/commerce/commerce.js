@@ -387,8 +387,10 @@ async function submitSubscriptionConsultation(event) {
   }
 }
 
-function renderProductModal(item, optionIndex = 0, cardIndex = -1) {
+function renderProductModal(item, optionIndex = 0, cardIndex = -1, restoreFocusId = '') {
   const modal = ensureProductModal();
+  const dialog = modal.querySelector('.commerce-product-dialog');
+  const previousScroll = restoreFocusId ? dialog?.scrollTop || 0 : 0;
   const options = productOptions(item);
   const selected = options[Math.max(0, Math.min(optionIndex, options.length - 1))];
   const care = [selected.installationType, selected.careType, selected.careDetail, selected.visitCycle ? `${selected.visitCycle} 주기` : ""].filter(Boolean).join(" · ") || "별도 관리 조건 없음";
@@ -421,12 +423,14 @@ function renderProductModal(item, optionIndex = 0, cardIndex = -1) {
       <section><div class="commerce-card-benefit-heading"><div><h3>제휴카드 최대 혜택</h3><p>월 최대 <strong>${formatWon(maximum)}</strong></p></div><span>최대 혜택</span></div><div class="commerce-card-benefits">${affiliateCards.map((card) => `<div><strong>${escapeHtml(card.name)}</strong><span>${escapeHtml(card.spend)}</span><b>월 ${formatWon(card.benefit)}</b></div>`).join("")}</div><p class="commerce-card-disclaimer">표시된 적용 금액은 카드별 최대 할인액을 단순 차감한 예상 금액입니다. 카드 발급, 전월 실적, 자동이체, 할인 한도 등 실제 적용 조건은 카드사 정책에 따라 달라질 수 있으므로 계약 전 최신 조건을 확인하세요.</p></section>
     </div>
     <div class="commerce-detail-actions"><button class="commerce-primary" type="button" data-subscription-consult-modal>선택 옵션 상담 신청</button></div>`;
-  modal.querySelector("#commerceDetailOption")?.addEventListener("change", (event) => renderProductModal(item, Number(event.target.value || 0), activeCardIndex));
-  modal.querySelector("#commerceAffiliateCard")?.addEventListener("change", (event) => renderProductModal(item, optionIndex, Number(event.target.value || 0)));
+  modal.querySelector("#commerceDetailOption")?.addEventListener("change", (event) => renderProductModal(item, Number(event.target.value || 0), activeCardIndex, 'commerceDetailOption'));
+  modal.querySelector("#commerceAffiliateCard")?.addEventListener("change", (event) => renderProductModal(item, optionIndex, Number(event.target.value || 0), 'commerceAffiliateCard'));
   modal.querySelector("[data-subscription-consult-modal]")?.addEventListener("click", () => openSubscriptionConsultation(item, selected));
   modal.hidden = false;
   document.body.classList.add("has-commerce-modal");
-  modal.querySelector(".commerce-product-modal-close").focus();
+  const focusTarget = restoreFocusId ? modal.querySelector(`#${restoreFocusId}`) : modal.querySelector('.commerce-product-modal-close');
+  focusTarget?.focus({ preventScroll: true });
+  if (restoreFocusId && dialog) dialog.scrollTop = previousScroll;
 }
 
 function sortCommerceItems() {

@@ -7,15 +7,16 @@ const read = file => readFileSync(`public/${file}`, 'utf8');
 test('all public customer routes load the same mobile-only polish after base styles', () => {
   for (const page of ['index.html','quote/index.html','my-quote/index.html','brand/index.html','subscription/index.html','shopping/index.html','privacy/index.html']) {
     const html = read(page);
-    assert.match(html, /customer-mobile.css\?v=20261026-mobile-audit/);
-    assert.match(html, /customer-mobile.js\?v=20261026-mobile-audit/);
+    assert.match(html, /customer-mobile.css\?v=20261026-device-audit/);
+    assert.match(html, /customer-mobile.js\?v=20261026-device-audit/);
     assert.ok(html.indexOf('customer-mobile.css') > html.indexOf('customer-ui.css'), page);
   }
 });
 
 test('mobile controls wrap, have touch targets and preserve desktop separation', () => {
   const css = read('customer-mobile.css');
-  assert.match(css, /@media \(max-width: 760px\) and \(pointer: coarse\)/);
+  assert.match(css, /@media \(max-width: 760px\)/);
+  assert.doesNotMatch(css, /pointer: coarse/);
   assert.match(css, /\.wizard-choice-card strong \{ white-space: normal/);
   assert.match(css, /\.brand-detail-close \{ background: #1d1d1f; color: #fff/);
   assert.match(css, /\.subscription-consultation-close/);
@@ -31,10 +32,11 @@ function harness({touch=true, supported=true} = {}) {
   const handlers={}, classes=new Map(), frames=[];
   const viewport={height:800,offsetTop:0,scale:1,addEventListener:(name,fn)=>{handlers[`viewport:${name}`]=fn;}};
   const window={innerHeight:800,matchMedia:()=>({matches:touch,addEventListener(){}}),visualViewport:supported?viewport:null,addEventListener:(name,fn)=>{handlers[`window:${name}`]=fn;}};
-  const document={activeElement:null,body:{classList:{toggle:(key,value)=>classes.set(key,value)}},addEventListener:(name,fn)=>{handlers[name]=fn;}};
+  const properties=new Map();
+  const document={activeElement:null,documentElement:{style:{setProperty:(key,value)=>properties.set(key,value)}},body:{classList:{toggle:(key,value)=>classes.set(key,value)}},addEventListener:(name,fn)=>{handlers[name]=fn;}};
   vm.runInNewContext(read('customer-mobile.js'), {window,document,requestAnimationFrame:fn=>{frames.push(fn);return frames.length;}});
   const flush=()=>{while(frames.length)frames.shift()();};flush();
-  return {window,document,viewport,handlers,classes,flush};
+  return {window,document,viewport,handlers,classes,properties,flush};
 }
 
 test('keyboard-aware spacing follows editable focus and viewport size, not zoom', () => {
@@ -48,14 +50,17 @@ test('keyboard-aware spacing follows editable focus and viewport size, not zoom'
   assert.equal(h.classes.get('mobile-keyboard-open'),true);
   h.viewport.scale=2;h.handlers['viewport:resize']();h.flush();
   assert.equal(h.classes.get('mobile-keyboard-open'),false);
+  h.viewport.height=250;h.handlers['viewport:resize']();h.flush();
+  assert.equal(h.classes.get('mobile-keyboard-open'),true);
+  assert.equal(h.properties.get('--customer-viewport-height'),'250px');
   h.viewport.scale=1;h.document.activeElement=null;h.handlers.focusout();h.flush();
   assert.equal(h.classes.get('mobile-keyboard-open'),false);
 });
 
-test('desktop and unsupported browsers keep their existing navigation', () => {
+test('keyboard avoidance also works on tablet/desktop and unsupported browsers remain usable', () => {
   const h=harness({touch:false});
   h.document.activeElement={tagName:'TEXTAREA'};h.viewport.height=400;h.handlers.focusin();h.flush();
-  assert.equal(h.classes.get('mobile-keyboard-open'),false);
+  assert.equal(h.classes.get('mobile-keyboard-open'),true);
   assert.doesNotThrow(()=>harness({supported:false}));
 });
 

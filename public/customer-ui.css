@@ -212,7 +212,7 @@ body.customer-refresh .commerce-main>p { grid-column: 1/-1; font-size: 14px; }
 .pq-retail-logo { display: flex; align-items: center; justify-content: center; gap: 12px; width: 230px; max-width: 100%; }
 .pq-retail-logo img { display: block; width: auto; max-width: 48%; height: 24px; object-fit: contain; }
 .pq-brand-selectors:has(.pq-retail-logo) .pq-brand-selector > img { width: 160px; max-width: 100%; height: 36px; object-position: center; }
-@media (max-width:760px) and (pointer: coarse) {
+@media (max-width:760px) {
   .pq-brand-selectors:has(.pq-retail-logo) { gap: 12px; }
   .pq-brand-selectors:has(.pq-retail-logo) .pq-brand-selector { min-height: 96px; }
   .pq-retail-logo { flex-direction: column; gap: 8px; }
@@ -258,7 +258,7 @@ body.customer-refresh :is(.footer-company,.commerce-footer-company) p { display:
 body.customer-refresh :is(.footer-company,.commerce-footer-company) > strong { color: #363635; font-size: 14px; font-weight: 600; }
 body.customer-refresh .footer-privacy-btn { padding: 0; color: #363635; font-size: 14px; font-weight: 600; }
 body.customer-refresh :is(.footer-company,.commerce-footer-company) :is(.footer-disclaimer,.commerce-footer-disclaimer) { display: block; max-width: 880px; }
-@media (max-width: 760px) and (pointer: coarse) {
+@media (max-width: 760px) {
   body.customer-refresh :is(.footer,.commerce-footer) { grid-template-columns: minmax(0,1fr); gap: 24px; }
   body.customer-refresh .footer-support { grid-column: 1; grid-row: auto; }
 }
@@ -272,11 +272,11 @@ body.customer-refresh #customerPage .wizard-step[data-step=purpose] .wizard-choi
 body.customer-refresh #customerPage .wizard-choice-card.has-purpose-photo { display: grid; grid-template-columns: 22px 72px minmax(0,1fr) auto; min-height: 108px; gap: 16px; }
 body.customer-refresh #customerPage .wizard-purpose-photo { display: block; width: 72px; height: 72px; aspect-ratio: 1; object-fit: cover; border-radius: 6px; background: #f5f5f7; }
 body.customer-refresh #customerPage .has-purpose-photo .wizard-choice-copy { min-width: 0; }
-@media (max-width: 760px) and (pointer: coarse) {
+@media (max-width: 760px) {
   body.customer-refresh #customerPage .wizard-choice-card.has-purpose-photo { grid-template-columns: 22px 56px minmax(0,1fr) auto; min-height: 92px; gap: 12px; }
   body.customer-refresh #customerPage .wizard-purpose-photo { width: 56px; height: 56px; }
 }
-@media (max-width: 379px) and (pointer: coarse) {
+@media (max-width: 379px) {
   body.customer-refresh #customerPage .wizard-choice-card.has-purpose-photo { grid-template-columns: 22px 48px minmax(0,1fr) auto; gap: 10px; padding-inline: 12px; }
   body.customer-refresh #customerPage .wizard-purpose-photo { width: 48px; height: 48px; }
 }
@@ -300,7 +300,7 @@ body.customer-refresh #customerPage .wizard-step:has([data-choice-name="wizardBr
 body.customer-refresh :is(.status,.commerce-status) { background: #f4f4f2; color: #363635; }
 body.customer-refresh #customerPage .request-form-message:empty { display: none; }
 
-@media (max-width: 1100px) and (pointer: coarse) {
+@media (max-width: 1100px) {
   body.customer-refresh .pick-catalog-link { display: none; }
   body.customer-refresh #homePage .pick-case-content article { display: block; }
   body.customer-refresh #homePage .pick-case-prices { margin-top: 24px; }
@@ -310,7 +310,7 @@ body.customer-refresh #customerPage .request-form-message:empty { display: none;
   .pq-entry { padding: 16px; }
   .pq-entry strong { font-size: 19px; }
 }
-@media (max-width: 760px) and (pointer: coarse) {
+@media (max-width: 760px) {
   body.customer-refresh { padding-bottom: calc(72px + env(safe-area-inset-bottom,0px)); }
   body.customer-refresh :is(.topbar,.commerce-topbar) { min-height: 64px; padding: calc(12px + env(safe-area-inset-top,0px)) 20px 12px; gap: 12px; }
   body.customer-refresh :is(.brand-logo-image,.commerce-logo) { width: 110px; max-height: 36px; object-fit: contain; }
@@ -420,18 +420,18 @@ body.customer-refresh #customerPage .request-form-message:empty { display: none;
   body.customer-refresh :is(.mobile-flow-logo,.commerce-mobile-logo) img { width: 24px; height: 24px; object-fit: contain; }
   body.customer-refresh .kakao-floating-btn { bottom: calc(82px + env(safe-area-inset-bottom,0px)); right: 14px; }
 }
-@media (min-width: 761px) and (max-width: 1100px) and (pointer: coarse) {
+@media (min-width: 761px) and (max-width: 1100px) {
   .pq-hero { min-height: 430px; }
   .pq-hero-copy { max-width: 45%; }
   body.customer-refresh #homePage .pq-hero h1 { font-size: 40px; }
   .pq-hero-copy > p { font-size: 17px; margin: 14px 0 20px; }
   .pq-hero-scene img { object-position: 46% center; }
 }
-@media (max-width: 760px) and (max-height: 700px) and (pointer: coarse) {
+@media (max-width: 760px) and (max-height: 700px) {
   .pq-hero { min-height: 400px; }
   .pq-hero-copy > p { margin-bottom: 14px; }
 }
-@media (max-width: 360px) and (pointer: coarse) {
+@media (max-width: 360px) {
   body.customer-refresh #homePage .pq-hero h1 { font-size: 32px; }
   .pq-entry { padding: 12px; }
   .pq-entry strong { font-size: 16px; }

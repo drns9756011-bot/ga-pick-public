@@ -1,0 +1,300 @@
+/* Loaded last. Catalogue ownership only; shared navigation stays in responsive.css. */
+body.customer-refresh :is(.commerce-main, .brand-hall-main,
+  .commerce-product-dialog, .subscription-consultation-dialog,
+  .brand-detail-dialog, .brand-consult-dialog) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+  letter-spacing: 0;
+}
+
+body.customer-refresh :is(.commerce-main, .brand-hall-main,
+  .commerce-product-dialog, .subscription-consultation-dialog,
+  .brand-detail-dialog, .brand-consult-dialog) :is(input, select, textarea) {
+  min-width: 0;
+  max-width: 100%;
+  font-size: 16px;
+  scroll-margin-block: 80px;
+}
+
+body.customer-refresh :is(.commerce-tools, .commerce-card-option,
+  .commerce-detail-option, .commerce-affiliate-selector, .brand-hall-selects,
+  .brand-consult-form, .subscription-consultation-fields) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), select) {
+  min-height: 44px;
+  height: auto;
+  padding-block: 10px;
+}
+
+body.customer-refresh :is(.commerce-main, .brand-hall-main,
+  .commerce-product-dialog, .subscription-consultation-dialog,
+  .brand-detail-dialog, .brand-consult-dialog) :is(button, a, summary) {
+  min-height: 44px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+body.customer-refresh :is(.commerce-product-price, .brand-package-price strong,
+  .commerce-price-comparison strong, .brand-detail-price strong) {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+
+body.customer-refresh :is(.commerce-product-body, .brand-package-body,
+  .commerce-tools, .brand-hall-filter-row, .brand-hall-selects,
+  .commerce-detail-head, .commerce-detail-sections,
+  .subscription-consultation-fields, .subscription-selected-product) > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+body.customer-refresh .pq-brand-selectors {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+body.customer-refresh .pq-brand-selector {
+  min-width: 0;
+  justify-content: center;
+}
+body.customer-refresh .pq-brand-selector > img {
+  max-width: 100%;
+  object-position: center;
+}
+
+/* Each overlay owns one scrollport, including when a second dialog is opened. */
+body.customer-refresh :is(.brand-detail-modal, .brand-consult-modal,
+  .commerce-product-modal, .subscription-consultation-modal) {
+  --catalog-modal-gap: 16px;
+  --catalog-modal-height: calc(var(--customer-viewport-height, 100dvh) -
+    env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) -
+    var(--catalog-modal-gap) - var(--catalog-modal-gap));
+  box-sizing: border-box;
+  height: var(--customer-viewport-height, 100dvh);
+  max-height: var(--customer-viewport-height, 100dvh);
+  min-height: 0;
+  padding: calc(var(--catalog-modal-gap) + env(safe-area-inset-top, 0px))
+    calc(var(--catalog-modal-gap) + env(safe-area-inset-right, 0px))
+    calc(var(--catalog-modal-gap) + env(safe-area-inset-bottom, 0px))
+    calc(var(--catalog-modal-gap) + env(safe-area-inset-left, 0px));
+  grid-template-rows: minmax(0, 1fr);
+  overflow: hidden;
+}
+body.customer-refresh :is(.brand-detail-modal, .brand-consult-modal,
+  .commerce-product-modal, .subscription-consultation-modal)[hidden] {
+  display: none !important;
+}
+body.customer-refresh :is(.brand-detail-dialog, .brand-consult-dialog,
+  .commerce-product-dialog, .subscription-consultation-dialog) {
+  box-sizing: border-box;
+  min-height: 0;
+  max-width: 100%;
+  max-height: var(--catalog-modal-height);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scroll-padding-block: 80px;
+}
+body.customer-refresh :is(.brand-detail-close, .brand-consult-close,
+  .commerce-product-modal-close, .subscription-consultation-close) {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  background: #fff;
+  color: #202020;
+  border: 1px solid #deded9;
+  z-index: 5;
+}
+body.customer-refresh .brand-detail-close { background: #202020; color: #fff; }
+body.customer-refresh :is(.subscription-consultation-head, .brand-consult-head) {
+  padding-right: 76px;
+}
+body.customer-refresh .subscription-consultation-head span { color: #666660; }
+body.customer-refresh :is(.commerce-detail-sections > section, .brand-detail-section) {
+  border: 0;
+  border-bottom: 1px solid #deded9;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+body.customer-refresh .subscription-consent-box input[type="checkbox"] {
+  flex-shrink: 0;
+}
+body.customer-refresh .subscription-consent-box summary label,
+body.customer-refresh .brand-consent-check { min-height: 44px; }
+
+/* Tablet and compact share a full-width catalogue, not a cramped sidebar. */
+@media (max-width: 1100px) {
+  body.customer-refresh :is(.commerce-main, .brand-hall-main) {
+    box-sizing: border-box;
+    width: calc(100% - 48px);
+    max-width: 100%;
+    margin-inline: auto;
+    padding-block: 32px 56px;
+  }
+  body.customer-refresh .commerce-main {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+  body.customer-refresh .commerce-category-grid {
+    position: static;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    min-width: 0;
+    max-width: 100%;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+    border: 0;
+  }
+  body.customer-refresh .commerce-category {
+    flex: 0 1 auto;
+    min-width: 0;
+    min-height: 44px;
+    padding: 10px 12px;
+    border: 1px solid #deded9;
+    border-radius: 4px;
+    background: #fff;
+    color: #363635;
+  }
+  body.customer-refresh .commerce-category.is-active {
+    border-color: #363635;
+    background: #f4f4f2;
+    color: #363635;
+  }
+  body.customer-refresh .commerce-category strong { margin: 0; color: inherit; }
+  body.customer-refresh .commerce-category :is(b, small) { display: none; }
+  body.customer-refresh :is(.commerce-product-grid, .brand-hall-grid) {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+    gap: 28px 20px;
+    min-width: 0;
+    margin: 0;
+  }
+  body.customer-refresh .commerce-tools {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 160px) minmax(0, 160px);
+  }
+  body.customer-refresh .commerce-tools:not(:has(#commerceSort)) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 160px);
+  }
+  body.customer-refresh .pq-catalog-head {
+    grid-column: 1 / -1;
+    min-width: 0;
+    flex-wrap: wrap;
+    min-height: 0;
+    margin-bottom: 0;
+    padding: 0 0 24px;
+  }
+  body.customer-refresh .commerce-product-image { aspect-ratio: 1; }
+  body.customer-refresh .brand-hall-filter-row { flex-wrap: wrap; }
+  body.customer-refresh .brand-hall-filter-chips { flex-wrap: wrap; overflow: visible; }
+  body.customer-refresh .brand-hall-selects { max-width: 100%; }
+  body.customer-refresh .subscription-video-section { grid-column: 1 / -1; min-width: 0; }
+  body.customer-refresh .subscription-video-section summary { padding-block: 10px; }
+  body.customer-refresh .commerce-detail-head {
+    grid-template-columns: minmax(0, .7fr) minmax(0, 1fr);
+    gap: 24px;
+    padding: 28px;
+  }
+  body.customer-refresh .commerce-detail-image { width: 100%; min-width: 0; }
+  body.customer-refresh .commerce-detail-sections { grid-template-columns: minmax(0, 1fr); }
+  body.customer-refresh .commerce-card-benefits > div {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  }
+  body.customer-refresh .subscription-selected-product {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 760px) {
+  body.customer-refresh :is(.commerce-main, .brand-hall-main) {
+    width: calc(100% - 32px);
+    padding-block: 24px 48px;
+  }
+  body.customer-refresh .commerce-main { gap: 20px; }
+  body.customer-refresh :is(.commerce-product-grid, .brand-hall-grid) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px 12px;
+  }
+  body.customer-refresh .commerce-tools,
+  body.customer-refresh .commerce-tools:not(:has(#commerceSort)) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  body.customer-refresh .commerce-tools input { grid-column: 1 / -1; }
+  body.customer-refresh .commerce-product-body h3 { font-size: 17px; line-height: 1.5; }
+  body.customer-refresh .commerce-product-price { font-size: 20px; }
+  body.customer-refresh :is(.commerce-product-meta, .commerce-product-model,
+    .commerce-contract-label, .commerce-product-body > p, .commerce-max-card-benefit) {
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  body.customer-refresh .commerce-additional-benefit { max-width: 100%; }
+  body.customer-refresh .brand-hall-toolbar-heading { flex-wrap: wrap; gap: 12px; }
+  body.customer-refresh .brand-hall-filter-row { display: grid; grid-template-columns: minmax(0, 1fr); }
+  body.customer-refresh .brand-hall-selects { grid-template-columns: minmax(0, 1fr); }
+  body.customer-refresh .brand-hall-selects select { width: 100%; min-width: 0; }
+  body.customer-refresh .brand-package-card { display: flex; flex-direction: column; }
+  body.customer-refresh .brand-package-price-only { padding-inline: 0 !important; }
+  body.customer-refresh .pq-brand-selectors,
+  body.customer-refresh .pq-brand-selectors:has(.pq-retail-logo) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  body.customer-refresh .pq-brand-selector { gap: 8px; padding-inline: 8px; }
+  body.customer-refresh .pq-retail-logo { width: 100%; flex-direction: column; gap: 8px; }
+  body.customer-refresh .pq-retail-logo img { width: auto; max-width: 100%; height: 20px; }
+  body.customer-refresh :is(.brand-detail-modal, .brand-consult-modal,
+    .commerce-product-modal, .subscription-consultation-modal) { --catalog-modal-gap: 8px; }
+  body.customer-refresh :is(.brand-detail-dialog, .brand-consult-dialog,
+    .commerce-product-dialog, .subscription-consultation-dialog) {
+    border-radius: 8px;
+    align-self: center;
+  }
+  body.customer-refresh .commerce-detail-head {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 64px 16px 20px;
+    gap: 20px;
+  }
+  body.customer-refresh .commerce-detail-image { width: min(100%, 240px); justify-self: center; }
+  body.customer-refresh .commerce-detail-summary h2 { margin-right: 0; font-size: 22px; }
+  body.customer-refresh .commerce-price-comparison { grid-template-columns: minmax(0, 1fr); }
+  body.customer-refresh .commerce-detail-sections { padding: 0 16px; }
+  body.customer-refresh .commerce-detail-sections > section { padding: 20px 0; }
+  body.customer-refresh .commerce-detail-sections dl div { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  body.customer-refresh .commerce-card-benefit-heading { flex-wrap: wrap; }
+  body.customer-refresh .commerce-card-benefits > div { grid-template-columns: minmax(0, 1fr); padding-block: 10px; }
+  body.customer-refresh .commerce-card-benefits span { grid-column: auto; grid-row: auto; }
+  body.customer-refresh .commerce-detail-actions { padding: 20px 16px; }
+  body.customer-refresh :is(.brand-detail-dialog, .brand-consult-dialog) { padding: 64px 16px 24px; }
+  body.customer-refresh :is(.brand-form-row, .subscription-consultation-fields) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  body.customer-refresh :is(.subscription-phone-field, .subscription-code-field,
+    .subscription-consultation-memo) { grid-column: auto; }
+  body.customer-refresh :is(.subscription-phone-field > div, .subscription-code-field > div) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 108px);
+  }
+  body.customer-refresh :is(.subscription-phone-field button, .subscription-code-field button) {
+    min-height: 44px;
+    padding: 8px;
+    font-size: 14px;
+  }
+  body.customer-refresh .subscription-consent-box dl div { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (min-width: 380px) and (max-width: 760px) {
+  body.customer-refresh :is(.commerce-product-grid, .brand-hall-grid) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 379.98px) {
+  body.customer-refresh .commerce-product-image { aspect-ratio: 1; }
+}

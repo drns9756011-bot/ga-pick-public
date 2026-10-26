@@ -22,7 +22,7 @@ body.customer-refresh #homePage .pq-launch .pick-case-visual .pick-case-bid-list
 .pick-case-visual .pick-case-bid-list li > span { grid-column: 1 / -1; white-space: normal; overflow-wrap: anywhere; }
 body.customer-refresh #homePage .pq-launch .pick-case-visual .pick-case-bid-list strong { font-size: 18px; text-align: left; white-space: normal; overflow-wrap: anywhere; }
 .pick-case-visual .pick-case-bid-list em { position: static; align-self: center; white-space: nowrap; }
-@media (max-width:760px) and (pointer: coarse) {
+@media (max-width:760px) {
   body.customer-refresh #homePage .pq-launch .pick-case-content { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
   body.customer-refresh #homePage .pq-launch .pick-case-content article.pick-case-visual { padding: 0 12px 4px; }
   .pick-case-visual .pick-case-media { margin: 0 -12px 16px; aspect-ratio: 1.65; }
@@ -39,7 +39,7 @@ body.customer-refresh #homePage .pq-launch .pick-case-visual .pick-case-bid-list
   body.customer-refresh #homePage .pq-launch .pick-case-visual .pick-case-bid-list strong { font-size: 15px; }
   .pick-case-products,.pick-case-footnote { font-size: 13px; }
 }
-@media (max-width:379px) and (pointer: coarse) {
+@media (max-width:379px) {
   .pick-case-feature > strong { font-size: 18px; }
 }
 body.customer-refresh:has(#homePage.is-active .pq-launch) .topbar { min-height: 64px; padding-top: calc(8px + env(safe-area-inset-top,0px)); padding-bottom: 8px; background: rgba(255,255,255,.96); }
@@ -99,20 +99,20 @@ body.customer-refresh #homePage .pq-launch .pq-faq { padding-top: 80px; padding-
 .pq-launch .pq-faq-list { grid-column: 1 / -1; width: min(100%,840px); margin-inline: auto; }
 .pq-launch .pq-partner { background: #1d1d1f; padding: 36px 40px; }
 body.customer-refresh #homePage .pq-launch .pq-partner h2 { color: #fff; }
-@media (hover: hover) and (pointer: fine) {
+@media (min-width: 1101px) {
   html:has(body.customer-refresh) { overflow-x: auto; }
-  body.customer-refresh { min-width: 1200px; overflow-x: visible; padding-bottom: 0; }
-  body.customer-refresh :is(.topbar,.commerce-topbar) { min-width: 1200px; padding-inline: 40px; gap: 28px; }
+  body.customer-refresh { min-width: 0; overflow-x: visible; padding-bottom: 0; }
+  body.customer-refresh :is(.topbar,.commerce-topbar) { min-width: 0; padding-inline: 40px; gap: 28px; }
   body.customer-refresh :is(.nav,.commerce-desktop-nav) { display: flex; gap: 28px; }
   body.customer-refresh :is(.nav,.commerce-desktop-nav) > :is(a,button) { display: inline-flex; align-items: center; }
   body.customer-refresh .pick-catalog-link { display: inline-flex; }
   body.customer-refresh :is(.commerce-mobile-nav,.mobile-flow-nav) { display: none; }
   .pq-launch .pq-hero-inner { width: 1000px; }
   .pq-launch .pq-hero-scene { width: 1120px; height: 300px; }
-  .pq-launch .pq-assurance { width: 1100px; }
-  body.customer-refresh #homePage .pq-launch .pq-section { width: 1120px; }
+  .pq-launch .pq-assurance { width: min(1100px,100%); }
+  body.customer-refresh #homePage .pq-launch .pq-section { width: min(1120px,calc(100% - 80px)); }
 }
-@media(max-width:760px) and (pointer: coarse) {
+@media(max-width:760px) {
   .pq-launch .pq-hero { padding: 30px 0 22px; }
   .pq-launch .pq-hero-inner { width: calc(100% - 36px); }
   body.customer-refresh #homePage .pq-launch .pq-hero h1 { max-width: none; font-size: 38px; line-height: 1.2; }

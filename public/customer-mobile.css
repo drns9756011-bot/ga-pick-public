@@ -1,5 +1,5 @@
-/* Touch layouts only: mouse-driven desktop keeps its fixed workspace. */
-@media (max-width: 760px) and (pointer: coarse) {
+/* Compact viewport polish shared by touch, mouse and keyboard users. */
+@media (max-width: 760px) {
   html:has(body.customer-refresh) { scroll-padding-top: calc(88px + env(safe-area-inset-top,0px)); scroll-padding-bottom: calc(176px + env(safe-area-inset-bottom,0px)); }
   body.customer-refresh { --mobile-nav-space: calc(72px + env(safe-area-inset-bottom,0px)); min-width: 0; font-size: 16px; line-height: 1.7; padding-bottom: var(--mobile-nav-space); }
   body.customer-refresh :is(h1,h2,h3,p,label,summary,button,a,dd,small) { overflow-wrap: anywhere; }
@@ -73,7 +73,7 @@
   body.customer-refresh.mobile-keyboard-open { padding-bottom: 24px; }
   html:has(body.customer-refresh.mobile-keyboard-open) { scroll-padding-bottom: 24px; }
 }
-@media (max-width: 379px) and (pointer: coarse) {
+@media (max-width: 379px) {
   body.customer-refresh :is(.commerce-product-grid,.brand-hall-grid) { grid-template-columns: minmax(0,1fr); gap: 28px; }
   body.customer-refresh .commerce-product-image { aspect-ratio: 4 / 3; }
   body.customer-refresh .commerce-price-comparison { grid-template-columns: minmax(0,1fr); }

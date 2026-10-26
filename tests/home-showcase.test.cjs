@@ -6,7 +6,7 @@ const read = file => readFileSync(`public/${file}`, 'utf8');
 test('showcase preserves quote starts and places evidence before brand discovery', () => {
   for (const file of ['index.html', 'quote/index.html', 'my-quote/index.html']) {
     const html = read(file);
-    assert.match(html, /home-showcase.css\?v=20261026-official-visuals/);
+    assert.match(html, /home-showcase.css\?v=20261026-device-audit/);
     assert.match(html, /class="pq-home pq-launch"/);
     assert.match(html, /data-home-quote-mode="with_quote"/);
     assert.match(html, /data-home-quote-mode="without_quote"/);
@@ -29,13 +29,13 @@ test('showcase is scoped to home and keeps readable mobile controls and safe are
   assert.match(read('customer-motion.js'), /scene.style.transform = `scale\(/);
 });
 
-test('desktop stays fixed and the title shares the hero center axis', () => {
+test('wide desktop retains its composition without clipping narrower windows', () => {
   const css = read('home-showcase.css');
   assert.match(css, /\.pq-hero h1 \{ width: 100%; max-width: none; margin-inline: auto/);
-  assert.match(css, /@media \(hover: hover\) and \(pointer: fine\)/);
-  assert.match(css, /min-width: 1200px/);
+  assert.match(css, /@media \(min-width: 1101px\)/);
+  assert.doesNotMatch(css, /min-width: 1200px/);
   assert.match(css, /\.pq-hero-inner \{ width: 1000px/);
-  assert.match(css, /@media\(max-width:760px\) and \(pointer: coarse\)/);
+  assert.match(css, /@media\(max-width:760px\)/);
 });
 
 test('mobile section copy and secondary action share a centered alignment', () => {

@@ -717,7 +717,7 @@
   }
 
   function isMobileWizardViewport() {
-    return window.matchMedia?.("(max-width: 720px)")?.matches ?? window.innerWidth <= 720;
+    return window.matchMedia?.("(max-width: 1100px)")?.matches ?? window.innerWidth <= 1100;
   }
 
   let stepScrollGeneration = 0;
@@ -753,7 +753,28 @@
     const step = currentStep();
     const ok = step.validate();
     updatePreview();
+    if (!ok) showStepValidationMessage();
     return ok;
+  }
+
+  function showStepValidationMessage() {
+    const step = form.querySelector(".wizard-step");
+    if (!step || !message.textContent) return;
+    const alert = document.createElement("p");
+    alert.className = "form-message wizard-step-message";
+    alert.setAttribute("role", "alert");
+    alert.tabIndex = -1;
+    alert.textContent = message.textContent;
+    alert.dataset.type = "error";
+    const headerBottom = document.querySelector(".topbar")?.getBoundingClientRect().bottom || 0;
+    alert.style.scrollMarginTop = `${Math.max(0, headerBottom) + 16}px`;
+    step.prepend(alert);
+    alert.focus({ preventScroll: true });
+    alert.scrollIntoView({ block: "start", behavior: "instant" });
+  }
+
+  function restoreChoiceFocus(selector) {
+    form.querySelector(".customer-wizard")?.querySelector(selector)?.focus({ preventScroll: true });
   }
 
   function setMessage(text, type = "error") {
@@ -764,6 +785,7 @@
 
   function clearMessage() {
     setMessage("");
+    form.querySelector(".wizard-step-message")?.remove();
   }
 
   function renderQuoteType() {
@@ -928,7 +950,7 @@
           .map((product) => {
             const checked = state.selectedProducts.includes(product.value);
             return `
-              <button type="button" class="wizard-product-card ${checked ? "is-selected" : ""}" data-product="${escapeHtml(product.value)}">
+              <button type="button" class="wizard-product-card ${checked ? "is-selected" : ""}" data-product="${escapeHtml(product.value)}" aria-pressed="${checked}">
                 <span class="wizard-checkbox" aria-hidden="true">${checked ? "✓" : ""}</span>
                 ${productPhotoMarkup(product)}
                 <strong>${escapeHtml(productDisplayTitle(product.value))}</strong>
@@ -1144,8 +1166,11 @@
           fields.price.value = "0";
           clearAiRecommendation();
         }
+        const selector = `input[data-choice-name="${cssEscape(input.name)}"][value="${cssEscape(input.value)}"]`;
+        clearMessage();
         syncAllFields();
         render();
+        restoreChoiceFocus(selector);
       });
     });
 
@@ -1217,8 +1242,10 @@
           state.selectedProducts.push(product);
         }
         clearAiRecommendation();
+        if (state.selectedProducts.length) clearMessage();
         syncAllFields();
         render();
+        restoreChoiceFocus(`.wizard-product-card[data-product="${cssEscape(product)}"]`);
       });
     });
 
