@@ -2,6 +2,15 @@
   const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
   if (preference.matches || !('IntersectionObserver' in window)) return;
   const running = new Set();
+  const active = new Map();
+  const pending = new Map();
+  function restore(element) {
+    const original = pending.get(element);
+    if (!original) return;
+    if (original.value) element.style.setProperty('opacity', original.value, original.priority);
+    else element.style.removeProperty('opacity');
+    pending.delete(element);
+  }
   const home = document.querySelector('#homePage');
   const hero = home?.querySelector('.pq-hero');
   const scene = hero?.querySelector('.pq-hero-scene');
@@ -50,29 +59,49 @@
   }
   const observer = new IntersectionObserver(entries => {
     for (const entry of entries) {
-      if (!entry.isIntersecting || entry.intersectionRatio < 0.08) continue;
+      if (!entry.isIntersecting || entry.intersectionRatio < 0.08 || !pending.has(entry.target) || active.has(entry.target)) continue;
       observer.unobserve(entry.target);
-      if (preference.matches || !entry.target.animate) continue;
-      const animation = entry.target.animate([
-        { opacity: 1, transform: 'translateY(24px)' },
+      if (preference.matches || !entry.target.animate) { restore(entry.target); continue; }
+      let animation;
+      try {
+        animation = entry.target.animate([
+        { opacity: 0, transform: 'translateY(56px)' },
         { opacity: 1, transform: 'translateY(0)' },
-      ], { duration: compact.matches ? 900 : 1100, easing: 'cubic-bezier(.22,.61,.36,1)' });
+        ], { duration: compact.matches ? 1800 : 2000, easing: 'cubic-bezier(.25,.1,.25,1)', fill: 'both' });
+      } catch { restore(entry.target); continue; }
       running.add(animation);
-      animation.finished.catch(() => {}).finally(() => running.delete(animation));
+      active.set(entry.target, animation);
+      animation.finished.catch(() => {}).finally(() => {
+        restore(entry.target);
+        running.delete(animation);
+        active.delete(entry.target);
+        animation.cancel();
+      });
     }
   }, { threshold: 0.08, rootMargin: '-88px 0px -80px 0px' });
-  // Content is visible by default, including when JavaScript or motion is disabled.
+  // Only supported reveals are hidden; disabled motion leaves content untouched.
   const observed = new WeakSet();
   function observeContent() {
-    document.querySelectorAll('#homePage .pq-section-head, #homePage .pq-entry, #homePage .pq-process-grid > article, #homePage .pq-partner, #homePage .pick-case-copy, #homePage .pick-review-grid > article, #homePage .pq-faq-list > details, .pq-catalog-head, .pq-brand-selectors').forEach(element => {
+    document.querySelectorAll('#homePage .pq-section-head, #homePage .pq-entry, #homePage .pq-process-grid > article, #homePage .pq-partner, #homePage .pick-case-content > article, #homePage .pick-review-grid > article, #homePage .pq-faq-list > details, .pq-catalog-head, .pq-brand-selectors').forEach(element => {
       if (observed.has(element)) return;
       observed.add(element);
+      if (!element.animate) return;
+      pending.set(element, { value: element.style.getPropertyValue('opacity'), priority: element.style.getPropertyPriority('opacity') });
+      element.style.setProperty('opacity', '0');
       observer.observe(element);
     });
   }
   observeContent();
   const contentObserver = home && new MutationObserver(observeContent);
   contentObserver?.observe(home, { childList: true, subtree: true });
+  document.addEventListener('focusin', event => {
+    for (const element of pending.keys()) {
+      if (!element.contains(event.target)) continue;
+      observer.unobserve(element);
+      active.get(element)?.cancel();
+      restore(element);
+    }
+  });
   preference.addEventListener('change', () => {
     scheduleScroll();
     if (!preference.matches) return;
@@ -80,5 +109,7 @@
     contentObserver?.disconnect();
     running.forEach(animation => animation.cancel());
     running.clear();
+    active.clear();
+    for (const element of pending.keys()) restore(element);
   });
 })();
