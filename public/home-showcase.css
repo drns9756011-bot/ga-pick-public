@@ -1,9 +1,19 @@
 /* The public home is a product showcase; the quote workspace keeps its own layout. */
-.pq-launch .pq-hero:has(img[src*="home-appliances-official"]) { background: #fff; }
+.pq-launch .pq-hero:has(.appliance-lineup) { background: #fff; }
 body.customer-refresh #homePage .pq-launch .pick-case-content article.pick-case-visual { min-width: 0; padding: 0 24px 12px; border: 1px solid #e5e5e7; border-radius: 6px; background: #fff; overflow: hidden; }
-.pick-case-visual .pick-case-media { position: relative; margin: 0 -24px 22px; aspect-ratio: 2.15; background: #fff; }
-.pick-case-visual .pick-case-media img { display: block; width: 100%; height: 100%; object-fit: contain; }
-.pick-case-visual .pick-case-media figcaption { position: absolute; right: 12px; bottom: 6px; color: #6e6e73; font-size: 11px; }
+.pick-case-visual .pick-case-media { display: flex; align-items: end; position: relative; margin: 0 -24px 22px; padding: 20px 12px 0; aspect-ratio: 2.15; background: #fff; }
+.appliance-lineup { display: flex; align-items: end; justify-content: center; gap: 1.25%; width: 100%; height: 100%; margin-inline: auto; }
+.appliance-lineup .appliance-photo { display: block; position: relative; flex: var(--product-width) 1 0; min-width: 0; aspect-ratio: var(--photo-aspect); overflow: hidden; }
+.pq-launch .appliance-lineup .appliance-photo img { display: block; position: absolute; max-width: none; width: var(--photo-width); height: var(--photo-height); left: var(--photo-left); top: var(--photo-top); }
+.appliance-photo--tv { --product-width: 1.10; }
+.appliance-photo--refrigerator { --product-width: .493; }
+.appliance-photo--laundry { --product-width: .368; }
+.appliance-photo--airdresser { --product-width: .308; }
+.appliance-photo--air-purifier { --product-width: .22; }
+.appliance-photo--kimchi { --product-width: .43; }
+.appliance-lineup--newlywed { width: 82%; gap: 2%; }
+.appliance-lineup--newlywed .appliance-photo--tv { --product-width: .92; }
+.appliance-lineup--moving { width: 60%; gap: 3%; }
 body.customer-refresh #homePage .pq-launch .pick-case-visual .pick-case-copy { min-height: 0; }
 body.customer-refresh #homePage .pq-launch .pick-case-visual .pick-case-copy h3 { margin: 0; font-size: 20px; line-height: 1.5; overflow-wrap: anywhere; }
 body.customer-refresh #homePage .pq-launch .pick-case-visual .pick-case-copy p { margin: 4px 0 20px; font-size: 14px; color: #626267; }
@@ -16,17 +26,20 @@ body.customer-refresh #homePage .pq-launch .pick-case-visual .pick-case-copy p {
 .pick-case-difference { color: #1d1d1f; font-size: 15px; line-height: 1.6; font-weight: 600; }
 .pick-case-details { border-top: 1px solid #e5e5e7; }
 .pick-case-details summary { display: list-item; min-height: 48px; padding: 14px 0; cursor: pointer; color: #1d1d1f; font-size: 14px; font-weight: 600; }
-.pick-case-products,.pick-case-footnote { font-size: 13px; line-height: 1.7; color: #626267; overflow-wrap: anywhere; }
-body.customer-refresh #homePage .pq-launch .pick-case-visual .pick-case-prices { margin-top: 12px; }
-body.customer-refresh #homePage .pq-launch .pick-case-visual .pick-case-bid-list li { display: grid; grid-template-columns: minmax(0,1fr) auto; min-height: 76px; gap: 6px; padding: 12px 0; }
-.pick-case-visual .pick-case-bid-list li > span { grid-column: 1 / -1; white-space: normal; overflow-wrap: anywhere; }
-body.customer-refresh #homePage .pq-launch .pick-case-visual .pick-case-bid-list strong { font-size: 18px; text-align: left; white-space: normal; overflow-wrap: anywhere; }
-.pick-case-visual .pick-case-bid-list em { position: static; align-self: center; white-space: nowrap; }
+.pick-case-products,.pick-case-footnote { margin: 0 0 16px; font-size: 13px; line-height: 1.7; color: #626267; word-break: keep-all; overflow-wrap: break-word; }
+.pick-case-offers { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+.pick-case-offers > li { display: grid; gap: 8px; min-width: 0; padding: 14px 0; border-top: 1px solid #e5e5e7; }
+.pick-case-offer-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; min-width: 0; color: #626267; font-size: 14px; line-height: 1.5; }
+.pick-case-offer-head > span { min-width: 0; word-break: keep-all; overflow-wrap: break-word; }
+.pick-case-offer-head > em { flex: none; padding: 2px 5px; border-radius: 3px; background: #f0f0f2; color: #1d1d1f; font-size: 11px; font-weight: 600; font-style: normal; white-space: nowrap; }
+.pick-case-offer-price { color: #1d1d1f; font-size: 19px; font-weight: 600; line-height: 1.4; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pick-case-footnote { margin: 4px 0 12px; font-size: 12px; }
 @media (max-width:760px) {
   body.customer-refresh #homePage .pq-launch .pick-case-content { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
   body.customer-refresh #homePage .pq-launch .pick-case-content article.pick-case-visual { padding: 0 12px 4px; }
-  .pick-case-visual .pick-case-media { margin: 0 -12px 16px; aspect-ratio: 1.65; }
-  .pick-case-visual .pick-case-media figcaption { right: 8px; bottom: 0; font-size: 11px; }
+  .pick-case-visual .pick-case-media { margin: 0 -12px 16px; padding: 12px 6px 0; aspect-ratio: 1.65; }
+  .appliance-lineup--newlywed { width: 100%; }
+  .appliance-lineup--moving { width: 76%; }
   body.customer-refresh #homePage .pq-launch .pick-case-visual .pick-case-copy h3 { min-height: 44px; font-size: 15px; }
   body.customer-refresh #homePage .pq-launch .pick-case-visual .pick-case-copy p { min-height: 40px; margin: 4px 0 14px; font-size: 13px; }
   .pick-case-feature { gap: 6px; padding-bottom: 12px; }
@@ -36,8 +49,9 @@ body.customer-refresh #homePage .pq-launch .pick-case-visual .pick-case-bid-list
   .pick-case-original del { display: block; }
   .pick-case-difference { min-height: 44px; font-size: 13px; }
   .pick-case-details summary { font-size: 13px; }
-  body.customer-refresh #homePage .pq-launch .pick-case-visual .pick-case-bid-list strong { font-size: 15px; }
-  .pick-case-products,.pick-case-footnote { font-size: 13px; }
+  .pick-case-offer-head { font-size: 12px; }
+  .pick-case-offer-price { font-size: 16px; }
+  .pick-case-products { font-size: 12px; }
 }
 @media (max-width:379px) {
   .pick-case-feature > strong { font-size: 18px; }
@@ -59,7 +73,7 @@ body.customer-refresh .pq-launch .pq-primary:not(.pq-primary-secondary) { backgr
 .pq-launch .pq-hero-followup { justify-content: center; gap: 4px 16px; max-width: none; margin-top: 12px; }
 .pq-launch .pq-hero-note { color: var(--launch-muted); font-size: 13px; }
 .pq-launch .pq-return { min-height: 36px; font-size: 13px; }
-.pq-launch .pq-hero-scene { order: 1; position: relative; inset: auto; z-index: 0; width: min(1120px,94%); height: max(160px,min(340px,calc(100svh - 520px))); margin: 24px auto 0; pointer-events: none; transform-origin: center bottom; }
+.pq-launch .pq-hero-scene { order: 1; position: relative; inset: auto; z-index: 0; width: min(880px,94%); height: auto; aspect-ratio: 2.6; margin: 32px auto 0; pointer-events: none; transform-origin: center bottom; }
 .pq-launch .pq-hero-scene::after { content: none; }
 .pq-launch .pq-hero-scene img { width: 100%; height: 100%; object-fit: contain; object-position: center; }
 .pq-launch .pq-assurance { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); max-width: 1100px; margin: auto; padding: 30px 24px; gap: 24px; text-align: center; }
@@ -108,7 +122,7 @@ body.customer-refresh #homePage .pq-launch .pq-partner h2 { color: #fff; }
   body.customer-refresh .pick-catalog-link { display: inline-flex; }
   body.customer-refresh :is(.commerce-mobile-nav,.mobile-flow-nav) { display: none; }
   .pq-launch .pq-hero-inner { width: 1000px; }
-  .pq-launch .pq-hero-scene { width: 1120px; height: 300px; }
+  .pq-launch .pq-hero-scene { width: 880px; }
   .pq-launch .pq-assurance { width: min(1100px,100%); }
   body.customer-refresh #homePage .pq-launch .pq-section { width: min(1120px,calc(100% - 80px)); }
 }
@@ -123,7 +137,7 @@ body.customer-refresh #homePage .pq-launch .pq-partner h2 { color: #fff; }
   .pq-launch .pq-hero-followup { margin-top: 14px; gap: 0 12px; }
   .pq-launch .pq-hero-note { width: 100%; font-size: 14px; }
   .pq-launch .pq-return { min-height: 44px; font-size: 14px; }
-  .pq-launch .pq-hero-scene { width: 96%; height: auto; aspect-ratio: 2022 / 778; margin-top: 24px; }
+  .pq-launch .pq-hero-scene { width: 96%; margin-top: 24px; }
   .pq-launch .pq-assurance { gap: 16px 8px; padding: 24px 14px; }
   .pq-assurance strong { font-size: 14px; }
   .pq-assurance span { font-size: 13px; }

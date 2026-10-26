@@ -113,7 +113,8 @@ test('all route shells contain the same redesigned home and form anchors', () =>
   assert.ok(baseline.includes('data-home-quote-mode="with_quote"'));
   assert.ok(baseline.includes('data-home-quote-mode="without_quote"'));
   assert.match(baseline, /pq-hero-scene/);
-  assert.ok(baseline.includes('/assets/home-appliances-official-20261026.webp'));
+  assert.ok(baseline.includes('appliance-lineup--hero'));
+  assert.ok(baseline.includes('/assets/home-product-photos/refrigerator.png'));
   assert.ok(baseline.includes('pq-launch'));
   assert.doesNotMatch(baseline, /pq-benefit-strip|pq-privacy/);
   assert.ok(baseline.includes('/brand?brand=LG'));

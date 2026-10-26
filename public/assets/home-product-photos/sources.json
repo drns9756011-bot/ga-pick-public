@@ -1,0 +1,101 @@
+{
+  "note": "Unmodified official product photographs. CSS removes transparent margins only. Illustrative arrangements, not historical quote model identification.",
+  "items": [
+    {
+      "file": "tv.png",
+      "model": "KQ85LSH03E-WT",
+      "source": "https://images.samsung.com/kdp/goods/2026/07/08/ae1a7540-53c7-4f5d-9834-aedd4561d596.png?$Q80_660_660_F_PNG$",
+      "bytes": 300227,
+      "bounds": {
+        "left": 44,
+        "top": 166,
+        "width": 572,
+        "height": 328
+      },
+      "canvas": {
+        "width": 660,
+        "height": 660
+      }
+    },
+    {
+      "file": "refrigerator.png",
+      "model": "RM70H63R1A",
+      "source": "https://images.samsung.com/kdp/goods/2026/08/14/14409efd-ae3d-4e64-b64b-16a5931d5efe.png?$Q80_660_660_F_PNG$",
+      "bytes": 60763,
+      "bounds": {
+        "left": 225,
+        "top": 117,
+        "width": 210,
+        "height": 426
+      },
+      "canvas": {
+        "width": 660,
+        "height": 660
+      }
+    },
+    {
+      "file": "laundry.png",
+      "model": "WF2522HDEEE",
+      "source": "https://images.samsung.com/kdp/goods/2026/03/27/89e139a0-86d3-426c-85f6-fbc2cffb7f53.png?$Q80_660_660_F_PNG$",
+      "bytes": 67393,
+      "bounds": {
+        "left": 252,
+        "top": 117,
+        "width": 156,
+        "height": 426
+      },
+      "canvas": {
+        "width": 660,
+        "height": 660
+      }
+    },
+    {
+      "file": "airdresser.png",
+      "model": "DF80H24R1P",
+      "source": "https://images.samsung.com/kdp/goods/2026/01/13/01a4f015-8e69-4464-9eaa-2ce829d443a8.png?$Q80_660_660_F_PNG$",
+      "bytes": 21575,
+      "bounds": {
+        "left": 266,
+        "top": 120,
+        "width": 128,
+        "height": 420
+      },
+      "canvas": {
+        "width": 660,
+        "height": 660
+      }
+    },
+    {
+      "file": "air-purifier.png",
+      "model": "AP90H10198MDD",
+      "source": "https://images.samsung.com/kdp/goods/2026/01/09/984814ac-a7c9-47c2-ab98-ed42806862bb.png?$Q80_660_660_F_PNG$",
+      "bytes": 29648,
+      "bounds": {
+        "left": 268,
+        "top": 130,
+        "width": 124,
+        "height": 413
+      },
+      "canvas": {
+        "width": 660,
+        "height": 660
+      }
+    },
+    {
+      "file": "kimchi.png",
+      "model": "RK70F42M2A",
+      "source": "https://images.samsung.com/kdp/goods/2025/07/31/2706a214-c15f-42ae-9e5e-085186642504.png?$Q80_660_660_F_PNG$",
+      "bytes": 51276,
+      "bounds": {
+        "left": 238,
+        "top": 117,
+        "width": 184,
+        "height": 426
+      },
+      "canvas": {
+        "width": 660,
+        "height": 660
+      }
+    }
+  ]
+}

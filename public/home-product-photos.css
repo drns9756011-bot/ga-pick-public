@@ -1,0 +1,7 @@
+/* Official photos remain unchanged; crop only their transparent canvas in the layout. */
+.appliance-photo--tv { --photo-aspect: 572 / 328; --photo-width: 115.38462%; --photo-height: 201.21951%; --photo-left: -7.69231%; --photo-top: -50.60976%; }
+.appliance-photo--refrigerator { --photo-aspect: 210 / 426; --photo-width: 314.28571%; --photo-height: 154.92958%; --photo-left: -107.14286%; --photo-top: -27.46479%; }
+.appliance-photo--laundry { --photo-aspect: 156 / 426; --photo-width: 423.07692%; --photo-height: 154.92958%; --photo-left: -161.53846%; --photo-top: -27.46479%; }
+.appliance-photo--airdresser { --photo-aspect: 128 / 420; --photo-width: 515.62500%; --photo-height: 157.14286%; --photo-left: -207.81250%; --photo-top: -28.57143%; }
+.appliance-photo--air-purifier { --photo-aspect: 124 / 413; --photo-width: 532.25806%; --photo-height: 159.80630%; --photo-left: -216.12903%; --photo-top: -31.47700%; }
+.appliance-photo--kimchi { --photo-aspect: 184 / 426; --photo-width: 358.69565%; --photo-height: 154.92958%; --photo-left: -129.34783%; --photo-top: -27.46479%; }

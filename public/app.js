@@ -1995,11 +1995,14 @@ function renderHomeCaseCard({ request, quoteBids, bidCount }) {
   const region = String(request.region || request.installRegion || '지역 비공개').trim();
   const purpose = String(request.purchasePurpose || '가전 견적 비교').trim();
   const description = homeQuoteTitle(request);
-  const image = /김치/.test(description) ? 'case-moving-official-20261026' : 'case-newlywed-official-20261026';
+  const moving = /김치/.test(description);
+  const products = moving ? ['refrigerator', 'kimchi', 'laundry'] : ['refrigerator', 'tv', 'laundry'];
   const count = bidCount ?? quoteBids.length;
   const comparedBids = quoteBids.slice(0, 3);
   return `<article class="pick-case-visual">
-    <figure class="pick-case-media"><img src="/assets/${image}.webp" alt="공식 제품 사진으로 구성한 가전 예시" width="1200" height="560" loading="lazy" decoding="async" /><figcaption>가전 구성 예시</figcaption></figure>
+    <figure class="pick-case-media" role="img" aria-label="${moving ? '냉장고, 김치냉장고, 세탁건조기' : '냉장고, TV, 세탁건조기'} 공식 제품 사진">
+      <div class="appliance-lineup appliance-lineup--${moving ? 'moving' : 'newlywed'}" aria-hidden="true">${products.map(product => `<span class="appliance-photo appliance-photo--${product}"><img src="/assets/home-product-photos/${product}.png" alt="" width="660" height="660" loading="lazy" decoding="async" /></span>`).join('')}</div>
+    </figure>
     <div class="pick-case-copy"><h3>${escapeHTML(region)}</h3><p>${escapeHTML(purpose)}</p></div>
     <div class="pick-case-feature">
       <span class="pick-case-kicker">최저 제안 · ${escapeHTML(lowest.channel || '판매 채널')}</span>
@@ -2009,9 +2012,9 @@ function renderHomeCaseCard({ request, quoteBids, bidCount }) {
     </div>
     <details class="pick-case-details"><summary>${escapeHTML(`${count}개 제안 비교`)}</summary>
       <p class="pick-case-products">${escapeHTML(description)}</p>
-      <div class="pick-case-prices"><ol class="pick-case-bid-list" aria-label="실제 판매자 제안 금액">
-        ${comparedBids.map((bid, index) => `<li class="${index === 0 ? 'is-lowest' : ''}"><span>${escapeHTML(bid.channel || '판매 채널')}</span><strong>${escapeHTML(formatPrice(bid.price))}</strong>${index === 0 ? '<em>최저</em>' : ''}</li>`).join('')}
-      </ol></div>
+      <ol class="pick-case-offers" aria-label="실제 판매자 제안 금액">
+        ${comparedBids.map((bid, index) => `<li><div class="pick-case-offer-head"><span>${escapeHTML(bid.channel || '판매 채널')}</span>${index === 0 ? '<em>최저</em>' : ''}</div><strong class="pick-case-offer-price">${escapeHTML(formatPrice(bid.price))}</strong></li>`).join('')}
+      </ol>
       <p class="pick-case-footnote">낮은 금액순 최대 3개 표시. 이미지는 실제 견적 모델과 다를 수 있습니다.</p>
     </details>
   </article>`;

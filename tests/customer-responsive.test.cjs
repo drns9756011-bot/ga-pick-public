@@ -7,7 +7,7 @@ test('all customer pages share the final responsive contract and dialog lifecycl
   for (const page of ['index.html','quote/index.html','my-quote/index.html','brand/index.html','subscription/index.html','shopping/index.html','privacy/index.html']) {
     const html = read(page);
     for (const file of ['customer-responsive.css','customer-catalog-responsive.css','customer-dialogs.js']) {
-      const version = file === 'customer-responsive.css' ? '20261027-path-align' : '20261027-mobile-layout';
+      const version = file === 'customer-responsive.css' ? '20261027-appliance-layout' : '20261027-mobile-layout';
       assert.ok(html.includes(`/${file}?v=${version}`), `${page}: ${file}`);
     }
     assert.ok(html.indexOf('customer-responsive.css') > html.indexOf('customer-mobile.css'));
