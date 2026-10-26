@@ -1,4 +1,44 @@
 /* The public home is a product showcase; the quote workspace keeps its own layout. */
+.pq-launch .pq-hero:has(img[src*="home-appliances-official"]) { background: #fff; }
+body.customer-refresh #homePage .pq-launch .pick-case-content article.pick-case-visual { min-width: 0; padding: 0 24px 12px; border: 1px solid #e5e5e7; border-radius: 6px; background: #fff; overflow: hidden; }
+.pick-case-visual .pick-case-media { position: relative; margin: 0 -24px 22px; aspect-ratio: 2.15; background: #fff; }
+.pick-case-visual .pick-case-media img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.pick-case-visual .pick-case-media figcaption { position: absolute; right: 12px; bottom: 6px; color: #6e6e73; font-size: 11px; }
+body.customer-refresh #homePage .pq-launch .pick-case-visual .pick-case-copy { min-height: 0; }
+body.customer-refresh #homePage .pq-launch .pick-case-visual .pick-case-copy h3 { margin: 0; font-size: 20px; line-height: 1.5; overflow-wrap: anywhere; }
+body.customer-refresh #homePage .pq-launch .pick-case-visual .pick-case-copy p { margin: 4px 0 20px; font-size: 14px; color: #626267; }
+.pick-case-feature { display: grid; gap: 7px; padding-bottom: 20px; }
+.pick-case-kicker { color: #626267; font-size: 14px; overflow-wrap: anywhere; }
+.pick-case-feature > strong { color: #1d1d1f; font-size: 34px; font-weight: 650; line-height: 1.3; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.pick-case-feature p { margin: 0; }
+.pick-case-original { color: #6e6e73; font-size: 14px; line-height: 1.6; }
+.pick-case-original del { white-space: nowrap; }
+.pick-case-difference { color: #1d1d1f; font-size: 15px; line-height: 1.6; font-weight: 600; }
+.pick-case-details { border-top: 1px solid #e5e5e7; }
+.pick-case-details summary { display: list-item; min-height: 48px; padding: 14px 0; cursor: pointer; color: #1d1d1f; font-size: 14px; font-weight: 600; }
+.pick-case-products,.pick-case-footnote { font-size: 13px; line-height: 1.7; color: #626267; overflow-wrap: anywhere; }
+body.customer-refresh #homePage .pq-launch .pick-case-visual .pick-case-prices { margin-top: 12px; }
+body.customer-refresh #homePage .pq-launch .pick-case-visual .pick-case-bid-list li { display: grid; grid-template-columns: minmax(0,1fr) auto; min-height: 76px; gap: 6px; padding: 12px 0; }
+.pick-case-visual .pick-case-bid-list li > span { grid-column: 1 / -1; white-space: normal; overflow-wrap: anywhere; }
+body.customer-refresh #homePage .pq-launch .pick-case-visual .pick-case-bid-list strong { font-size: 18px; text-align: left; white-space: normal; overflow-wrap: anywhere; }
+.pick-case-visual .pick-case-bid-list em { position: static; align-self: center; white-space: nowrap; }
+@media (max-width:760px) and (pointer: coarse) {
+  body.customer-refresh #homePage .pq-launch .pick-case-content { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+  body.customer-refresh #homePage .pq-launch .pick-case-content article.pick-case-visual { padding: 0 12px 4px; }
+  .pick-case-visual .pick-case-media { margin: 0 -12px 16px; aspect-ratio: 1.65; }
+  .pick-case-visual .pick-case-media figcaption { right: 8px; bottom: 0; font-size: 10px; }
+  body.customer-refresh #homePage .pq-launch .pick-case-visual .pick-case-copy h3 { min-height: 44px; font-size: 15px; }
+  body.customer-refresh #homePage .pq-launch .pick-case-visual .pick-case-copy p { min-height: 40px; margin: 4px 0 14px; font-size: 13px; }
+  .pick-case-feature { gap: 6px; padding-bottom: 12px; }
+  .pick-case-feature > strong { font-size: 20px; }
+  .pick-case-kicker { min-height: 40px; font-size: 13px; }
+  .pick-case-original { font-size: 12px; }
+  .pick-case-original del { display: block; }
+  .pick-case-difference { min-height: 44px; font-size: 13px; }
+  .pick-case-details summary { font-size: 13px; }
+  body.customer-refresh #homePage .pq-launch .pick-case-visual .pick-case-bid-list strong { font-size: 15px; }
+  .pick-case-products,.pick-case-footnote { font-size: 13px; }
+}
 body.customer-refresh:has(#homePage.is-active .pq-launch) .topbar { min-height: 64px; padding-top: calc(8px + env(safe-area-inset-top,0px)); padding-bottom: 8px; background: rgba(255,255,255,.96); }
 body.customer-refresh:has(#homePage.is-active .pq-launch) .brand-logo-image { width: 116px; }
 .pq-launch { --launch-ink: #1d1d1f; --launch-muted: #626267; --launch-surface: #f5f5f7; }

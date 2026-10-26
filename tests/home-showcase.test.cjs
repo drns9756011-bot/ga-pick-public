@@ -6,7 +6,7 @@ const read = file => readFileSync(`public/${file}`, 'utf8');
 test('showcase preserves quote starts and places evidence before brand discovery', () => {
   for (const file of ['index.html', 'quote/index.html', 'my-quote/index.html']) {
     const html = read(file);
-    assert.match(html, /home-showcase.css\?v=20261026-fixed-type/);
+    assert.match(html, /home-showcase.css\?v=20261026-official-visuals/);
     assert.match(html, /class="pq-home pq-launch"/);
     assert.match(html, /data-home-quote-mode="with_quote"/);
     assert.match(html, /data-home-quote-mode="without_quote"/);
@@ -15,7 +15,7 @@ test('showcase preserves quote starts and places evidence before brand discovery
     assert.match(html, /href="\/subscription"/);
     assert.match(html, /href="\/shopping"/);
   }
-  assert.ok(statSync('public/assets/appliance-showcase-20261026.webp').size < 160000);
+  assert.ok(statSync('public/assets/home-appliances-official-20261026.webp').size < 160000);
 });
 
 test('showcase is scoped to home and keeps readable mobile controls and safe area', () => {

@@ -1,0 +1,21 @@
+{
+  "checkedOn": "2026-10-26",
+  "note": "Official product photographs, resized and arranged without generative alterations. Illustrative product groups, not the models of historical customer quotes.",
+  "models": {
+    "lgFridge": "M876GBB131",
+    "samsungFridge": "RM70H63R1A",
+    "samsungLaundry": "WF2522HDEEE",
+    "samsungTv": "KQ85LSH03E-WT",
+    "samsungKimchi": "RK70F42M2A"
+  },
+  "sources": {
+    "lgFridge": "https://www.lge.co.kr/kr/images/refrigerators/md10615853/gallery/medium01.jpg",
+    "samsungFridge": "https://images.samsung.com/kdp/goods/2026/08/14/14409efd-ae3d-4e64-b64b-16a5931d5efe.png?$Q90_900_900_F_PNG$",
+    "samsungLaundry": "https://images.samsung.com/kdp/goods/2026/03/27/89e139a0-86d3-426c-85f6-fbc2cffb7f53.png?$Q90_900_900_F_PNG$",
+    "samsungTv": "https://images.samsung.com/kdp/goods/2026/07/08/ae1a7540-53c7-4f5d-9834-aedd4561d596.png?$Q90_900_900_F_PNG$",
+    "samsungKimchi": "https://images.samsung.com/kdp/goods/2025/07/31/2706a214-c15f-42ae-9e5e-085186642504.png?$Q90_900_900_F_PNG$",
+    "lgLogo": "https://bestshop.lge.co.kr/kr/bestshop/images/renewal/common/logo_lge_new.svg",
+    "bestshopLogo": "https://bestshop.lge.co.kr/kr/bestshop/images/renewal/common/logo_bestshop_new.svg",
+    "samsungStoreLogo": "https://www.samsungstore.com/images/new/gnb/logo_samsungstore.png"
+  }
+}
