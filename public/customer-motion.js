@@ -45,23 +45,34 @@
   }
   const observer = new IntersectionObserver(entries => {
     for (const entry of entries) {
-      if (!entry.isIntersecting) continue;
+      if (!entry.isIntersecting || entry.intersectionRatio < 0.08) continue;
       observer.unobserve(entry.target);
       if (preference.matches || !entry.target.animate) continue;
       const animation = entry.target.animate([
-        { opacity: 0.65, transform: 'translateY(14px)' },
+        { opacity: 1, transform: 'translateY(24px)' },
         { opacity: 1, transform: 'translateY(0)' },
-      ], { duration: 420, easing: 'cubic-bezier(.2,.7,.2,1)' });
+      ], { duration: compact.matches ? 900 : 1100, easing: 'cubic-bezier(.22,.61,.36,1)' });
       running.add(animation);
       animation.finished.catch(() => {}).finally(() => running.delete(animation));
     }
-  }, { threshold: 0.12 });
+  }, { threshold: 0.08, rootMargin: '-88px 0px -80px 0px' });
   // Content is visible by default, including when JavaScript or motion is disabled.
-  document.querySelectorAll('#homePage .pq-section-head, #homePage .pq-entry-grid, #homePage .pq-process-grid, #homePage .pq-partner, #homePage .pick-case-content, #homePage .pick-review-grid, #homePage .pq-faq-list, .pq-catalog-head, .pq-brand-selectors, .commerce-tools').forEach(element => observer.observe(element));
+  const observed = new WeakSet();
+  function observeContent() {
+    document.querySelectorAll('#homePage .pq-section-head, #homePage .pq-entry, #homePage .pq-process-grid > article, #homePage .pq-partner, #homePage .pick-case-copy, #homePage .pick-review-grid > article, #homePage .pq-faq-list > details, .pq-catalog-head, .pq-brand-selectors').forEach(element => {
+      if (observed.has(element)) return;
+      observed.add(element);
+      observer.observe(element);
+    });
+  }
+  observeContent();
+  const contentObserver = home && new MutationObserver(observeContent);
+  contentObserver?.observe(home, { childList: true, subtree: true });
   preference.addEventListener('change', () => {
     scheduleScroll();
     if (!preference.matches) return;
     observer.disconnect();
+    contentObserver?.disconnect();
     running.forEach(animation => animation.cancel());
     running.clear();
   });
