@@ -113,7 +113,8 @@ test('all route shells contain the same redesigned home and form anchors', () =>
   assert.ok(baseline.includes('data-home-quote-mode="with_quote"'));
   assert.ok(baseline.includes('data-home-quote-mode="without_quote"'));
   assert.match(baseline, /pq-hero-scene/);
-  assert.ok(baseline.includes('/assets/pickquote-appliance-space-20261025.webp'));
+  assert.ok(baseline.includes('/assets/appliance-showcase-20261026.webp'));
+  assert.ok(baseline.includes('pq-launch'));
   assert.doesNotMatch(baseline, /pq-benefit-strip|pq-privacy/);
   assert.ok(baseline.includes('/brand?brand=LG'));
   assert.ok(baseline.includes('/brand?brand=Samsung'));
@@ -142,7 +143,7 @@ test('all customer pages load one version of the shared design without ad script
     assert.ok(statSync(path.join(root, 'assets', asset)).size < 50000, asset);
   }
   assert.ok(statSync(path.join(root, 'assets/noto-sans-kr-variable.woff2')).size < 2200000);
-  assert.ok(statSync(path.join(root, 'assets/pickquote-appliance-space-20261025.webp')).size < 160000);
+  assert.ok(statSync(path.join(root, 'assets/appliance-showcase-20261026.webp')).size < 160000);
   assert.ok(statSync(path.join(root, 'assets/noto-sans-kr-OFL.txt')).size > 1000);
   assert.match(read('customer-ui.css'), /src: url\("\/assets\/pretendard-variable\.woff2"\)/);
   for (const file of ['styles.css', 'brand/brand.css', 'commerce/commerce.css']) {

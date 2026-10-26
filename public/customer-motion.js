@@ -29,9 +29,14 @@
     const distance = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
     const ratio = Math.max(0, Math.min(1, window.scrollY / distance));
     progress.style.transform = `scaleX(${ratio})`;
-    // Overscan keeps the image edges covered throughout the small parallax range.
-    const offset = Math.max(0, Math.min(rect.height, -rect.top)) * (compact.matches ? 0.025 : 0.055);
-    scene.style.transform = `translateY(${offset}px) scale(1.12)`;
+    if (home.querySelector('.pq-launch')) {
+      const phase = Math.max(0, Math.min(1, -rect.top / Math.max(1, rect.height)));
+      scene.style.transform = `scale(${1 + phase * 0.04})`;
+    } else {
+      // Overscan keeps the original full-bleed image covered during parallax.
+      const offset = Math.max(0, Math.min(rect.height, -rect.top)) * (compact.matches ? 0.025 : 0.055);
+      scene.style.transform = `translateY(${offset}px) scale(1.12)`;
+    }
   }
   function scheduleScroll() {
     if (!frame) frame = requestAnimationFrame(updateScroll);
