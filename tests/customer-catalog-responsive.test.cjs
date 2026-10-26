@@ -86,7 +86,7 @@ for (const width of [320, 344, 360, 375, 379, 379.99, 380, 390, 414, 540, 700, 7
 test('Fold inner and tablets have no catalogue sidebar or fixed-width tools', () => {
   for (const width of [761, 820, 853, 900, 1024, 1100]) {
     assert.equal(value('body.customer-refresh .commerce-main', 'grid-template-columns', width), 'minmax(0, 1fr)');
-    assert.equal(value('body.customer-refresh .commerce-category-grid', 'flex-wrap', width), 'wrap');
+    assert.equal(value('body.customer-refresh .commerce-category-grid', 'flex-wrap', width), width <= 760 ? 'nowrap' : 'wrap');
     assert.equal(value('body.customer-refresh .commerce-category-grid', 'position', width), 'static');
   }
   assert.match(css, /\.commerce-tools:not\(:has\(#commerceSort\)\)/);

@@ -19,7 +19,11 @@ const server = createServer(async (request, response) => {
     let target = resolve(root, `.${decodeURIComponent(url.pathname)}`);
     if (target !== resolve(root) && !target.startsWith(resolve(root) + sep)) { response.writeHead(403).end(); return; }
     if ((await stat(target)).isDirectory()) target = resolve(target, 'index.html');
-    const bytes = await readFile(target);
+    let bytes = await readFile(target);
+    // Reproduce the former mobile-only cascade without changing browser identity.
+    if (extname(target) === '.html' && url.searchParams.get('legacy-mobile') === '1') {
+      bytes = Buffer.from(bytes.toString().replace('<html lang="ko">', '<html lang="ko" class="is-mobile-device">'));
+    }
     response.writeHead(200, { 'Content-Type': types[extname(target)] || 'application/octet-stream', 'Cache-Control': 'no-store' });
     response.end(request.method === 'HEAD' ? undefined : bytes);
   } catch { response.writeHead(404).end('Not found'); }

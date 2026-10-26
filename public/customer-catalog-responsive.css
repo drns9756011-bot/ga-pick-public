@@ -218,6 +218,30 @@ body.customer-refresh .brand-consent-check { min-height: 44px; }
     padding-block: 24px 48px;
   }
   body.customer-refresh .commerce-main { gap: 20px; }
+  body.customer-refresh .commerce-category-grid {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    gap: 16px;
+    padding: 0 2px 4px;
+    scroll-padding-inline: 4px;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+    border-bottom: 1px solid #e5e5e7;
+  }
+  body.customer-refresh .commerce-category {
+    flex: 0 0 auto;
+    padding: 8px 2px;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    scroll-snap-align: start;
+  }
+  body.customer-refresh .commerce-category.is-active {
+    border-bottom-color: #1d1d1f;
+    background: none;
+    color: #1d1d1f;
+  }
   body.customer-refresh :is(.commerce-product-grid, .brand-hall-grid) {
     grid-template-columns: minmax(0, 1fr);
     gap: 24px 12px;

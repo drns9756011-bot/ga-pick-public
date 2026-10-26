@@ -692,6 +692,7 @@
       ${renderSelectionContext(step.key)}
       <div class="wizard-step" data-step="${step.key}">${step.render()}</div>
       <div class="wizard-actions">
+        <a class="wizard-help" href="https://pf.kakao.com/_PxlUfX" target="_blank" rel="noopener noreferrer" aria-label="카카오톡 문의 (새 창)">문의</a>
         ${state.stepIndex > 0 ? '<button type="button" class="wizard-back">이전</button>' : ""}
         <button type="${isFinalVisibleStep() ? "submit" : "button"}" class="wizard-next primary-btn" ${busyAttr}>${state.recommending ? "AI 추천 중" : isFinalVisibleStep() ? "견적 요청 등록" : "다음"}</button>
       </div>

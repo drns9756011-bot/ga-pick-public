@@ -4,7 +4,7 @@
   <link rel="stylesheet" href="/customer-ready.css?v=20261025-ready" />
   <script defer src="/customer-ready.js?v=20261025-ready"></script>
     <meta charset="utf-8" />
-    <meta name="pickquote-build" content="20261007-action-first" />
+    <meta name="pickquote-build" content="20261027-mobile-layout" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 
     <!-- 픽견적은 시스템 다크모드와 무관하게 항상 라이트 UI를 사용합니다. -->
@@ -29,10 +29,6 @@
     <script>
       (() => {
         const cleanPath = (window.location.pathname || "/").replace(/\/+$/, "") || "/";
-        const mobileUserAgent = /Android|iPhone|iPad|iPod|Windows Phone|Mobile|SamsungBrowser|KAKAOTALK|NAVER/i.test(navigator.userAgent || "");
-        const coarsePointer = window.matchMedia?.("(hover: none) and (pointer: coarse)")?.matches || false;
-        const touchCapable = (navigator.maxTouchPoints || 0) > 0;
-        const compactViewport = Math.min(window.innerWidth || 0, screen.width || 0) > 0 && Math.min(window.innerWidth || screen.width, screen.width || window.innerWidth) <= 900;
         const initialViewByPath = {
           "/": "home",
           "/quote": "customer",
@@ -41,9 +37,6 @@
           "/seller/register": "sellerRegister",
         };
         document.documentElement.dataset.initialView = initialViewByPath[cleanPath] || "home";
-        if (mobileUserAgent || (coarsePointer && touchCapable) || (touchCapable && compactViewport)) {
-          document.documentElement.classList.add("is-mobile-device");
-        }
       })();
     </script>
     <style>
@@ -61,14 +54,14 @@
         display: block;
       }
     </style>
-  <link rel="stylesheet" href="/styles.css?v=20261025-products" />
+  <link rel="stylesheet" href="/styles.css?v=20261027-mobile-layout" />
     <script defer src="/privacy-policy.js?v=20261007-selection-retention"></script>
   <script defer src="/app.js?v=20261026-official-visuals"></script>
     <script defer src="/customer-motion.js?v=20261026-slow-reveal"></script>
-    <script defer src="/customer-wizard.js?v=20261026-device-audit"></script>
+    <script defer src="/customer-wizard.js?v=20261027-mobile-layout"></script>
     <link rel="preload" href="/assets/pretendard-variable.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="stylesheet" href="/customer-ui.css?v=20261026-device-audit" />
-    <link rel="stylesheet" href="/home-showcase.css?v=20261026-device-audit" />
+    <link rel="stylesheet" href="/customer-ui.css?v=20261027-mobile-layout" />
+    <link rel="stylesheet" href="/home-showcase.css?v=20261027-mobile-layout" />
     <link rel="stylesheet" href="/customer-lookup-ui.css?v=20261025-stone" />
 
     <!-- Search metadata: kept in sync with src/search-config.js. -->
@@ -91,11 +84,11 @@
     <script type="application/json" id="pickSearchRoutes">[{"path":"/","file":"index.html","name":"픽견적","title":"픽견적 | 혼수·입주 가전 견적 비교","description":"혼수·입주 가전 견적서를 올리거나 필요한 품목을 선택하고 LG·삼성 판매자의 가격, 배송, 설치, 혜택을 비교하세요. 고객 견적 비교는 무료입니다.","index":true,"type":"WebPage","graph":{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://ga-pick.com/#organization","name":"픽견적","legalName":"픽브릿지","url":"https://ga-pick.com/","logo":"https://ga-pick.com/assets/pickquote-official-symbol-navy.png","sameAs":["https://pf.kakao.com/_PxlUfX"]},{"@type":"WebSite","@id":"https://ga-pick.com/#website","name":"픽견적","url":"https://ga-pick.com/","inLanguage":"ko-KR","publisher":{"@id":"https://ga-pick.com/#organization"}},{"@type":"WebPage","@id":"https://ga-pick.com/#webpage","url":"https://ga-pick.com/","name":"픽견적 | 혼수·입주 가전 견적 비교","description":"혼수·입주 가전 견적서를 올리거나 필요한 품목을 선택하고 LG·삼성 판매자의 가격, 배송, 설치, 혜택을 비교하세요. 고객 견적 비교는 무료입니다.","inLanguage":"ko-KR","isPartOf":{"@id":"https://ga-pick.com/#website"},"publisher":{"@id":"https://ga-pick.com/#organization"}},{"@type":"Service","@id":"https://ga-pick.com/#service","name":"픽견적 가전 견적 비교","serviceType":"가전 견적 비교","provider":{"@id":"https://ga-pick.com/#organization"},"areaServed":{"@type":"Country","name":"대한민국"},"description":"혼수·입주 가전 견적서를 올리거나 필요한 품목을 선택하고 LG·삼성 판매자의 가격, 배송, 설치, 혜택을 비교하세요. 고객 견적 비교는 무료입니다."},{"@type":"FAQPage","@id":"https://ga-pick.com/#faq","mainEntity":[{"@type":"Question","name":"견적서가 없어도 요청할 수 있나요?","acceptedAnswer":{"@type":"Answer","text":"필요한 품목과 브랜드, 예산을 선택하면 견적서 없이도 비교 요청을 등록할 수 있어요."}},{"@type":"Question","name":"연락처가 판매자에게 바로 공개되나요?","acceptedAnswer":{"@type":"Answer","text":"제안을 비교한 뒤 고객님이 판매자를 선택했을 때만 선택한 판매자에게 공개됩니다."}},{"@type":"Question","name":"견적 비교에 비용이 드나요?","acceptedAnswer":{"@type":"Answer","text":"고객님 이용료는 없습니다. 여러 판매자의 제안을 무료로 비교할 수 있어요."}}]}]}},{"path":"/quote","file":"quote/index.html","name":"견적 올리기","title":"가전 견적 올리기 | 픽견적","description":"가전 견적서 사진을 올리거나 필요한 품목과 예산을 선택해 판매자에게 비교 제안을 요청하세요.","index":false,"type":"WebPage","graph":null},{"path":"/my-quote","file":"my-quote/index.html","name":"내 견적 확인","title":"내 견적·판매자 제안 확인 | 픽견적","description":"본인의 가전 견적과 판매자 제안을 확인하는 고객 전용 페이지입니다.","index":false,"type":"WebPage","graph":null}]</script>
     <script defer src="/search-navigation.js?v=20261014-search"></script>
     <script defer src="/seller-recovery.js?v=20261014-secure-recovery"></script>
-    <link rel="stylesheet" href="/customer-mobile.css?v=20261026-device-audit" />
-    <script defer src="/customer-mobile.js?v=20261026-device-audit"></script>
-    <link rel="stylesheet" href="/customer-responsive.css?v=20261026-device-audit" />
-    <link rel="stylesheet" href="/customer-catalog-responsive.css?v=20261026-device-audit" />
-    <script defer src="/customer-dialogs.js?v=20261026-device-audit"></script>
+    <link rel="stylesheet" href="/customer-mobile.css?v=20261027-mobile-layout" />
+    <script defer src="/customer-mobile.js?v=20261027-mobile-layout"></script>
+    <link rel="stylesheet" href="/customer-responsive.css?v=20261027-mobile-layout" />
+    <link rel="stylesheet" href="/customer-catalog-responsive.css?v=20261027-mobile-layout" />
+    <script defer src="/customer-dialogs.js?v=20261027-mobile-layout"></script>
   </head>
   <body class="customer-refresh">
     <header class="topbar">

@@ -106,12 +106,6 @@
 .brand-honeypot { position: absolute !important; left: -10000px !important; width: 1px !important; height: 1px !important; opacity: 0 !important; }
 .brand-hall-footer .footer-register-btn { text-decoration: none; display: inline-flex; align-items: center; }
 /* 모바일 하단 메뉴는 픽견적 공통 mobile-flow-nav UI를 그대로 사용 */
-html.is-mobile-device .brand-mobile-nav a.is-current {
-  color: var(--primary);
-}
-html.is-mobile-device .brand-mobile-nav a.is-current .mobile-flow-icon {
-  color: var(--primary);
-}
 @media (max-width: 980px) {
   .brand-hall-main { width: min(100% - 24px, 900px); margin-top: 20px; }
   .brand-hall-hero { grid-template-columns: 1fr; gap: 28px; padding: 38px; }
@@ -580,9 +574,6 @@ body.brand-server-is-loading { cursor: wait; }
 }
 
 /* V10: 브랜드관 모바일 하단 메뉴의 폰트까지 기존 픽견적 공통 UI와 동일하게 */
-html.is-mobile-device .brand-mobile-nav {
-  font-family: "Pretendard Variable", Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-}
 
 
 /* V12: 노출용 브랜드관 카드 간소화 + 상세 모달 */

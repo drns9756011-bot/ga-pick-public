@@ -7,8 +7,8 @@ const read = file => readFileSync(`public/${file}`, 'utf8');
 test('all public customer routes load the same mobile-only polish after base styles', () => {
   for (const page of ['index.html','quote/index.html','my-quote/index.html','brand/index.html','subscription/index.html','shopping/index.html','privacy/index.html']) {
     const html = read(page);
-    assert.match(html, /customer-mobile.css\?v=20261026-device-audit/);
-    assert.match(html, /customer-mobile.js\?v=20261026-device-audit/);
+    assert.match(html, /customer-mobile.css\?v=20261027-mobile-layout/);
+    assert.match(html, /customer-mobile.js\?v=20261027-mobile-layout/);
     assert.ok(html.indexOf('customer-mobile.css') > html.indexOf('customer-ui.css'), page);
   }
 });
@@ -33,7 +33,7 @@ function harness({touch=true, supported=true} = {}) {
   const viewport={height:800,offsetTop:0,scale:1,addEventListener:(name,fn)=>{handlers[`viewport:${name}`]=fn;}};
   const window={innerHeight:800,matchMedia:()=>({matches:touch,addEventListener(){}}),visualViewport:supported?viewport:null,addEventListener:(name,fn)=>{handlers[`window:${name}`]=fn;}};
   const properties=new Map();
-  const document={activeElement:null,documentElement:{style:{setProperty:(key,value)=>properties.set(key,value)}},body:{classList:{toggle:(key,value)=>classes.set(key,value)}},addEventListener:(name,fn)=>{handlers[name]=fn;}};
+  const document={activeElement:null,querySelector:()=>null,documentElement:{style:{setProperty:(key,value)=>properties.set(key,value)}},body:{classList:{toggle:(key,value)=>classes.set(key,value)}},addEventListener:(name,fn)=>{handlers[name]=fn;}};
   vm.runInNewContext(read('customer-mobile.js'), {window,document,requestAnimationFrame:fn=>{frames.push(fn);return frames.length;}});
   const flush=()=>{while(frames.length)frames.shift()();};flush();
   return {window,document,viewport,handlers,classes,properties,flush};
@@ -66,4 +66,25 @@ test('keyboard avoidance also works on tablet/desktop and unsupported browsers r
 
 test('upload privacy warning is visible beside the actual image picker', () => {
   assert.match(read('customer-wizard.js'), /wizard-upload-notice.*이미지 속 성함·전화번호·상세주소/);
+});
+
+test('compact contact moves into the header and returns to its desktop position', () => {
+  const changes = [], placements = [];
+  const contact = { before: node => placements.push(['placeholder', node]) };
+  const home = { after: node => placements.push(['body', node]) };
+  const nav = { before: node => placements.push(['header', node]) };
+  const compact = { matches: true, addEventListener: (event, callback) => changes.push(callback) };
+  const document = {
+    querySelector: selector => selector === '.kakao-floating-btn' ? contact : nav,
+    createComment: () => home,
+  };
+  vm.runInNewContext(read('customer-mobile.js'), {
+    window: { matchMedia: () => compact, visualViewport: null }, document,
+  });
+  assert.deepEqual(placements, [['placeholder', home], ['header', contact]]);
+  compact.matches = false; changes[0]();
+  assert.deepEqual(placements.at(-1), ['body', contact]);
+  compact.matches = true; changes[0]();
+  assert.deepEqual(placements.at(-1), ['header', contact]);
+  assert.match(read('customer-responsive.css'), /\.topbar > \.kakao-floating-btn \{ position: static/);
 });

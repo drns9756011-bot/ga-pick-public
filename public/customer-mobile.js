@@ -1,5 +1,17 @@
 (() => {
   const compact = window.matchMedia('(max-width: 1100px)');
+  const contact = document.querySelector('.kakao-floating-btn');
+  const headerNav = document.querySelector('.topbar > .nav');
+  if (contact && headerNav) {
+    const home = document.createComment('customer contact position');
+    contact.before(home);
+    function placeContact() {
+      if (compact.matches) headerNav.before(contact);
+      else home.after(contact);
+    }
+    compact.addEventListener('change', placeContact);
+    placeContact();
+  }
   const viewport = window.visualViewport;
   if (!viewport) return;
   let baseline = window.innerHeight;

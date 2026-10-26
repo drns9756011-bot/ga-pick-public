@@ -102,7 +102,7 @@ test('failed inference clears output, offers retry, and does not masquerade as A
   assert.ok(!source.includes('chooseRecommendedModel('));
   assert.ok(!source.includes('fallbackRecommendationText('));
   for (const shell of shells) {
-    assert.ok(read(shell).includes('/customer-wizard.js?v=20261026-device-audit'));
+    assert.ok(read(shell).includes('/customer-wizard.js?v=20261027-mobile-layout'));
     assert.doesNotMatch(read(shell), /네이버 최저/);
   }
 });
@@ -133,7 +133,7 @@ test('all route shells contain the same redesigned home and form anchors', () =>
 test('all customer pages load one version of the shared design without ad scripts', () => {
   for (const file of [...shells, ...catalogs]) {
     const html = read(file);
-    assert.ok(html.includes('/customer-ui.css?v=20261026-device-audit'), file);
+    assert.ok(html.includes('/customer-ui.css?v=20261027-mobile-layout'), file);
     assert.ok(html.includes('href="/assets/pretendard-variable.woff2"'), file);
     assert.ok(html.includes('customer-refresh'), file);
     assert.doesNotMatch(html, /adsbygoogle|PICK SUBSCRIPTION|PICK SHOPPING/);
@@ -198,7 +198,7 @@ test('reference-led layout uses content-sized entries, a category rail, and one 
     assert.equal((html.match(/<details class="preview-card" hidden>/g) || []).length, 1);
     assert.doesNotMatch(home(html), /pickquote-showroom|pq-step-compare|pq-step-select/);
   }
-  assert.ok(read('privacy/index.html').includes('/customer-ui.css?v=20261026-device-audit'));
+  assert.ok(read('privacy/index.html').includes('/customer-ui.css?v=20261027-mobile-layout'));
 });
 
 test('home quote choice uses the existing wizard and resumes matching drafts', () => {
