@@ -1,0 +1,12 @@
+{
+  "generator": "Built-in image_gen",
+  "date": "2026-10-26",
+  "sharedPrompt": "Square photorealistic editorial thumbnail for a premium Korean home appliance quote purchase-purpose selector. Calm natural daylight, crisp realistic materials, understated contemporary styling, centered subject readable at thumbnail size, generous breathing room, neutral white and light gray palette with a subtle natural accent. No people, text, numbers, logos, borders, cartoons or icons.",
+  "items": [
+    { "file": "purpose-wedding-20261026.webp", "purpose": "웨딩,혼수", "prompt": "Small white bridal bouquet and two simple gold wedding rings on a ceramic tray beside a discreet white linen ribbon on a light gray stone table." },
+    { "file": "purpose-new-home-20261026.webp", "purpose": "신축입주", "prompt": "New silver apartment keys with a simple ivory key fob on a light gray stone kitchen island in a pristine modern Korean apartment kitchen." },
+    { "file": "purpose-moving-20261026.webp", "purpose": "이사", "prompt": "Two neatly stacked unbranded cardboard moving boxes, one open with folded white linen and a small green houseplant, in a bright clean unfurnished apartment." },
+    { "file": "purpose-interior-20261026.webp", "purpose": "인테리어", "prompt": "Fanned neutral gray and white interior material swatches, a pale natural oak sample, tape measure and rolled architectural floor plan on a white table." },
+    { "file": "purpose-everyday-20261026.webp", "purpose": "일반", "prompt": "Unbranded compact white electric kettle, two ceramic mugs and small silver toaster on a light gray contemporary kitchen counter." }
+  ]
+}

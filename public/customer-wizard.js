@@ -86,11 +86,11 @@
   ];
 
   const purposeOptions = [
-    { value: "웨딩,혼수 특별혜택", title: "웨딩,혼수", badge: "특별혜택" },
-    { value: "신축입주 특별혜택", title: "신축입주", badge: "특별혜택" },
-    { value: "이사", title: "이사" },
-    { value: "인테리어", title: "인테리어" },
-    { value: "일반", title: "일반" },
+    { value: "웨딩,혼수 특별혜택", title: "웨딩,혼수", badge: "특별혜택", thumbnail: "wedding" },
+    { value: "신축입주 특별혜택", title: "신축입주", badge: "특별혜택", thumbnail: "new-home" },
+    { value: "이사", title: "이사", thumbnail: "moving" },
+    { value: "인테리어", title: "인테리어", thumbnail: "interior" },
+    { value: "일반", title: "일반", thumbnail: "everyday" },
   ];
 
   const brandOptions = [
@@ -1319,9 +1319,10 @@
   function choiceCard(item, name, currentValue) {
     const checked = currentValue === item.value;
     return `
-      <label class="wizard-choice-card ${checked ? "is-selected" : ""} ${item.badge ? "has-badge" : ""}">
+      <label class="wizard-choice-card ${checked ? "is-selected" : ""} ${item.badge ? "has-badge" : ""} ${item.thumbnail ? "has-purpose-photo" : ""}">
         <input type="radio" name="${name}" value="${escapeHtml(item.value)}" ${checked ? "checked" : ""} data-choice-name="${name}" />
         <span class="wizard-radio" aria-hidden="true">${checked ? "✓" : ""}</span>
+        ${item.thumbnail ? `<img class="wizard-purpose-photo" src="/assets/purpose-${escapeHtml(item.thumbnail)}-20261026.webp" alt="" width="72" height="72" decoding="async" />` : ""}
         <span class="wizard-choice-copy">
           <strong>${escapeHtml(item.title)}</strong>
           <small>${escapeHtml(item.text || "")}</small>
