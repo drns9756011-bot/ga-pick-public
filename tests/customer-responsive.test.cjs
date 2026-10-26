@@ -6,7 +6,10 @@ const read = file => fs.readFileSync(`public/${file}`, 'utf8');
 test('all customer pages share the final responsive contract and dialog lifecycle', () => {
   for (const page of ['index.html','quote/index.html','my-quote/index.html','brand/index.html','subscription/index.html','shopping/index.html','privacy/index.html']) {
     const html = read(page);
-    for (const file of ['customer-responsive.css','customer-catalog-responsive.css','customer-dialogs.js']) assert.ok(html.includes(`/${file}?v=20261027-mobile-layout`), `${page}: ${file}`);
+    for (const file of ['customer-responsive.css','customer-catalog-responsive.css','customer-dialogs.js']) {
+      const version = file === 'customer-responsive.css' ? '20261027-path-align' : '20261027-mobile-layout';
+      assert.ok(html.includes(`/${file}?v=${version}`), `${page}: ${file}`);
+    }
     assert.ok(html.indexOf('customer-responsive.css') > html.indexOf('customer-mobile.css'));
     assert.ok(html.indexOf('customer-catalog-responsive.css') > html.indexOf('customer-responsive.css'));
   }

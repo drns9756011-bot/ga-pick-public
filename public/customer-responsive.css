@@ -78,7 +78,7 @@ body.customer-refresh.mobile-keyboard-open { padding-bottom: 16px; }
   .pq-launch .pq-hero { padding-top: 36px; }
   body.customer-refresh #homePage .pq-launch .pq-hero h1 { font-size: 46px; }
   .pq-launch .pq-hero-scene { max-height: 280px; margin-top: 20px; }
-  .pq-launch .pq-entry-grid { gap: 24px; }
+  .pq-launch .pq-entry-grid,.pq-launch .pq-more-paths { gap: 24px; }
   .pq-launch .pq-entry { grid-template-rows: 190px auto auto; }
   .pq-launch .pq-process-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 32px; }
   body.customer-refresh #customerPage .wizard-step > h3 { font-size: 28px; }

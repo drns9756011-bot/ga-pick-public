@@ -6,7 +6,7 @@ const read = file => readFileSync(`public/${file}`, 'utf8');
 test('showcase preserves quote starts and places evidence before brand discovery', () => {
   for (const file of ['index.html', 'quote/index.html', 'my-quote/index.html']) {
     const html = read(file);
-    assert.match(html, /home-showcase.css\?v=20261027-mobile-layout/);
+    assert.match(html, /home-showcase.css\?v=20261027-path-align/);
     assert.match(html, /class="pq-home pq-launch"/);
     assert.match(html, /data-home-quote-mode="with_quote"/);
     assert.match(html, /data-home-quote-mode="without_quote"/);
@@ -44,4 +44,17 @@ test('mobile section copy and secondary action share a centered alignment', () =
   assert.match(css, /\.pq-section-head \{ flex-direction: column; align-items: center; justify-content: center; text-align: center/);
   assert.match(css, /\.pq-process-grid article \{ align-items: center; text-align: center/);
   assert.match(css, /\.pq-faq > h2 \{ grid-column: 1 \/ -1/);
+});
+
+test('subscription and shopping titles share the brand column centers at every breakpoint', () => {
+  const css = read('home-showcase.css');
+  const responsive = read('customer-responsive.css');
+  assert.match(css, /\.pq-more-paths a \{ display: grid; grid-template-columns: minmax\(0,1fr\); justify-items: center; align-content: start/);
+  assert.doesNotMatch(css, /\.pq-more-paths a \{[^}]*flex-/);
+  for (const gap of [16,24]) {
+    assert.ok(responsive.includes(`.pq-launch .pq-entry-grid,.pq-launch .pq-more-paths { gap: ${gap}px; }`));
+  }
+  for (const selector of ['pq-entry-grid','pq-more-paths']) {
+    assert.match(css, new RegExp(`\\.pq-launch \\.${selector} \\{[^}]*gap: 44px`));
+  }
 });
