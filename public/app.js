@@ -3951,19 +3951,13 @@ document.addEventListener("keydown", (event) => {
 });
 
 document.addEventListener("visibilitychange", () => {
-  if (document.hidden) {
-    showSecurityBlanket(0);
-    return;
-  }
-
-  hideSecurityBlanket();
+  if (!document.hidden) hideSecurityBlanket();
 });
 
 document.addEventListener("contextmenu", (event) => {
   event.preventDefault();
 });
 
-window.addEventListener("blur", () => showSecurityBlanket(0));
 window.addEventListener("focus", hideSecurityBlanket);
 window.addEventListener("beforeprint", () => showSecurityBlanket(0));
 window.addEventListener("afterprint", hideSecurityBlanket);
