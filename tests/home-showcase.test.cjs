@@ -6,7 +6,7 @@ const read = file => readFileSync(`public/${file}`, 'utf8');
 test('showcase preserves quote starts and places evidence before brand discovery', () => {
   for (const file of ['index.html', 'quote/index.html', 'my-quote/index.html']) {
     const html = read(file);
-    assert.match(html, /home-showcase.css\?v=20261027-bold-cta/);
+    assert.match(html, /home-showcase.css\?v=20261027-bold-actions/);
     assert.match(html, /class="pq-home pq-launch"/);
     assert.match(html, /data-home-quote-mode="with_quote"/);
     assert.match(html, /data-home-quote-mode="without_quote"/);
@@ -21,6 +21,7 @@ test('showcase preserves quote starts and places evidence before brand discovery
 test('showcase is scoped to home and keeps readable mobile controls and safe area', () => {
   const css = read('home-showcase.css');
   assert.match(css, /body\.customer-refresh \.pq-launch \.pq-primary:not\(\.pq-primary-secondary\) \{[^}]*font-weight: 800/);
+  assert.match(css, /\.pq-launch \.pq-primary-secondary \{[^}]*font-weight: 800/);
   assert.match(css, /:has\(#homePage.is-active \.pq-launch\) \.topbar/);
   assert.match(css, /env\(safe-area-inset-top,0px\)/);
   assert.match(css, /object-fit: contain/);

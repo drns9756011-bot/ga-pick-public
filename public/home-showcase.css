@@ -68,7 +68,7 @@ body.customer-refresh #homePage .pq-launch .pq-hero h1 { width: 100%; max-width:
 .pq-launch .pq-start-paths { flex-direction: row; align-items: center; justify-content: center; gap: 12px; }
 .pq-launch .pq-primary { width: auto; min-height: 48px; padding: 12px 22px; border-radius: 6px; }
 body.customer-refresh .pq-launch .pq-primary:not(.pq-primary-secondary) { background: #1d1d1f; border-color: #1d1d1f; font-size: 16px; font-weight: 800; }
-.pq-launch .pq-primary-secondary { justify-content: center; text-align: center; border: 1px solid #96969b; color: #1d1d1f; font-size: 16px; font-weight: 600; text-decoration: none; }
+.pq-launch .pq-primary-secondary { justify-content: center; text-align: center; border: 1px solid #96969b; color: #1d1d1f; font-size: 16px; font-weight: 800; text-decoration: none; }
 .pq-launch .pq-primary-secondary:hover { background: #e8e8ed; }
 .pq-launch .pq-hero-followup { justify-content: center; gap: 4px 16px; max-width: none; margin-top: 12px; }
 .pq-launch .pq-hero-note { color: var(--launch-muted); font-size: 13px; }
