@@ -4,15 +4,11 @@ import { paidAssignment } from './lead-payments.js';
 const schemas = new WeakMap();
 export async function ensureLeadWaitingSchema(env) {
   if (!schemas.has(env.DB)) {
+    // Install the multi-statement stock trigger through the D1 migration, not prepare().
     const pending = env.DB.batch([
       env.DB.prepare(`CREATE TABLE IF NOT EXISTS lead_waiting_batches (
         id TEXT PRIMARY KEY, initial_quantity INTEGER NOT NULL CHECK(initial_quantity >= 0),
         remaining INTEGER NOT NULL CHECK(remaining >= 0 AND remaining <= initial_quantity), created_at TEXT NOT NULL)`),
-      env.DB.prepare(`CREATE TRIGGER IF NOT EXISTS consume_waiting_lead_on_registration
-        AFTER INSERT ON assigned_leads BEGIN
-          UPDATE lead_waiting_batches SET remaining = remaining - 1
-          WHERE id = (SELECT id FROM lead_waiting_batches WHERE remaining > 0 ORDER BY created_at, id LIMIT 1);
-        END`),
     ]).catch(error => { schemas.delete(env.DB); throw error; });
     schemas.set(env.DB, pending);
   }

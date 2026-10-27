@@ -16,7 +16,10 @@ async function setup() {
   db.prepare('INSERT INTO seller_sessions VALUES(?,?,?,?)').run(createHash('sha256').update('test-session').digest('hex'), 'seller', future, now);
   const DB = { prepare(sql) { let args = []; return {
     bind(...values) { args = values; return this; },
-    async run() { return { meta: { changes: db.prepare(sql).run(...args).changes } }; },
+    async run() {
+      assert.doesNotMatch(sql, /CREATE TRIGGER/i, 'D1 trigger installation belongs to the migration');
+      return { meta: { changes: db.prepare(sql).run(...args).changes } };
+    },
     async first() { return db.prepare(sql).get(...args) || null; },
     async all() { return { results: db.prepare(sql).all(...args) }; },
   }; }, async batch(statements) { const out = []; for (const s of statements) out.push(await s.run()); return out; } };
