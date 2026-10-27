@@ -2,6 +2,7 @@ import { getHomeCases } from "../home-cases.js";
 import { getOfficialCatalog, verifyOfficialModels, readBoundedJson, validateRecommendationRequest, recommendOfficialModels } from "../official-models.js";
 import { handleLeads, purgeExpiredLeads, ensureLeadSchema } from "../assigned-leads.js";
 import { handleLeadPayments, reconcileLeadPayments } from "../lead-payments.js";
+import { getLeadAvailability } from "../lead-availability.js";
 import { protectCustomerPhone, customerPhoneHash, readCustomerPhone, customerPhoneWithinSevenDays, customerPhoneRetained, customerPhoneAccessExpiresAt, customerPersonalExpiresAt, fullyMaskCustomerPhone, maskPhoneInMessage, quoteImageSignature, verifyQuoteImageSignature } from "../phone-vault.js";
 
 const jsonHeaders = {
@@ -5673,6 +5674,11 @@ export async function onRequest(context) {
   if (!env.DB) return json({ ok: false, message: "D1 DB 바인딩(DB)이 필요합니다." }, 500);
   if (path === "home-cases" && method === "GET") {
     return apiBoundary(() => getHomeCases(request, env, context.ctx || context), "비교 사례를 불러오지 못했습니다.");
+  }
+  if (path === 'lead-availability' && method === 'GET') {
+    const seller = await getAuthenticatedSeller(env, request);
+    if (!seller) return json({ ok: false, message: '판매자 로그인이 필요합니다.' }, 401);
+    return apiBoundary(() => getLeadAvailability(env, seller.seller_id), '고객DB 현황을 확인하지 못했습니다.');
   }
   if (path === 'lead-payments' || path.startsWith('lead-payments/')) {
     const seller = await getAuthenticatedSeller(env, request);
