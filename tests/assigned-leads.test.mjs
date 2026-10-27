@@ -5,6 +5,8 @@ import { readFileSync, existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { handleLeads, purgeExpiredLeads } from '../functions/assigned-leads.js';
 import { onRequest } from '../functions/api/[[path]].js';
+import { getLeadAvailability } from '../functions/lead-availability.js';
+import { handleLeads as adminLeads } from '../../ga-pick-admin/functions/assigned-leads.js';
 
 function setup() {
   const db = new DatabaseSync(':memory:');
@@ -34,6 +36,49 @@ async function seed(s) {
   return s.db.prepare('SELECT * FROM assigned_leads').get();
 }
 const assign = (s, id, sellerId) => s.call(`/${id}/assign`, 'POST', { sellerId, consentRef: 'recipient-proof', consentConfirmed: true });
+
+test('admin registration and paid allocation agree with seller lists and inventory counts end to end', async () => {
+  const s = setup();
+  try {
+    const upload = await adminLeads(s.env, new Request('https://admin/api/assigned-leads', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...payload, rows: [customer, { ...customer, name: '테스트 고객2', phone: '01012345679' }] }),
+    }), 'assigned-leads', { admin: true });
+    assert.equal(upload.status, 200);
+    assert.equal((await upload.json()).added, 2);
+    const ids = s.db.prepare('SELECT id FROM assigned_leads ORDER BY id').all().map(row => row.id);
+    const counts = async seller => (await getLeadAvailability(s.env, seller)).json();
+    assert.equal((await counts('s1')).availableCount, 2);
+    assert.equal((await assign(s, ids[0], 's1')).status, 409);
+    const now = new Date().toISOString(), future = new Date(Date.now() + 3600000).toISOString();
+    s.db.prepare("INSERT INTO lead_orders(id,seller_id,quantity,amount,mode,status,callback_hash,created_at,expires_at) VALUES('flow-paid','s1',5,40000,'live','paid','test',?,?)").run(now, future);
+    assert.equal((await counts('s1')).unassignedCount, 5);
+    const allocate = async id => {
+      const response = await adminLeads(s.env, new Request(`https://admin/api/assigned-leads/${id}/assign`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sellerId: 's1', consentRef: 'test-recipient-proof', consentConfirmed: true }),
+      }), `assigned-leads/${id}/assign`, { admin: true });
+      return response.status;
+    };
+    assert.equal(await allocate(ids[0]), 200);
+    assert.equal(await allocate(ids[1]), 200);
+    assert.equal(await allocate(ids[0]), 409);
+    s.db.prepare('INSERT INTO seller_sessions VALUES(?,?,?,?)').run(createHash('sha256').update('flow-session').digest('hex'), 's1', future, now);
+    const listed = await onRequest({ env: s.env, request: new Request('https://test/api/assigned-leads', { headers: { 'X-Seller-Session': 'flow-session' } }), params: { path: ['assigned-leads'] } });
+    assert.equal(listed.status, 200);
+    const data = await listed.json();
+    assert.equal(data.rows.length, 2);
+    assert.deepEqual(new Set(data.rows.map(row => row.id)), new Set(ids));
+    assert.ok(data.rows.every(row => !('phone_ciphertext' in row) && !('phone_hash' in row)));
+    const own = await counts('s1');
+    assert.equal(own.assignedCount, data.rows.length);
+    assert.equal(own.unassignedCount, 3);
+    assert.equal(own.assignedCount + own.unassignedCount, 5);
+    assert.equal(s.db.prepare('SELECT count(*) AS n FROM lead_credit_usage').get().n, 2);
+    assert.equal((await counts('s2')).assignedCount, 0);
+    assert.equal((await s.call('', 'GET', null, { sellerId: 's2' })).status, 403);
+  } finally { s.db.close(); }
+});
 
 test('register encrypts phone, deduplicates and never leaks ciphertext/hash in lists', async () => {
   const s = setup(); const row = await seed(s);
