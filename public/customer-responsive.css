@@ -5,6 +5,8 @@ body.customer-refresh :is(main,section,article,aside,form,fieldset,figure,.wizar
 body.customer-refresh :is(img,video,canvas) { max-width: 100%; }
 body.customer-refresh :is(h1,h2,h3,p,li,label,button,summary,dd,small) { overflow-wrap: anywhere; }
 body.customer-refresh :is(input,select,textarea) { max-width: 100%; min-width: 0; }
+body.customer-refresh .footer-ci { display: inline-flex; align-items: center; justify-self: start; width: 140px; height: 48px; }
+body.customer-refresh .footer-ci img { display: block; width: 140px; height: 48px; object-fit: contain; filter: grayscale(1) brightness(.5); }
 body.customer-refresh :is(.topbar,.commerce-topbar) { position: sticky; top: 0; z-index: 1200; min-width: 0; width: 100%; background: #fff; }
 body.customer-refresh #customerPage .wizard-actions { scroll-margin-bottom: calc(var(--customer-nav-space) + 16px); }
 body.customer-refresh #customerPage .wizard-help { display: none; }
@@ -41,13 +43,17 @@ body.customer-refresh.mobile-keyboard-open { padding-bottom: 16px; }
   body.customer-refresh :is(.mobile-flow-nav,.commerce-mobile-nav) :is(.is-current,.is-active,[aria-current=page]) { color: #1d1d1f; font-weight: 700; }
   body.customer-refresh :is(input,select,textarea) { font-size: 16px; scroll-margin-top: 100px; scroll-margin-bottom: 180px; }
   body.customer-refresh :is(button,.wizard-chip,.option-choice,.option-chip) { min-height: 44px; }
-  body.customer-refresh .kakao-floating-btn { right: max(14px,env(safe-area-inset-right,0px)); bottom: calc(var(--customer-nav-space) + 12px); width: 48px; min-width: 48px; height: 48px; min-height: 48px; padding: 5px; gap: 0; justify-content: center; }
+  body.customer-refresh .kakao-floating-btn { position: fixed; top: auto; right: max(14px,env(safe-area-inset-right,0px)); bottom: calc(var(--customer-nav-space) + 12px); width: 48px; min-width: 48px; height: 48px; min-height: 48px; padding: 5px; gap: 0; justify-content: center; z-index: 1100; }
   body.customer-refresh .kakao-floating-btn > span:not(.kakao-floating-icon) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   body.customer-refresh .kakao-floating-icon { flex: 0 0 36px; width: 36px; height: 36px; }
-  body.customer-refresh .topbar > .kakao-floating-btn { position: static; flex: 0 0 44px; width: 44px; min-width: 44px; height: 44px; min-height: 44px; margin: 0 0 0 auto; padding: 4px; border: 0; background: none; box-shadow: none; transform: none; }
   body.customer-refresh :is(.footer,.commerce-footer) { padding-left: max(20px,env(safe-area-inset-left,0px)); padding-right: max(20px,env(safe-area-inset-right,0px)); padding-bottom: 28px; }
   body.customer-refresh :is(.footer,.commerce-footer) > nav { display: flex; flex-wrap: wrap; gap: 4px 16px; }
   body.customer-refresh :is(.footer,.commerce-footer) > nav a { display: inline-flex; align-items: center; min-height: 44px; }
+  body.customer-refresh :is(.footer-company,.commerce-footer-company) { width: 100%; min-width: 0; gap: 16px; text-align: left; }
+  body.customer-refresh :is(.footer-company,.commerce-footer-company) p { display: grid; grid-template-columns: minmax(0,1fr); justify-items: start; align-items: start; gap: 8px; font-size: 13px; line-height: 1.8; text-align: left; }
+  body.customer-refresh :is(.footer-company,.commerce-footer-company) p > span { display: block; margin: 0; white-space: normal; word-break: keep-all; overflow-wrap: anywhere; }
+  body.customer-refresh :is(.footer-company,.commerce-footer-company) .footer-privacy-btn { display: inline-flex; align-items: center; justify-content: flex-start; min-height: 44px; margin: 0; padding: 0; font-size: 13px; line-height: 1.8; text-align: left; }
+  body.customer-refresh :is(.footer-company,.commerce-footer-company) :is(.footer-disclaimer,.commerce-footer-disclaimer,.footer-copy) { display: block; width: 100%; margin: 0; padding-top: 0; word-break: keep-all; overflow-wrap: anywhere; }
   body.customer-refresh .footer-top { display: flex; flex-wrap: wrap; gap: 24px; }
   body.customer-refresh .footer-brand { min-width: 0; max-width: 100%; }
   body.customer-refresh #customerPage :is(.page-head,.request-grid) { width: min(680px,calc(100% - 40px)); }

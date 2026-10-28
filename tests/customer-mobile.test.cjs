@@ -8,7 +8,7 @@ test('all public customer routes load the same mobile-only polish after base sty
   for (const page of ['index.html','quote/index.html','my-quote/index.html','brand/index.html','subscription/index.html','shopping/index.html','privacy/index.html']) {
     const html = read(page);
     assert.match(html, /customer-mobile.css\?v=20261027-mobile-layout/);
-    assert.match(html, /customer-mobile.js\?v=20261027-mobile-layout/);
+    assert.match(html, /customer-mobile.js\?v=20261028-footer-contact/);
     assert.ok(html.indexOf('customer-mobile.css') > html.indexOf('customer-ui.css'), page);
   }
 });
@@ -68,23 +68,28 @@ test('upload privacy warning is visible beside the actual image picker', () => {
   assert.match(read('customer-wizard.js'), /wizard-upload-notice.*이미지 속 성함·전화번호·상세주소/);
 });
 
-test('compact contact moves into the header and returns to its desktop position', () => {
-  const changes = [], placements = [];
-  const contact = { before: node => placements.push(['placeholder', node]) };
-  const home = { after: node => placements.push(['body', node]) };
-  const nav = { before: node => placements.push(['header', node]) };
-  const compact = { matches: true, addEventListener: (event, callback) => changes.push(callback) };
-  const document = {
-    querySelector: selector => selector === '.kakao-floating-btn' ? contact : nav,
-    createComment: () => home,
-  };
+test('compact contact stays outside the header above the bottom navigation', () => {
+  const document = { querySelector: () => { throw new Error('contact must not be reparented'); } };
   vm.runInNewContext(read('customer-mobile.js'), {
-    window: { matchMedia: () => compact, visualViewport: null }, document,
+    window: { matchMedia: () => ({ matches: true }), visualViewport: null }, document,
   });
-  assert.deepEqual(placements, [['placeholder', home], ['header', contact]]);
-  compact.matches = false; changes[0]();
-  assert.deepEqual(placements.at(-1), ['body', contact]);
-  compact.matches = true; changes[0]();
-  assert.deepEqual(placements.at(-1), ['header', contact]);
-  assert.match(read('customer-responsive.css'), /\.topbar > \.kakao-floating-btn \{ position: static/);
+  assert.doesNotMatch(read('customer-responsive.css'), /\.topbar > \.kakao-floating-btn/);
+  assert.match(read('customer-responsive.css'), /\.kakao-floating-btn \{ position: fixed; top: auto;[^}]*bottom: calc\(var\(--customer-nav-space\) \+ 12px\)/);
+});
+
+test('compact company details stack independently and keep legal text left aligned', () => {
+  const css = read('customer-responsive.css');
+  assert.match(css, /\.commerce-footer-company\) p \{ display: grid; grid-template-columns: minmax\(0,1fr\); justify-items: start; align-items: start/);
+  assert.match(css, /p > span \{ display: block; margin: 0; white-space: normal/);
+  assert.match(css, /\.footer-privacy-btn \{[^}]*justify-content: flex-start/);
+});
+
+test('customer footers use the official CI image with stable dimensions', () => {
+  for (const file of ['index.html','quote/index.html','my-quote/index.html','brand/index.html','subscription/index.html','shopping/index.html']) {
+    const html = read(file);
+    const footer = html.slice(html.indexOf('<footer'));
+    assert.match(footer, /class="footer-ci"[^>]*><img src="\/assets\/pickquote-official-logo-navy.png/);
+    assert.match(footer, /width="140" height="48" alt="픽견적"/);
+    assert.doesNotMatch(footer, /<strong>픽견적<\/strong>/);
+  }
 });
